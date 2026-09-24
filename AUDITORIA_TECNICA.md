@@ -1663,3 +1663,60 @@ que é exatamente o critério combinado ("provar antes de valer"/"não quebrar o
 - **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
   quantas listas vivas existem hoje em `modulosDinamicos` (é o que fecha o inventário de
   paridade dos módulos dinâmicos, item ◻ do blueprint).
+
+## 27. REDESENHO — FASE 1·B: A PONTE (TELAS DE HOJE × CORAÇÃO NOVO) E A PÁGINA COM A MESMA CARA (24/09/2026)
+
+**Decisão dele:** *"recriar praticamente O MESMO sistema, só que com núcleo diferente... acostumamos
+com o mesmo Index, as mesmas funções, tudo, mas aí você muda o que precisa mudar completamente"*.
+Isso fixa a estratégia: **mesma casca (index, menu, telas, funções), coração trocado**.
+
+### 27.1 Arquitetura — a ponte (`novo/ponte.js`)
+
+- **Ponto de integração escolhido:** `saveDB()` — conferido em código que `db` é global (`app.js:265`,
+  `window.db` em `:266`) e que `saveDB` é **o** ponto de gravação (`app.js:175`). A ponte envolve esse
+  ponto; **nenhuma tela é alterada**, nenhuma lista muda de formato.
+- **Semântica nova:** o que sai da lista vira **lápide** (quem/quando/por quê) no coração, em vez de
+  "sumiço". É a causa-raiz dos defeitos das rodadas 12/15 tratada no lugar certo.
+- **Regra de ouro:** a ponte **não decide** conflito — pergunta ao coração (`aplicarDaNuvem`), que tem
+  a decisão **em um lugar só** (`decisao()`), determinística (versão → lápide → data → origem).
+- **`salvar(nome, dados, {semFila:true})`** (novo no coração): importa base existente sem gerar mudança
+  para a nuvem — necessário para a primeira varredura não nascer sujando a fila.
+
+### 27.2 Travas (cada uma é uma classe de defeito já vista)
+
+| Trava | Defeito que ela fecha | Onde |
+|---|---|---|
+| Modo observação | trocar o coração "às cegas" numa base real | `ligar({modo:'observacao'})` |
+| Exclusão em massa pede confirmação (>20 ou >metade) | reset/importação/erro de tela apagando base em cascata (regra 27) | `aoPrecisarConfirmar` + `pendentesDeConfirmacao`/`confirmarExclusaoEmMassa`/`recusarExclusaoEmMassa` |
+| Comparação por id (2× o mesmo ≠ 2 registros) | duplicação ao reimportar | `importar()` |
+| Formato das listas intacto | quebrar 482 arquivos de tela | nenhuma mudança de formato em `db.*` |
+| A ponte não reimplementa o coração | duas fontes de verdade (a doença atual) | `aplicarDaNuvem`/`restaurar` delegam |
+
+### 27.3 Página do sistema novo com o menu real
+
+`novo/index.html` foi refeito com os **mesmos rótulos de menu do sistema de hoje** (extraídos do
+`index.html` real): Início · Cadastros · Atendimento · Locação · Fiscal · Financeiro · Buscador Escola ·
+Configurações — **18 itens**. Migrados: Clientes e Produtos (funcionam pelo coração novo). Não migrados:
+avisam **em que fase entram** (nada de botão morto, regra 17 do `REGRAS_PERMANENTES.md`).
+
+### 27.4 Testes desta fase (todos no `test_runner.js`)
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_ponte.js` | **50 ✔** | importar base sem perder/inventar; criar/editar; **excluir = lápide**; reabrir não ressuscita; massa pede confirmação (confirmar e recusar); modo observação não muda nada; restaurar devolve à lista da tela; exclusão/edição de outro PC; listas continuam normais; ponte não reimplementa decisão |
+| `test_nucleo.js` | 53 ✔ | (ganhou o caso `semFila`) |
+| `test_telas.js` | 38 ✔ | telas novas sobre o coração (inclui o teste que derruba `alert`/`confirm`/`prompt`) |
+| `test_redesenho_pagina.js` | **24 ✔** | menu do sistema presente, telas migradas funcionando (preço com vírgula), aviso de fase, barra de status |
+
+**Suíte completa:** **221 passaram, 0 falharam, 0 não rodaram** (com `jsdom` instalado no ambiente).
+Sem `jsdom`: 216/0/5.
+
+### 27.5 Pendências registradas (não são dúvidas minhas; são decisões de formato)
+
+1. **Ligar a ponte no `index.html` de produção** — próximo passo, começando em **modo observação**
+   (relata sem gravar). É a única mudança no sistema atual e é reversível: a ponte **não** altera o `db`.
+2. **`modulosDinamicos`**: a ponte cobre arrays do `db` com `id`. As listas criadas dentro do sistema
+   (sub-listas de `modulosDinamicos`) exigem decisão de formato antes de entrar — e **não foi possível
+   verificar diretamente como estão chaveadas na nuvem (acesso ao banco de produção indisponível)**.
+3. **`novo/`** está fora do bundle e do empacotamento: app publicado segue **v7.0.10**; motor da nuvem
+   **5.26.8**.

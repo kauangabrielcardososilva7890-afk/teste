@@ -103,6 +103,20 @@ comportamento a levantar no dia da reescrita daquela tela.
 
 ---
 
+## 4.1) COMO O SISTEMA NOVO ENTRA (a ponte) — decidido em 24/09/2026
+
+Pedido dele: *"o mesmo Index, as mesmas funções, tudo, mas aí você muda o que precisa mudar
+completamente"*. A peça que faz isso é a **ponte** (`novo/ponte.js`):
+
+1. as telas de hoje **não mudam**: continuam mexendo nas listas (`db.clientes.push(...)`,
+   `db.clientes = db.clientes.filter(...)`) e chamando `saveDB()`;
+2. a ponte escuta `saveDB()`, conta ao coração o que entrou/editou e **transforma retirada
+   em lápide** (quem/quando/por quê) — nunca mais "sumiço";
+3. exclusão em massa (mais de 20 ou mais da metade da lista) **não** vira lápide automática:
+   pede confirmação (regra 27);
+4. a ponte começa em **modo observação** (relata sem gravar) e só depois vai a modo ligado;
+5. conforme cada tela é migrada para o padrão novo, a ponte encolhe — até sobrar só o coração.
+
 ## 5) Regras que o sistema novo já nasce cumprindo
 
 Sai direto das `REGRAS_PERMANENTES.md`: local-first e incremental; nada de apagar dado

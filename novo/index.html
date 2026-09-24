@@ -3,17 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DIGICOPY — sistema novo (em construção)</title>
+<title>Sistema Digicopy — núcleo novo (em construção)</title>
 <style>
-  :root{--azul:#0a1e8a;--azul2:#12279e;--claro:#eef1f8;--linha:#d8ddef;--texto:#111827;}
+  :root{--azul:#0a1e8a;--azul-esc:#08166b;--claro:#eef1f8;--linha:#d8ddef;--texto:#111827;}
   *{box-sizing:border-box}
-  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--claro);color:var(--texto)}
-  .topo{background:var(--azul);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-  .topo b{font-size:15px}
-  .topo small{opacity:.85;font-size:11.5px;display:block;margin-top:2px}
-  .selo{background:#fbbf24;color:#3b2c00;font-weight:800;font-size:11px;padding:5px 10px;border-radius:999px}
-  .conteudo{max-width:980px;margin:14px auto;padding:0 12px}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--claro);color:var(--texto);display:flex;flex-direction:column;min-height:100vh}
+  /* ── barra de cima: mesma linguagem do sistema de hoje ── */
+  .app-titlebar{background:var(--azul);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+  .app-titlebar b{font-size:15px;letter-spacing:.2px}
+  .app-titlebar small{display:block;opacity:.85;font-size:11px;margin-top:2px}
+  .selo{background:#fbbf24;color:#3b2c00;font-weight:800;font-size:11px;padding:5px 10px;border-radius:999px;white-space:nowrap}
+  .modern-topnav{background:#fff;border-bottom:1px solid var(--linha);padding:0 8px;display:flex;align-items:stretch;gap:2px;overflow:auto}
+  .module{position:relative}
+  .module>button{height:56px;min-width:104px;padding:6px 14px;background:transparent;border:0;border-right:1px solid #eef2f7;color:#334155;font-size:11.5px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+  .module>button i{font-size:19px;font-style:normal;color:var(--azul)}
+  .module>button:hover,.module.ativo>button{background:#f1f6ff;color:var(--azul)}
+  .module-menu{position:absolute;top:56px;left:0;min-width:240px;background:#fff;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.14);padding:8px;display:none;z-index:40}
+  .module.aberto .module-menu{display:block}
+  .module-menu button{width:100%;height:38px;border:0;background:transparent;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;text-align:left;font-size:12.5px;color:#334155;cursor:pointer}
+  .module-menu button:hover{background:#f1f6ff;color:var(--azul)}
+  .module-menu button i{font-style:normal;font-size:16px;color:var(--azul)}
+  .module-menu small{margin-left:auto;color:#94a3b8;font-size:10px}
+  /* ── área de trabalho ── */
+  main{flex:1;padding:14px;max-width:1200px;width:100%;margin:0 auto}
   .cartao{background:#fff;border:1px solid var(--linha);border-radius:14px;padding:14px;box-shadow:0 6px 22px rgba(10,30,138,.06)}
+  .titulo-tela{font-size:16px;font-weight:900;color:var(--azul);margin:0 0 10px}
+  .em-construcao{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:12px;padding:14px;font-size:13px;line-height:1.5}
+  .em-construcao b{color:#9a3412}
+  .statusbar{height:24px;background:#f2f2f2;border-top:1px solid #cfd6df;font-size:11px;color:#111;display:flex;align-items:center;gap:14px;padding:0 10px;position:sticky;bottom:0}
+  /* ── tabela/modal das telas novas (as mesmas classes que o teste usa) ── */
   .nfx-cabecalho{margin-bottom:10px}
   .nfx-abas{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
   .nfx-aba{border:1px solid var(--linha);background:#fff;color:var(--azul);font-weight:800;font-size:12.5px;padding:8px 14px;border-radius:10px;cursor:pointer}
@@ -24,14 +42,14 @@
   .nfx-btn-forte{background:var(--azul);border-color:var(--azul);color:#fff}
   .nfx-btn-fraco{background:#fff;color:var(--azul)}
   .nfx-tabela{width:100%;border-collapse:collapse;font-size:13px}
-  .nfx-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px 8px}
+  .nfx-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px}
   .nfx-tabela td{padding:9px 8px;border-bottom:1px solid #eef1f8}
   .nfx-acoes{text-align:right;white-space:nowrap}
   .nfx-mini{border:1px solid var(--linha);background:#fff;border-radius:9px;padding:6px 9px;font-size:12px;cursor:pointer}
   .nfx-perigo{color:#b91c1c;border-color:#fecaca}
   .nfx-vazio{color:#64748b;font-style:italic;padding:18px 8px}
   .nfx-rodape{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:11.5px;color:#475569;font-weight:700}
-  .nfx-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .nfx-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
   .nfx-caixa{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
   .nfx-titulo{font-size:15px;font-weight:900;color:var(--azul);margin-bottom:10px}
   .nfx-campo{display:block;margin-bottom:10px}
@@ -40,31 +58,89 @@
   .nfx-aviso{font-size:13px;margin:0 0 10px}
   .nfx-erro{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:12px;font-weight:700;padding:8px 10px;border-radius:10px;margin:8px 0}
   .nfx-botoes{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-  .explica{font-size:12px;color:#475569;line-height:1.5;margin-top:12px}
-  .explica b{color:var(--azul)}
 </style>
 </head>
 <body>
-  <div class="topo">
+  <div class="app-titlebar">
     <div>
-      <b>DIGICOPY — sistema novo (fase 1)</b>
-      <small>O coração novo + as duas primeiras telas. Roda em separado: o sistema de hoje não é tocado.</small>
+      <b>Sistema Digicopy — núcleo novo</b>
+      <small>Mesmo menu, mesmas telas. O coração é novo (fase 1: Clientes e Produtos).</small>
     </div>
     <span class="selo">EM CONSTRUÇÃO</span>
   </div>
 
-  <div class="conteudo">
-    <div class="cartao" id="telas"></div>
-    <div class="explica">
-      <b>O que já dá para ver aqui:</b> cadastrar, editar, excluir (com motivo) e trazer de volta —
-      e a exclusão aqui é <b>lápide</b>: o registro não “some”, fica marcado com quem apagou, quando e por quê.
-      Nada volta sozinho, e nada é apagado de verdade.
-      <br><b>Nesta fase</b>, o que você digitar fica num rascunho local deste navegador (chave própria, separada do sistema de hoje);
-      na fase 2 a nuvem nova entra no lugar do rascunho. <b>O sistema atual não é lido nem alterado por esta página.</b>
+  <nav class="modern-topnav" id="topnav">
+    <div class="module" data-modulo="inicio">
+      <button type="button" data-menu="inicio"><i>🏠</i>Início</button>
+      <div class="module-menu"><button type="button" data-tela="inicio">Painel do dia</button></div>
     </div>
+    <div class="module" data-modulo="cadastros">
+      <button type="button" data-menu="cadastros"><i>👥</i>Cadastros</button>
+      <div class="module-menu">
+        <button type="button" data-tela="clientes"><i>👤</i>Clientes</button>
+        <button type="button" data-tela="produtos"><i>📦</i>Produtos e serviços</button>
+      </div>
+    </div>
+    <div class="module" data-modulo="atendimento">
+      <button type="button" data-menu="atendimento"><i>🧾</i>Atendimento</button>
+      <div class="module-menu">
+        <button type="button" data-tela="vendas"><i>🛒</i>Consultar notinhas<small>fase 3</small></button>
+        <button type="button" data-tela="orcamentos"><i>📋</i>Orçamentos<small>fase 3</small></button>
+        <button type="button" data-tela="os"><i>🔧</i>Abrir chamado<small>fase 3</small></button>
+      </div>
+    </div>
+    <div class="module" data-modulo="locacao">
+      <button type="button" data-menu="locacao"><i>🖨️</i>Locação</button>
+      <div class="module-menu">
+        <button type="button" data-tela="contratos"><i>📄</i>Contratos<small>fase 4</small></button>
+        <button type="button" data-tela="parque"><i>🏢</i>Máquinas nos clientes<small>fase 4</small></button>
+        <button type="button" data-tela="leituras"><i>📈</i>Leituras<small>fase 4</small></button>
+      </div>
+    </div>
+    <div class="module" data-modulo="fiscal">
+      <button type="button" data-menu="fiscal"><i>🧮</i>Fiscal</button>
+      <div class="module-menu">
+        <button type="button" data-tela="fiscal-nfe"><i>📑</i>Nota Fiscal<small>fase 5</small></button>
+        <button type="button" data-tela="fiscal-catalogo"><i>📚</i>Catálogo (NCM/CEST/CFOP)<small>fase 5</small></button>
+        <button type="button" data-tela="fiscal-cert"><i>🔐</i>Certificado A1<small>fase 5</small></button>
+      </div>
+    </div>
+    <div class="module" data-modulo="financeiro">
+      <button type="button" data-menu="financeiro"><i>💰</i>Financeiro</button>
+      <div class="module-menu">
+        <button type="button" data-tela="contasReceber"><i>📥</i>Contas a receber<small>fase 3</small></button>
+        <button type="button" data-tela="contasPagar"><i>📤</i>Contas a pagar<small>fase 3</small></button>
+      </div>
+    </div>
+    <div class="module" data-modulo="escola">
+      <button type="button" data-menu="escola"><i>🎓</i>Buscador Escola</button>
+      <div class="module-menu"><button type="button" data-tela="escola"><i>🔎</i>Buscador<small>fase 4</small></button></div>
+    </div>
+    <div class="module" data-modulo="config">
+      <button type="button" data-menu="config"><i>⚙️</i>Configurações</button>
+      <div class="module-menu">
+        <button type="button" data-tela="usuarios"><i>👥</i>Usuários e permissões<small>fase 4</small></button>
+        <button type="button" data-tela="auditoria"><i>🧭</i>Auditoria<small>fase 4</small></button>
+        <button type="button" data-tela="nuvem"><i>☁️</i>Nuvem e backups<small>fase 2</small></button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="cartao">
+      <h2 class="titulo-tela" id="titulo-tela">Início</h2>
+      <div id="tela"></div>
+    </div>
+  </main>
+
+  <div class="statusbar">
+    <span id="st-nucleo">coração: —</span>
+    <span id="st-fila">fila da nuvem: 0</span>
+    <span id="st-bd">as telas de hoje veem as mesmas listas</span>
   </div>
 
 <script src="nucleo.js"></script>
+<script src="ponte.js"></script>
 <script src="telas.js"></script>
 <script>
 (function(){
@@ -75,6 +151,7 @@
     origem: 'este-pc',
     guardar: function () {
       try { localStorage.setItem(CHAVE, JSON.stringify(nucleo.paraJSON())); } catch (e) { /* sem espaço: segue sem rascunho */ }
+      pintarStatus();
     }
   });
   try {
@@ -82,8 +159,76 @@
     if (salvo) nucleo.carregarDeJSON(JSON.parse(salvo));
   } catch (e) { /* rascunho ilegível: começa vazio */ }
 
-  window.DIGICOPY_TELAS.criarTelas({ nucleo: nucleo, elemento: document.getElementById('telas'), documento: document });
-  window.__nucleoNovo = nucleo;   // para conferir pelo console, se quiser
+  // A MESMA PONTE que vai entrar no sistema de hoje: aqui ela está ligada a um `db`
+  // de rascunho, só para mostrar que as telas continuam mexendo em listas comuns.
+  var banco = { clientes: [], produtos: [] };
+  var ponte = window.DIGICOPY_PONTE.ligar({ db: banco, nucleo: nucleo, origem: 'este-pc',
+    schemas: {
+      clientes: { nome: { obrigatorio: true, tipo: 'texto' }, fone: { tipo: 'texto' }, cidade: { tipo: 'texto' } },
+      produtos: { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' } }
+    } });
+  ponte.primeiraVarredura();
+  window.__ponte = ponte; window.__nucleoNovo = nucleo; window.__dbNovo = banco;
+
+  var telas = window.DIGICOPY_TELAS.criarTelas({ nucleo: nucleo, elemento: document.getElementById('tela'), documento: document });
+  var titulos = { clientes: 'Clientes', produtos: 'Produtos e serviços' };
+  var selo = { inicio: null, vendas: 3, orcamentos: 3, os: 3, contratos: 4, parque: 4, leituras: 4, contasReceber: 3, contasPagar: 3, 'fiscal-nfe': 5, 'fiscal-catalogo': 5, 'fiscal-cert': 5, escola: 4, usuarios: 4, auditoria: 4, nuvem: 2 };
+
+  function pintarStatus(){
+    document.getElementById('st-nucleo').textContent = 'coração: v' + nucleo.versao + ' (núcleo)';
+    document.getElementById('st-fila').textContent = 'fila da nuvem: ' + (nucleo.mudancas().length || 0);
+  }
+  function abrir(tela){
+    document.querySelectorAll('.module').forEach(function(m){ m.classList.remove('aberto'); });
+    var alvo = document.getElementById('tela');
+    if (tela === 'clientes' || tela === 'produtos') {
+      titulos[tela] && (document.getElementById('titulo-tela').textContent = titulos[tela]);
+      // as telas novas desenham dentro do cartão; elas escolhem a lista pelas abas
+      telas.estado.lista = tela; telas.estado.busca = ''; telas.estado.mostrando = 'vivos'; telas.desenhar();
+      document.querySelector('[data-aba="' + tela + '"]').click();
+      pintarStatus();
+      return;
+    }
+    if (tela === 'inicio') {
+      document.getElementById('titulo-tela').textContent = 'Início';
+      alvo.innerHTML = '<div class="em-construcao">Esta é a <b>fase 1</b> do sistema novo: o coração ' +
+        '(lápide, versão, fila da nuvem) e as telas de <b>Clientes</b> e <b>Produtos</b>. ' +
+        'O menu acima é o <b>mesmo</b> do sistema de hoje — cada item entra provando por teste, sem parar a loja. ' +
+        'Nada aqui toca o sistema atual nem a nuvem.</div>';
+      return;
+    }
+    document.getElementById('titulo-tela').textContent = 'Em construção';
+    alvo.innerHTML = '<div class="em-construcao"><b>Esta tela ainda não foi migrada</b> (fase ' + (selo[tela] || '—') + '). ' +
+      'Ela já existe no sistema de hoje e vai entrar aqui com a mesma função — o que muda é o coração por baixo. ' +
+      'Enquanto isso, use o sistema de hoje normalmente.</div>';
+  }
+
+  document.querySelectorAll('[data-menu]').forEach(function(b){
+    b.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      var mod = b.closest('.module');
+      var jaAberto = mod.classList.contains('aberto');
+      document.querySelectorAll('.module').forEach(function(m){ m.classList.remove('aberto'); });
+      if (!jaAberto) mod.classList.add('aberto');
+    });
+  });
+  document.addEventListener('click', function(){
+    document.querySelectorAll('.module').forEach(function(m){ m.classList.remove('aberto'); });
+  });
+  document.querySelectorAll('[data-tela]').forEach(function(b){
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); abrir(b.getAttribute('data-tela')); });
+  });
+  // a troca de aba dentro das telas também atualiza o título (é o mesmo conteúdo,
+  // outra lista) — o ouvinte fica no cartão, que não é recriado a cada desenho
+  document.getElementById('tela').addEventListener('click', function(ev){
+    var aba = ev.target && ev.target.closest ? ev.target.closest('.nfx-aba') : null;
+    if(!aba) return;
+    var l = aba.getAttribute('data-aba');
+    if(titulos[l]) document.getElementById('titulo-tela').textContent = titulos[l];
+  });
+
+  abrir('clientes');
+  pintarStatus();
 })();
 </script>
 </body>

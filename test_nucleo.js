@@ -147,6 +147,11 @@ console.log('-- 8) fila da nuvem: uma mudança por gravação, na ordem --');
   ok('o que não foi confirmado continua na fila (nada se perde)', n.mudancas()[0].seq === fila[2].seq);
   n.confirmarEnvio();
   ok('confirmar tudo esvazia a fila', n.mudancas().length === 0);
+  // importar base existente (usado pela ponte na primeira varredura): conhece sem
+  // fingir que é novidade para a nuvem
+  const imp = n.salvar('produtos', { nome: 'Toner importado', preco: 10 }, { semFila: true });
+  ok('importar base existente não cria mudança para a nuvem', imp.ok && n.mudancas().length === 0);
+  ok('mas o registro passa a ser conhecido (e versionado)', n.obter('produtos', imp.item.id).versao === 1);
 }
 
 console.log('-- 9) achar registro é pelo índice (sem varrer a lista) --');

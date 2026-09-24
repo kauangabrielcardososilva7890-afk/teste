@@ -161,8 +161,9 @@
     }
 
     // ── GRAVAR (criar ou editar) — o caminho único ──
-    function salvar(nome, dados) {
+    function salvar(nome, dados, opcoes) {
       var l = exigirLista(nome);
+      var op2 = opcoes || {};
       var d = Object.assign({}, dados || {});
 
       // atenção: a posição 0 do índice é um número VÁLIDO — comparar com
@@ -189,8 +190,12 @@
       if (!existente) { item.criadoEm = agoraMs; item.apagadoEm = 0; item.apagadoPor = ''; item.motivo = ''; }
 
       posicionarNoIndice(l, item);
-      anotarMudanca(item);
-      avisar(existente ? 'editou' : 'criou', { lista: nome, id: item.id, versao: item.versao });
+      // IMPORTAR BASE EXISTENTE (op2.semFila): o coração passa a conhecer o
+      // registro, mas isso NÃO é novidade para a nuvem — é o que já está lá.
+      if (!op2.semFila) {
+        anotarMudanca(item);
+        avisar(existente ? 'editou' : 'criou', { lista: nome, id: item.id, versao: item.versao });
+      }
       guardar();
       return { ok: true, item: item };
     }

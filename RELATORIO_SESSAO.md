@@ -5754,3 +5754,61 @@ pasta `novo/`). Nada disso toca a nuvem nem o banco.
 entidade, como as listas de hoje), trazer as telas seguintes (vendas/OS/orçamento) e a
 migração dos campos que hoje vivem espalhados pelos remendos **por lista**, cada uma com
 teste.
+
+### 24/09/2026 (cont.) — RODADA 18 · "O MESMO SISTEMA, NÚCLEO DIFERENTE": A PONTE E A PÁGINA COM A MESMA CARA
+
+**Pedido literal dele:** *"recriar praticamente O MESMO sistema, só que com núcleo diferente que você
+falou, pois acostumamos com o mesmo Index, as mesmas funções, tudo, mas aí você muda o que precisa
+mudar completamente"*.
+
+**A peça que faz isso — `novo/ponte.js` (v1.0.0).** O sistema de hoje mexe nas listas do jeito dele
+(`db.clientes.push(...)`, `db.clientes = db.clientes.filter(...)`) e chama **`saveDB()`** (conferido:
+`db` é global — `app.js:265`/`266` — e `saveDB` é o ponto único de gravação). A ponte **escuta esse
+ponto** e conta ao coração o que mudou: quem entrou, quem foi editado e — o ponto que dava problema —
+**quem foi retirado, virando lápide** (com quem/quando/por quê), em vez de "sumiço" que ninguém sabia
+explicar. Nenhuma tela precisa mudar.
+
+**As 4 travas da ponte** (para não repetir os defeitos das rodadas 12-16):
+1. **Modo observação** (`modo:'observacao'`): só **relata** o que faria — não grava lápide, não suja a fila.
+2. **Exclusão em massa pede confirmação**: se um commit retira mais de 20 registros ou mais da metade
+   da lista, **nada é marcado** até alguém confirmar (`pendentesDeConfirmacao` / `confirmarExclusaoEmMassa`
+   / `recusarExclusaoEmMassa`) — exclusão em massa é operação destrutiva (regra 27).
+3. **Duas vezes o mesmo não vira dois**: comparação por id; reimportar a base não cria registro nem lápide.
+4. **O formato das listas não muda**: `db.clientes` continua uma lista normal de objetos com `id`.
+
+**Caminho de importação no coração:** `salvar(nome, dados, {semFila:true})` — a primeira varredura
+conhece a base que já existe **sem** fingir que ela é novidade para a nuvem (senão a fila nasceria
+suja no primeiro uso).
+
+**A página com a MESMA cara — `novo/index.html`.** Refiz com o **menu real do sistema de hoje** (os
+mesmos rótulos, tirados do `index.html`: Início · Cadastros · Atendimento · Locação · Fiscal ·
+Financeiro · Buscador Escola · Configurações — 18 itens), mesma linguagem visual (barra azul, módulos,
+submenu, barra de status). Os itens migrados (Clientes, Produtos) funcionam; os que ainda não entraram
+**dizem em que fase entram** (nada de botão morto — regra 17). A ponte está ligada a um `db` de
+rascunho, só para mostrar que as telas continuam mexendo em listas comuns.
+
+**Provas novas (todas no `test_runner.js`):**
+- `test_ponte.js` — **50 ✔**: importar base existente sem perder nem inventar; criar/editar/ excluir
+  pela tela; **excluir = lápide**; reabrir não ressuscita; exclusão em massa pede confirmação (e o
+  "recusar" mantém tudo); **modo observação** não muda nada; restaurar devolve para a lista que a tela
+  usa; exclusão/edição de outro PC chegam na tela; listas continuam normais; e a ponte **não
+  reimplementa** a decisão de conflito (quem decide é o coração).
+- `test_nucleo.js` — 53 ✔ (ganhou o caso do `semFila`).
+- `test_redesenho_pagina.js` — **24 ✔**: o menu tem os itens do sistema, as telas migradas funcionam
+  (inclusive o preço com vírgula), o que falta avisa a fase, e a barra de status mostra o coração e a fila.
+- **Suíte: 221 passaram, 0 falharam, 0 não rodaram** (com `jsdom` instalado).
+
+**Como ver:** a página nova está no ar (servidor estático apontando para `novo/`). Ela **não** lê nem
+altera o sistema atual e **não** fala com a nuvem.
+
+**Pendências registradas (com o que falta para decidir):**
+1. **Ligar a ponte no sistema de hoje** (`index.html`) — o próximo passo. Recomendação: entrar primeiro
+   em **modo observação** (relata, não grava), para conferir contra a base de verdade; só depois o modo
+   ligado. É a única mudança no sistema atual e ela é reversível (a ponte não altera o `db`).
+2. **`modulosDinamicos`**: hoje a ponte cobre as listas do `db` (arrays com `id`). As listas criadas
+   dentro do sistema (sub-listas de `modulosDinamicos`) precisam de uma decisão de **formato** antes de
+   entrar — e a nuvem atual guarda isso em `entity='modulosDinamicos'`; **não foi possível verificar
+   diretamente como os registros estão chaveados lá (acesso ao banco de produção indisponível)**. Fica
+   para a fase em que a nuvem nova entra (fase 2).
+3. **`mobile/www`**: nada a fazer (a pasta `novo/` não entra no bundle nem no `.exe`); o app publicado
+   segue **v7.0.10** e o motor da nuvem **5.26.8**.
