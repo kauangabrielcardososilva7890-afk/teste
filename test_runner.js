@@ -241,6 +241,10 @@ const tests=[
   "test_exclusao_nao_volta.js",
   "test_recuperacao_completa.js",
   "test_recuperacao_nao_ressuscita.js",
+  // REDESENHO (fase 1) — o coração novo e as primeiras telas do sistema novo:
+  // lápide em vez de apagar, conflito decidido em um lugar só e nada voltando sozinho
+  "test_nucleo.js",
+  "test_telas.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"

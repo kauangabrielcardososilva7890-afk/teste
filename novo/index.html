@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIGICOPY — sistema novo (em construção)</title>
+<style>
+  :root{--azul:#0a1e8a;--azul2:#12279e;--claro:#eef1f8;--linha:#d8ddef;--texto:#111827;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--claro);color:var(--texto)}
+  .topo{background:var(--azul);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .topo b{font-size:15px}
+  .topo small{opacity:.85;font-size:11.5px;display:block;margin-top:2px}
+  .selo{background:#fbbf24;color:#3b2c00;font-weight:800;font-size:11px;padding:5px 10px;border-radius:999px}
+  .conteudo{max-width:980px;margin:14px auto;padding:0 12px}
+  .cartao{background:#fff;border:1px solid var(--linha);border-radius:14px;padding:14px;box-shadow:0 6px 22px rgba(10,30,138,.06)}
+  .nfx-cabecalho{margin-bottom:10px}
+  .nfx-abas{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .nfx-aba{border:1px solid var(--linha);background:#fff;color:var(--azul);font-weight:800;font-size:12.5px;padding:8px 14px;border-radius:10px;cursor:pointer}
+  .nfx-aba-ativa{background:var(--azul);border-color:var(--azul);color:#fff}
+  .nfx-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .nfx-bar input[type=search]{flex:1;min-width:180px;height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 12px;font-size:13px}
+  .nfx-btn{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--linha);font-weight:800;font-size:12.5px;cursor:pointer}
+  .nfx-btn-forte{background:var(--azul);border-color:var(--azul);color:#fff}
+  .nfx-btn-fraco{background:#fff;color:var(--azul)}
+  .nfx-tabela{width:100%;border-collapse:collapse;font-size:13px}
+  .nfx-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px 8px}
+  .nfx-tabela td{padding:9px 8px;border-bottom:1px solid #eef1f8}
+  .nfx-acoes{text-align:right;white-space:nowrap}
+  .nfx-mini{border:1px solid var(--linha);background:#fff;border-radius:9px;padding:6px 9px;font-size:12px;cursor:pointer}
+  .nfx-perigo{color:#b91c1c;border-color:#fecaca}
+  .nfx-vazio{color:#64748b;font-style:italic;padding:18px 8px}
+  .nfx-rodape{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:11.5px;color:#475569;font-weight:700}
+  .nfx-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .nfx-caixa{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .nfx-titulo{font-size:15px;font-weight:900;color:var(--azul);margin-bottom:10px}
+  .nfx-campo{display:block;margin-bottom:10px}
+  .nfx-campo span{display:block;font-size:11.5px;font-weight:800;color:#475569;margin-bottom:4px}
+  .nfx-campo input{width:100%;height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 12px;font-size:13px}
+  .nfx-aviso{font-size:13px;margin:0 0 10px}
+  .nfx-erro{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:12px;font-weight:700;padding:8px 10px;border-radius:10px;margin:8px 0}
+  .nfx-botoes{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  .explica{font-size:12px;color:#475569;line-height:1.5;margin-top:12px}
+  .explica b{color:var(--azul)}
+</style>
+</head>
+<body>
+  <div class="topo">
+    <div>
+      <b>DIGICOPY — sistema novo (fase 1)</b>
+      <small>O coração novo + as duas primeiras telas. Roda em separado: o sistema de hoje não é tocado.</small>
+    </div>
+    <span class="selo">EM CONSTRUÇÃO</span>
+  </div>
+
+  <div class="conteudo">
+    <div class="cartao" id="telas"></div>
+    <div class="explica">
+      <b>O que já dá para ver aqui:</b> cadastrar, editar, excluir (com motivo) e trazer de volta —
+      e a exclusão aqui é <b>lápide</b>: o registro não “some”, fica marcado com quem apagou, quando e por quê.
+      Nada volta sozinho, e nada é apagado de verdade.
+      <br><b>Nesta fase</b>, o que você digitar fica num rascunho local deste navegador (chave própria, separada do sistema de hoje);
+      na fase 2 a nuvem nova entra no lugar do rascunho. <b>O sistema atual não é lido nem alterado por esta página.</b>
+    </div>
+  </div>
+
+<script src="nucleo.js"></script>
+<script src="telas.js"></script>
+<script>
+(function(){
+  'use strict';
+  var CHAVE = 'digicopy_novo_rascunho_v1';   // chave PRÓPRIA — não toca em nada do sistema de hoje
+  var nucleo = window.DIGICOPY_NUCLEO.criar({
+    empresaId: 'rascunho',
+    origem: 'este-pc',
+    guardar: function () {
+      try { localStorage.setItem(CHAVE, JSON.stringify(nucleo.paraJSON())); } catch (e) { /* sem espaço: segue sem rascunho */ }
+    }
+  });
+  try {
+    var salvo = localStorage.getItem(CHAVE);
+    if (salvo) nucleo.carregarDeJSON(JSON.parse(salvo));
+  } catch (e) { /* rascunho ilegível: começa vazio */ }
+
+  window.DIGICOPY_TELAS.criarTelas({ nucleo: nucleo, elemento: document.getElementById('telas'), documento: document });
+  window.__nucleoNovo = nucleo;   // para conferir pelo console, se quiser
+})();
+</script>
+</body>
+</html>

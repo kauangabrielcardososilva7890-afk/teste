@@ -60,6 +60,36 @@ regra (ex.: exclusão) está decidida em **82 pontos diferentes**; no novo, em u
 - **não mexo no que está funcionando** no sistema de hoje enquanto o novo não estiver
   provado: as correções das rodadas 12 a 16 continuam valendo.
 
+### 1.2) ATUALIZAÇÃO (24/09/2026, depois do seu recado)
+
+**Você: *"cada funçãozinha que tinha o sistema é útil, eu vou querer"*.** Travado, e isso
+muda uma coisa importante no plano: **nenhuma função fica de fora.** Nada de "sistema novo
+e menor por corte": o sistema novo tem **todas** as telas, botões e recursos de hoje —
+inclusive as 13 automações herdadas do sistema antigo, o navegador embutido, o PIX, o
+Buscador Escola, as etiquetas, os módulos dinâmicos e o painel do gerente.
+
+Onde está o ganho, então? **Na arquitetura, não no corte** — deixa eu ser claro para você
+não esperar a coisa errada:
+
+- **menos arquivo para a mesma função**: hoje a mesma regra está escrita em vários arquivos
+  de remendo. No novo, a função existe **uma vez**, e todas as telas usam ela;
+- **menos lugar para o defeito morar**: um só caminho de gravação, um só de exclusão, um só
+  de sincronização (hoje são **82** pontos de exclusão, por exemplo);
+- **o mesmo que você usa, com o comportamento provado por teste** antes de valer.
+
+Ou seja: **o sistema novo faz tudo o que o de hoje faz** — a diferença é por dentro. Se
+algo que você usa ficar de fora, para mim será **defeito**, não "simplificação". Registrar
+isso no `REDESENHO_BLUEPRINT.md` como inventário de paridade (item por item, com o arquivo
+de onde vem cada função).
+
+**Você: *"fiz o backup aqui, não só manual, fiz o backup todo, baixei tudo até os
+antigos"*.** Fase 0 **concluída**: o arquivo de emergência está na sua mão. Duas
+recomendações de segurança (não é obrigação, mas é o que eu faria): (1) guarde uma cópia
+**fora do PC** (pen drive, e-mail para você mesmo ou Drive) — backup que só existe no mesmo
+computador não protege contra o computador; (2) não apague a base da nuvem nem a dos PCs
+ainda: o "zerar" acontece **na virada da chave** (fase 6), com você acompanhando. Enquanto
+isso, o backup é a sua rede de segurança e o de hoje é o sistema que a loja usa.
+
 ---
 
 ## 2) O que o sistema é hoje (medido agora, não é achismo)

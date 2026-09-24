@@ -5681,3 +5681,76 @@ nuvem publicado **5.26.8**.
 **Próxima rodada (fase 1):** começar o núcleo novo (listas, regra única, lápides) com as
 primeiras telas provadas, rodando **ao lado** do sistema de hoje. Nada disso toca o que
 está no ar.
+
+### 24/09/2026 (cont.) — RODADA 17-C · FASE 1: O CORAÇÃO NOVO E AS PRIMEIRAS TELAS
+
+**Recado dele (literal):** *"cada funçãozinha que tinha o sistema é útil, eu vou querer"* +
+*"fiz o backup aqui, não só manual, fiz o backup todo, baixei tudo até os antigos"*.
+
+**1) Paridade total travada.** `PLANO_REDESENHO.md` §1.2 e `REDESENHO_BLUEPRINT.md` item 4:
+**nenhuma função fica de fora** — e onde está o ganho passa a ser dito com clareza: **na
+arquitetura, não no corte** (menos arquivo para a mesma função, uma regra em um lugar só).
+O item 4 do blueprint deixou de ser pergunta e virou **inventário de paridade** (15 blocos,
+com os arquivos de origem de cada um). Se alguma função ficar de fora, é **defeito**, não
+"simplificação".
+
+**2) Fase 0 concluída:** ele fez o backup manual **e** baixou todos os backups (incluindo os
+antigos). Recomendado no plano: guardar uma cópia fora do PC e **não** apagar a base antes
+da virada da chave (fase 6).
+
+**3) FASE 1 — o coração novo entregue, com prova:**
+
+- **`novo/nucleo.js` (v1.0.0)** — o coração: dados + regras, **sem tela, sem nuvem, sem
+  senha**. As 5 regras que substituem a bagunça das rodadas 12-16:
+  1. **apagar é marcar** (lápide com `apagadoEm`, `apagadoPor`, `motivo`) — o registro nunca
+     sai da lista, nunca tem `splice`;
+  2. **conflito decidido em UMA função** (`decisao`), determinística: versão maior vence →
+     lápide mais nova → data → origem; dois computadores chegam sempre ao mesmo resultado;
+  3. **nada volta sozinho** — editar um apagado é **recusado** ("restaure antes de editar");
+     só `restaurar()` (ação explícita) traz de volta; a única exceção é a regra da rodada 15
+     (edição **mais nova** que a lápide vence, e isso também está no mesmo lugar);
+  4. **toda gravação vira uma mudança na fila** (`mudancas()`/`confirmarEnvio`) — na ordem,
+     sem perder nem duplicar;
+  5. **achar registro é pelo índice** (`Map id → posição`), nunca varrendo a lista.
+- **`novo/telas.js` (v1.0.0)** — as duas primeiras telas (Clientes e Produtos): modal do
+  sistema (nunca `alert`/`confirm`/`prompt`), exclusão com **confirmação + motivo**,
+  lixeira ("🕳️ Lixeira (n)") com "♻️ Restaurar", busca **por Enter ou lupa** (não a cada
+  tecla). As telas **não** mexem no dado: elas pedem ao núcleo.
+- **`novo/index.html`** — a página do sistema novo (roda **ao lado** do de hoje; o sistema
+  atual não é lido nem alterado). Nesta fase o que for digitado fica num **rascunho local**
+  com chave própria (`digicopy_novo_rascunho_v1`); a nuvem nova entra na fase 2.
+- **Testes:** `test_nucleo.js` (**51 ✔**, entrou no runner) e `test_telas.js` (**38 ✔**,
+  jsdom: faz o que a pessoa faz — cadastra, erra o preenchimento, exclui com motivo, tenta
+  ressuscitar por versão velha, restaura, busca, edita). Os dois provam as regras acima,
+  inclusive **o teste que derruba `alert`/`confirm`/`prompt` nativos na hora**.
+
+**4) Defeitos que os testes novos pegaram — meus, antes de publicar** (registro honesto):
+(a) o índice guarda **posição**, e a **posição 0** é válida: `obter`/`apagar`/`restaurar`/
+`salvar` tratavam 0 como "não achei" — corrigido com um único `itemPorId`; (b)
+`somenteApagados` não funcionava (a primeira condição engolia a segunda); (c) a validação
+olhava só os campos que chegavam, então editar um campo só acusava "faltou o nome" —
+agora valida o **registro completo**. Os três apareceram **antes** de qualquer publicação.
+
+**5) Achado extra (teste desatualizado, não produto):** `test_ajustes_v6104.js` cobrava que
+o botão `erro.txt` **continuasse** no rodapé — o contrário da decisão dele de 23/09 (o botão
+foi removido). O teste vivia **pulado** por falta do `jsdom` neste ambiente; com o jsdom
+instalado ele reprovou e foi **alinhado à decisão atual** (agora ele cobra que o botão
+**não** volte e que o rodapé não cite `erro.txt`).
+
+**6) Suíte:** com o jsdom disponível, **219 passaram, 0 falharam, 0 não rodaram** — inclusive
+os 5 que viviam pulando (`test_telas`, `test_relatorio_teste_nf`, `test_ajustes_v6104`,
+`test_mobile_apk`, `test_ponte_electron`). Sem jsdom: 214/0/5. `build_bundle --check` OK
+(225 scripts, `4b139844c79b1c6b`), `sync_build --check` OK.
+
+**7) O que NÃO mudou:** o app publicado segue **v7.0.10** e o motor da nuvem **5.26.8**.
+`novo/` é uma pasta **nova**, fora do bundle e do empacotamento — nada do sistema de hoje
+depende dela. Nenhum arquivo do sistema atual foi alterado (só o `test_ajustes_v6104.js`
+teve a checagem alinhada).
+
+**8) Como ver:** abrir `novo/index.html` (servidor de arquivos estático apontando para a
+pasta `novo/`). Nada disso toca a nuvem nem o banco.
+
+**Próxima (fase 1, continuação):** ligar o núcleo ao armazenamento do sistema novo (por
+entidade, como as listas de hoje), trazer as telas seguintes (vendas/OS/orçamento) e a
+migração dos campos que hoje vivem espalhados pelos remendos **por lista**, cada uma com
+teste.

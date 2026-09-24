@@ -754,7 +754,9 @@ async function testarAchouClienteERodapeVivo(){
   ok(log.join(' ').indexOf('vincul') >= 0, 'e fica registrado na Auditoria (' + (log[0] || 'sem log') + ')');
   domV.window.close();
 
-  // ── rodapé: diz onde o banco está, sem perder o botão erro.txt ───────────
+  // ── rodapé: diz onde o banco está (o botão erro.txt foi REMOVIDO pelo dono
+  //    em 23/09/2026 — este teste cobrava a presença dele, o contrário da
+  //    decisão atual; alinhado em 24/09/2026) ────────────────────────────────
   console.log('\n== RODAPÉ: versão + carimbo + onde o banco está ==');
   const srcRod = fs.readFileSync('ajustes_v52245_rodape_versao_patch.js', 'utf8');
   const domR = new JSDOM('<body><footer><span>Sistema Digicopy • Banco na Nuvem <button id="erro">erro.txt</button></span>' +
@@ -766,7 +768,8 @@ async function testarAchouClienteERodapeVivo(){
   const dR = domR.window.document;
   ok(/^v6\.1\.4 • e65f19cc$/.test(dR.getElementById('footer-version').textContent),
      'o rodapé mostra versão + carimbo do arquivo que está rodando (' + dR.getElementById('footer-version').textContent + ')');
-  ok(!!dR.getElementById('erro'), 'o botão erro.txt continua no rodapé (não foi apagado ao repintar)');
+  ok(!dR.getElementById('erro'), 'o botão erro.txt NÃO volta no repintar (o dono mandou tirar em 23/09)');
+  ok(!/erro\.txt/.test(dR.querySelector('footer span').textContent), 'e o texto do rodapé não cita mais o erro.txt');
   ok(/banco só neste PC|banco neste PC \+ nuvem conectada/.test(dR.querySelector('footer span').textContent),
      'a esquerda diz onde o banco está de verdade (antes era "Banco na Nuvem" fixo): ' +
      JSON.stringify(dR.querySelector('footer span').textContent.trim()));

@@ -1597,3 +1597,69 @@ banco de prova tem as mesmas regras (inclusive `OR REPLACE`). Teste permanente:
 - **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
   quantos orçamentos existem hoje na base (peso real da varredura antiga) e se algum acesso de
   cliente já falhou por causa dela.
+
+## 26. REDESENHO — FASE 1: O CORAÇÃO NOVO (novo/nucleo.js) E AS PRIMEIRAS TELAS (24/09/2026)
+
+**Pedido:** *"cada funçãozinha que tinha o sistema é útil, eu vou querer"* + *"fiz o backup,
+não só manual, fiz o backup todo"*. Registrado: **paridade total** (nenhuma função fica de
+fora — `REDESENHO_BLUEPRINT.md` item 4 virou inventário de paridade com 15 blocos) e **fase 0
+concluída** (backup na mão dele; recomendado guardar cópia fora do PC e não apagar a base
+antes da virada).
+
+### 26.1 Decisão de arquitetura — o coração com 5 regras (e por que)
+
+A causa-raiz das rodadas 12-16 era sempre a mesma: a regra morava em vários lugares (a
+exclusão em **82 pontos**) ou em nenhum (cada tela fazia do seu jeito). O núcleo novo
+(`novo/nucleo.js`, v1.0.0) escreve cada regra **uma vez**:
+
+| Regra | Onde mora | O que substitui |
+|---|---|---|
+| apagar é marcar (lápide com quem/quando/motivo) | `apagar()` | 82 pontos de `filter`/`splice` espalhados |
+| conflito decidido em um lugar (versão → lápide → data → origem) | `decisao()` | regras duplicadas em `cloudflare_data_sync_patch.js` |
+| nada volta sozinho (editar apagado é recusado) | `salvar()` | a "recuperação" que ressuscitava (rodada 15) |
+| toda gravação vira 1 mudança na fila, na ordem | `salvar`/`apagar`/`restaurar` → `mudancas()` | outbox + remendos de envio |
+| achar registro é pelo índice | `itemPorId()` | varreduras (`findIndex`) que causavam a lentidão |
+
+As telas (`novo/telas.js`) **não** mexem no dado: pedem ao núcleo. Modal é o do sistema
+(nunca `alert`/`confirm`/`prompt`), exclusão pede confirmação **e motivo**, lixeira mostra o
+que foi apagado e "♻️ Restaurar" traz de volta — nada automático.
+
+### 26.2 Defeitos meus, achados pelos testes ANTES de publicar (registro honesto)
+
+| # | Defeito | Gravidade | Onde | Correção |
+|---|---|---|---|---|
+| 1 | O índice guarda **posição**, e a posição **0** era tratada como "não achei" (`obter`, `apagar`, `restaurar`, `salvar` do 1º registro) | ALTO | `novo/nucleo.js` | um único `itemPorId()` comparando com `undefined` |
+| 2 | `somenteApagados` não devolvia os apagados (a checagem anterior engolia) | MÉDIO | `listar()` | a lixeira passou a ser um caso explícito |
+| 3 | A validação olhava só os campos que chegavam → editar um campo acusava "faltou o nome" | MÉDIO | `salvar()` | valida o **registro completo** (existente + novo) |
+
+Os três apareceram no `test_nucleo.js`/`test_telas.js` **antes** de qualquer publicação —
+que é exatamente o critério combinado ("provar antes de valer"/"não quebrar o que funciona").
+
+### 26.3 Achado: teste desatualizado cobrando o contrário da decisão do dono
+
+- **Onde:** `test_ajustes_v6104.js:769`.
+- **Problema:** cobrava que o botão `erro.txt` **continuasse** no rodapé. O dono mandou
+  remover o botão em 23/09/2026 e o `ajustes_v52245_rodape_versao_patch.js` já não o
+  recria (o próprio código traz o comentário da remoção).
+- **Por que ninguém viu:** o teste **vivia pulado** — neste ambiente o `jsdom` não estava
+  instalado (o runner pula quem faz `require('jsdom')`).
+- **Gravidade:** BAIXO (teste, não produto) · **Tipo:** Manutenção/Regressão de teste.
+- **Correção:** alinhado à decisão atual — agora ele cobra que o botão **não volte** no
+  repintar e que o rodapé **não cite** `erro.txt`.
+- **Verificação:** `test_ajustes_v6104.js` passou a rodar (com jsdom) e passa.
+
+### 26.4 Suíte e verificação desta fase
+
+- Novos: `test_nucleo.js` (**51 ✔**) e `test_telas.js` (**38 ✔**) — os dois entraram no
+  `test_runner.js`.
+- **Com `jsdom`:** a suíte inteira roda — **219 passaram, 0 falharam, 0 não rodaram**
+  (inclusive os 5 que viviam pulando). Sem `jsdom`: 214/0/5 (comportamento antigo).
+- `build_bundle.js --check` OK (225 scripts, `4b139844c79b1c6b`); `sync_build.js --check` OK.
+- **Nada do sistema publicado mudou:** app **v7.0.10**, motor da nuvem **5.26.8**. A pasta
+  `novo/` está fora do bundle e do empacotamento do `.exe`.
+- **Como ver a fase 1:** abrir `novo/index.html` (servido de um servidor estático apontando
+  para a pasta `novo/`). O rascunho desta fase usa `localStorage` com chave própria
+  (`digicopy_novo_rascunho_v1`) — a nuvem nova entra na fase 2.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  quantas listas vivas existem hoje em `modulosDinamicos` (é o que fecha o inventário de
+  paridade dos módulos dinâmicos, item ◻ do blueprint).

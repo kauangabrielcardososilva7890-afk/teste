@@ -71,13 +71,35 @@ usa**).
 
 ---
 
-## 4) O que ainda vou confirmar com você (na fase 1 — não vou inventar)
+## 4) INVENTÁRIO DE PARIDADE — **TUDO entra** (decisão dele, 24/09/2026)
 
-- As **12 "automações"** (`automacoes_*.js`, as grades do sistema antigo: compras,
-  recebimentos, contadores, caixa, chat auxiliares…): **quais dessas você usa de verdade?**
-  Se não usar nenhuma, elas **não entram** — o sistema novo já nasce menor.
-- **Navegador embutido**, **PIX**, **chat auxiliar**: entram ou ficam de fora?
-- **Módulos dinâmicos**: quais listas você criou por lá que precisam existir no novo?
+*"Cada funçãozinha que tinha o sistema é útil, eu vou querer"*. Então este item deixou de ser
+pergunta e virou **lista de conferência**: cada linha abaixo tem de existir no sistema novo,
+igual funciona hoje. Se faltar, é defeito — e eu quero que você me cobre.
+
+Legenda: **✔** = já inventariado com dono no código · **◻** = inventariado, detalhe do
+comportamento a levantar no dia da reescrita daquela tela.
+
+| Bloco | O que é | Origem (arquivos) |
+|---|---|---|
+| 13 automações herdadas | caixa/chat auxiliares · compras, recebimentos e contadores · contratos/caixa/fiscal · locação e visitas · financeiro e estoque · fiscal/cartuchos · orçamentos e clientes auxiliares · PIX/contadores · procedures operacionais · **triggers** · vendas/compras/cadastros · finais de locação | `automacoes_*.js` (13) ✔ |
+| Fiscal | NF-e/NFC-e, catálogo (NCM/CEST/CFOP), tributação, certificado A1, transmissão, guarda, eventos | `fiscal_*.js` (13) + `nf_*` ✔ |
+| Orçamentos | menu, link público de aprovação, trava e atalho, revalidação com OS | `ajustes_v52237/52238/52240/52254/52258/52260_*` ✔ |
+| Contratos e locação | contratos, filtros, RTF (modelo), visitas, vínculo com leituras, chamados | `contratos_*.js`, `locacao_*.js` ✔ |
+| Parque / impressora | monitor do parque, hub, SNMP, etiquetas de recarga | `ajustes_v52232_*`, `snmp*`, `etiqueta_*` ✔ |
+| Leituras | revisão completa (overhaul) e contadores | `ajustes_v5250_leitura_overhaul_patch.js` ✔ |
+| Vendas | venda, notinha, estorno, permissões de estorno, chamados de reparo | `vendas_*.js`, `notinha_patch.js` ✔ |
+| Estoque | alerta de estoque, voltar do zero, cartuchos | `estoque_*`, `cartuchos_*` ✔ |
+| Financeiro | contas a pagar/receber, datas, PIX, caixa | `financeiro_*`, `pix_*` ✔ |
+| Cadastros | clientes (abas), produtos, serviços, códigos, nomes | `clientes_*`, `cadastros_*`, `codigo_*` ✔ |
+| Nuvem | painel, backups, certificado na nuvem, celular, autocura de empresa, CNPJ/gerente | `ajustes_v52296_*`, `cloudflare_*`, `cert_nuvem_*`, `cnpj_*`, `autocura_*` ✔ |
+| Buscador Escola | buscador (menu próprio) + tela de login | `buscador_escola_patch.js`, `escola_*.html` ✔ |
+| Navegador embutido | aba de navegação dentro do sistema | `navegador_embutido_patch.js` ✔ |
+| Utilitários | popup do sistema, avisos/erro/auditoria, permissões, configurações, rodapé/versão, tema escuro, login 2 etapas, atalhos de menu | `popup_sistema_patch.js`, `avisos_*`, `permissoes_*`, `ajustes_v52213_*` ✔ |
+| Módulos dinâmicos | listas criadas dentro do sistema | `app.js` (`modulosDinamicos`) ◻ |
+| Empacotamento | `.exe` (Electron), atualização do programa, cache, resiliência, bundle | `main.js`, `exe_*`, `build_*` ✔ |
+
+**Chat auxiliar**: hoje vive dentro das automações de caixa — entra pela mesma linha das 13. ◻
 
 ---
 
