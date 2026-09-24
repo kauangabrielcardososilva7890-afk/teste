@@ -63,29 +63,72 @@ console.log('-- 1) EVIDÊNCIA: as regras copiadas ainda existem no sistema de ho
 
 console.log('-- 2) DIFERENCIAL: a numeração é a mesma do sistema de hoje --');
 {
-  // extrai a função que roda hoje (vendas_notinhas_fix_patch.js) e roda as duas lado a lado
-  const src = fs.readFileSync('vendas_notinhas_fix_patch.js', 'utf8');
-  const ini = src.indexOf('window.proximoNumeroVendaLimpo');
-  const fim = src.indexOf('\n  };', ini);
-  w.eval(src.slice(ini, fim + '\n  };'.length));
+  // A NUMERAÇÃO VIVA (correção da rodada 19): o número da venda sai do
+  // `proximoNumeroSimples` (vendas_os_patch.js:81) → `seqObter` (interface_patch.js:169).
+  // ATÉ A RODADA 18 este teste comparava com o `proximoNumeroVendaLimpo`
+  // (vendas_notinhas_fix_patch.js:30) — que está no repositório mas NÃO está no caminho
+  // vivo (ninguém chama). Quem seguia aquela conta devolvia o número de uma venda apagada,
+  // o contrário da regra do dono. Agora as duas pontas são as de verdade.
+  const srcOs = fs.readFileSync('vendas_os_patch.js', 'utf8');
+  w.eval(srcOs.slice(srcOs.indexOf('/* VOS_PURE_START */'), srcOs.indexOf('window.__vosPure')));
+  w.eval(srcOs.slice(srcOs.indexOf('window.proximoNumeroSimples'), srcOs.indexOf('\n};', srcOs.indexOf('window.proximoNumeroSimples')) + 3));
+  const srcIf = fs.readFileSync('interface_patch.js', 'utf8');
+  w.eval(srcIf.slice(srcIf.indexOf('window.seqObter'), srcIf.indexOf('\n};', srcIf.indexOf('window.seqObter')) + 3));
+  ok('as duas peças vivas do sistema de hoje foram carregadas (seqObter + proximoNumeroSimples)',
+    typeof w.seqObter === 'function' && typeof w.proximoNumeroSimples === 'function' && typeof w.vosNumeroInt === 'function');
+  ok('o `proximoNumeroVendaLimpo` do repositório NÃO é usado por ninguém (ficou órfão)',
+    fs.readFileSync('vendas_notinhas_fix_patch.js', 'utf8').indexOf('proximoNumeroVendaLimpo') >= 0 &&
+    /proximoNumeroVendaLimpo\s*\(/.test(fs.readFileSync('vendas_notinhas_fix_patch.js', 'utf8').replace(/window\.proximoNumeroVendaLimpo\s*=\s*function[\s\S]*?\n  \};/, '')) === false);
+
   const E = 'e1';
+  // O QUE CADA LADO VÊ: hoje, `proximoNumeroSimples` filtra a lista pela empresa; no coração
+  // novo cada empresa tem o SEU coração (todo registro já nasce com o `empresaId` dele), então
+  // a lista que a tela passa já é a da empresa. `soDaEmpresa` reproduz isso no teste.
+  const soDaEmpresa = (vendas) => (vendas || []).filter((v) => v && v.empresaId === E);
   const casos = [
-    { nome: 'lista vazia', vendas: [], empresa: E, espera: '1' },
-    { nome: '1, 2, 3 → 4', vendas: [{ numero: '1', empresaId: E }, { numero: '2', empresaId: E }, { numero: '3', empresaId: E }], empresa: E, espera: '4' },
-    { nome: 'fora de ordem (10,3,7) → 11', vendas: [{ numero: '10', empresaId: E }, { numero: '3', empresaId: E }, { numero: '7', empresaId: E }], empresa: E, espera: '11' },
-    { nome: 'número com letra (AB-9) → 10', vendas: [{ numero: 'AB-9', empresaId: E }], empresa: E, espera: '10' },
-    { nome: 'registro migrado é ignorado', vendas: [{ numero: '999', origemMigracao: true, empresaId: E }], empresa: E, espera: '1' },
-    { nome: 'número absurdo (500000) é ignorado', vendas: [{ numero: '500000', empresaId: E }], empresa: E, espera: '1' },
-    { nome: '600 → 601', vendas: [{ numero: '600', empresaId: E }], empresa: E, espera: '601' },
-    { nome: 'outra empresa não conta', vendas: [{ numero: '50', empresaId: 'e2' }], empresa: E, espera: '1' },
-    { nome: 'registro SEM empresa não conta quando a empresa é informada (regra de hoje)', vendas: [{ numero: '9' }], empresa: E, espera: '1' },
-    { nome: 'sem empresa informada, conta tudo', vendas: [{ numero: '50', empresaId: 'e2' }], empresa: null, espera: '51' }
+    ['lista vazia', [], '1', 0],
+    ['1, 2, 3 → 4', [{ numero: '1', empresaId: E }, { numero: '2', empresaId: E }, { numero: '3', empresaId: E }], '4', 0],
+    ['fora de ordem (10, 3, 7) → 11', [{ numero: '10', empresaId: E }, { numero: '3', empresaId: E }, { numero: '7', empresaId: E }], '11', 0],
+    ['número com letra (AB-9) → 10', [{ numero: 'AB-9', empresaId: E }], '10', 0],
+    ['registro migrado CONTA (a regra viva lê o último grupo de dígitos de qualquer venda)', [{ numero: '999', origemMigracao: true, empresaId: E }], '1000', 0],
+    ['número fora de faixa CONTA (500000 → 500001 — a regra viva não tem teto)', [{ numero: '500000', empresaId: E }], '500001', 0],
+    ['600 → 601', [{ numero: '600', empresaId: E }], '601', 0],
+    ['venda de OUTRA empresa não conta', [{ numero: '50', empresaId: 'e2' }], '1', 0],
+    ['registro antigo SEM empresa não conta quando a empresa é informada (e o coração novo nem enxerga ele: cada empresa tem o seu)', [{ numero: '9' }, { numero: '2', empresaId: E }], '3', 0],
+    ['VENDA APAGADA NÃO DEVOLVE O NÚMERO: contador em 2 e a venda 1 na lista → 3', [{ numero: '1', empresaId: E }], '3', 2]
   ];
-  casos.forEach((c) => {
-    const novo = w.DIGICOPY_VENDA.regras.numeroDaVenda(c.vendas, c.empresa);
-    const antigo = w.proximoNumeroVendaLimpo(c.vendas, c.empresa);
-    ok('numeração igual à de hoje: ' + c.nome, novo === antigo && novo === c.espera, 'novo=' + novo + ' antigo=' + antigo + ' espera=' + c.espera);
+  let iguais = 0;
+  casos.forEach(([nome, vendas, espera, seqInicial]) => {
+    w.db = { config: { seq: {} } };
+    if (seqInicial) w.db.config.seq['venda_' + E] = seqInicial;
+    const antigo = w.proximoNumeroSimples('venda', vendas, E);
+
+    const n = w.DIGICOPY_NUCLEO.criar({ empresaId: E, origem: 'teste', guardar: function () { } });
+    n.registrarLista('vendas', { numero: { tipo: 'texto' } });
+    soDaEmpresa(vendas).forEach((v) => {
+      n.salvar('vendas', { id: 'v' + v.numero, numero: v.numero, origemMigracao: v.origemMigracao });
+    });
+    if (seqInicial) {
+      n.registrarLista(n.LISTA_SERIES, n.SCHEMA_SERIES);
+      n.salvar(n.LISTA_SERIES, { id: 'venda', serie: 'venda', seq: seqInicial });
+    }
+    const meu = n.proximoNumeroDaSerie('venda', n.listar('vendas'), (v) => v && v.numero).numero;
+
+    const igual = meu === antigo;
+    if (igual) iguais++;
+    ok('numeração igual à de hoje: ' + nome, igual && meu === espera, 'novo=' + meu + ' hoje=' + antigo + ' esperado=' + espera);
   });
+  ok('a numeração nova dá o mesmo número que a de hoje em ' + iguais + ' de ' + casos.length + ' casos (inclusive depois de apagar a última venda)',
+    iguais === casos.length);
+
+  // a diferença de propósito: a LEITURA não gasta número (hoje, abrir a notinha e sair queima um)
+  const n2 = w.DIGICOPY_NUCLEO.criar({ empresaId: E, origem: 'teste', guardar: function () { } });
+  n2.registrarLista('vendas', { numero: { tipo: 'texto' } });
+  const ler1 = n2.proximoNumeroDaSerie('venda', n2.listar('vendas'), (v) => v && v.numero).numero;
+  const ler2 = n2.proximoNumeroDaSerie('venda', n2.listar('vendas'), (v) => v && v.numero).numero;
+  n2.proximoNumero('venda', n2.listar('vendas'), (v) => v && v.numero);
+  ok('ler o próximo número duas vezes não muda nada; só a gravação gasta (a diferença de propósito)',
+    ler1 === ler2 && ler1 === '1' && n2.contadorDaSerie('venda') === 1);
 }
 
 console.log('-- 3) AS REGRAS DO ITEM (validação, estoque, subtotal) --');

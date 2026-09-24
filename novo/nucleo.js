@@ -24,6 +24,10 @@
  *   4. TODA GRAVAÇÃO VIRA UMA MUDANÇA na fila (`outbox`), na ordem em que
  *      aconteceu. A nuvem manda essa fila; nada se perde e nada se duplica.
  *   5. ACHAR UM REGISTRO É PELO ÍNDICE (Map id → item), nunca varrendo a lista.
+ *   6. NÚMERO DE SÉRIE NUNCA VOLTA: quem numera (venda, OS, código de cliente) pede
+ *      aqui (`proximoNumero`) e o contador fica guardado — apagar não devolve número.
+ *   7. IMPORTAÇÃO NÃO RECUSA (`salvar(..., {importando:true})`): dado que vem da base
+ *      antiga entra sempre; o que ficou fora do schema volta em `avisos`.
  *
  * NÃO FAZ: `alert`, `confirm`, `prompt`, `localStorage`, `fetch`, senha, token.
  * Quem quiser guardar/puxar pluga por fora (`guardar`, e o cliente da nuvem).
@@ -123,6 +127,41 @@
       return erros;
     }
 
+    // ── IMPORTAÇÃO DA BASE ANTIGA (a ponte) ──────────────────────────────────
+    // As telas de hoje gravam do jeito delas. Esse dado é do DONO: não pode ser
+    // recusado por causa de tipo ou de campo obrigatório — se for, ele desaparece na
+    // virada da chave e ninguém fica sabendo. Então:
+    //   • o que dá para casar com o schema, casa (ex.: "80,00" → 80);
+    //   • o que não dá, entra COMO VEIO e volta em `avisos` para quem importou
+    //     reportar. Recusar, nunca.
+    // Exemplo real da base de hoje: `parcela: '1/1'` (texto) numa conta a pagar
+    // criada pelo `automacoes_caixa_chat_auxiliares_patch.js`.
+    // Lê número de texto SEM INVENTAR: só aceita o que é número de verdade escrito
+    // em brasileiro ('80', '80,00', '1.234,56') ou no formato simples ('80.00').
+    // '1/1', 'R$ 80' e 'abc' NÃO viram número — quem chama guarda como veio e avisa.
+    function numeroDoTexto(v) {
+      var t = texto(v).trim();
+      if (!t) return null;
+      if (/^-?\d+$/.test(t)) return Number(t);                                // 80
+      if (/^-?\d+,\d+$/.test(t)) return Number(t.replace(',', '.'));          // 80,00
+      if (/^-?\d+\.\d+$/.test(t)) return Number(t);                          // 80.00
+      if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) return Number(t.replace(/\./g, '').replace(',', '.')); // 1.234,56
+      return null;
+    }
+    function coagirAoTipo(nome, item) {
+      var l = exigirLista(nome);
+      Object.keys(l.schema || {}).forEach(function (campo) {
+        var t = (l.schema[campo] || {}).tipo;
+        var v = item[campo];
+        if (t === 'numero' && typeof v === 'string') {
+          var num = numeroDoTexto(v);
+          if (num !== null) item[campo] = num;
+        }
+        if (t === 'texto' && typeof v === 'number') item[campo] = String(v);
+      });
+      return item;
+    }
+
     function proximoId(nome) {
       var l = exigirLista(nome);
       var base = nome.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toLowerCase() || 'reg';
@@ -131,6 +170,43 @@
         id = base + '_' + (++seq).toString(36) + Math.random().toString(36).slice(2, 6);
       } while (l.indice.has(id));
       return id;
+    }
+
+    // ── O NÚMERO DE SÉRIE (é o `seqObter` do sistema de hoje) ────────────────
+    // Regra do dono, escrita no código de hoje: "excluir um registro NUNCA devolve
+    // o número dele". O contador mora na lista interna `series` (é o `db.config.seq`
+    // de hoje) e anda sempre para a frente: vale o MAIOR entre o contador guardado e
+    // o maior número já usado na lista — se o contador se perder (restauração, base
+    // importada), o maior número existente puxa ele de volta.
+    var LISTA_SERIES = 'series';
+    var SCHEMA_SERIES = { serie: { obrigatorio: true, tipo: 'texto' }, seq: { tipo: 'numero' } };
+
+    // Igual ao `vosNumeroInt` de hoje: o ÚLTIMO grupo de dígitos do número.
+    function numeroInteiro(v) {
+      var m = texto(v).match(/(\d+)(?!.*\d)/);
+      return m ? parseInt(m[1], 10) : 0;
+    }
+    function contadorDaSerie(nomeSerie) {
+      registrarLista(LISTA_SERIES, SCHEMA_SERIES);
+      var atual = itemPorId(listas[LISTA_SERIES], texto(nomeSerie));
+      return atual ? inteiro(atual.seq) : 0;
+    }
+    // Só LÊ (não gasta número): devolve o próximo e o contador que ele deixaria.
+    function proximoNumeroDaSerie(nomeSerie, itens, extrator) {
+      var maior = 0;
+      (itens || []).forEach(function (it) {
+        var n = numeroInteiro(extrator ? extrator(it) : it);
+        if (n > maior) maior = n;
+      });
+      var base = Math.max(contadorDaSerie(nomeSerie), maior);
+      return { numero: String(base + 1), seq: base + 1 };
+    }
+    // O mesmo, mas GRAVANDO o contador (vira uma mudança na fila, como qualquer gravação).
+    function proximoNumero(nomeSerie, itens, extrator) {
+      var p = proximoNumeroDaSerie(nomeSerie, itens, extrator);
+      var r = salvar(LISTA_SERIES, { id: texto(nomeSerie), serie: texto(nomeSerie), seq: p.seq });
+      if (!r || !r.ok) return null;
+      return p.numero;
     }
 
     function anotarMudanca(item) {
@@ -178,8 +254,14 @@
       // A validação olha o registro COMPLETO (o que já estava + o que chegou),
       // para editar um campo só não ser acusado de "faltou o nome".
       var item = Object.assign({}, existente || {}, d);
+      var avisos = [];
+      if (op2.importando) coagirAoTipo(nome, item);
       var erros = validar(nome, item);
-      if (erros.length) return { ok: false, erros: erros };
+      if (erros.length) {
+        if (!op2.importando) return { ok: false, erros: erros };
+        // importação da base antiga: entra assim mesmo; quem importou recebe o aviso
+        avisos = erros.slice();
+      }
       var agoraMs = agora();
       item.lista = nome;
       item.id = texto(item.id) || proximoId(nome);
@@ -197,7 +279,7 @@
         avisar(existente ? 'editou' : 'criou', { lista: nome, id: item.id, versao: item.versao });
       }
       guardar();
-      return { ok: true, item: item };
+      return { ok: true, item: item, avisos: avisos };
     }
 
     // ── APAGAR = MARCAR (lápide). Nunca sai da lista; nunca `splice`. ──
@@ -361,7 +443,14 @@
       resumo: resumo,
       paraJSON: paraJSON,
       carregarDeJSON: carregarDeJSON,
-      proximoId: proximoId
+      proximoId: proximoId,
+      numeroInteiro: numeroInteiro,
+      contadorDaSerie: contadorDaSerie,
+      proximoNumeroDaSerie: proximoNumeroDaSerie,
+      proximoNumero: proximoNumero,
+      LISTA_SERIES: LISTA_SERIES,
+      SCHEMA_SERIES: SCHEMA_SERIES,
+      numeroDoTexto: numeroDoTexto
     };
   }
 

@@ -65,7 +65,9 @@
       '</div>';
     dono.body.appendChild(overlay);
 
-    var primeiro = overlay.querySelector('input,select,textarea');
+    // campo desabilitado (ex.: o Código automático) não recebe foco — o dedo vai no primeiro
+    // campo de digitar de verdade
+    var primeiro = overlay.querySelector('input:not([disabled]),select,textarea');
     if (primeiro) primeiro.focus();
 
     function fechar() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
@@ -94,13 +96,16 @@
   var LISTAS = {
     clientes: {
       rotulo: 'Clientes',
-      colunas: [{ campo: 'nome', titulo: 'Nome' }, { campo: 'telefone', titulo: 'Telefone' }, { campo: 'cidade', titulo: 'Cidade' }],
+      colunas: [{ campo: 'codigo', titulo: 'Código' }, { campo: 'nome', titulo: 'Nome' }, { campo: 'telefone', titulo: 'Telefone' }, { campo: 'cidade', titulo: 'Cidade' }],
       campos: [
+        // O CÓDIGO é do sistema, não do dedo: sai da série (o `seqObter('cliente', …)` de
+        // hoje, `clientes_patch.js:300`) e nunca volta depois de um cliente ser apagado.
+        { campo: 'codigo', rotulo: 'Código (automático)', somenteLeitura: true },
         { campo: 'nome', rotulo: 'Nome', obrigatorio: true },
         { campo: 'telefone', rotulo: 'Telefone' },
         { campo: 'cidade', rotulo: 'Cidade' }
       ],
-      schema: { nome: { obrigatorio: true, tipo: 'texto' }, telefone: { tipo: 'texto' }, cidade: { tipo: 'texto' } }
+      schema: { codigo: { tipo: 'texto' }, nome: { obrigatorio: true, tipo: 'texto' }, telefone: { tipo: 'texto' }, cidade: { tipo: 'texto' } }
     },
     produtos: {
       rotulo: 'Produtos',
@@ -238,10 +243,14 @@
 
     function abrirFormulario(registro) {
       var lista = LISTAS[estado.lista];
+      // o próximo código é só MOSTRADO (a leitura não gasta número; quem gasta é o Salvar)
+      var proximoCodigo = (!registro && estado.lista === 'clientes')
+        ? nucleo.proximoNumeroDaSerie('cliente', nucleo.listar('clientes'), function (c) { return c && c.codigo; }).numero
+        : '';
       var html = lista.campos.map(function (c) {
-        var valor = registro ? escapar(registro[c.campo]) : '';
+        var valor = registro ? escapar(registro[c.campo]) : (c.somenteLeitura ? escapar(proximoCodigo) : '');
         return '<label class="nfx-campo"><span>' + escapar(c.rotulo) + (c.obrigatorio ? ' *' : '') + '</span>' +
-               '<input data-campo="' + c.campo + '" value="' + valor + '"></label>';
+               '<input data-campo="' + c.campo + '" value="' + valor + '"' + (c.somenteLeitura ? ' disabled' : '') + '></label>';
       }).join('');
       abrirModal(dono, {
         tipo: 'formulario',
@@ -251,10 +260,16 @@
         aoConfirmar: function (valores) {
           var dados = { id: registro ? registro.id : undefined };
           lista.campos.forEach(function (c) {
+            if (c.somenteLeitura) return;   // o código é dado pelo núcleo, não pelo formulário
             var v = valores[c.campo];
             if (c.campo === 'preco') { var n = Number(texto(v).replace(',', '.')); dados[c.campo] = isFinite(n) && texto(v).trim() ? n : undefined; }
             else dados[c.campo] = texto(v).trim();
           });
+          // cadastro novo de cliente: o código sai da série (nunca repete um código apagado)
+          if (estado.lista === 'clientes' && !registro) {
+            var codigo = nucleo.proximoNumero('cliente', nucleo.listar('clientes'), function (c) { return c && c.codigo; });
+            if (codigo) dados.codigo = codigo;
+          }
           var r = nucleo.salvar(estado.lista, dados);
           if (!r.ok) return { ok: false, erros: r.erros };
           desenhar();

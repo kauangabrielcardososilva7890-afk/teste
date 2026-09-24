@@ -31,6 +31,9 @@
  *      (regra 27) e não pode acontecer por acidente de tela/importação.
  *   3. DUAS VEZES O MESMO NÃO VIRA DOIS: a comparação é por id; reimportar a
  *      mesma base não cria registro novo nem lápide.
+ *   3-B. DADO ANTIGO NUNCA É RECUSADO: a importação manda `{importando:true}` para o
+ *      coração, que casa os tipos quando dá ("80,00" → 80) e, quando não dá, guarda
+ *      como veio e avisa — o aviso aparece no relatório (`camposForaDoPadrao`).
  *   4. O FORMATO DAS LISTAS NÃO MUDA: `db.clientes` continua uma lista normal de
  *      objetos com `id` — nenhuma tela precisa de adaptação.
  * ═══════════════════════════════════════════════════════════════════════════ */
@@ -96,7 +99,10 @@
 
     var ficha = {};        // lista -> { vivo: {id: assinatura}, apagados: {id:true} }
     var pendentes = {};    // lista -> [ids] aguardando confirmação de exclusão em massa
-    var relatorio = { listas: 0, novos: 0, editados: 0, apagados: 0, emObservacao: 0, massasSuspeitas: 0 };
+    // `camposForaDoPadrao` = entrou, mas com campo fora do schema (o valor veio como estava).
+    // `recusadosImpossiveis` = o coração recusou (não deve acontecer: importação não recusa).
+    var relatorio = { listas: 0, novos: 0, editados: 0, apagados: 0, emObservacao: 0, massasSuspeitas: 0,
+      camposForaDoPadrao: 0, recusadosImpossiveis: 0 };
 
     // O coração só trabalha com listas registradas. A ponte descobre as listas
     // sozinha (é ela que lê o `db` das telas de hoje) e registra cada uma — com o
@@ -122,8 +128,12 @@
     // tratada como nova (e não ressuscitar).
     function importar(nome, itens, semFila) {
       var f = garantirFicha(nome);
+      // O que vem por aqui é dado das TELAS DE HOJE → `importando: true` (o coração
+      // nunca recusa: guarda como veio e devolve o aviso, que é contado no relatório).
+      var opImportar = { importando: true };
+      if (semFila) opImportar.semFila = true;
       var vistos = {};
-      var novos = 0, editados = 0, iguais = 0;
+      var novos = 0, editados = 0, iguais = 0, foraPadrao = 0, recusados = 0;
       (itens || []).forEach(function (item) {
         if (!item || typeof item !== 'object' || item.id === undefined || item.id === '') return;
         var id = String(item.id);
@@ -132,16 +142,16 @@
         if (f.apagados[id]) { iguais++; return; }          // apagado aqui: não volta sozinho
         if (f.vivo[id] === undefined) {
           f.vivo[id] = assin;
-          var r = (modo === 'ligado') ? nucleo.salvar(nome, item, semFila ? { semFila: true } : null) : null;
-          if (modo !== 'ligado' || (r && r.ok)) novos++;
-          else relatorio.emObservacao++;
+          var r = (modo === 'ligado') ? nucleo.salvar(nome, item, opImportar) : null;
+          if (modo !== 'ligado' || (r && r.ok)) { novos++; if (r && r.avisos && r.avisos.length) foraPadrao++; }
+          else recusados++;
           return;
         }
         if (f.vivo[id] !== assin) {
           f.vivo[id] = assin;
-          var re = (modo === 'ligado') ? nucleo.salvar(nome, item, semFila ? { semFila: true } : null) : null;
-          if (modo !== 'ligado' || (re && re.ok)) editados++;
-          else relatorio.emObservacao++;
+          var re = (modo === 'ligado') ? nucleo.salvar(nome, item, opImportar) : null;
+          if (modo !== 'ligado' || (re && re.ok)) { editados++; if (re && re.avisos && re.avisos.length) foraPadrao++; }
+          else recusados++;
           return;
         }
         iguais++;
@@ -158,7 +168,8 @@
         pendentes[nome] = retirados.slice();
         relatorio.massasSuspeitas++;
         avisarMassa(nome, retirados.slice());
-        return { novos: novos, editados: editados, iguais: iguais, apagados: 0, retinhaMassa: retirados };
+        return { novos: novos, editados: editados, iguais: iguais, apagados: 0, retinhaMassa: retirados,
+          camposForaDoPadrao: foraPadrao, recusadosImpossiveis: recusados };
       }
 
       var apagados = 0;
@@ -168,7 +179,8 @@
         if (modo === 'ligado') nucleo.apagar(nome, id, 'removido na tela (registrado pela ponte)');
         apagados++;
       });
-      return { novos: novos, editados: editados, iguais: iguais, apagados: apagados };
+      return { novos: novos, editados: editados, iguais: iguais, apagados: apagados,
+        camposForaDoPadrao: foraPadrao, recusadosImpossiveis: recusados };
     }
 
     // ── O MOMENTO DA GRAVAÇÃO (é o `saveDB` das telas que chama isto) ──
@@ -181,6 +193,8 @@
         resultado.acoes[nome] = r;
         relatorio.novos += r.novos; relatorio.editados += r.editados; relatorio.apagados += r.apagados;
         relatorio.emObservacao += r.emObservacao || 0;
+        relatorio.camposForaDoPadrao += r.camposForaDoPadrao || 0;
+        relatorio.recusadosImpossiveis += r.recusadosImpossiveis || 0;
       });
       if (modo === 'ligado' && nucleo.mudancas().length) guardarExterno();
       return resultado;
@@ -191,7 +205,8 @@
       // primeira varredura: conhece a base SEM sujar a fila da nuvem e SEM poder
       // marcar ninguém como apagado (ela só lê o que já existe)
       listas().forEach(function (nome) { garantirFicha(nome); importar(nome, banco[nome], true); });
-      relatorio = { listas: listas().length, novos: 0, editados: 0, apagados: 0, emObservacao: 0, massasSuspeitas: 0 };
+      relatorio = { listas: listas().length, novos: 0, editados: 0, apagados: 0, emObservacao: 0, massasSuspeitas: 0,
+        camposForaDoPadrao: 0, recusadosImpossiveis: 0 };
       return relatorio;
     }
 

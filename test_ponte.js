@@ -222,6 +222,46 @@ console.log('-- 10) as telas continuam vendo listas NORMAIS (nada de formato est
   ok('a ponte não mexe em listas que não são de registros', app.ponte.listas().indexOf('config') < 0);
 }
 
+console.log('-- 11-B) IMPORTAR A BASE ANTIGA: o dado do dono nunca é recusado --');
+{
+  // Lista COM schema (é como o sistema novo vai andar depois da virada): aqui o tipo
+  // é cobrado. A base de hoje tem caso assim de verdade — o
+  // `automacoes_caixa_chat_auxiliares_patch.js` grava `parcela: '1/1'` (texto) numa
+  // conta a pagar, e o preço do produto pode ter sido digitado com vírgula.
+  const app = sistemaDeHoje();
+  app.db.contasPagar = [];
+  app.nucleo = N.criar({ empresaId: 'emp1', origem: 'pc-loja' });
+  app.ponte = P.ligar({
+    db: app.db, nucleo: app.nucleo, origem: 'pc-loja',
+    schemas: {
+      produtos: { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' } },
+      contasPagar: { fornecedor: { obrigatorio: true, tipo: 'texto' }, valor: { tipo: 'numero' }, parcela: { tipo: 'numero' } }
+    }
+  });
+  const salvar = () => { app.salvarDB(); app.ponte.sincronizar(); };   // é assim que fica no app de verdade
+  app.db.produtos.push({ id: 'pd1', nome: 'Cartucho 664', preco: '85,90' });
+  app.db.contasPagar.push({ id: 'pg1', fornecedor: 'Papelaria', descricao: 'RETIRADA DO CAIXA', valor: 20, parcela: '1/1' });
+  app.db.contasPagar.push({ id: 'pg2', descricao: 'sem fornecedor na base antiga', valor: 10 });
+  salvar();
+
+  const pd = app.nucleo.obter('produtos', 'pd1');
+  ok('o produto antigo entrou com o preço virando número (85,90 → 85.9)', pd && pd.preco === 85.9, pd ? String(pd.preco) : 'não entrou');
+  const pg1 = app.nucleo.obter('contasPagar', 'pg1');
+  ok('a conta a pagar com parcela "1/1" entrou COMO VEIO (não foi recusada nem virou 11)',
+    pg1 && pg1.parcela === '1/1' && pg1.valor === 20, pg1 ? String(pg1.parcela) : 'não entrou');
+  ok('o registro antigo sem o campo obrigatório também entrou', !!app.nucleo.obter('contasPagar', 'pg2'));
+  const rel = app.ponte.relatar();
+  ok('o relatório conta o que entrou fora do padrão (2 registros)',
+    rel.camposForaDoPadrao === 2, JSON.stringify(rel));
+  ok('e nenhum registro foi recusado (recusadosImpossiveis = 0)', rel.recusadosImpossiveis === 0, String(rel.recusadosImpossiveis));
+  ok('os três registros existem no coração (nada sumiu na importação)',
+    app.nucleo.contar('produtos') === 1 && app.nucleo.contar('contasPagar') === 2);
+
+  // e o caminho da TELA NOVA continua estrito com o mesmo schema
+  const recusa = app.nucleo.salvar('contasPagar', { id: 'pg3', fornecedor: 'Novo', valor: '10,00' });
+  ok('a tela nova, com esse mesmo schema, continua recusando texto no lugar de número', !recusa.ok);
+}
+
 console.log('-- 11) a ponte não reimplementa o coração (regra de ouro) --');
 {
   const bruto = require('fs').readFileSync('novo/ponte.js', 'utf8');

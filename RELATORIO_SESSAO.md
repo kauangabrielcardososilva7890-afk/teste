@@ -6013,3 +6013,52 @@ pagar** (com `?exemplo=1` no fim do endereço já vem 2 títulos a receber e 1 a
 
 **Próximo na fila:** PIX com link público, comprovante, carnê, impressão da notinha (meia folha/folha
 inteira com OS), estorno e a aba de OS dentro da venda.
+
+### Rodada 19 (24/09/2026) — a numeração estava ancorada em código morto (e a importação recusava dado antigo em silêncio)
+
+**Esta rodada era para ser a impressão da notinha e o PIX. Não foi — e por um bom motivo.** Antes de
+encostar neles, a conferência de rotina passou pela **numeração** (porque o número da venda sai impresso na
+notinha) e achou um defeito de paridade que teria aparecido justo no dia da virada.
+
+**O que estava errado:** na rodada da venda, a numeração nova foi copiada do
+`vendas_notinhas_fix_patch.js:30` — e essa função **não está no caminho vivo**. Quem numera de verdade é o
+`proximoNumeroSimples` (`vendas_os_patch.js:81`) → `seqObter` (`interface_patch.js:169`), com o contador
+guardado e **monotônico**: excluir **nunca** devolve o número. Pela regra que eu tinha copiado, **apagar a
+última venda devolvia o número dela para a venda seguinte** — o contrário da sua regra ("excluir um
+registro NUNCA devolve o número dele"). A função do arquivo antigo virou órfã, e o teste agora prova isso.
+
+**A correção:** o coração novo ganhou a **série** (o mesmo `seqObter`): contador guardado como registro do
+núcleo — por isso ele **sobe para a nuvem como qualquer gravação** e vale nos dois computadores. Mostrar o
+número na tela **não gasta** número; gastar só acontece quando a venda é gravada. Se o contador se perder
+numa restauração, o maior número existente puxa ele de volta — e ele **nunca anda para trás**.
+
+**Junto veio uma lacuna fechada:** a tela nova **não criava o código do cliente**. Agora o cliente ganha
+**Código automático**, que aparece no formulário **travado** (não dá para digitar), sai automático ao
+salvar, **não volta** depois de um cliente ser apagado e **não muda** na edição — e a busca "Cód. Cliente"
+do financeiro passa a achar.
+
+**Segundo achado, também ALTO (risco de perder registro na virada):** a importação da base antiga
+**recusava em silêncio**. O coração valida tipo e campo obrigatório; quando o dado antigo não casava, a
+ponte contava aquilo como "observação" e **o registro não entrava** — sem erro na tela. Caso real da base
+de hoje: a retirada de caixa grava `parcela: '1/1'` (texto) numa conta a pagar, e o schema novo pede número.
+Agora a importação **nunca recusa**: o que dá para casar casa (`'80,00'` → `80`), o que não dá **entra como
+veio** e vira aviso no relatório (`camposForaDoPadrao`; `recusadosImpossiveis` tem de ficar **0**). E o
+conversor **não inventa**: `'1/1'` **não** vira 11. As telas novas **não** passam por esse caminho — a trava
+continua valendo para dado novo.
+
+**Terceiro achado (MÉDIO):** no formulário da despesa, valor em branco (ou com vírgula, que o campo
+numérico não aceita) virava **R$ 0,00 calado**. Agora avisa e deixa corrigir; zero digitado de propósito
+continua valendo.
+
+**Provas:** `test_financeiro.js` **140 ✔** (era 118), `test_nucleo.js` **77 ✔** (era 53), `test_ponte.js`
+**57 ✔** (era 50), `test_telas.js` **46 ✔** (era 38), `test_venda.js` **102 ✔** (era 98 — o diferencial da
+numeração agora roda contra as **duas peças vivas**). Suíte inteira: **225 passaram, 0 falharam, 0 não
+rodaram**. Build: `Bundle OK (228 scripts, sha256 4228e4635a65b523)` e `Sync OK (v7.0.11, 0 soltos)` — o
+bundle foi regenerado junto (o coração novo roda dentro do conferente do painel da Nuvem).
+
+**O que ficou para a próxima:** a **impressão da notinha** (meia folha / folha inteira com a OS) e o **PIX**
+— que era o plano desta rodada e ficou para trás justamente por causa do número errado impresso nela.
+
+**Para ele testar:** na página nova, **Cadastros → Clientes**: cadastrar dois e apagar o último — o
+próximo cadastro pega um código **maior** (o apagado não volta). E no **Financeiro**, lançar um título a
+receber novo: a janela mostra as datas antes de salvar e o título sai com número de série próprio.

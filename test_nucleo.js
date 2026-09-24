@@ -185,6 +185,92 @@ console.log('-- 10) guardar e abrir preservam lápide, versão e data --');
   ok('a listagem normal segue vazia depois de abrir', m.listar('clientes').length === 0);
 }
 
+console.log('-- 10-B) O NÚMERO DE SÉRIE (o `seqObter` de hoje: apagar nunca devolve número) --');
+{
+  const n = novoNucleo();
+  n.registrarLista('vendas', { numero: { tipo: 'texto' } });
+  const daSerie = () => n.proximoNumeroDaSerie('venda', n.listar('vendas'), (v) => v && v.numero);
+
+  ok('série vazia começa em 1', daSerie().numero === '1' && daSerie().seq === 1);
+  ok('a LEITURA não gasta número (ler duas vezes dá o mesmo)', daSerie().numero === daSerie().numero);
+  ok('número com letra conta pelo último grupo de dígitos (AB-9 → 9, VD-2026-0042 → 42)',
+    n.numeroInteiro('AB-9') === 9 && n.numeroInteiro('VD-2026-0042') === 42 && n.numeroInteiro('') === 0);
+
+  const v1 = n.salvar('vendas', { numero: n.proximoNumero('venda', n.listar('vendas'), (v) => v && v.numero) });
+  const v2 = n.salvar('vendas', { numero: n.proximoNumero('venda', n.listar('vendas'), (v) => v && v.numero) });
+  ok('gravar gasta o número na ordem (1 e depois 2)', v1.item.numero === '1' && v2.item.numero === '2');
+
+  n.apagar('vendas', v2.item.id, 'venda apagada pelo teste');
+  ok('APAGAR NÃO DEVOLVE O NÚMERO: com a venda 2 apagada, a próxima é a 3',
+    n.proximoNumero('venda', n.listar('vendas'), (v) => v && v.numero) === '3');
+
+  ok('o contador é um registro do núcleo (aparece na fila da nuvem como qualquer gravação)',
+    !!n.obter(n.LISTA_SERIES, 'venda') && n.obter(n.LISTA_SERIES, 'venda').seq === 3);
+  const foto = JSON.parse(JSON.stringify(n.paraJSON()));
+  const m = novoNucleo();
+  m.carregarDeJSON(foto);
+  ok('o contador sobrevive a guardar e abrir (restauração, backup, nuvem)',
+    m.obter(m.LISTA_SERIES, 'venda').seq === 3 &&
+    m.proximoNumero('venda', m.listar('vendas'), (v) => v && v.numero) === '4');
+
+  const z = novoNucleo();
+  z.registrarLista('vendas', { numero: { tipo: 'texto' } });
+  z.salvar('vendas', { numero: '50' });
+  ok('se o contador se perder, o maior número existente puxa ele de volta (não repete)',
+    z.proximoNumero('venda', z.listar('vendas'), (v) => v && v.numero) === '51');
+  ok('e o contador nunca anda para trás', z.obter(z.LISTA_SERIES, 'venda').seq === 51);
+}
+
+console.log('-- 10-C) IMPORTAÇÃO DA BASE ANTIGA: nunca recusa (senão o dado some na virada) --');
+{
+  const n = novoNucleo();
+  n.registrarLista('contasReceber', { descricao: { tipo: 'texto' }, valor: { tipo: 'numero' }, parcela: { tipo: 'numero' } });
+
+  // 1) a TELA NOVA continua estrita (nada de texto onde o schema pede número)
+  const recusado = n.salvar('contasReceber', { id: 'x1', descricao: 'novo', valor: '80,00' });
+  ok('a tela nova continua sendo recusada quando manda texto no lugar de número',
+    !recusado.ok && /valor devia ser numero/.test(recusado.erros.join(' ')), JSON.stringify(recusado.erros || []));
+  ok('e nada entrou no coração', n.contar('contasReceber') === 0);
+
+  // 2) a IMPORTAÇÃO (a ponte) casa o tipo quando dá
+  const importado = n.salvar('contasReceber', { id: 'x1', descricao: 'título antigo', valor: '80,00', parcela: '2' }, { importando: true });
+  ok('importando: "80,00" vira 80 (número)', importado.ok && importado.item.valor === 80, String(importado.item && importado.item.valor));
+  ok('importando: "2" vira 2', importado.item.parcela === 2, String(importado.item.parcela));
+  ok('e não sobra aviso quando casou tudo', (importado.avisos || []).length === 0, JSON.stringify(importado.avisos || []));
+
+  // 3) o que NÃO dá para casar entra COMO VEIO — e o aviso volta para quem importou
+  //    (caso real da base de hoje: `parcela: '1/1'` na retirada de caixa)
+  const estranho = n.salvar('contasReceber', { id: 'x2', descricao: 'RETIRADA DO CAIXA', valor: 20, parcela: '1/1' }, { importando: true });
+  ok('importando: texto onde o schema pede número NÃO é recusado (o registro entra)',
+    estranho.ok && n.obter('contasReceber', 'x2').parcela === '1/1', String(n.obter('contasReceber', 'x2').parcela));
+  ok('e o aviso volta para quem importou (nada de "sumiu e ninguém viu")',
+    (estranho.avisos || []).length === 1 && /parcela/.test(estranho.avisos.join(' ')), JSON.stringify(estranho.avisos || []));
+
+  // 3-B) o conversor NÃO INVENTA número (senão vira mentira na base do dono)
+  ok('"1/1" NÃO vira 11 (o valor fica como veio)', n.numeroDoTexto('1/1') === null);
+  ok('"R$ 80" e "abc" também não viram número', n.numeroDoTexto('R$ 80') === null && n.numeroDoTexto('abc') === null);
+  ok('o que é número de verdade casa: "80" → 80, "80,00" → 80, "80.00" → 80, "1.234,56" → 1234.56',
+    n.numeroDoTexto('80') === 80 && n.numeroDoTexto('80,00') === 80 &&
+    n.numeroDoTexto('80.00') === 80 && n.numeroDoTexto('1.234,56') === 1234.56);
+  ok('campo vazio e nulo continuam como estavam', n.numeroDoTexto('') === null && n.numeroDoTexto(null) === null);
+
+  // 4) campo obrigatório faltando também não recusa na importação
+  n.registrarLista('contasPagar', { fornecedor: { obrigatorio: true, tipo: 'texto' }, valor: { tipo: 'numero' } });
+  const cp = n.salvar('contasPagar', { id: 'p1', descricao: 'sem fornecedor na base antiga' }, { importando: true });
+  ok('importando: registro sem o campo obrigatório entra (avisa, não recusa)',
+    cp.ok && !!n.obter('contasPagar', 'p1') && (cp.avisos || []).length === 1, JSON.stringify(cp.avisos || []));
+  const outro = novoNucleo();
+  outro.registrarLista('contasPagar', { fornecedor: { obrigatorio: true, tipo: 'texto' } });
+  ok('a TELA NOVA continuaria recusando esse mesmo registro (a trava da importação é só dela)',
+    !outro.salvar('contasPagar', { id: 'p2', descricao: 'sem fornecedor' }).ok);
+
+  // 5) importar de novo não suja a fila quando vem com `semFila` (é o primeiro passo da ponte)
+  const antesFila = n.mudancas().length;
+  n.salvar('contasReceber', { id: 'x1', descricao: 'título antigo', valor: 80, parcela: 2 }, { importando: true, semFila: true });
+  ok('importação com semFila não vira mudança para a nuvem', n.mudancas().length === antesFila);
+  ok('e o registro continua íntegro no coração', n.obter('contasReceber', 'x1').valor === 80);
+}
+
 console.log('-- 11) o núcleo não tem tela nem rede --');
 {
   const bruto = fs.readFileSync('novo/nucleo.js', 'utf8');

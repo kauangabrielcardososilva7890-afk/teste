@@ -3,7 +3,9 @@
 // FASE 3 do redesenho. Regra de ouro: as regras abaixo foram COPIADAS do arquivo que manda
 // no sistema de hoje — não foram inventadas. Cada uma diz de onde veio:
 //
-//   • número da venda ....... vendas_notinhas_fix_patch.js:30 (`proximoNumeroVendaLimpo`)
+//   • número da venda ....... `proximoNumeroSimples` (vendas_os_patch.js:81) → `seqObter`
+//     (interface_patch.js:169): contador guardado, nunca devolve número de venda apagada
+//     (o `proximoNumeroVendaLimpo` do repositório NÃO está no caminho vivo — ver §33)
 //   • item: validações ...... vendas_os_patch.js:446 (`vosAddItem`)
 //   • estoque só na gravação  vendas_os_patch.js:659 (`vosGravarVenda`, baixa "apenas na criação")
 //     + correção de propósito: quando a venda JÁ existe e algum item mudou, a diferença é
@@ -39,18 +41,18 @@
   var STATUS_QUE_JA_FATURARAM = ['faturado', 'finalizada', 'concluido', 'pago'];
   function jaFaturada(status) { return STATUS_QUE_JA_FATURARAM.indexOf(low(status)) >= 0; }
 
-  // Número da venda: maior número já usado (+1), ignorando registro migrado e número
-  // fora de faixa (>= 500000 — é o mesmo teto do sistema de hoje, que existe para número
-  // absurdo/corrompido não empurrar a numeração da loja para o infinito).
-  function numeroDaVenda(vendas, empresaId) {
-    var max = 0;
-    (vendas || []).forEach(function (v) {
-      if (!v || v.origemMigracao) return;
-      if (empresaId && v.empresaId !== empresaId) return;
-      var num = parseInt(texto(v.numero).replace(/\D/g, ''), 10);
-      if (isFinite(num) && num > max && num < 500000) max = num;
-    });
-    return String(max + 1);
+  // Número da venda: vem do NÚCLEO (`proximoNumeroDaSerie`), que é a cópia da regra que
+  // roda hoje — `proximoNumeroSimples('venda', …)` → `seqObter` (interface_patch.js:169):
+  // o contador fica guardado e "excluir um registro NUNCA devolve o número dele".
+  // A leitura (para mostrar na tela) não gasta número; quem gasta é a gravação.
+  //
+  // CORREÇÃO DA RODADA 19: até a 18 a conta era "maior + 1" (a regra do
+  // `vendas_notinhas_fix_patch.js:30`, que está no repositório mas NÃO está no caminho
+  // vivo). Com aquela conta, apagar a última venda devolvia o número dela para a venda
+  // seguinte — o contrário da regra do dono. Esta rodada trocou pela regra viva.
+  function numeroDaVenda(nucleo) {
+    var p = nucleo.proximoNumeroDaSerie('venda', nucleo.listar('vendas'), function (v) { return v && v.numero; });
+    return p.numero;
   }
 
   // Estoque: a INCLUSÃO do item não checa estoque quando é Serviço, Recarga ou estoque
@@ -267,7 +269,7 @@
   function isoDia(d) { return new Date(d.getTime()).toISOString().slice(0, 10); }
 
   var regras = {
-    numeroDaVenda: numeroDaVenda, ehNumerico: ehNumerico, jaFaturada: jaFaturada,
+    ehNumerico: ehNumerico, jaFaturada: jaFaturada,
     FORMAS_RECEBIMENTO: FORMAS_RECEBIMENTO, parcelasDoFaturamento: parcelasDoFaturamento,
     somarMesesDiaFixo: somarMesesDiaFixo, isoDia: isoDia,
     faturamentoDaVenda: faturamentoDaVenda,
@@ -324,7 +326,12 @@
       var totais = calcularTotais(estado.itens, estado.desconto);
       var status = forcarStatus || estado.status;
       var nova = !estado.vendaId;
-      if (nova) estado.numero = numeroDaVenda(nucleo.listar('vendas'), empresaId);
+      if (nova) {
+        // agora sim: a venda existe, então o número é GASTO na série (o contador fica
+        // guardado no núcleo e não volta nem se esta venda for apagada depois)
+        var numeroNovo = nucleo.proximoNumero('venda', nucleo.listar('vendas'), function (v) { return v && v.numero; });
+        estado.numero = numeroNovo || numeroDaVenda(nucleo);
+      }
       var anterior = null;
       if (!nova) { try { anterior = nucleo.obter('vendas', estado.vendaId); } catch (e) { anterior = null; } }
 
@@ -605,7 +612,7 @@
     function desenhar() {
       // a notinha já mostra o número dela ao abrir (é o "código automático" do sistema de
       // hoje); na hora de gravar o número é conferido de novo, então ele nunca sai torto
-      if (!estado.vendaId && !estado.numero) estado.numero = numeroDaVenda(nucleo.listar('vendas'), empresaId);
+      if (!estado.vendaId && !estado.numero) estado.numero = numeroDaVenda(nucleo);
       var totais = calcularTotais(estado.itens, estado.desconto);
       var travada = regras.jaFaturada(estado.status);
       alvo.innerHTML =

@@ -166,12 +166,14 @@
 
   // v5.22.43 (ordens do select)
   var ORDENS = {
-    'venc-asc': function (a, b) { return texto(a && a.ref ? a.ref.vencimento : a.vencimento).localeCompare(texto(b && b.ref ? b.ref.vencimento : b.vencimento)); },
-    'venc-desc': function (a, b) { return texto(b && b.ref ? b.ref.vencimento : b.vencimento).localeCompare(texto(a && a.ref ? a.ref.vencimento : a.vencimento)); },
-    'valor-desc': function (a, b) { return n((b && b.ref ? b.ref : b).valor) - n((a && a.ref ? a.ref : a).valor); },
-    'valor-asc': function (a, b) { return n((a && a.ref ? a.ref : a).valor) - n((b && b.ref ? b.ref : b).valor); },
-    'desc': function (a, b) { return texto((a && a.ref ? a.ref : a).descricao).localeCompare(texto((b && b.ref ? b.ref : b).descricao), 'pt-BR', { sensitivity: 'base' }); }
+    'venc-asc': function (a, b) { return String(vencDe(a) || '').localeCompare(String(vencDe(b) || '')); },
+    'venc-desc': function (a, b) { return String(vencDe(b) || '').localeCompare(String(vencDe(a) || '')); },
+    'valor-desc': function (a, b) { return n(refDe(b).valor) - n(refDe(a).valor); },
+    'valor-asc': function (a, b) { return n(refDe(a).valor) - n(refDe(b).valor); },
+    'desc': function (a, b) { return String(refDe(a).descricao || '').localeCompare(String(refDe(b).descricao || ''), 'pt-BR', { sensitivity: 'base' }); }
   };
+  function refDe(x) { return (x && x.ref) ? x.ref : (x || {}); }
+  function vencDe(x) { return refDe(x).vencimento; }
   function ordenarLancamentos(lista, ordem) {
     return (lista || []).slice().sort(ORDENS[ordem] || ORDENS['venc-asc']);
   }
@@ -218,7 +220,7 @@
     addMeses: addMeses, montarRepeticoes: montarRepeticoes, aplicarBaixaTitulo: aplicarBaixaTitulo,
     codigoNorm: codigoNorm, valorIgual: valorIgual, datasDoLancamento: datasDoLancamento,
     bateHoje: bateHoje, noIntervalo: noIntervalo, estaPago: estaPago,
-    filtraLancamentos: filtraLancamentos, ordenarLancamentos: ordenarLancamentos,
+    filtraLancamentos: filtraLancamentos, ordenarLancamentos: ordenarLancamentos, ORDENS: ORDENS,
     novoReceber: novoReceber, novaDespesa: novaDespesa
   };
 
@@ -494,6 +496,10 @@
           acao: function (overlay) {
             var fornecedor = texto(overlay.querySelector('[data-fin-forn]').value).trim();
             if (!fornecedor) return erroDaJanela(overlay, 'Informe o fornecedor.');
+            // valor em branco (ou digitado com vírgula, que o campo numérico não aceita) NÃO vira
+            // R$ 0,00 calado — avisa e deixa corrigir. Zero digitado de propósito continua valendo.
+            var valorCampo = texto(overlay.querySelector('[data-fin-valor]').value).trim();
+            if (valorCampo === '') return erroDaJanela(overlay, 'Informe o valor (ex.: 45.50).');
             var dados = novaDespesa({
               fornecedor: fornecedor,
               descricao: overlay.querySelector('[data-fin-desc]').value,

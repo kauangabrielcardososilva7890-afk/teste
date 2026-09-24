@@ -57,7 +57,10 @@ console.log('-- 1) cadastrar pelo modal do sistema --');
   ok('o cadastro foi para o núcleo (1 registro)', nucleo.contar('clientes') === 1);
   ok('o modal fechou', !doc.querySelector('[data-modal]'));
   ok('a linha apareceu na tabela', linhas().length === 1 && /Ana/.test(linhas()[0]));
-  ok('o rodapé já conta a mudança na fila da nuvem', /1 mudança/.test(doc.querySelector('[data-rodape]').textContent));
+  // 2 mudanças: o cliente + o CONTADOR de código (a série é um registro do coração como
+  // qualquer outro — se ele não subisse para a nuvem, dois computadores dariam o mesmo código)
+  ok('o rodapé já conta as mudanças na fila da nuvem (cadastro + contador de código)',
+    /2 mudança/.test(doc.querySelector('[data-rodape]').textContent), doc.querySelector('[data-rodape]').textContent);
 }
 
 console.log('-- 2) erro de validação fica no modal, sem perder o digitado --');
@@ -138,6 +141,47 @@ console.log('-- 7) editar pelo modal --');
   // a versão conta a história inteira do registro: 1 criou, 2 apagou, 3 restaurou, 4 editou
   ok('a versão conta a história (4 = criou, apagou, restaurou, editou)', nucleo.obter('clientes', id).versao === 4);
   ok('e a lápide antiga continua registrada no histórico da fila', nucleo.mudancas().some(m => m.id === id && m.apagadoEm > 0));
+}
+
+console.log('-- 7-B) o CÓDIGO do cliente sai da SÉRIE (nunca repete o de um cliente apagado) --');
+{
+  const daTela = nucleo.listar('clientes').filter(c => c.nome === 'Ana')[0];
+  ok('o cliente cadastrado pela TELA ganhou código automático', !!daTela && /^\d+$/.test(String(daTela.codigo)), daTela ? daTela.codigo : 'não achou');
+
+  abrirNovo();
+  const campoCod = doc.querySelector('[data-campo="codigo"]');
+  ok('o formulário mostra o Código (automático), sem deixar digitar',
+    !!campoCod && campoCod.disabled === true && /^\d+$/.test(String(campoCod.value)), campoCod ? campoCod.value : 'sem campo');
+  ok('e o foco do modal pula o campo desabilitado (vai no Nome)',
+    !!doc.activeElement && doc.activeElement.getAttribute('data-campo') === 'nome');
+  const mostrado = campoCod.value;
+  digitar('[data-campo="nome"]', 'Cliente da série');
+  clicar('[data-modal-ok]');
+  const novo = nucleo.listar('clientes').filter(c => c.nome === 'Cliente da série')[0];
+  ok('o código que aparece no formulário é o MESMO que o cliente recebe', !!novo && novo.codigo === mostrado,
+    'mostrou ' + mostrado + ', gravou ' + (novo ? novo.codigo : '-'));
+
+  // apaga o cliente novo e cadastra outro: o código apagado NÃO volta (regra do dono)
+  nucleo.apagar('clientes', novo.id, 'cadastro errado (teste)');
+  telas.desenhar();
+  abrirNovo();
+  digitar('[data-campo="nome"]', 'Depois do apagado');
+  clicar('[data-modal-ok]');
+  const depois = nucleo.listar('clientes').filter(c => c.nome === 'Depois do apagado')[0];
+  ok('depois de apagar um cliente, o próximo cadastro pega um código MAIOR (não devolve o apagado)',
+    !!depois && Number(depois.codigo) > Number(mostrado), 'apagado ' + mostrado + ', próximo ' + (depois ? depois.codigo : '-'));
+
+  // e editar não troca o código
+  clicar('[data-linha="' + depois.id + '"] [data-acao="editar"]');
+  ok('na edição o Código aparece travado com o do cliente',
+    doc.querySelector('[data-campo="codigo"]').value === depois.codigo && doc.querySelector('[data-campo="codigo"]').disabled === true);
+  digitar('[data-campo="telefone"]', '38999991111');
+  clicar('[data-modal-ok]');
+  ok('salvar a edição mantém o código do cliente', nucleo.obter('clientes', depois.id).codigo === depois.codigo &&
+    nucleo.obter('clientes', depois.id).telefone === '38999991111');
+  ok('e nenhum código se repete entre os clientes',
+    new Set(nucleo.listar('clientes').map(c => c.codigo)).size === 3,
+    JSON.stringify(nucleo.listar('clientes').map(c => c.codigo)));
 }
 
 console.log('-- 8) as telas não mexem no dado por conta própria --');

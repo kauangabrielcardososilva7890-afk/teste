@@ -1881,6 +1881,11 @@ sem nada ficar no PC. Provado em `test_redesenho_pagina.js` (o exemplo abre com 
   não existem no núcleo novo — o seletor já os mostra (paridade do controle) e vão ganhar dados quando o
   cadastro completo entrar na fase 3/4. `modulosDinamicos` segue sem formato definido (fase 2/4).
 
+> **⚠️ Correção de rumo (rodada 19, §33):** a **numeração da venda** como descrita abaixo ficou ancorada
+> no `vendas_notinhas_fix_patch.js:30` (`proximoNumeroVendaLimpo`) — essa função **não está no caminho vivo**.
+> A regra que roda é `proximoNumeroSimples` (`vendas_os_patch.js:81`) → `seqObter` (`interface_patch.js:169`),
+> **monotônica**. O que está abaixo vale para o resto; a numeração foi corrigida e provada no §33.
+
 ## 30. RODADA 18-D — A VENDA (NOTINHA) NO NÚCLEO NOVO (24/09/2026)
 
 **Pedido do dono:** *"eu quero cada função que tinha antes, a caixa de seleção inteligente de escolher
@@ -2169,3 +2174,101 @@ ainda não). **Não corrigido** para não mudar comportamento sem o dono pedir.
 **Nada no sistema de hoje mudou:** o app publicado continua **v7.0.11** (`?v=7.0.11-cd1b595e0a7b`, bundle
 `3a341ce6d072e7de`, 228 scripts, `sync_build --check` = "0 soltos") e o motor da nuvem **5.26.8**. Os
 arquivos novos vivem em `novo/`, fora do pacote do exe — como a caixa de seleção e a venda.
+
+## 33. RODADA 19 — A NUMERAÇÃO ESTAVA ANCORADA EM CÓDIGO MORTO (e a importação recusava dado antigo em silêncio) (24/09/2026)
+
+**O que esta rodada foi fazer:** o próximo passo da fila era a impressão da notinha e o PIX. Antes de
+encostar neles, uma conferência de rotina ("as exclusões nunca devolvem o número?") passou pela
+numeração — e foi ali que apareceu o achado. A impressão/PIX fica para a próxima rodada (§33.6).
+
+### 33.1 Achado 1 — gravidade ALTA · Bug (paridade) — provado
+
+Na rodada 18-D a numeração da venda nova foi ancorada no `proximoNumeroVendaLimpo`
+(`vendas_notinhas_fix_patch.js:30`). Esta rodada conferiu **quem usa essa função: ninguém**. Ela existe no
+arquivo, no bundle e nos documentos, mas **não está no caminho vivo** — o `test_venda.js` agora prova isso
+procurando chamada fora da própria definição.
+
+A regra que roda de verdade é `proximoNumeroSimples('venda', …)` (`vendas_os_patch.js:81`) → `seqObter`
+(`interface_patch.js:169`): o contador guardado em `db.config.seq['venda_<empresaId>']` e a conta
+`max(contador, maior número existente) + 1` — **monotônica**. O comentário do próprio arquivo diz o
+motivo: *"excluir o cliente 57 não devolve o 57 pra ninguém — nem excluindo o último"*.
+
+| Situação | `proximoNumeroVendaLimpo` (morta — era a âncora da 18-D) | `seqObter` (a que roda) |
+|---|---|---|
+| 1 e 2 na lista, apaga a 2 | a próxima venda recebe **2 de novo** | a próxima recebe **3** |
+| registro migrado (`999999`) | ignora | **conta** (último grupo de dígitos de qualquer venda da empresa) |
+| número absurdo (`500000`) | ignora (tem teto) | **conta** (não tem teto) |
+| contador guardado | não existe | `db.config.seq`, viaja pela nuvem |
+| venda de outra empresa | ignora | ignora (filtra por `empresaId`) |
+
+Se ficasse como estava, no dia da virada **apagar uma venda devolveria o número dela** — o contrário da
+regra que o dono mandou escrever no código.
+
+### 33.2 A correção (a regra passou a morar num lugar só)
+
+- `novo/nucleo.js` ganhou a série: `numeroInteiro` (último grupo de dígitos, igual ao `vosNumeroInt`),
+  `proximoNumeroDaSerie` (só **lê** — mostrar o número na tela **não gasta**), `proximoNumero` (grava o
+  contador) e `contadorDaSerie`. O contador é um registro da lista interna `series` (id = nome da série):
+  **é registro do núcleo**, entra na fila da nuvem como qualquer gravação — por isso vale nos dois PCs.
+- Se o contador se perder (restauração/backup), o maior número existente puxa ele de volta e ele **nunca
+  anda para trás** — igual ao `seqObter`.
+- `novo/venda.js`: o número da venda vem do núcleo; a leitura não gasta, a gravação gasta.
+- `novo/telas.js`: o **cliente ganhou Código automático** — lacuna fechada: a tela nova não criava
+  `codigo` e a busca "Cód. Cliente" do financeiro nunca acharia nada. Sai da mesma série (o
+  `seqObter('cliente', …)` de `clientes_patch.js:300`), aparece no formulário **travado** (não dá para
+  digitar), sai automático no Salvar e **editar não troca**.
+
+### 33.3 Achado 2 — gravidade ALTA · Bug (risco de perder registro na virada da chave)
+
+`nucleo.salvar` valida tipo e campo obrigatório e **recusa** o que não casa. A ponte importa as listas das
+telas de hoje; quando a validação recusava, a ponte contava aquilo em `emObservacao` (nome que quer dizer
+"modo observação") — e **o registro não entrava no coração, sem erro na tela e sem nada no relatório**.
+
+Caso real da base de hoje: `automacoes_caixa_chat_auxiliares_patch.js:70` grava `parcela: '1/1'` (**texto**)
+numa conta a pagar, e o schema novo declara `parcela` como número. O mesmo vale para preço digitado com
+vírgula.
+
+Correção na raiz, não no sintoma:
+
+- `salvar(..., {importando:true})`: a importação **nunca recusa**. O que casa com o schema casa
+  (`numeroDoTexto`: `'80'`, `'80,00'`, `'80.00'`, `'1.234,56'`); o que não casa **entra como veio** e volta
+  em `avisos`. E `numeroDoTexto` **não inventa número**: `'1/1'` **não** vira 11, `'R$ 80'` e `'abc'` não
+  viram número.
+- A ponte manda `importando:true` em toda importação (o que vem por ali é dado das telas de hoje) e o
+  relatório ganhou `camposForaDoPadrao` (entrou, mas ficou fora do schema) e `recusadosImpossiveis`
+  (tem de ficar **0**).
+- As **telas novas não passam `importando`** — a trava continua valendo para dado novo (provado).
+
+### 33.4 Achado 3 — gravidade MÉDIA · Bug (tela) — corrigido
+
+No formulário da despesa, valor em branco (ou digitado com vírgula, que o campo numérico não aceita)
+virava **R$ 0,00 calado** — o `parseFloat(x)||0`, igual ao `saveCP` de hoje. Agora a janela avisa
+("Informe o valor (ex.: 45.50)") e deixa corrigir. **Zero digitado de propósito continua valendo**, para
+não travar a edição de um registro antigo que já esteja zerado.
+
+### 33.5 Provas da rodada
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_financeiro.js` | **140 ✔** (era 118) | o diferencial do financeiro contra as funções que rodam hoje (18 combinações de busca, 56 pares de ordem, 8 casos de repetição) + a tela: baixa em Pix, **baixa em lote**, novo lançamento 3×, despesa criar/editar, valor em branco recusado, lixeira e restaurar |
+| `test_nucleo.js` | **77 ✔** (era 53) | a série do número (9 casos, incluindo "apagar não devolve") + a importação que **não recusa** (7 casos) |
+| `test_ponte.js` | **57 ✔** (era 50) | base antiga com schema: preço `'85,90'` → 85.9, `parcela '1/1'` entra como veio, `camposForaDoPadrao` conta e `recusadosImpossiveis` = 0 |
+| `test_telas.js` | **46 ✔** (era 38) | código automático do cliente: sai na criação, é o mesmo que o formulário mostrou, não volta depois de apagar, não muda na edição |
+| `test_venda.js` | **102 ✔** (era 98) | o diferencial da numeração roda contra as **duas peças vivas** (`proximoNumeroSimples` + `seqObter`): 10 casos, incluindo "apagar não devolve" (contador 2 → próxima 3) |
+| suíte inteira (`test_runner.js`) | **225 passaram, 0 falharam, 0 não rodaram** | nada regrediu |
+| build | `Bundle OK: 228 scripts, sha256 4228e4635a65b523` · `Sync OK: v7.0.11 | 228 no bundle | 0 soltos | 13 entradas em build.files` | |
+
+O bundle foi **regenerado** nesta rodada porque `novo/nucleo.js` e `novo/ponte.js` **estão** no bundle (o
+conferente do painel da Nuvem roda dentro do sistema de hoje) — e o carimbo do `index.html` andou junto
+(`?v=7.0.11-134df55ea26a`). A versão continua **7.0.11** (não houve mudança de versão). O `mobile/www` foi atualizado **só pela cópia mecânica do
+build** (`mobile/sync-www.js`, que a própria suíte dispara): o `app.bundle.js` de lá ficou idêntico ao de
+cá. Nenhum arquivo do APK foi editado à mão.
+
+### 33.6 O que ficou de fora (registrado)
+
+- **Impressão da notinha (meia folha / folha inteira com OS) e PIX**: era o plano desta rodada; ficou para a
+  próxima porque o número da venda — que sai impresso na notinha — estava errado.
+- **O conferente do painel da Nuvem compara listas, não "engole" a base**: ele roda em modo observação, então
+  **não** responde se o coração aceita o dado. Quem responde isso é a importação de verdade, com
+  `camposForaDoPadrao` / `recusadosImpossiveis`. Para o dia da virada: importar a base numa cópia e conferir
+  que `recusadosImpossiveis` = **0**.
