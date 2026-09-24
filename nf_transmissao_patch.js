@@ -273,7 +273,7 @@ window.nfEmitirCompleta=async function(origem, id, docConferido){
     // Duplicidade: mesma origem já autorizada?
     const d=nfxDb();
     const ja=d.config.nfRegistro.find(n=>n.origemId===id && n.status==='autorizada');
-    if(ja){ const abrirDanfe=(typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('Nota já autorizada','Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'. Abrir o DANFE dela?', {botao:'Abrir DANFE'}) : ((typeof window.confirm==='function') ? window.confirm('Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'.\nOK = abrir o DANFE dela · Cancelar = não fazer nada') : true); if(abrirDanfe){ window.nfAbrirDanfe(ja.id); } return {ok:false, error:'duplicada', nota:ja}; }
+    if(ja){ const abrirDanfe=(typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('Nota já autorizada','Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'. Abrir o DANFE dela?', {botao:'Abrir DANFE'}) : ((typeof window.confirmSistema==='function') ? await window.confirmSistema('Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'. Abrir o DANFE dela?','Nota já autorizada') : (nfxToast('Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+' — abrindo o DANFE.','info'), true)); if(abrirDanfe){ window.nfAbrirDanfe(ja.id); } return {ok:false, error:'duplicada', nota:ja}; }
     const amb=passo.ambiente;
     // 1) XML final: confere + number lock + selo de homologação dentro do XML
     const numero=window.nfProximoNumero('55', docConferido.serie||1);
@@ -352,7 +352,7 @@ window.nfCancelarNota=async function(notaId){
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
     const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : null;
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa muito curta — cancelamento não enviado.','error'); return {ok:false, error:'just-curta'}; }
-    const confereProd = (typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('CANCELAR NOTA DE VERDADE?','Cancelar nota DE VERDADE (produção) fica registrado na SEFAZ para sempre.', {botao:'Cancelar a nota', cor:'#b91c1c'}) : (typeof window.confirm==='function' && window.confirm('⚠️ Cancelar nota DE VERDADE (produção)?'));
+    const confereProd = (typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('CANCELAR NOTA DE VERDADE?','Cancelar nota DE VERDADE (produção) fica registrado na SEFAZ para sempre.', {botao:'Cancelar a nota', cor:'#b91c1c'}) : ((typeof window.confirmSistema==='function') ? await window.confirmSistema('Cancelar nota DE VERDADE (produção)? Isso fica registrado na SEFAZ para sempre.','CANCELAR NOTA DE VERDADE?') : (nfxToast('Sem a janela de confirmação do sistema a nota NÃO foi cancelada.','error'), false));
     if(nota.ambiente==='producao' && !confereProd){ return {ok:false, error:'desistiu'}; }
     const senha=await nfxPedirSenha(); if(!senha) return {ok:false, error:'sem-senha'};
     const amb=nota.ambiente || nfxAmb();

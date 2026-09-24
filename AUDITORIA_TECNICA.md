@@ -2710,3 +2710,89 @@ Alterados: `cloudflare_data_sync_patch.js`, `test_nuvem_rapida.js`, `test_runner
 `PASSO_A_PASSO_NUVEM_E_SITE.html`, `RELATORIO_DE_TESTE_NF.html`, `test_worker_publico.js` (comentário),
 `IDEIAS_PARA_RESOLVER.md` (versão), `app.bundle.js` (build), `mobile/www/app.bundle.js` (build),
 `bundle-manifest.json` (build). Novos: `test_nuvem_nao_perde.js`, `bench_clique_nuvem.js`.
+
+## §39 — Rodada 25 (24/09/2026): a ideia "A" — toda reclamação do dono ganhou uma trava viva
+
+**Contexto:** depois de fechar a dor nº 1 (§38), a ordem aprovada por ele é **E → A → B → J**. Esta
+rodada entrega o **A**: *"transformar cada reclamação dele em teste"* — o que impede o "voltou a dar
+problema".
+
+### 39.1 O registro: `RECLAMACOES_E_TESTES.md`
+
+Uma tabela com **19 linhas** (18 reclamações dele + 1 defeito achado nesta rodada), cada uma com: as
+palavras dele (ou o efeito, quando ele só descreveu o sintoma), quando foi, o que foi corrigido, **onde
+vive a correção** e **o teste que trava**. As reclamações sem teste próprio até agora estão marcadas
+**aqui** — a trava delas mora dentro do `test_reclamacoes_do_dono.js`.
+
+Exemplos de linhas: o duplo clique que não fazia nada (r5) · "MUDE A VERSÃO … e CONFIRA TODOS OS
+ARQUIVOS" e os links que levavam para branch antiga (r4) · "NADA APARECEU NOS CONTRATOS NOVAMENTE, AS
+IMPRESSORAS, NADA" (r6/r9) · "INSTANTÂNEO SEM NENHUM ERRO" (r8/r9) · "pq fica voltando? … vai subindo aos
+poucos" (r11) · "os menus não estão ficando lá em cima no NF-e/NFC-e … muda esse nome pra ser
+oficialmente o menu fiscal" (v6.1.0) · "não está mudando nada, somente o rodapé da versão; o modo escuro
+é todo bugado" (v6.1.2) · "em usuários tem uma caixa que é 'o que são as 3 permissões?', retira isso"
+(v7.0.1) · "nada salvo no PC/navegador — só nuvem" (v6.1.5) · **"dado que some/volta"** (§38) · e a regra
+16 (nada de `alert`/`confirm`/`prompt` nativos, que estouram no `.exe`).
+
+### 39.2 O cobrador: `test_reclamacoes_do_dono.js` (55 verificações)
+
+Duas funções:
+
+1. **Cobra a lista contra o repositório.** Cada arquivo citado tem de existir; cada teste citado tem de
+   existir **e estar registrado no `test_runner.js`** (teste que existe mas ninguém roda **não trava
+   nada** — foi exatamente esse o buraco de antes). Se alguém apagar um teste ou tirá-lo da suíte, este
+   teste fica vermelho apontando a linha da tabela.
+2. **Prende as 9 linhas "aqui"**: versão do app igual em `package.json`, `index.html`,
+   `mobile/www/index.html`, `importar.html` e nos 3 HTMLs de doc (e **nenhuma sobra de outra versão
+   7.x.y**); `package.json > digicopy.branch` na branch da sessão (o ZIP/link apontando para o código
+   certo); os 3 patches do **menu fiscal oficial** no bundle, com o nome "Menu Fiscal", `#menu-nfe`, os
+   6 itens e as regras de **modo escuro**; a caixa **"3 permissões" não injetada** (a explicação
+   continua pronta); **`erro.txt` fora do rodapé**; o **SÓ NUVEM** de pé (`soNuvem?true:original.apply`
+   e a cópia local só com `nuvemTemTudo()`); o **"dado que some"** (§38) com `enfileirarNaHora`,
+   `keepalive`, teto da fila ≥ 400 e teto do fechamento maior; e **nenhum `prompt`/`confirm` nativo**
+   nos caminhos críticos (`alert` só como rede de segurança quando não existe `toast`).
+
+**Provas negativas (quebrar de propósito e ver a trava pegar):** versão do celular trocada ✘ · `prompt`
+nativo devolvido ao `popup_sistema_patch.js` ✘ · guia de teste com versão velha ✘ · `confirm` nativo
+devolvido ao caminho fiscal ✘ · enfileiramento na hora desfeito no motor ✘ · teste citado tirado do
+`test_runner.js` ✘. Todas as seis apontaram o defeito; depois, tudo restaurado.
+
+### 39.3 ACHADO NOVO — gravidade ALTA · Bug (diálogo nativo no caminho fiscal) — corrigido
+
+Foi a própria trava nova que achou, ao ser escrita: **dois pontos** de `nf_transmissao_patch.js` ainda
+chamavam `window.confirm` **nativo** como rede de segurança quando `window.nfxConfirmar` não estava
+disponível (`:276` — nota duplicada; `:355` — cancelamento em produção). Dentro do `.exe` isso é diálogo
+do navegador, e a regra 16 existe justamente porque o `prompt` nativo **lança erro** ali
+(`window-setup.ts` do Electron); o `confirm` é do mesmo time.
+
+**Correção:** os dois pontos passaram a usar `window.confirmSistema` (o modal do sistema) e, se nem ele
+existir, **avisam na tela por `toast` sem abrir diálogo nativo**. No cancelamento em produção o padrão
+sem modal é **não cancelar** (comportamento conservador, igual ao de antes quando o `confirm` não
+existia). O resto do arquivo já estava certo (`nfxPedirTexto`/`nfxToast`); `fiscal_guard_patch.js` foi
+conferido e **não** tem diálogo nativo (usa `pedirTextoSistema`/`nfxPedirTexto`).
+
+### 39.4 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| `test_reclamacoes_do_dono.js` (novo) | **55 ✓** + 6 provas negativas (quebrar → ✘, restaurar → ✓) |
+| suíte inteira (`test_runner.js`) | **220 passaram, 0 falharam, 0 não rodaram** |
+| `build_bundle.js` / `--check` | `Bundle OK: 225 scripts, sha256 c01d345eae96c994` |
+| `sync_build.js` | `Sync OK: v7.0.13 \| 225 no bundle \| 0 soltos \| 13 entradas em build.files` |
+| `mobile/sync-www.js` | `www do celular 1.0 pronto: 4 arquivos + assets/vendor, 0 referências quebradas` |
+
+**Versão do app: 7.0.12 → 7.0.13** (mudou arquivo vivo — o caminho fiscal). **Motor da nuvem segue
+5.26.8**; nada de banco, nada de servidor, nenhum deploy. A partir de agora a **conferência da versão em
+todos os arquivos é automática** (a linha 2 da lista roda na suíte), então não depende mais de lembrar.
+
+### 39.5 Limites honestos
+
+- O teste cobra a lista **e** as travas de código; ele **não** substitui os testes de comportamento (é o
+  `test_nuvem_nao_perde.js`, o `test_pix.js`, etc. que provam o sistema funcionando). Ele é o índice que
+  garante que nenhum deles seja apagado nem saia da suíte.
+- O `confirm` nativo corrigido em `:276`/`:355` **não tinha sido relatado pelo dono** — a classificação
+  vem da leitura do código + regra 16; **não foi possível verificar diretamente** em qual máquina ele
+  apareceu (acesso ao banco de produção indisponível), porque depende de um estado em que o modal do
+  sistema não existe (patch fora do bundle/versão antiga embarcada no `.exe`).
+- As linhas antigas da tabela apontam para os testes que existem hoje; se um dia um teste for
+  **substituído** por outro melhor, a linha precisa ser atualizada junto (senão a suíte acusa — de
+  propósito).

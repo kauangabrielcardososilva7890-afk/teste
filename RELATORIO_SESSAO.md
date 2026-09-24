@@ -6481,3 +6481,100 @@ sem esperar). Ele grava um cliente e olha o navegador **no mesmo instante**.
 passaram, 0 falharam, 0 sem rodar** · `Build: 225 scripts, sha256 4affbd2e2851450e` · `Sync OK: v7.0.12 |
 225 no bundle | 0 soltos` · **app v7.0.12** · **motor da nuvem 5.26.8** (não tocado) · nada de banco
 tocado, nenhum deploy feito.
+
+## Rodada 25 — 24/09/2026 — CADA RECLAMAÇÃO SUA AGORA TEM UMA TRAVA (ideia "A") + UM DEFEITO ACHADO POR ELA
+
+**Ordem que você aprovou:** E → **A** → B → J (o **E** foi a rodada 24, o "dado que some"). Esta rodada
+entrega o **A**: *"transformar cada reclamação dele em teste"* — para o "voltou a dar problema" não
+depender mais de ninguém lembrar.
+
+### 1. O registro: `RECLAMACOES_E_TESTES.md`
+
+Uma tabela com **19 linhas**. Cada uma traz: **o que você reclamou** (suas palavras), quando foi, o que
+foi consertado, onde vive a correção e **qual teste trava aquilo**. Estão lá, entre outras: o duplo
+clique que não fazia nada (5 telas) · a versão que tinha de estar em todos os arquivos (e os links que
+apontavam para branch velha) · "NADA APARECEU NOS CONTRATOS NOVAMENTE, AS IMPRESSORAS, NADA" · o
+"INSTANTÂNEO SEM NENHUM ERRO" · "pq fica voltando?" · o menu fiscal lá em cima com o nome oficial · o
+modo escuro · a caixa "o que são as 3 permissões?" que saiu · o `erro.txt` fora do rodapé · o SÓ NUVEM ·
+o **"dado que some/volta"** (rodada 24) e a regra do `prompt` que estoura dentro do `.exe`.
+
+### 2. O cobrador automático: `test_reclamacoes_do_dono.js` (55 verificações)
+
+Ele faz duas coisas:
+
+- **Cobra a lista contra o repositório:** todo teste citado tem de existir **e estar rodando na suíte**
+  (teste que existe mas ninguém roda não trava nada — era esse o buraco). Se alguém apagar um teste ou
+  tirar da suíte, fica vermelho apontando a linha.
+- **Prende as 9 reclamações que ainda não tinham teste próprio:** versão igual em todos os arquivos (e
+  nenhuma sobra de versão velha), branch certa nos links, menu fiscal oficial com os 6 itens e o escuro,
+  a caixa "3 permissões" fora da tela, `erro.txt` fora do rodapé, o SÓ NUVEM, o "dado que some" e o
+  prompt/confirm nativo.
+
+**Provei que a trava pega:** quebrei de propósito 6 vezes (versão do celular trocada, `prompt` de volta,
+guia com versão velha, `confirm` de volta no caminho fiscal, enfileiramento desfeito no motor e um teste
+tirado da suíte) — **as seis ficaram vermelhas**; depois restaurei tudo.
+
+### 3. Defeito que **a trava nova achou** (e eu consertei)
+
+Ao escrever a trava do `prompt`, ela acusou dois pontos do **caminho fiscal**
+(`nf_transmissao_patch.js`, linhas 276 e 355) que ainda chamavam o **`confirm` nativo do navegador** como
+rede de segurança se o modal do sistema não estivesse disponível: na **nota duplicada** e no
+**cancelamento em produção**. Dentro do `.exe` isso é diálogo do navegador, e a regra 16 existe porque o
+`prompt` nativo **lança erro** ali (o Electron faz isso de propósito).
+
+**Consertado:** os dois pontos usam a janela do sistema (`confirmSistema`) e, se nem ela existir,
+**avisam na tela** em vez de abrir diálogo nativo. No cancelamento em produção, sem janela de
+confirmação, a nota **não é cancelada** (o lado seguro). Varri os arquivos fiscais: o resto já estava
+certo.
+
+### 4. O que mudou para você
+
+- **Nada muda no seu uso.** A diferença é que agora existe uma lista viva e um teste que segura cada
+  coisa que você já reclamou uma vez.
+- Versão do app: **7.0.12 → 7.0.13** (mexi em arquivo vivo — o fiscal). Motor da nuvem segue **5.26.8**,
+  nada de banco, nada de servidor, nenhum deploy.
+- A conferência da **versão em todos os arquivos** agora é automática: não depende mais de lembrar a cada
+  publicação.
+
+### 5. Limites (sem promessa vazia)
+
+- O teste novo **não substitui** os testes de comportamento (nuvem, PIX, venda, contratos): ele é o
+  **índice** que garante que nenhum deles seja apagado nem saia da suíte.
+- O `confirm` nativo corrigido **não foi você quem relatou** — veio da leitura do código + da regra 16.
+  Não foi possível verificar diretamente em qual máquina ele chegou a aparecer (acesso ao banco de
+  produção indisponível); ele só acontece num cenário em que o modal do sistema não está presente.
+- Se um dia um teste for **trocado** por outro melhor, a linha da tabela precisa ser atualizada junto —
+  se não, a suíte acusa (de propósito).
+
+### 6. Passos da rodada (tudo o que foi feito, na ordem)
+
+1. Reuni as reclamações documentadas nas rodadas (23/09 e 24/09, mais as de 19/09 e v5.22.x) com a
+   evidência de cada uma no `RELATORIO_SESSAO.md`.
+2. Escrevi `RECLAMACOES_E_TESTES.md` (19 linhas, com o teste de cada uma; as sem teste próprio marcadas
+   "aqui").
+3. Escrevi `test_reclamacoes_do_dono.js`: cobra a lista (arquivo existe / teste registrado na suíte) e
+   prende as 9 reclamações "aqui".
+4. **Rodei e endureci:** nas primeiras provas negativas, a checagem da versão do celular e a do `prompt`
+   passaram batido (a primeira aceitava a versão em qualquer lugar do arquivo; a segunda deixava passar
+   `window.prompt(` por causa do ponto antes da palavra). Corrigi as duas e refiz as provas.
+5. A trava do `confirm` acusou os 2 pontos do `nf_transmissao_patch.js` → **consertei** (trocado por
+   `confirmSistema` + aviso na tela) e reconferi o `fiscal_guard_patch.js`.
+6. 6 provas negativas: todas vermelhas como deviam; restaurei tudo. (Numa delas, o `git checkout` desfez
+   a correção do fiscal junto com o teste — reapliquei e reconferi pelo `sha256` do bundle.)
+7. Registrei o teste no `test_runner.js`, subi a versão para **7.0.13** (e a própria trava confere
+   `package.json`, `index.html`, `mobile/www/index.html`, `importar.html` e os 3 HTMLs de doc).
+8. `node build_bundle.js` → `Bundle gerado: 225 scripts, sha256 c01d345eae96c994`; `node sync_build.js` →
+   `Sync OK: v7.0.13 | 225 no bundle | 0 soltos | 13 entradas em build.files`; `node mobile/sync-www.js` →
+   `4 arquivos + assets/vendor, 0 referências quebradas`.
+9. Suíte inteira: **220 passaram, 0 falharam, 0 não rodaram**.
+10. AUDITORIA §39 + este relatório; commit + push na branch `arena/01a0cf4a-teste`.
+
+### 7. Provas
+
+`test_reclamacoes_do_dono.js` **55 ✓** (+6 provas negativas) · suíte inteira **220 passaram, 0 falharam, 0
+sem rodar** · `Bundle OK: 225 scripts, sha256 c01d345eae96c994` · `Sync OK: v7.0.13 | 225 no bundle | 0
+soltos` · **app v7.0.13** · **motor da nuvem 5.26.8** (não tocado) · nada de banco tocado, nenhum deploy
+feito.
+
+**Na fila:** **B** (limpeza do código morto com prova) e **J** (backup e voltar atrás em 1 clique), na
+ordem que você aprovou.

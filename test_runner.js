@@ -251,6 +251,13 @@ const tests=[
   // de 900 ms) e reprova se ela não entrar na fila no fim do clique, não sobreviver ao
   // fechamento da janela e não avisar quando a fila enche.
   "test_nuvem_nao_perde.js",
+  // v7.0.13 (rodada 25) — A IDEIA "A": toda reclamação do dono tem uma trava viva. Este teste
+  // cobra a lista (RECLAMACOES_E_TESTES.md): teste citado tem de existir E estar registrado aqui
+  // — teste que ninguém roda não trava nada. E prende as reclamações que ainda não tinham teste
+  // próprio (versão/branch em todos os arquivos, menu fiscal oficial, modo escuro, a caixa
+  // "3 permissões" fora da tela, o erro.txt fora do rodapé, o SÓ NUVEM, o "dado que some" e o
+  // prompt/confirm nativo que quebra dentro do .exe — regra 16).
+  "test_reclamacoes_do_dono.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"
