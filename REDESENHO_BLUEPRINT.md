@@ -117,6 +117,16 @@ completamente"*. A peça que faz isso é a **ponte** (`novo/ponte.js`):
 4. a ponte começa em **modo observação** (relata sem gravar) e só depois vai a modo ligado;
 5. conforme cada tela é migrada para o padrão novo, a ponte encolhe — até sobrar só o coração.
 
+**Correção de rumo (medida em 24/09/2026, rodada 18-B):** o item 2 **muda**. Medido numa base de
+**76.550 registros**, a ponte acompanhando **cada** gravação custa **137 ms** por gravação (239 ms antes
+da assinatura FNV-1a; 1ª varredura ~270 ms). Isso é a lentidão que o dono reclamou — então a ponte **não
+entra no `saveDB()` de produção**. Dentro do sistema de hoje ela entra como **conferência sob demanda**
+(painel da Nuvem, botão "Conferir o núcleo novo"): custo zero no uso normal, 131-243 ms quando ele pede,
+e **sem gravar nada**. O item 3 (massa pede confirmação) e o item 4 (modo observação) continuam valendo.
+O modo ligado no `saveDB()` só volta à mesa quando existir **cadência de gravação em lote** (hoje cada
+tela grava a base inteira) — é a mesma raiz da lentidão. Prova: `test_ponte_no_sistema.js` (39 ✔);
+detalhes em `AUDITORIA_TECNICA.md` §28.
+
 ## 5) Regras que o sistema novo já nasce cumprindo
 
 Sai direto das `REGRAS_PERMANENTES.md`: local-first e incremental; nada de apagar dado
