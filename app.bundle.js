@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: c01d345eae96c994
+ * scripts: 225 | sha256: f14563564b6d710f
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29537,6 +29537,36 @@ function localBusinessCount(){
   });
   return n;
 }
+// v7.0.13 — "NÃO ESTÁ APARECENDO NENHUM DADO, É NORMAL?"
+// Pergunta do dono (24/09). Num endereço novo a resposta é sim (portão da nuvem + a
+// regra de não guardar nada no PC). Mas a MESMA tela vazia também é o que ele vê se a
+// conexão daquele computador estiver apontando para outra loja (CNPJ errado) — e aí ele
+// fica no escuro, achando que perdeu tudo. Este aviso acaba com o silêncio: quando a
+// nuvem RESPONDE e mesmo assim a base está vazia, aparece na tela — uma vez por
+// abertura — dizendo com qual empresa a conexão está falando.
+let avisouBaseVazia=false;
+function empresaDaConexao(){
+  try{
+    const c=window.DIGICOPY_CLOUD;
+    const d=c&&typeof c.deviceInfo==='function'?c.deviceInfo():null;
+    if(!d)return '';
+    return String(d.cnpj||d.empresaNome||d.deviceName||'');
+  }catch(e){return '';}
+}
+function avisarSeBaseVazia(){
+  if(avisouBaseVazia)return;
+  try{
+    if(!authorized()||!state.lastOk)return;      // só depois de a nuvem responder
+    if(!state.initialPull)return;                 // e só com a base inteira já trazida (senão era alarme falso)
+    if(localBusinessCount()>0)return;            // tem dado na tela: nada a avisar
+    avisouBaseVazia=true;
+    const empresa=empresaDaConexao();
+    if(typeof window.toast==='function'){
+      window.toast('Nuvem conectada'+(empresa?' ('+empresa+')':'')+
+        ': nenhum registro nesta empresa. Se você esperava ver seus dados, esta conexão pode ser de outra loja — confira em Nuvem → Conexões.', 'info');
+    }
+  }catch(e){}
+}
 function listLocalOnlyKeys(beforeKeys){
   const extras=[];
   if(!beforeKeys)return extras;
@@ -30085,6 +30115,7 @@ async function tickSohLeitura(reason){
     if(mudou){redesenhoPendente=true;tentarRedesenhoPendente();}
     failures=0;lastError='';state.lastOk=Date.now();   // v7.0.5 — leitura boa zera o recuo
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    avisarSeBaseVazia();   // v7.0.13 — base vazia com a nuvem respondendo NUNCA fica em silêncio
     return true;
   }catch(e){
     lastError=e&&e.message?e.message:String(e);
@@ -30170,6 +30201,7 @@ async function tick(reason){
     // atrapalhar quem está digitando.
     if(mudouNaTela){redesenhoPendente=true;tentarRedesenhoPendente();}
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    avisarSeBaseVazia();   // v7.0.13 — base vazia com a nuvem respondendo NUNCA fica em silêncio
     return true;
   }catch(e){
     mostrarCargaNuvem(false);   // nunca deixar o dono preso no aviso de carga

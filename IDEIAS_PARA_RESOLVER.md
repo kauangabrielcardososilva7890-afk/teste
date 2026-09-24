@@ -1,6 +1,6 @@
 # IDEIAS PARA RESOLVER O PROBLEMA DO SISTEMA ORIGINAL
 
-**Data:** 24/09/2026 · **Autor:** manutenção técnica (Arena) · **Versão do sistema:** 7.0.13 · **Motor:** 5.26.8
+**Data:** 24/09/2026 · **Autor:** manutenção técnica (Arena) · **Versão do sistema:** 7.0.14 · **Motor:** 5.26.8
 
 Este documento é o que o dono pediu: **ideias**, sem compromisso, para resolver o problema do sistema
 que já existe. Nada aqui foi feito ainda. Cada ideia diz: o que resolve, como seria, quanto custa, qual

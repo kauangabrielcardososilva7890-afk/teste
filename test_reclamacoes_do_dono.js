@@ -192,6 +192,45 @@ console.log('-- reclamação 16: a venda/notinha usa o sistema vivo, não o arqu
   ok('quem fatura é o vendas_os_patch (vosConcluirFaturamento)', ler('vendas_os_patch.js').indexOf('vosConcluirFaturamento') >= 0);
 }
 
+console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?" --');
+{
+  // A resposta é: num ENDEREÇO NOVO (outro navegador, aba anônima, ou o preview de
+  // teste) o sistema abre no PORTÃO da nuvem — e isso é de propósito (regra 44: nada
+  // salvo no PC; a base vem da nuvem). Estas travas garantem que:
+  //   (a) o portão continua existindo e cobrindo a tela quando não há conexão;
+  //   (b) ele NÃO aparece quando o computador já está conectado;
+  //   (c) antes das listas, aparece a tela "Baixando os dados da nuvem…";
+  //   (d) a tela de carga NUNCA fica presa (tem saída garantida).
+  const portao = ler('ajustes_v5262_login_nuvem_primeiro_patch.js');
+  ok('o portão da nuvem está no bundle (endereço novo = conectar uma vez)',
+    posNoManifesto('ajustes_v5262_login_nuvem_primeiro_patch.js') >= 0);
+  ok('sem conexão, o portão cobre a tela inteira (o sistema não abre vazio por baixo)',
+    /box\.id = 'v5262-portao'/.test(portao) && /position:fixed;inset:0;z-index:2147482900/.test(portao));
+  ok('quem já conectou NÃO vê o portão de novo (a conexão fica guardada neste navegador)',
+    /if \(tokenNuvem\(\)\) return;\s*\/\/ conectou uma vez/.test(portao));
+  ok('o aviso é claro: "Este computador ainda não está conectado"',
+    portao.indexOf('Este computador ainda não está conectado') >= 0);
+
+  const sync = ler('cloudflare_data_sync_patch.js');
+  ok('a tela "Baixando os dados da nuvem…" existe e mostra a contagem que já chegou',
+    /function mostrarCargaNuvem\(/.test(sync) && /Baixando os dados da nuvem/.test(sync) && /registros trazidos/.test(sync));
+  ok('ela abre na primeira carga e no "baixar tudo"', /pedirCarga\(!state\.initialPull\|\|reason==='baixar-tudo-da-nuvem'\)/.test(sync));
+  ok('ela NUNCA fica presa na tela (tem saída garantida)',
+    /nunca deixar o dono preso no aviso de carga/.test(sync));
+  ok('o motor diz na tela quantos estão por subir e até quando está em dia (o "sumiço" deixa de ser mistério)',
+    /filaCheia, filaGravada, emDiaAte:/.test(sync));
+
+  // v7.0.14 — o degrau novo: base vazia com a nuvem RESPONDENDO avisa na tela, com o
+  // nome/CNPJ da conexão. Era o único caso em que "não apareceu nada" ainda ficava mudo.
+  ok('existe o aviso de base vazia (nuvem conectada e nenhum registro)',
+    /function avisarSeBaseVazia\(/.test(sync) && /nenhum registro nesta empresa/.test(sync));
+  ok('o aviso só sai depois de a nuvem responder e com a base inteira trazida (sem alarme falso)',
+    /!authorized\(\)\|\|!state\.lastOk\)return/.test(sync) && /!state\.initialPull\)return/.test(sync) && /localBusinessCount\(\)>0\)return/.test(sync));
+  ok('o aviso é chamado no caminho de sincronização bem-sucedida', /indicator\(true,'Nuvem sincronizada/.test(sync) && (sync.match(/avisarSeBaseVazia\(\);/g) || []).length >= 2);
+  ok('o aviso diz COM QUAL empresa a conexão está falando (CNPJ errado é a causa mais comum)',
+    /function empresaDaConexao\(/.test(sync) && /d\.cnpj\|\|d\.empresaNome/.test(sync));
+}
+
 console.log('-- a própria lista continua viva (linhas marcadas "aqui") --');
 {
   const marcadas = linhas.filter((l) => l.indexOf('**aqui**') >= 0).length;

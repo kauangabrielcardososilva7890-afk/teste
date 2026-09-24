@@ -44,6 +44,12 @@ function nuvemFingida() {
   return {
     diario: diario,
     envios: envios,
+    // planta um registro JÁ EXISTENTE na nuvem (com o cursor certo, como se tivesse
+    // sido gravado por outro computador antes deste abrir)
+    semear: function (entity, recordId, data) {
+      cursor++;
+      diario.push({ cursor: cursor, entity: entity, recordId: recordId, data: data, version: 1 });
+    },
     api: async function (path, options) {
       const opt = options || {};
       if (path.indexOf('/v1/changes?cursor=') === 0) {
@@ -80,7 +86,7 @@ function abrirNavegador(nuvem, estadoSalvo) {
   w.localStorage.setItem('digicopy_cf_token_v1', 'token-de-teste');
   w.DIGICOPY_CLOUD = { token: () => 'token-de-teste', api: nuvem.api, deviceInfo: () => null };
   w.DIGICOPY_SO_NUVEM = true;
-  w.DIGICOPY_APP_VERSION = '7.0.13';
+  w.DIGICOPY_APP_VERSION = '7.0.14';
   w.getSession = () => null;
   w.db = { clientes: [], produtos: [], vendas: [], contasReceber: [], contasPagar: [], config: {}, _seq: {} };
   w.saveDB = function () { };            // o saveDB "de antes" (app.js) — o motor embrulha este
@@ -221,6 +227,29 @@ function abrirNavegador(nuvem, estadoSalvo) {
       avisou && naFila < total, 'avisos: ' + JSON.stringify(n3.avisos.slice(0, 2)) + ' guardados: ' + naFila + ' de ' + total);
   }
 
-  console.log('\nRESULTADO: ' + passou + ' verificações passaram — o que ele grava entra na fila na hora e sobrevive a fechar e reabrir.');
+  console.log('-- "não está aparecendo nenhum dado, é normal?" --');
+  {
+    // Nuvem conectada mas SEM nenhum registro (é o caso de uma conexão nova, ou de uma
+    // conexão apontando para outra loja): ele PRECISA ser avisado, com o nome da empresa,
+    // em vez de ficar olhando a tela vazia e achando que perdeu tudo.
+    const nuvem4 = nuvemFingida();
+    const n4 = abrirNavegador(nuvem4);
+    await n4.andar(20000);
+    const avisou = n4.avisos.some((a) => /nenhum registro nesta empresa/i.test(a.txt));
+    ok('base vazia com a nuvem respondendo avisa na tela (nada de tela vazia em silêncio)', avisou,
+      'avisos: ' + JSON.stringify(n4.avisos.slice(0, 2)).slice(0, 160));
+
+    // e com dados na nuvem esse aviso NÃO aparece (senão virava alarme falso)
+    const nuvem5 = nuvemFingida();
+    nuvem5.semear('clientes', 'c-existente', { id: 'c-existente', nome: 'Cliente Que Já Existe' });
+    const n5 = abrirNavegador(nuvem5);
+    await n5.andar(20000);
+    const avisou5 = n5.avisos.some((a) => /nenhum registro nesta empresa/i.test(a.txt));
+    const temDado = (n5.janela.db.clientes || []).some((c) => c && c.id === 'c-existente');
+    ok('com dados na nuvem o aviso NÃO aparece e o dado está na tela (sem alarme falso)', !avisou5 && temDado,
+      'avisou=' + avisou5 + ' na tela=' + temDado);
+  }
+
+  console.log('\nRESULTADO: ' + passou + ' verificações passaram — o que ele grava entra na fila na hora, sobrevive a fechar e reabrir, e a tela vazia nunca fica em silêncio.');
   try { n1.dom.window.close(); n2.dom.window.close(); } catch (e) { }
 })();

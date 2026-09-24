@@ -6578,3 +6578,86 @@ feito.
 
 **Na fila:** **B** (limpeza do código morto com prova) e **J** (backup e voltar atrás em 1 clique), na
 ordem que você aprovou.
+
+## Rodada 26 — 24/09/2026 — "NÃO ESTÁ APARECENDO NENHUM DADO, É NORMAL?" — SIM, E AGORA NEM A TELA VAZIA FICA MUDA
+
+**Suas palavras:** *"pode fazer, se for melhorar pode fazer"* + *"agora não está aparecendo nenhum dado, é
+normal?"*.
+
+### 1. A resposta curta: **sim, é normal naquele endereço** — e não é o seu sistema
+
+O seu sistema tem **duas trancas** de propósito:
+1. **Conexão da nuvem** (CNPJ + senha de conexão) — guardada **por navegador/endereço**. Sem ela, o
+   sistema **não abre**: aparece a caixa azul **"Conexão da nuvem — Este computador ainda não está
+   conectado"** (você mesmo pediu: "sem a conexão, o sistema não abre"). É só a **primeira vez** naquele
+   endereço; depois nunca mais aparece.
+2. **Login do usuário** (usuário e senha).
+
+E, pela sua regra (nada salvo no PC — só nuvem), a base **vem da nuvem**. Então: **endereço novo** (outro
+navegador, aba anônima, ou a cópia de teste desta sessão aqui no chat) = sem conexão guardada e sem base
+local → abre vazio e trancado, com o aviso. **No seu sistema** (o `.exe`, ou o navegador onde você já
+conectou) a conexão está guardada — os dados continuam lá.
+
+### 2. O que eu conferi antes de responder (não é achismo)
+
+- Montei a nuvem com **3 clientes** e abri o sistema: **os 3 aparecem** ("Cliente Um, Cliente Dois,
+  Cliente Três"). Ou seja: as rodadas de 24 e 25 **não** quebraram a chegada dos dados.
+- Conferi as duas telas que existem para isso: o **portão** (cobre a tela inteira quando não há conexão;
+  quem já conectou não vê) e a tela **"Baixando os dados da nuvem… com N registros trazidos"** (aparece
+  antes das listas e tem saída garantida, para ninguém ficar preso).
+- O **site de teste publicado** (`teste-60f.pages.dev`) é um **deploy antigo** — ele mostra a tela de
+  login e o "Conexão da nuvem: este computador ainda não está conectado" quando aberto num navegador sem
+  a conexão. Ele não tem nada das rodadas novas (quem publica é você).
+
+### 3. O degrau que faltava (a melhoria que você autorizou)
+
+Sobrava **um** caso mudo: a nuvem **responder** e a base ficar **vazia**. Isso acontece, por exemplo,
+quando a conexão daquele computador está apontando para **outra loja** (CNPJ diferente) — e aí a tela
+vazia não dá nenhuma pista (a sensação exata de "meus dados sumiram").
+
+**Agora aparece na tela**, uma vez por abertura: *"Nuvem conectada (empresa/CNPJ): nenhum registro nesta
+empresa. Se você esperava ver seus dados, esta conexão pode ser de outra loja — confira em Nuvem →
+Conexões."* Ele só sai quando: a nuvem **respondeu**, a base **inteira** já foi trazida e a base está
+**vazia** — para nunca virar alarme falso.
+
+### 4. Provas
+
+- `test_nuvem_nao_perde.js`: **15 ✓** (2 novas — nuvem vazia avisa; nuvem com dados **não** avisa e o dado
+  aparece na tela).
+- `test_reclamacoes_do_dono.js`: **55 → 67 ✓** (a sua pergunta entrou na lista viva como reclamação **19**,
+  com 8 travas; a melhoria como **19b**, com 4 travas).
+- Suíte inteira: **220 passaram, 0 falharam, 0 não rodaram**.
+- `Bundle OK: 225 scripts, sha256 f14563564b6d710f` · `Sync OK: v7.0.14 | 225 no bundle | 0 soltos` ·
+  celular `0 referências quebradas`.
+- **Versão do app: 7.0.13 → 7.0.14** · **motor da nuvem 5.26.8** (não toquei) · nada de banco, nenhum
+  deploy.
+
+### 5. Passos da rodada (na ordem)
+
+1. O ambiente recriou o checkout (`.git` voltou para trás): recuperei com `git fetch` + `reset --mixed`
+   (arquivos intactos, HEAD no commit publicado) e restaurei o `jsdom` para poder testar.
+2. Investiguei a sua pergunta: o motor mostrando dado da nuvem (3/3 ✓), o portão da conexão, a tela de
+   carga, e o que o site publicado mostra.
+3. (A primeira rodada da minha prova deu "0 clientes" — era defeito da **minha** nuvem de teste, que não
+   entendia o `&limit=1000` do endereço; corrigi a prova e os 3 clientes apareceram. Registro porque
+   prova errada dá conclusão errada.)
+4. Implementei o aviso de base vazia (`avisarSeBaseVazia` + `empresaDaConexao`) e rodei: **a primeira
+   versão disparava alarme falso** com a nuvem cheia (a base ainda não tinha sido aplicada no momento da
+   primeira chamada) → acrescentei a guarda "só com a base inteira trazida" (`state.initialPull`) e
+   reconferi: nuvem vazia avisa, nuvem com dados não avisa.
+5. Escrevi as 2 verificações novas no teste da nuvem (e consertei a nuvem fingida do teste, que precisava
+   de `semear()` para plantar um registro já existente com o cursor certo).
+6. Registrei a reclamação 19 e a 19b na lista viva e escrevi as 12 travas novas no cobrador; rodei
+   (67 ✓).
+7. Subi a versão para **7.0.14**; build/sync/celular; **suíte inteira 220 passaram, 0 falharam, 0 sem
+   rodar**.
+8. AUDITORIA §40 + este relatório; commit + push na branch `arena/01a0cf4a-teste`.
+
+### 6. Limites honestos
+
+- **Não foi possível verificar diretamente** em qual endereço você estava olhando nem o que a conexão
+  daquele navegador tinha guardado (o seu computador e o banco de produção não estão acessíveis daqui).
+- O preview desta sessão é uma **cópia de teste** dentro do meu ambiente: ele **não** é o seu sistema e
+  não tem a sua conexão. Para ver o seu dado, use o seu `.exe` (ou o navegador onde você já conectou).
+- Se você abrir o **seu** sistema, a nuvem estiver conectada e a **sua** lista continuar vazia, me diga:
+  aí é outra coisa, e o botão da nuvem já mostra "fila: N • em dia até HH:MM" para eu localizar o ponto.

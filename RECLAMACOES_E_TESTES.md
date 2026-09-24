@@ -1,6 +1,6 @@
 # RECLAMAÇÕES DO DONO → TESTE QUE TRAVA (a lista viva)
 
-**O que é este arquivo:** a ideia **A** ("transformar cada reclamação dele em teste"). Toda vez que o
+**O que é este arquivo:** a ideia **A** ("transformar cada reclamação dele em teste"). A linha 19 é o caso inverso — uma **dúvida** dele ("não está aparecendo nenhum dado, é normal?") que virou trava para o comportamento certo **não mudar** sem ninguém perceber. Toda vez que o
 dono reclamou de alguma coisa e a gente consertou, aquele conserto ganhou uma **trava automática**: se o
 defeito voltar, a suíte fica vermelha antes de qualquer um usar o sistema.
 
@@ -38,6 +38,8 @@ Se ainda não existir teste, escreva a trava aqui dentro do `test_reclamacoes_do
 | 16 | "a numeração estava ancorada em código morto" (a venda/notinha usava função de arquivo antigo) | 24/09 (r19) | a venda/OS/notinha passaram a usar o sistema vivo | `vendas_os_patch.js`, `notinha_patch.js` | **aqui** |
 | 17 | venda faturada/estorno: só com permissão, e não pode sumir | 24/09 (r20) | portão de permissões em 11 funções + estorno que não perde a venda | `permissoes_estorno_venda_patch.js`, `ajustes_v5240_relatorio_grande_patch.js` | `test_camadas_protegidas.js`, `test_vos.js` |
 | 18 | PIX da venda (valor/QR) tem que sair certo | 24/09 (r20) | PIX EMV com CRC16 (vetor do Banco Central) | `pix_patch.js`, `ajustes_v52219_pix_link_publico_patch.js` | `test_pix.js` |
+| 19b | **melhoria tirada da 19:** base vazia **com a nuvem respondendo** avisava nada — a tela ficava muda e podia ser conexão apontando para outra loja (CNPJ errado) | 24/09 (r26) | aviso na tela, uma vez por abertura, **com o nome/CNPJ da empresa** da conexão; só dispara com a base inteira já trazida e a base vazia (sem alarme falso) | `cloudflare_data_sync_patch.js` | `test_nuvem_nao_perde.js` (2 verificações novas) + **aqui** |
+| 19 | **"agora não está aparecendo nenhum dado, é normal?"** — investigado: não era defeito. Num **endereço novo** (navegador diferente, aba anônima, ou a cópia de teste da sessão) o sistema abre no **portão da nuvem** ("Este computador ainda não está conectado") e, pela regra 44 (nada salvo no PC), a base só vem da nuvem — então abre vazio **de propósito**; quem já conectou naquele navegador não vê o portão | 24/09 (r26) | nada a corrigir: é o comportamento certo (duas trancas: conexão da nuvem por endereço + login do usuário) | `ajustes_v5262_login_nuvem_primeiro_patch.js`, `cloudflare_data_sync_patch.js` | **aqui** (8 travas: portão cobre a tela, não reaparece para quem conectou, tela "Baixando os dados da nuvem…" com contagem e saída garantida) |
 
 ## Linhas marcadas **aqui**
 

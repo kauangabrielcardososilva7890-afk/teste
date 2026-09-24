@@ -2796,3 +2796,76 @@ todos os arquivos é automática** (a linha 2 da lista roda na suíte), então n
 - As linhas antigas da tabela apontam para os testes que existem hoje; se um dia um teste for
   **substituído** por outro melhor, a linha precisa ser atualizada junto (senão a suíte acusa — de
   propósito).
+
+## §40 — Rodada 26 (24/09/2026): "não está aparecendo nenhum dado, é normal?" — investigação, resposta e o degrau que faltava
+
+**Pergunta do dono (24/09, depois da r25):** *"pode fazer, se for melhorar pode fazer"* + *"agora não está
+aparecendo nenhum dado, é normal?"*.
+
+### 40.1 A investigação (o que foi conferido, na ordem)
+
+| O que | Como foi verificado | Resultado |
+|---|---|---|
+| O motor perdeu a capacidade de mostrar dado da nuvem? | jsdom: nuvem fingida com 3 clientes → `await tick()` → contagem no banco do sistema | **3 de 3 clientes na tela** ("Cliente Um, Cliente Dois, Cliente Três"). Nada quebrado pelas rodadas 24/25. |
+| Esse comportamento tem tranca na tela? | leitura do `ajustes_v5262_login_nuvem_primeiro_patch.js` (bundle 202) | Existe o **portão** `#v5262-portao`, tela cheia (`inset:0;z-index:2147482900`), com "Este computador ainda não está conectado" — e `if (tokenNuvem()) return;` (quem já conectou não vê). |
+| Existe tela de espera antes das listas? | leitura do motor (`mostrarCargaNuvem`, `pedirCarga`) | Existe: **"Baixando os dados da nuvem… N registros trazidos…"** na primeira carga e no "baixar tudo", com saída garantida (`nunca deixar o dono preso no aviso de carga`). |
+| O que o dono está vendo aqui? | `curl`/`fetch` do site publicado | `teste-60f.pages.dev` é **deploy antigo** (título sem versão) e mostra **Login do usuário** + **"Conexão da nuvem — Este computador ainda não está conectado"** num navegador sem a conexão. O preview da sessão é uma cópia local, com a caixa de dados própria do sandbox. |
+
+**Resposta ao dono:** **sim, é normal** naquele endereço. O sistema tem **duas trancas**: (1) a **conexão
+da nuvem** — CNPJ + senha de conexão, guardada **por navegador/endereço**, e sem ela o sistema não abre
+(decisão dele: "sem a conexão, o sistema não abre"); e (2) o **login do usuário**. Como a regra 44 manda
+**não guardar nada no PC**, a base vem **da nuvem** — então um endereço novo (outro navegador, aba
+anônima, ou a cópia de teste desta sessão) abre sem base nenhuma e com o portão na frente. No sistema
+dele (o `.exe` ou o navegador onde ele já conectou), a conexão está guardada e os dados continuam.
+
+### 40.2 O degrau que faltava (melhoria feita nesta rodada)
+
+Ficava **um** caso mudo: nuvem **respondendo** e base **vazia**. Isso acontece de verdade quando a
+conexão daquele computador está falando com **outra loja** (CNPJ diferente do certo) — e aí o dono vê a
+tela vazia **sem nenhuma pista**, exatamente a sensação de "meus dados sumiram".
+
+**Feito (`cloudflare_data_sync_patch.js`):** `avisarSeBaseVazia()` — depois de uma sincronização
+**bem-sucedida**, se a base estiver **vazia**, aparece um aviso na tela, **uma vez por abertura**,
+dizendo: *"Nuvem conectada (empresa/CNPJ): nenhum registro nesta empresa. Se você esperava ver seus
+dados, esta conexão pode ser de outra loja — confira em Nuvem → Conexões."* Guardas contra alarme falso:
+só com `authorized()`, com `state.lastOk` (a nuvem respondeu), com `state.initialPull` (a base **inteira**
+já foi trazida) e com `localBusinessCount()===0`.
+
+**Prova (2 verificações novas no `test_nuvem_nao_perde.js`, agora 15 ✓):** nuvem vazia → o aviso aparece;
+nuvem com 1 cliente → **o aviso não aparece** e o cliente está na tela.
+
+### 40.3 Travas registradas na lista viva (ideia "A")
+
+- A reclamação **19** (a pergunta dele) entrou na `RECLAMACOES_E_TESTES.md` com **8 travas** no
+  `test_reclamacoes_do_dono.js`: o portão está no bundle, cobre a tela, não reaparece para quem já
+  conectou, o texto do aviso, a tela "Baixando os dados da nuvem…" com contagem, a chamada dela, a saída
+  garantida e o "fila/em dia até" do botão.
+- A **19b** (a melhoria desta rodada) ganhou **4 travas**: o aviso existe, só sai com a base inteira
+  trazida (sem alarme falso), é chamado no caminho de sincronização bem-sucedida e cita a empresa/CNPJ.
+
+`test_reclamacoes_do_dono.js`: **55 → 67 verificações**.
+
+### 40.4 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| `test_nuvem_nao_perde.js` | **15 ✓** (2 novas: aviso na base vazia, sem alarme falso com dados) |
+| `test_reclamacoes_do_dono.js` | **67 ✓** |
+| suíte inteira (`test_runner.js`) | **220 passaram, 0 falharam, 0 não rodaram** |
+| `build_bundle.js` / `--check` | `Bundle OK: 225 scripts, sha256 f14563564b6d710f` |
+| `sync_build.js` | `Sync OK: v7.0.14 \| 225 no bundle \| 0 soltos \| 13 entradas em build.files` |
+| `mobile/sync-www.js` | `www do celular 1.0 pronto: 4 arquivos + assets/vendor, 0 referências quebradas` |
+
+**Versão do app: 7.0.13 → 7.0.14.** Motor da nuvem segue **5.26.8**; nada de banco, nada de servidor,
+nenhum deploy.
+
+### 40.5 Limites honestos
+
+- **Não foi possível verificar diretamente** em qual endereço o dono estava olhando nem qual estado a
+  conexão daquele navegador tinha (o banco de produção e a máquina dele não estão acessíveis daqui). O
+  que está provado: (a) com dados na nuvem, o sistema mostra os dados; (b) sem conexão, aparece o portão;
+  (c) com a base inteira trazida e vazia, agora ele é avisado.
+- O site publicado (`teste-60f.pages.dev`) é um **deploy antigo** e não contém nada das rodadas 24-26 —
+  quem publica é o dono. O preview desta sessão é uma cópia local sem a conexão dele.
+- O aviso novo **não** substitui a tela de carga (que cobre a primeira importação): ele é o degrau
+  seguinte, o do "já terminou de trazer e mesmo assim não tem nada".
