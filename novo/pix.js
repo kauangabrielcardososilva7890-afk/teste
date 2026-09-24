@@ -120,7 +120,11 @@
   // A lista interna da configuração — é um registro do núcleo como qualquer outro,
   // por isso sobe para a nuvem (é o `db.config.pix` de hoje).
   var LISTA_CONFIG = 'config';
-  var SCHEMA_CONFIG = { chave: { tipo: 'texto' }, nome: { tipo: 'texto' }, cidade: { tipo: 'texto' } };
+  // o schema desta lista mora na FICHA (novo/listas.js) — uma verdade só; a cópia local
+  // vale apenas quando a ficha não está carregada (teste isolado desta peça)
+  var FICHA = raiz.DIGICOPY_LISTAS;
+  var SCHEMA_CONFIG = (FICHA && FICHA.ESQUEMAS && FICHA.ESQUEMAS.config) ||
+    { chave: { tipo: 'texto' }, nome: { tipo: 'texto' }, cidade: { tipo: 'texto' } };
   var ID_CONFIG_PIX = 'pix';
 
   function lerConfig(nucleo) {
@@ -335,7 +339,7 @@
   var regras = {
     PIX_PURE: PIX_PURE,
     PIX_PUBLICO: PIX_PUBLICO,
-    LISTA_CONFIG: LISTA_CONFIG,
+    LISTA_CONFIG: LISTA_CONFIG, SCHEMA_CONFIG: SCHEMA_CONFIG,
     ID_CONFIG_PIX: ID_CONFIG_PIX,
     urlPagamento: urlPagamento,
     lerConfig: lerConfig,

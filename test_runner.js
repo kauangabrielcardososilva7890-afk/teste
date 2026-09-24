@@ -269,6 +269,7 @@ const tests=[
   // conferência sob demanda no painel da Nuvem (não grava nada, não escuta gravação)
   "test_ponte_no_sistema.js",
   "test_telas.js",
+  "test_listas.js",
   "test_redesenho_pagina.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem

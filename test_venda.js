@@ -791,6 +791,59 @@ console.log('-- 10) A TELA: estornar (títulos marcados no financeiro e venda li
     F.ehEstornado(crDepois) === true && F.ehEstornado({ status: 'aberto' }) === false && F.ehEstornado({ estornado: true }) === true);
 }
 
+console.log('-- 11) A NOTINHA EM WORD na tela (o botão que faltava do sistema de hoje) --');
+{
+  const nucleo = w.DIGICOPY_NUCLEO.criar({ empresaId: 'e1', origem: 'teste', guardar: function () { } });
+  nucleo.registrarLista('clientes', { nome: { obrigatorio: true, tipo: 'texto' } });
+  nucleo.salvar('clientes', { id: 'c1', nome: 'José Ávila' });
+  const div = doc.createElement('div');
+  doc.body.appendChild(div);
+  const tela = w.DIGICOPY_VENDA.criarVenda({ nucleo: nucleo, elemento: div, empresaId: 'e1' });
+  const alvo = div;
+  nucleo.salvar('vendas', {
+    id: 'vw', numero: '16010', clienteId: 'c1', clienteNome: 'José Ávila',
+    itens: [{ descricao: 'Cartucho', qtd: 1, preco: 80, subtotal: 80 }],
+    desconto: 0, total: 80, status: 'aguardar', formaPagamento: 'Dinheiro'
+  });
+  tela.estadoAtual().vendaId = 'vw';
+  tela.estadoAtual().numero = '16010';
+  tela.estadoAtual().cliente = nucleo.obter('clientes', 'c1');
+  tela.desenhar();
+  const clicar = (sel) => alvo.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+
+  ok('com a venda gravada, o botão 📄 Word aparece ao lado do Notinha e do Carnê',
+    !!alvo.querySelector('[data-word]') && !!alvo.querySelector('[data-print-notinha]') && !!alvo.querySelector('[data-print-carne]'));
+  // venda em branco (nada gravado): os três botões de papel somem (não se imprime o que não existe)
+  tela.novaVenda();
+  ok('venda nova em branco não mostra botão de papel nenhum',
+    !alvo.querySelector('[data-word]') && !alvo.querySelector('[data-print-notinha]') && !alvo.querySelector('[data-print-carne]'));
+
+  // o jsdom não baixa arquivo: o teste deixa o caminho do download pronto e confere que a
+  // tela NÃO estoura e avisa o dono (nada de alert nativo, nada de erro na cara)
+  tela.estadoAtual().vendaId = 'vw';
+  tela.estadoAtual().numero = '16010';
+  tela.estadoAtual().cliente = nucleo.obter('clientes', 'c1');
+  tela.desenhar();
+  const baixados = [];
+  w.URL.createObjectURL = function () { return 'blob:teste'; };
+  w.URL.revokeObjectURL = function () { };
+  const clicarOriginal = w.HTMLAnchorElement.prototype.click;
+  w.HTMLAnchorElement.prototype.click = function () { baixados.push(this.download); };
+  clicar('[data-word]');
+  w.HTMLAnchorElement.prototype.click = clicarOriginal;
+  ok('clicar no Word monta o arquivo e dispara o download (notinha_<número>.doc)',
+    baixados.length === 1 && /^notinha_[\w-]+\.doc$/.test(baixados[0]), JSON.stringify(baixados));
+  ok('e avisa na própria tela que baixou (sem janela nativa)',
+    /baixada em Word/.test((alvo.querySelector('[data-aviso-box]') || {}).textContent || ''));
+  // com a OS completa, o arquivo Word sai de FOLHA INTEIRA (é a mesma regra do papel impresso)
+  const osCompleta = { numero: '700', modelo: 'Kyocera', numeroSerie: 'SN1', patrimonio: 'P7', defeito: 'não puxa' };
+  const arqCheio = w.DIGICOPY_IMPRESSAO.regras.arquivoWord({
+    venda: Object.assign({}, nucleo.obter('vendas', 'vw'), { os: osCompleta }), cliente: nucleo.obter('clientes', 'c1')
+  });
+  ok('com a OS completa, o Word sai de folha inteira (duas assinaturas)',
+    arqCheio.html.indexOf('ass-dupla') > 0 && w.DIGICOPY_IMPRESSAO.regras.tipoDePapel({ os: osCompleta }) === 'folha inteira');
+}
+
 console.log('\nRESULTADO: ' + passou + ' verificações passaram — a venda do núcleo novo responde como o sistema de hoje (numeração, item, estoque, total, financeiro) e a tela funciona.');
 try { w.close(); } catch (e) { }
 process.exit(0);

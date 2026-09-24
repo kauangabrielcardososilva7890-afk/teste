@@ -2374,3 +2374,103 @@ A versão continua **7.0.11** (não houve mudança de versão nesta rodada).
    título fica **ABERTO** no financeiro até alguém conferir.
 4. **↩ Estornar** (na venda faturada): a janela avisa que o estoque não se mexe e que o número não muda;
    confirmando, os títulos ficam com tarja **estornado** no financeiro e a venda volta a ser editável.
+
+---
+
+## §35 — Rodada 21 (24/09/2026): todos os menus na página nova, uma verdade por lista e o Word da notinha
+
+Escopo pedido pelo dono: **“não só um módulo, tudo mesmo, quero tudo de uma vez os menus”** — a página
+nova tinha de ficar com **todas** as telas do sistema de hoje, não uma por rodada. Junto: o pedido de
+confirmação de que **o núcleo novo pode ser removido depois** ("se ficar ruim, você consegue?").
+
+### 35.1 Achado 1 — gravidade CRÍTICA · Bug (quebra de sintaxe, página inteira pararia) — corrigido
+
+- **Arquivo/local:** `novo/venda.js` (bloco dos schemas, ~:386-418).
+- **Problema:** a unificação dos schemas foi aplicada pela metade: `var LISTA_OS = daFicha('os', { … };`
+  (faltava o `)`) e `var LISTA_RECEBER = { … });` (parêntese órfão). `node --check novo/venda.js` →
+  `SyntaxError: missing ) after argument list` (linha 411).
+- **Causa:** a edição trocou a **abertura** de um bloco e o **fechamento** de outro no mesmo arquivo — o
+  par ficou cruzado. Sem teste rodando, isso só apareceria no navegador, com a venda inteira fora do ar.
+- **Impacto:** com a peça inválida, `novo/venda.js` não carrega → a tela da venda e a aba OS morrem
+  (e a página fica sem a venda, que é o coração do sistema dele).
+- **Correção:** fechamento de `LISTA_OS` → `});`, abertura de `LISTA_RECEBER` → `daFicha('contasReceber', {`
+  e `node --check` em **todas** as peças novas (venda, financeiro, pix, impressao) passou a ser passo
+  obrigatório depois de cada edição.
+
+### 35.2 Achado 2 — gravidade ALTA · Bug (duas verdades para a mesma lista) — corrigido
+
+- **Arquivo/local:** `novo/venda.js` (`LISTA_RECEBER`), `novo/financeiro.js` (idem), `novo/pix.js`
+  (`SCHEMA_CONFIG`), `novo/index.html` (cinco listas escritas à mão).
+- **Problema:** a mesma lista tinha **dois schemas** no núcleo novo — o da venda (sem `clienteNome` e
+  `baixaForma`) e o do financeiro (com eles). Como `registrarLista` aceita o último que monta, o formato
+  do mesmo título dependia da **ordem de abertura das telas**: o mesmo dado entrava num formato e voltava
+  noutro.
+- **Causa:** cada peça nasceu com a sua cópia (rodadas 18-D/E/F), e ninguém era o dono do schema.
+- **Impacto:** risco real de o título perder `clienteNome`/`baixaForma` ao ser salvo pela venda e reaberto
+  no financeiro — divergência silenciosa, o tipo de defeito que só aparece no dia da virada.
+- **Correção (raiz, não sintoma):** a **ficha** (`novo/listas.js`) passou a ser a única verdade — exporta
+  `ESQUEMAS` (`vendas`, `contasReceber`, `contasPagar`, `config`, `os`). As peças pedem o schema à ficha
+  por `daFicha(nome, reserva)` (a cópia local só vale quando a ficha **não** está carregada, para o teste
+  isolado de cada peça continuar rodando). A página monta o rascunho e os schemas varrendo a ficha
+  (`Object.keys(FICHA.LISTAS)`), e não mais listas escritas à mão. `ESQUEMAS.os` é a **união** da tela de
+  Chamados com o espelho que a venda grava.
+- **Prova:** `test_listas.js` compara **identidade de objeto** (`DIGICOPY_FINANCEIRO.regras.esquemas.contasReceber === DIGICOPY_LISTAS.ESQUEMAS.contasReceber`
+  e o mesmo para vendas/os/config), não apenas "parecido".
+
+### 35.3 Achado 3 — gravidade MÉDIA · Pendência de paridade — corrigido
+
+- **Arquivo/local:** `novo/venda.js` + `novo/impressao.js` (o botão "Word" que a §34.6 havia registrado
+  como faltante).
+- **Problema:** o sistema de hoje tem **Exportar notinha em Word** (`vosExportarNotinhaWord`,
+  `vendas_os_patch.js:1178`, `application/msword`, com BOM para o Word ler os acentos, arquivo
+  `notinha_<número>.doc`); a tela nova não tinha o botão.
+- **Correção:** `regras.arquivoWord(opcoes)` na impressão (o **mesmo** papel da notinha, com
+  `paraArquivo:true` — sem auto-print, senão o arquivo abriria imprimindo — e a limpeza do número para o
+  nome do arquivo) e o botão **📄 Word** ao lado de Notinha/Carnê (aparece só com a venda gravada). Se o
+  navegador recusar o download, avisa na própria tela (nunca `alert`).
+
+### 35.4 Achado 4 — gravidade MÉDIA · Manutenção (a paridade do menu não estava provada) — corrigido
+
+- **Arquivo/local:** `novo/listas.js` (TELAS/GRUPOS), `novo/index.html` (menu), testes.
+- **Problema:** a ficha tinha 32 telas e o menu era construído dela, mas **nada provava** que todo item do
+  menu de hoje tinha tela na página — e uma tela sem ano ("roda no sistema de hoje") podia existir sem
+  dizer **onde** ela fica hoje.
+- **Correção:** leitura do **menu vivo** (`ajustes_v52213_menus_atalhos_patch.js` → `menusPadrao()` e
+  `catalogoAtalhos()`) dentro do teste: cada `click` de hoje tem de ter um destino na ficha (tabela
+  `PONTE` no teste). Hoje: **24 itens de menu + 9 atalhos**, todos com tela. Acrescentei também
+  "No sistema de hoje ela fica em: <menu> → <tela>" na caixa das telas pendentes e a **marca da tela
+  aberta** no menu (`.ativa`), para ele não se perder em 32 telas.
+
+### 35.5 Decisão registrada: o núcleo novo continua FORA do bundle e do APK
+
+`novo/*.js` **não** entra no `bundle-manifest.json` nem no app de celular. Não é esquecimento: o
+`mobile/sync-www.js` deriva a lista de arquivos do **index.html da raiz** (o sistema de hoje), e o
+`novo/index.html` não é referenciado por ele. Conferido nesta rodada: `mobile/www/novo` **não existe** e
+há **0 referências** a `novo/` no `index.html` do APK. Consequência prática: apagar o núcleo novo depois
+é remover a pasta `novo/` + `ajustes_v7011_ponte_nucleo_patch.js` + a linha do manifesto — nada do
+sistema de hoje depende dele (isolamento mantido).
+
+### 35.6 Provas da rodada
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_listas.js` | **62 ✔** (era 49) | uma única verdade por lista (identidade de objeto), o `os` como união Chamados+espelho, e a **paridade item a item com o menu vivo** (24+9) |
+| `test_redesenho_pagina.js` | **109 ✔** (era 99) | as **32 telas** do menu abrem (nenhuma em branco), as pendentes dizem o motivo e onde ficam hoje, as 14 listas têm tela, a tela aberta fica marcada, e a venda tem OS/totais/papel |
+| `test_venda.js` | **155 ✔** (era 150) | o botão **Word** baixa `notinha_<número>.doc`, a venda em branco não mostra botão de papel, e com a OS completa o Word sai de folha inteira |
+| `test_impressao.js` | **65 ✔** (era 59) | `arquivoWord`: mesmo papel, sem auto-print, tipo `application/msword`, nome limpo (sem `../`) |
+| `test_telas.js` | 46 ✔ | as telas de cadastro continuam iguais (nada regrediu com a ficha dirigindo os campos) |
+| suíte inteira | **228 passaram, 0 falharam, 0 não rodaram** | nenhum dos 228 arquivos regrediu |
+| build/sync | `Sync OK: v7.0.11 \| 228 no bundle \| 0 soltos` | o bundle **não** mudou (o núcleo novo segue fora dele, de propósito) |
+
+Versão continua **7.0.11**; motor **5.26.8** (nada tocado nesta rodada no motor).
+
+### 35.7 O que segue pendente (registrado, sem promessa)
+
+- As **13 telas** marcadas `depende` na ficha continuam no sistema de hoje, **de propósito** e com o
+  motivo escrito na própria tela: nota fiscal (emissão/certificado/histórico/perfil tributário — regra 22:
+  homologar antes), Buscador Escola, nuvem/backup, relatórios, painel do gerente, preferências, módulos
+  dinâmicos, automações (as 13), navegador embutido e registros migrados.
+- **Permissão de estornar** (`permissoes_estorno_venda_patch.js`): a página nova ainda não tem usuário
+  logado/permissão — pendência de paridade já registrada na §34.6.
+- **Escolher um chamado já existente** dentro da venda (`f.osSelecionada` de hoje) continua fora.
+- **Recibo v5.22.17** continua fora do escopo.

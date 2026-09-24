@@ -329,6 +329,18 @@
   // Igual ao sistema de hoje: abre a janela, escreve e manda imprimir (o próprio
   // HTML tem o `window.print()` e os botões). Devolve false quando o navegador
   // bloqueia a janela — quem chamou avisa o dono na tela (nada de alert nativo).
+  // ── A NOTINHA EM ARQUIVO WORD (.doc) ─────────────────────────────────────
+  // É o botão "Word" do sistema de hoje (`vosExportarNotinhaWord`, vendas_os_patch.js:1178):
+  // o MESMO papel da notinha (sem auto-print, senão o arquivo abriria imprimindo), com o
+  // BOM na frente para o Word ler os acentos, salvo como `notinha_<número>.doc`.
+  function arquivoWord(opcoes) {
+    var o = opcoes || {};
+    var venda = o.venda || {};
+    var html = notinhaHtml(Object.assign({}, o, { paraArquivo: true }));
+    var numero = texto(venda.numero || venda.id || 'notinha').replace(/[^\w-]+/g, '_');
+    return { html: '\ufeff' + html, nome: 'notinha_' + numero + '.doc', tipo: 'application/msword' };
+  }
+
   function imprimir(html, opcoes) {
     var o = opcoes || {};
     if (!html) return false;
@@ -356,7 +368,8 @@
     dataBR: dataBR,
     horaBR: horaBR,
     moeda: moeda,
-    escapar: escapar
+    escapar: escapar,
+    arquivoWord: arquivoWord
   };
 
   raiz.DIGICOPY_IMPRESSAO = { VERSAO_IMPRESSAO: VERSAO, regras: regras, imprimir: imprimir };

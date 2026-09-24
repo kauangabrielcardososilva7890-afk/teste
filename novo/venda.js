@@ -114,7 +114,8 @@
       tecnico: os.tecnico, tecnicoNome: os.tecnico,
       responsavelEntrega: os.responsavelEntrega, garantia: os.garantia,
       pecasTexto: os.pecas, situacaoOS: os.situacao, acessorios: os.acessorios,
-      prioridade: 'normal',
+      // a prioridade NÃO é reescrita aqui: se o dono já marcou no Chamado, é a dele
+      // que fica (é o `prioridade: reg.prioridade || 'normal'` de hoje)
       status: /Conclu|Entregue/i.test(os.situacao || '') ? 'concluido' : 'aberto',
       abertura: iso, criadoEm: iso
     };
@@ -382,7 +383,13 @@
   };
 
   // ── 2. A TELA ─────────────────────────────────────────────────────────────
-  var LISTA_VENDAS = {
+  // O schema desta lista mora na FICHA (novo/listas.js) — uma verdade só para o mesmo
+  // dado. Sem a ficha carregada (teste isolado desta peça), vale a cópia de reserva abaixo.
+  var FICHA = raiz.DIGICOPY_LISTAS;
+  function daFicha(nome, reserva) {
+    return (FICHA && FICHA.ESQUEMAS && FICHA.ESQUEMAS[nome]) || reserva;
+  }
+  var LISTA_VENDAS = daFicha('vendas', {
     numero: { obrigatorio: true, tipo: 'texto' }, clienteId: { tipo: 'texto' }, clienteNome: { tipo: 'texto' },
     itens: { tipo: 'lista' }, desconto: { tipo: 'numero' }, total: { tipo: 'numero' },
     status: { tipo: 'texto' }, formaPagamento: { tipo: 'texto' }, data: { tipo: 'texto' }, destino: { tipo: 'texto' },
@@ -390,9 +397,9 @@
     atendenteNome: { tipo: 'texto' }, os: { tipo: 'objeto' },
     parcelas: { tipo: 'lista' }, faturadoEm: { tipo: 'texto' },
     estornoDe: { tipo: 'texto' }, estornadoEm: { tipo: 'texto' }, estornadoPor: { tipo: 'texto' }
-  };
+  });
   // O espelho do `db.os` de hoje (a OS da venda aparece nos Chamados)
-  var LISTA_OS = {
+  var LISTA_OS = daFicha('os', {
     numero: { tipo: 'texto' }, vendaId: { tipo: 'texto' }, clienteId: { tipo: 'texto' },
     problema: { tipo: 'texto' }, descricao: { tipo: 'texto' }, serie: { tipo: 'texto' },
     numeroSerie: { tipo: 'texto' }, modelo: { tipo: 'texto' }, equipamentoModelo: { tipo: 'texto' },
@@ -401,13 +408,13 @@
     garantia: { tipo: 'texto' }, pecasTexto: { tipo: 'texto' }, situacaoOS: { tipo: 'texto' },
     acessorios: { tipo: 'texto' }, status: { tipo: 'texto' }, prioridade: { tipo: 'texto' },
     abertura: { tipo: 'texto' }, criadoEm: { tipo: 'texto' }
-  };
-  var LISTA_RECEBER = {
+  });
+  var LISTA_RECEBER = daFicha('contasReceber', {
     origem: { tipo: 'texto' }, clienteId: { tipo: 'texto' }, vendaId: { tipo: 'texto' }, descricao: { tipo: 'texto' },
     valor: { tipo: 'numero' }, vencimento: { tipo: 'texto' }, pagamentoData: { tipo: 'texto' }, status: { tipo: 'texto' },
     autoBaixa: { tipo: 'boleano' }, formaPagamento: { tipo: 'texto' },
     parcela: { tipo: 'numero' }, totalParcelas: { tipo: 'numero' }, jurosMes: { tipo: 'numero' }
-  };
+  });
 
   function moeda(v) { return n(v, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
   function escapar(t) {
@@ -514,7 +521,12 @@
         var chamadoExistente = null;
         (nucleo.listar('os') || []).forEach(function (x) { if (!chamadoExistente && x.vendaId === r.item.id) chamadoExistente = x; });
         var dadosDoChamado = osParaChamados(r.item, os, os.numero, new Date());
-        if (chamadoExistente) dadosDoChamado.id = chamadoExistente.id;
+        if (chamadoExistente) {
+          dadosDoChamado.id = chamadoExistente.id;
+          if (chamadoExistente.prioridade) dadosDoChamado.prioridade = chamadoExistente.prioridade;   // respeita a do Chamado
+        } else {
+          dadosDoChamado.prioridade = 'normal';   // chamado novo nasce 'normal', como hoje
+        }
         nucleo.salvar('os', dadosDoChamado);
       }
       estado.os = os;
@@ -926,6 +938,35 @@
       return foi;
     }
 
+    // ── A NOTINHA EM ARQUIVO WORD (.doc) ─────────────────────────────────────
+    // Mesmo botão do sistema de hoje (`vosExportarNotinhaWord`): o MESMO papel da notinha,
+    // sem auto-print, baixado como arquivo. Se o navegador não deixar baixar, avisa em vez
+    // de ficar quieto.
+    function exportarWord() {
+      var v = pegarVendaGravada();
+      if (!v) { mostrarErro('Grave a venda antes de baixar a notinha em Word.'); return false; }
+      if (!IMPRESSAO || !IMPRESSAO.regras.arquivoWord) { mostrarErro('A notinha em Word não está disponível nesta página.'); return false; }
+      var cfgPix = PIXREG ? PIXREG.lerConfig(nucleo) : { chave: '' };
+      var arq = IMPRESSAO.regras.arquivoWord({
+        venda: v, cliente: clienteDaVenda(v), empresa: empresa,
+        sessao: { cnpj: empresa.cnpj || '', usuarioNome: usuario },
+        pix: PIXREG ? PIXREG.blocoNotinha(v, cfgPix) : ''
+      });
+      try {
+        var blob = new Blob([arq.html], { type: arq.tipo });
+        var url = URL.createObjectURL(blob);
+        var a = doc.createElement('a');
+        a.href = url; a.download = arq.nome;
+        doc.body.appendChild(a); a.click();
+        setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) { } }, 1500);
+        mostrarAviso('Notinha ' + v.numero + ' baixada em Word (' + arq.nome + ').');
+        return true;
+      } catch (e) {
+        mostrarErro('O navegador não deixou baixar o arquivo Word.');
+        return false;
+      }
+    }
+
     // ── O ESTORNO (a venda volta a poder ser editada; o financeiro fica marcado) ──
     function abrirConfirmacao(titulo, corpo, textoOk, aoConfirmar) {
       var velha = doc.querySelector('[data-conf-modal]');
@@ -1081,7 +1122,8 @@
           '<div class="vnd-acoes">' +
             '<button type="button" class="vnd-btn vnd-btn-fraco" data-nova>Nova</button>' +
             (estado.vendaId ? '<button type="button" class="vnd-btn" data-print-notinha>🖨 Notinha</button>' +
-                              '<button type="button" class="vnd-btn" data-print-carne>🖨 Carnê</button>' : '') +
+                              '<button type="button" class="vnd-btn" data-print-carne>🖨 Carnê</button>' +
+                              '<button type="button" class="vnd-btn" data-word>📄 Word</button>' : '') +
             (travada ? '' : '<button type="button" class="vnd-btn" data-salvar>Salvar</button>') +
             (travada ? '<button type="button" class="vnd-btn vnd-btn-forte" data-estornar>↩ Estornar</button>'
                      : '<button type="button" class="vnd-btn vnd-btn-forte" data-faturar>Faturar</button>') +
@@ -1141,6 +1183,8 @@
       if (imprimirN) imprimirN.addEventListener('click', imprimirNotinha);
       var imprimirC = alvo.querySelector('[data-print-carne]');
       if (imprimirC) imprimirC.addEventListener('click', imprimirCarne);
+      var wordBtn = alvo.querySelector('[data-word]');
+      if (wordBtn) wordBtn.addEventListener('click', exportarWord);
       var estornarBtn = alvo.querySelector('[data-estornar]');
       if (estornarBtn) estornarBtn.addEventListener('click', estornar);
       atualizarDicaOs();
@@ -1159,11 +1203,15 @@
       escolherForma: escolherForma, fecharRecebimento: fecharRecebimento,
       removerItem: removerItem, novaVenda: novaVenda,
       estornar: estornar, aplicarEstorno: aplicarEstorno,
-      imprimirNotinha: imprimirNotinha, imprimirCarne: imprimirCarne,
+      imprimirNotinha: imprimirNotinha, imprimirCarne: imprimirCarne, exportarWord: exportarWord,
       buscarSerial: buscarSerial, lerOsDaTela: lerOsDaTela, atualizarDicaOs: atualizarDicaOs,
       parcelasDaVenda: parcelasDaVenda
     };
   }
+
+  // os schemas que ESTA peça usa (é assim que o teste prova que ela não tem uma segunda
+  // verdade para a mesma lista — com a ficha carregada, são os mesmos objetos da ficha)
+  regras.esquemas = { vendas: LISTA_VENDAS, os: LISTA_OS, contasReceber: LISTA_RECEBER };
 
   raiz.DIGICOPY_VENDA = { VERSAO_VENDA: VERSAO, regras: regras, criarVenda: criarVenda };
 })(typeof window !== 'undefined' ? window : globalThis);

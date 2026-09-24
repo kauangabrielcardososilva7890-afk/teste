@@ -281,5 +281,26 @@ console.log('-- 10) MANDAR PARA A IMPRESSORA (janela bloqueada avisa, não quebr
     I.imprimir(html) === false);
 }
 
+// ── a notinha em ARQUIVO WORD (.doc) — é o botão "Word" do sistema de hoje ──
+console.log('-- a notinha em Word (.doc), igual ao botão de hoje --');
+{
+  const arq = R.arquivoWord({ venda: vendaBase, cliente: cliente, empresa: empresa, sessao: sessao });
+  ok('o arquivo sai com o MESMO papel da notinha (meia folha, sem a OS)',
+    arq.html.indexOf('\ufeff') === 0 && arq.html.indexOf('<html') > 0);
+  ok('e o nome sai pela número da venda (notinha_<número>.doc)', /^notinha_[\w-]+\.doc$/.test(arq.nome), arq.nome);
+  ok('com o tipo que o Word abre (application/msword)', arq.tipo === 'application/msword');
+  ok('SEM auto-print (senão o arquivo abriria imprimindo na cara do dono)',
+    arq.html.indexOf('window.print()') < 0 && arq.html.indexOf('onload=') < 0);
+  const vendaComOsCheia = Object.assign({}, vendaBase, { os: { modelo: 'Kyocera', numeroSerie: 'SN1', patrimonio: 'P7' } });
+  const comOS = R.arquivoWord({ venda: vendaComOsCheia, cliente: cliente, empresa: empresa, sessao: sessao });
+  ok('com a OS completa, o arquivo vem de FOLHA INTEIRA (as duas assinaturas)',
+    comOS.html.indexOf('ass-dupla') > 0 && comOS.html.indexOf('Assinatura do técnico') > 0);
+  // o nome do arquivo perde barra e ponto do número (é a mesma limpeza de hoje): ninguém
+  // baixa um arquivo com caminho dentro do nome
+  ok('o número com caractere estranho não vira caminho de arquivo',
+    R.arquivoWord({ venda: { numero: '../../etc/passwd' } }).nome === 'notinha__etc_passwd.doc',
+    R.arquivoWord({ venda: { numero: '../../etc/passwd' } }).nome);
+}
+
 console.log('\nRESULTADO: ' + passou + ' verificações passaram — a notinha (meia folha e folha inteira com OS) e o carnê saem como no sistema de hoje.');
 try { w.close(); } catch (e) { }

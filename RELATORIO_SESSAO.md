@@ -6154,3 +6154,79 @@ carrega). Versão continua **7.0.11**.
 3. **Faturar → Pix**: o QR aparece na janela e o título fica **ABERTO** no financeiro (Pix não dá baixa
    sozinho).
 4. **↩ Estornar** na venda faturada: os títulos ganham a tarja **estornado** e a venda volta a ser editada.
+
+---
+
+## Rodada 21 — 24/09/2026 — TODOS OS MENUS DE UMA VEZ, UMA VERDADE POR LISTA E O WORD DA NOTINHA
+
+Pedido dele: **“não só um módulo, tudo mesmo, quero tudo de uma vez os menus”**. Também perguntou se, se
+ele mandar apagar o núcleo novo depois, isso é possível.
+
+### O que a página nova tem agora
+
+- **Todas as telas do sistema de hoje no menu**, sem exceção: **32 telas** em 8 menus (Início, Cadastros,
+  Atendimento, Locação, Fiscal, Financeiro, Buscador Escola, Configurações). **14 listas** com tela de
+  cadastro de verdade (clientes, produtos, recargas, máquinas, contratos, máquinas nos clientes, leituras,
+  chamados/OS, orçamentos, usuários, técnicos, empresas, auditoria, catálogo fiscal) e **13 telas** que
+  ainda rodam no sistema de hoje **de propósito**, cada uma abrindo com o motivo escrito e dizendo **onde
+  ela fica hoje** (ex.: “No sistema de hoje ela fica em: Fiscal → Perfil tributário”). Nenhuma tela abre em
+  branco e nenhuma sumiu do menu.
+- **Venda completa:** itens, OS, recebimento (8 formas), **Notinha** (meia folha / folha inteira com OS),
+  **Carnê**, **📄 Word** (novo) e **↩ Estornar**.
+- **Pix:** chave, QR, copia e cola, link público e comprovante manual (título fica ABERTO — Pix não dá
+  baixa sozinho).
+- **A tela aberta fica marcada no menu** (agora são 32 telas — fácil de se perder).
+
+### Os achados desta rodada (provados antes de corrigir)
+
+1. **CRÍTICO — `novo/venda.js` estava quebrado** (`SyntaxError: missing ) after argument list`): uma
+   edição minha trocou a abertura de um bloco e o fechamento de outro. Consertado e conferido com
+   `node --check` em todas as peças.
+2. **ALTO — a mesma lista tinha dois schemas.** `contasReceber` existia na venda (sem `clienteNome` e
+   `baixaForma`) e no financeiro (com eles): quem montasse por último ganhava, então o mesmo dado entrava
+   num formato e voltava noutro. Agora a **ficha é a única verdade** (a peça pede o schema a ela) e o
+   teste compara **o mesmo objeto**, não "parecido".
+3. **MÉDIO — o botão Word da notinha faltava** (estava registrado como pendência na rodada 20). Entrou:
+   `notinha_<número>.doc`, mesmo papel da notinha, sem auto-print, com aviso na tela se o navegador
+   recusar o download.
+4. **MÉDIO — a paridade do menu não estava provada.** Agora o teste lê o **menu vivo** de hoje
+   (`menusPadrao()` + `catalogoAtalhos()`: 24 itens + 9 atalhos) e cobra que cada item tenha tela na
+   página nova. Se ele acrescentar um item no sistema de hoje, o teste avisa que falta na página.
+
+### Sobre apagar o núcleo novo depois
+
+**Sim, dá.** Ele continua isolado: só existe em `novo/` (+ o `ajustes_v7011_ponte_nucleo_patch.js` e uma
+linha no manifesto). Conferido nesta rodada: o app de celular **não** tem `novo/` e o `index.html` de hoje
+**não** referencia nada de `novo/`. Para desfazer é apagar a pasta e o patch — o sistema de hoje continua
+inteiro, sem tocar em dado.
+
+### O que o teste pegou de errado em mim (sem esconder)
+
+- Editei `novo/venda.js` **sem rodar `node --check`** e deixei o arquivo inválido: foi o teste/bateria que
+  pegou. Virou passo obrigatório depois de cada edição.
+- Um teste meu procurava `[data-pix-codigo]` (sintaxe de seletor) dentro do HTML — o certo era
+  `data-pix-codigo`. O teste estava errado, não o código.
+- O bloco novo de contratos do teste rodava **sem cliente cadastrado**, então o contrato (cliente
+  obrigatório) não gravava. Corrigido no teste.
+
+### Provas
+
+`test_listas.js` **62 ✔** (era 49) · `test_redesenho_pagina.js` **109 ✔** (era 99) · `test_venda.js`
+**155 ✔** (era 150) · `test_impressao.js` **65 ✔** (era 59) · `test_telas.js` 46 ✔ · suíte inteira:
+**228 passaram, 0 falharam, 0 não rodaram**. Build/sync: `Sync OK: v7.0.11 | 228 no bundle | 0 soltos`
+(o bundle não mudou: o núcleo novo não entra nele, de propósito). Versão **7.0.11**, motor **5.26.8**.
+
+### Ficou para a próxima (registrado)
+
+- As 13 telas `depende` (nota fiscal, Escola, nuvem/backup, relatórios, painel do gerente, preferências,
+  módulos dinâmicos, automações, navegador embutido, registros migrados) — cada uma com o motivo escrito.
+- **Permissão de estornar** e **usuário logado** na página nova (não existe controle de permissão ainda).
+- **Escolher um chamado já existente** dentro da venda.
+
+### Para ele testar (no navegador, na página nova)
+
+1. Abrir o menu e **passar por todas as telas**: as de cadastro entram com tabela e busca; as pendentes
+   dizem o motivo e onde elas ficam hoje. A tela aberta fica marcada no menu.
+2. **Nova venda / Notinha:** cliente + produto, OS, **Salvar** e clicar em **🖨 Notinha** (meia folha; com
+   a OS completa, folha inteira), **🖨 Carnê** e **📄 Word** (baixa `notinha_<número>.doc`).
+3. **Faturar → Pix** (QR na janela, título ABERTO) e **↩ Estornar** (tarja no financeiro, venda liberada).

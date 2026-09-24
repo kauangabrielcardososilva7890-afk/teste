@@ -24,6 +24,9 @@
   .module-menu button:hover{background:#f1f6ff;color:var(--azul)}
   .module-menu button i{font-style:normal;font-size:16px;color:var(--azul)}
   .module-menu small{margin-left:auto;color:#94a3b8;font-size:10px}
+  /* a tela aberta fica marcada no menu — o dono não se perde no meio de 32 telas */
+  .module-menu button.ativa{background:#e8f0ff;color:var(--azul);font-weight:800}
+  .module:has(button.ativa) > button{color:var(--azul);border-color:var(--azul)}
   /* ── área de trabalho ── */
   main{flex:1;padding:14px;max-width:1200px;width:100%;margin:0 auto}
   .cartao{background:#fff;border:1px solid var(--linha);border-radius:14px;padding:14px;box-shadow:0 6px 22px rgba(10,30,138,.06)}
@@ -170,74 +173,36 @@
   .nfx-aviso{font-size:13px;margin:0 0 10px}
   .nfx-erro{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:12px;font-weight:700;padding:8px 10px;border-radius:10px;margin:8px 0}
   .nfx-botoes{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  /* formulário de cadastro: duas colunas, campo largo ocupa a linha toda */
+  .nfx-caixa-larga{max-width:780px;max-height:92vh;overflow:auto}
+  .nfx-grade{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  .nfx-campo-largo{grid-column:1 / -1}
+  .nfx-campo select{width:100%;height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 12px;font-size:13px;background:#fff}
+  .nfx-vazio-inline{font-size:11px;color:#94a3b8}
+  /* o aviso honesto da tela (o que ela faz e o que ainda não faz) */
+  .nfx-nota{margin:0 0 10px;padding:8px 10px;border-radius:10px;background:#f8fafc;border:1px solid var(--linha);color:#475569;font-size:12px;line-height:1.5}
+  #tela{overflow-x:auto}
+  /* tela que ainda roda no sistema de hoje (diz o motivo, não finge) */
+  .nfx-depende{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:16px;color:#7c2d12}
+  .nfx-depende-titulo{font-size:15px;font-weight:900;color:#9a3412;margin-bottom:6px}
+  .nfx-depende-sub{margin:0 0 8px;font-size:13px}
+  .nfx-depende-motivo{margin:0;font-size:13px;line-height:1.55}
+  .nfx-depende-pe{margin:10px 0 0;font-size:12px;color:#92400e}
 </style>
 </head>
 <body>
   <div class="app-titlebar">
     <div>
       <b>Sistema Digicopy — núcleo novo</b>
-      <small>Mesmo menu, mesmas telas. O coração é novo (fase 1: Clientes e Produtos).</small>
+      <small>Mesmo menu, mesmas telas de hoje. O coração (dados, numeração, fila da nuvem) é novo.</small>
     </div>
-    <span class="selo">EM CONSTRUÇÃO</span>
+    <span class="selo">NÚCLEO NOVO — EM CONSTRUÇÃO</span>
   </div>
 
-  <nav class="modern-topnav" id="topnav">
-    <div class="module" data-modulo="inicio">
-      <button type="button" data-menu="inicio"><i>🏠</i>Início</button>
-      <div class="module-menu"><button type="button" data-tela="inicio">Painel do dia</button></div>
-    </div>
-    <div class="module" data-modulo="cadastros">
-      <button type="button" data-menu="cadastros"><i>👥</i>Cadastros</button>
-      <div class="module-menu">
-        <button type="button" data-tela="clientes"><i>👤</i>Clientes</button>
-        <button type="button" data-tela="produtos"><i>📦</i>Produtos e serviços</button>
-      </div>
-    </div>
-    <div class="module" data-modulo="atendimento">
-      <button type="button" data-menu="atendimento"><i>🧾</i>Atendimento</button>
-      <div class="module-menu">
-        <button type="button" data-tela="vendas"><i>🛒</i>Nova venda / Notinha<small>pronta (impressão, Pix e OS)</small></button>
-        <button type="button" data-tela="orcamentos"><i>📋</i>Orçamentos<small>fase 3</small></button>
-        <button type="button" data-tela="os"><i>🔧</i>Abrir chamado<small>fase 3</small></button>
-      </div>
-    </div>
-    <div class="module" data-modulo="locacao">
-      <button type="button" data-menu="locacao"><i>🖨️</i>Locação</button>
-      <div class="module-menu">
-        <button type="button" data-tela="contratos"><i>📄</i>Contratos<small>fase 4</small></button>
-        <button type="button" data-tela="parque"><i>🏢</i>Máquinas nos clientes<small>fase 4</small></button>
-        <button type="button" data-tela="leituras"><i>📈</i>Leituras<small>fase 4</small></button>
-      </div>
-    </div>
-    <div class="module" data-modulo="fiscal">
-      <button type="button" data-menu="fiscal"><i>🧮</i>Fiscal</button>
-      <div class="module-menu">
-        <button type="button" data-tela="fiscal-nfe"><i>📑</i>Nota Fiscal<small>fase 5</small></button>
-        <button type="button" data-tela="fiscal-catalogo"><i>📚</i>Catálogo (NCM/CEST/CFOP)<small>fase 5</small></button>
-        <button type="button" data-tela="fiscal-cert"><i>🔐</i>Certificado A1<small>fase 5</small></button>
-      </div>
-    </div>
-    <div class="module" data-modulo="financeiro">
-      <button type="button" data-menu="financeiro"><i>💰</i>Financeiro</button>
-      <div class="module-menu">
-        <button type="button" data-tela="contasReceber"><i>📥</i>Contas a receber<small>pronta</small></button>
-        <button type="button" data-tela="contasPagar"><i>📤</i>Contas a pagar<small>pronta</small></button>
-      </div>
-    </div>
-    <div class="module" data-modulo="escola">
-      <button type="button" data-menu="escola"><i>🎓</i>Buscador Escola</button>
-      <div class="module-menu"><button type="button" data-tela="escola"><i>🔎</i>Buscador<small>fase 4</small></button></div>
-    </div>
-    <div class="module" data-modulo="config">
-      <button type="button" data-menu="config"><i>⚙️</i>Configurações</button>
-      <div class="module-menu">
-        <button type="button" data-tela="usuarios"><i>👥</i>Usuários e permissões<small>fase 4</small></button>
-        <button type="button" data-tela="auditoria"><i>🧭</i>Auditoria<small>fase 4</small></button>
-        <button type="button" data-tela="nuvem"><i>☁️</i>Nuvem e backups<small>fase 2</small></button>
-        <button type="button" data-tela="pix"><i>💠</i>Pix (chave e QR)<small>pronta</small></button>
-      </div>
-    </div>
-  </nav>
+  <!-- O menu é montado no script, a partir da FICHA (novo/listas.js): assim nenhuma
+       tela do sistema de hoje fica de fora sem alguém ver — e a tela que ainda roda no
+       sistema antigo aparece marcada, com o motivo escrito. -->
+  <nav class="modern-topnav" id="topnav"></nav>
 
   <main>
     <div class="cartao">
@@ -259,6 +224,8 @@
 <script src="impressao.js"></script>
 <script src="venda.js"></script>
 <script src="financeiro.js"></script>
+<script src="leituras.js"></script>
+<script src="listas.js"></script>
 <script src="telas.js"></script>
 <script>
 (function(){
@@ -285,24 +252,76 @@
 
   // A MESMA PONTE que vai entrar no sistema de hoje: aqui ela está ligada a um `db`
   // de rascunho, só para mostrar que as telas continuam mexendo em listas comuns.
-  var banco = { clientes: [], produtos: [], vendas: [], contasReceber: [], contasPagar: [] };
-  var ponte = window.DIGICOPY_PONTE.ligar({ db: banco, nucleo: nucleo, origem: 'este-pc',
-    schemas: {
+  // As listas e os SCHEMAS saem da FICHA (novo/listas.js). Antes eram cinco listas escritas
+  // à mão aqui — e o schema de `contasReceber` existia em duas versões no núcleo novo
+  // (a da venda e a do financeiro): quem montasse por último ganhava. Agora é uma verdade.
+  var FICHA = window.DIGICOPY_LISTAS;
+  var banco = {};
+  var schemas = {};
+  if (FICHA) {
+    Object.keys(FICHA.LISTAS).forEach(function (n) { banco[n] = []; schemas[n] = FICHA.LISTAS[n].schema; });
+    Object.keys(FICHA.ESQUEMAS).forEach(function (n) { if (!banco[n]) banco[n] = []; schemas[n] = FICHA.ESQUEMAS[n]; });
+  } else {
+    banco = { clientes: [], produtos: [], vendas: [], contasReceber: [], contasPagar: [] };
+    schemas = {
       clientes: { nome: { obrigatorio: true, tipo: 'texto' }, telefone: { tipo: 'texto' }, cidade: { tipo: 'texto' } },
       produtos: { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' }, estoque: { tipo: 'numero' }, estoqueInfinito: { tipo: 'boleano' }, sku: { tipo: 'texto' } },
-      vendas: window.DIGICOPY_VENDA ? { numero: { tipo: 'texto' }, clienteId: { tipo: 'texto' }, itens: { tipo: 'lista' }, desconto: { tipo: 'numero' }, total: { tipo: 'numero' }, status: { tipo: 'texto' } } : {},
-      contasReceber: window.DIGICOPY_VENDA ? { origem: { tipo: 'texto' }, vendaId: { tipo: 'texto' }, valor: { tipo: 'numero' }, status: { tipo: 'texto' } } : {},
+      vendas: { numero: { tipo: 'texto' }, clienteId: { tipo: 'texto' }, itens: { tipo: 'lista' }, desconto: { tipo: 'numero' }, total: { tipo: 'numero' }, status: { tipo: 'texto' } },
+      contasReceber: { origem: { tipo: 'texto' }, vendaId: { tipo: 'texto' }, valor: { tipo: 'numero' }, status: { tipo: 'texto' } },
       contasPagar: { fornecedor: { tipo: 'texto' }, descricao: { tipo: 'texto' }, valor: { tipo: 'numero' }, status: { tipo: 'texto' } }
-    } });
+    };
+  }
+  var ponte = window.DIGICOPY_PONTE.ligar({ db: banco, nucleo: nucleo, origem: 'este-pc', schemas: schemas });
   ponte.primeiraVarredura();
   window.__ponte = ponte; window.__nucleoNovo = nucleo; window.__dbNovo = banco;
 
-  var telas = window.DIGICOPY_TELAS.criarTelas({ nucleo: nucleo, elemento: document.getElementById('tela'), documento: document });
-  var titulos = { clientes: 'Clientes', produtos: 'Produtos e serviços', vendas: 'Nova venda / Notinha', contasReceber: 'Contas a receber', contasPagar: 'Contas a pagar' };
-  var vendaTela = null;
-  var pixTela = null;
-  var finTelas = {};
-  var selo = { inicio: null, orcamentos: 3, os: 3, contratos: 4, parque: 4, leituras: 4, 'fiscal-nfe': 5, 'fiscal-catalogo': 5, 'fiscal-cert': 5, escola: 4, usuarios: 4, auditoria: 4, nuvem: 2 };
+  // ═══════════════════════════════════════════════════════════════════════
+  // O MENU E AS TELAS — tudo saído da FICHA (novo/listas.js)
+  // ───────────────────────────────────────────────────────────────────────
+  var CAT = window.DIGICOPY_LISTAS;                    // a ficha de todas as telas
+  var TELAS_CAT = (CAT && CAT.TELAS) || [];
+  var ICONES_GRUPO = { inicio: '🏠', cadastros: '👥', atendimento: '🧾', locacao: '🖨️',
+    fiscal: '🧮', financeiro: '💰', escola: '🎓', config: '⚙️' };
+  var ICONES = { inicio: '🏠', clientes: '👤', produtos: '📦', recargas: '🖨️', vendas: '🛒',
+    orcamentos: '📋', os: '🔧', impressoras: '🖨️', contratos: '📄', parque: '🏢', leituras: '📈',
+    contasReceber: '📥', contasPagar: '📤', 'fiscal-nfe': '📑', 'fiscal-catalogo': '📚',
+    'fiscal-cert': '🔐', 'fiscal-historico': '🗂️', escola: '🔎', usuarios: '👥', tecnicos: '🧑‍🔧',
+    empresas: '🏭', auditoria: '🧭', pix: '💠', nuvem: '☁️', relatorios: '📊',
+    'painel-gerente': '🧑‍💼', navegador: '🌐', migrados: '🗃️' };
+
+  function esc(t){
+    return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function telaDaFicha(id){
+    for (var i = 0; i < TELAS_CAT.length; i++) if (TELAS_CAT[i].id === id) return TELAS_CAT[i];
+    return null;
+  }
+
+  var titulos = {};                                    // o título de cada tela (vem da ficha)
+  TELAS_CAT.forEach(function (t) { titulos[t.id] = t.rotulo; });
+  titulos.inicio = 'Início';
+  titulos.pix = 'Configurações — Pix';
+  titulos.nuvem = 'Nuvem e backups';
+
+  // O MENU: um botão por MENU do sistema de hoje e, dentro dele, TODAS as telas daquela
+  // área. Tela que ainda roda no sistema antigo aparece marcada — e diz o motivo quando abre.
+  function montarMenu(){
+    var nav = document.getElementById('topnav');
+    if (!nav || !CAT) return;
+    nav.innerHTML = CAT.GRUPOS.map(function (g) {
+      var itens = TELAS_CAT.filter(function (t) { return t.grupo === g.id; });
+      if (!itens.length) return '';
+      return '<div class="module" data-modulo="' + esc(g.id) + '">' +
+        '<button type="button" data-menu="' + esc(g.id) + '"><i>' + (ICONES_GRUPO[g.id] || '•') + '</i>' + esc(g.rotulo) + '</button>' +
+        '<div class="module-menu">' + itens.map(function (t) {
+          var marca = t.marca ? '<small>' + esc(t.marca) + '</small>' : '';
+          return '<button type="button" data-tela="' + esc(t.id) + '"><i>' + (ICONES[t.id] || '•') + '</i>' +
+                 esc(t.rotulo) + marca + '</button>';
+        }).join('') + '</div></div>';
+    }).join('');
+  }
 
   // aviso na tela (nunca alert/confirm/prompt): escreve no rodapé e some sozinho
   function lfbAviso(txt, deuCerto){
@@ -321,22 +340,64 @@
     document.getElementById('st-nucleo').textContent = 'coração: v' + nucleo.versao + ' (núcleo)';
     document.getElementById('st-fila').textContent = 'fila da nuvem: ' + (nucleo.mudancas().length || 0);
   }
+
+  var vendaTela = null;      // a janela da venda (novo/venda.js)
+  var pixTela = null;        // o cartão do Pix (novo/pix.js)
+  var finTelas = {};         // as telas do financeiro (novo/financeiro.js)
+
+  // As telas de cadastro são UMA peça por MENU (as abas são as listas daquele menu) —
+  // por isso a página guarda uma instância por área, e não uma por tela.
+  var telasPorGrupo = {};
+  function telaDeLista(t){
+    var area = telasPorGrupo[t.grupo];
+    if (!area) {
+      area = telasPorGrupo[t.grupo] = window.DIGICOPY_TELAS.criarTelas({
+        nucleo: nucleo, elemento: document.getElementById('tela'), documento: document,
+        grupo: t.grupo, lista: t.lista
+      });
+    } else {
+      area.estado.lista = t.lista;
+      area.estado.busca = '';
+      area.estado.mostrando = 'vivos';
+      area.desenhar();
+    }
+    return area;
+  }
+
   function abrir(tela){
     // nenhuma janela pode ficar pendurada quando ele troca de tela
     if (vendaTela && vendaTela.fecharRecebimento) vendaTela.fecharRecebimento();
     Object.keys(finTelas).forEach(function(k){ if (finTelas[k] && finTelas[k].fecharJanela) finTelas[k].fecharJanela(); });
     document.querySelectorAll('.module').forEach(function(m){ m.classList.remove('aberto'); });
     var alvo = document.getElementById('tela');
-    if (tela === 'clientes' || tela === 'produtos') {
-      titulos[tela] && (document.getElementById('titulo-tela').textContent = titulos[tela]);
-      // as telas novas desenham dentro do cartão; elas escolhem a lista pelas abas
-      telas.estado.lista = tela; telas.estado.busca = ''; telas.estado.mostrando = 'vivos'; telas.desenhar();
-      document.querySelector('[data-aba="' + tela + '"]').click();
+    var ficha = telaDaFicha(tela);
+    document.getElementById('titulo-tela').textContent = titulos[tela] || (ficha && ficha.rotulo) || 'Em construção';
+    // marca a tela aberta no menu (mesmo quando ela abre pela barra de dentro)
+    document.querySelectorAll('[data-tela]').forEach(function(b){ b.classList.toggle('ativa', b.getAttribute('data-tela') === tela); });
+
+    // 1) tela de cadastro (clientes, produtos, contratos, chamados, leituras…) — uma
+    //    peça só atende todas; a ficha diz os campos e as abas
+    if (ficha && ficha.tipo === 'lista') {
+      telaDeLista(ficha);
+      pintarStatus();
+      return;
+    }
+
+    // 2) tela própria do núcleo novo (já migrada e provada por teste)
+    if (tela === 'inicio') {
+      var prontas = TELAS_CAT.filter(function (t) { return t.tipo === 'lista' || t.tipo === 'feita'; }).length;
+      var faltam = TELAS_CAT.length - prontas;
+      alvo.innerHTML = '<div class="em-construcao">O coração novo (lápide, versão, numeração, fila da nuvem) já atende ' +
+        '<b>' + prontas + ' telas</b> do sistema de hoje: cadastros (clientes, produtos, recargas, máquinas, contratos, ' +
+        'máquinas nos clientes, leituras, chamados, orçamentos, usuários, técnicos, empresas, auditoria e catálogo fiscal), ' +
+        'a <b>venda/notinha</b> (recebimento, impressão, OS e Pix) e o <b>financeiro</b>. ' +
+        (faltam ? 'As <b>' + faltam + '</b> que faltam abrem dizendo exatamente do que dependem (nota fiscal, Buscador Escola, ' +
+          'relatórios, painel do gerente, navegador e nuvem — nenhuma some do menu).' : '') +
+        ' Nada aqui toca o sistema atual nem a nuvem.</div>';
       pintarStatus();
       return;
     }
     if (tela === 'vendas') {
-      titulos.vendas && (document.getElementById('titulo-tela').textContent = titulos.vendas);
       if (!vendaTela) {
         vendaTela = window.DIGICOPY_VENDA.criarVenda({
           nucleo: nucleo, elemento: alvo, empresaId: 'rascunho', documento: document, aoMudar: pintarStatus,
@@ -349,7 +410,6 @@
       return;
     }
     if (tela === 'contasReceber' || tela === 'contasPagar') {
-      titulos[tela] && (document.getElementById('titulo-tela').textContent = titulos[tela]);
       var tipo = tela === 'contasReceber' ? 'Receber' : 'Pagar';
       if (!finTelas[tela]) {
         finTelas[tela] = window.DIGICOPY_FINANCEIRO.criarFinanceiro({
@@ -363,7 +423,6 @@
       return;
     }
     if (tela === 'pix') {
-      document.getElementById('titulo-tela').textContent = 'Configurações — Pix';
       if (!pixTela) {
         pixTela = window.DIGICOPY_PIX.montarConfig({
           nucleo: nucleo, elemento: alvo,
@@ -375,20 +434,14 @@
       pintarStatus();
       return;
     }
-    if (tela === 'inicio') {
-      document.getElementById('titulo-tela').textContent = 'Início';
-      alvo.innerHTML = '<div class="em-construcao">O coração novo (lápide, versão, fila da nuvem) com as telas de ' +
-        '<b>Clientes</b>, <b>Produtos</b>, <b>Nova venda / Notinha</b> (recebimento, impressão da notinha e do carnê, ' +
-        'OS com folha inteira e Pix com comprovante) e <b>Financeiro</b>. ' +
-        'O menu acima é o <b>mesmo</b> do sistema de hoje — cada item entra provando por teste, sem parar a loja. ' +
-        'Nada aqui toca o sistema atual nem a nuvem.</div>';
-      return;
-    }
-    document.getElementById('titulo-tela').textContent = 'Em construção';
-    alvo.innerHTML = '<div class="em-construcao"><b>Esta tela ainda não foi migrada</b> (fase ' + (selo[tela] || '—') + '). ' +
-      'Ela já existe no sistema de hoje e vai entrar aqui com a mesma função — o que muda é o coração por baixo. ' +
-      'Enquanto isso, use o sistema de hoje normalmente.</div>';
+
+    // 3) tela que ainda roda no sistema de hoje: abre EXPLICANDO por quê (nunca em branco)
+    var pendente = ficha || { rotulo: 'Em construção', motivo: 'Esta tela ainda não foi migrada; ela continua no sistema de hoje.' };
+    alvo.innerHTML = window.DIGICOPY_TELAS.htmlDependencia(pendente);
+    pintarStatus();
   }
+
+  montarMenu();   // o menu inteiro sai da ficha (nenhuma tela do sistema fica de fora)
 
   document.querySelectorAll('[data-menu]').forEach(function(b){
     b.addEventListener('click', function(ev){

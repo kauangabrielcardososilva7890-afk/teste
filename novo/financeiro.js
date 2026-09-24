@@ -229,18 +229,25 @@
   };
 
   // ── 2. A TELA ─────────────────────────────────────────────────────────────
-  var LISTA_RECEBER = {
+  // O schema destas listas mora na FICHA (novo/listas.js): era o defeito de existirem
+  // DUAS versões de `contasReceber` (esta e a da venda) — o último a montar ganhava.
+  // Sem a ficha carregada (teste isolado desta peça), vale a cópia de reserva abaixo.
+  var FICHA = raiz.DIGICOPY_LISTAS;
+  function daFicha(nome, reserva) {
+    return (FICHA && FICHA.ESQUEMAS && FICHA.ESQUEMAS[nome]) || reserva;
+  }
+  var LISTA_RECEBER = daFicha('contasReceber', {
     origem: { tipo: 'texto' }, clienteId: { tipo: 'texto' }, clienteNome: { tipo: 'texto' },
     vendaId: { tipo: 'texto' }, descricao: { tipo: 'texto' }, valor: { tipo: 'numero' },
     vencimento: { tipo: 'texto' }, pagamentoData: { tipo: 'texto' }, status: { tipo: 'texto' },
     autoBaixa: { tipo: 'boleano' }, formaPagamento: { tipo: 'texto' }, baixaForma: { tipo: 'texto' },
     parcela: { tipo: 'numero' }, totalParcelas: { tipo: 'numero' }, jurosMes: { tipo: 'numero' }
-  };
-  var LISTA_PAGAR = {
+  });
+  var LISTA_PAGAR = daFicha('contasPagar', {
     origem: { tipo: 'texto' }, fornecedor: { tipo: 'texto' }, descricao: { tipo: 'texto' },
     categoria: { tipo: 'texto' }, valor: { tipo: 'numero' }, vencimento: { tipo: 'texto' },
     pagamentoData: { tipo: 'texto' }, status: { tipo: 'texto' }, formaPagamento: { tipo: 'texto' }
-  };
+  });
 
   function moeda(v) { return n(v, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
   function escapar(t) {
@@ -795,6 +802,8 @@
       abrirBaixa: abrirBaixa, abrirExcluir: abrirExcluir, abrirHistorico: abrirHistorico, fecharJanela: fecharJanela
     };
   }
+
+  regras.esquemas = { contasReceber: LISTA_RECEBER, contasPagar: LISTA_PAGAR };
 
   raiz.DIGICOPY_FINANCEIRO = { VERSAO_FINANCEIRO: VERSAO, regras: regras, criarFinanceiro: criarFinanceiro };
 })(typeof window !== 'undefined' ? window : globalThis);
