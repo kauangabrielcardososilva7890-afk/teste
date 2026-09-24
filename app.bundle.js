@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 1ed26ac13f913ee1
+ * scripts: 225 | sha256: 4b139844c79b1c6b
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -7040,9 +7040,17 @@ function ntfLista(){
 }
 // API pública: qualquer parte do sistema registra um aviso aqui.
 // O Pix automático (quando conectado ao banco) vai usar exatamente esta função.
+// v7.0.9 — DEVOLVE true/false (antes não devolvia nada)
+// Quem chama precisa saber se o recado foi REALMENTE guardado. O motor da nuvem
+// começa a rodar quando a tela abre — antes de qualquer login — e o sino é por
+// empresa: sem sessão não há onde guardar. Antes o aviso era descartado em
+// silêncio e o motor gravava a marca de "já avisei" de qualquer jeito, então o
+// dono NUNCA ficava sabendo. Devolvendo false, o motor guarda o recado e entrega
+// assim que houver sessão. (Continua sendo seguro para quem ignorar o retorno.)
 window.notificarEvento = function(tipo, texto, acao){
   const sess = (typeof getSession==='function') ? getSession() : null;
-  if(!sess) return;
+  if(!sess) return false;                       // sem sessão: NÃO foi guardado
+  if(typeof db==='undefined' || !db) return false;   // sem base: não há onde guardar
   const lista = ntfLista();
   lista.unshift({
     id: (typeof uid==='function' ? uid('ntf') : 'ntf_'+Date.now()),
@@ -7051,8 +7059,13 @@ window.notificarEvento = function(tipo, texto, acao){
     criadoPorNome: sess.usuarioNome
   });
   if(lista.length > 200) lista.length = 200; // guarda só os 200 mais recentes
-  if(typeof saveDB==='function') saveDB();
-  ntfAtualizarBadge(true);
+  // v7.0.9 — O REGISTRO JÁ FOI FEITO: o que vier depois é enfeite/bônus e NÃO pode
+  // fazer a função lançar erro. Antes, se salvar o banco falhasse (navegador sem
+  // espaço, por exemplo) ou o sino não estivesse montado, o erro subia para quem
+  // chamou — e o aviso já estava guardado, mas quem chamou achava que não.
+  try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+  try{ if(typeof ntfAtualizarBadge==='function') ntfAtualizarBadge(true); }catch(e){}
+  return true;                                  // guardado de verdade
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -28914,6 +28927,18 @@ function fecharIntencaoDeExclusao(){
   return 0;
 }
 function temMarcaDeExclusao(k){const a=state.excluidosDeProposito;return !!(a&&a[k]);}
+// v7.0.9 — "ELE APAGOU DE PROPÓSITO": a marca acima existe justamente para o
+// registro não voltar. A RECUPERAÇÃO não estava olhando esta marca (defeito
+// provado: o contrato apagado de propósito voltava pela recuperação automática).
+// Regra igual à do "voltou da nuvem": se a versão que veio da nuvem for MAIS NOVA
+// que a da marca, alguém mexeu depois — a edição vale mais e a recuperação pode
+// trazer (nada de perder edição de outro computador).
+function ehExclusaoDele(k,versaoNaNuvem){
+  const a=state.excluidosDeProposito;
+  if(!a||!a[k])return false;
+  if(versaoNaNuvem!=null&&Number(versaoNaNuvem)>Number((a[k]&&a[k].v)||0))return false;
+  return true;
+}
 // v7.0.7 — para as funções de apagar que o vigia NÃO alcança por nome (são
 // internas do módulo): o próprio módulo embrulha a função com esta ferramenta.
 // Foi assim que "Excluir" (histórico de leituras, patch v52210) ficou sem avisar
@@ -29241,13 +29266,57 @@ let sujo=false,varreduraFeita=0,filaCheia=false;
 let gravacaoAgendada=null,estadoMudou=true,estadoGravadoEm=0;
 function marcarEstado(){estadoMudou=true;}
 function gravarFila(){ try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));return true;}catch(e){lastError='Sem espaço para a fila de sincronização.';return false;} }
+// ═══════════════════════════════════════════════════════════════════════════
+// v7.0.9 — RECADO QUE NÃO PODE SE PERDER (defeito provado)
+// O sino (window.notificarEvento) só registra quando há SESSÃO aberta — e o motor
+// da nuvem começa a rodar no instante em que a tela abre, antes de qualquer login
+// (basta o aparelho estar autorizado). O aviso era descartado em silêncio e a
+// marca de "já avisei" ficava gravada do mesmo jeito: o dono NUNCA ficava sabendo.
+// Agora o recado fica guardado aqui e é entregue assim que houver sessão.
+// ───────────────────────────────────────────────────────────────────────────
+function entregarRecados(){
+  try{
+    const pend=state.recadosPendentes;
+    if(!pend)return 0;
+    const chaves=Object.keys(pend);
+    if(!chaves.length)return 0;
+    let n=0;
+    for(const k of chaves){
+      const item=pend[k]||{};
+      let guardado;
+      const sino=(typeof window!=='undefined')?window.notificarEvento:null;
+      if(typeof sino!=='function')guardado=true;   // sem sino: nada a fazer, não fica tentando
+      else{ try{ guardado=sino(item.tipo||'aviso',String(item.texto||''),{tipo:'sync'})!==false; }catch(e){ guardado=false; } }
+      if(guardado){
+        const entregues=state.recadosEntregues=(state.recadosEntregues&&typeof state.recadosEntregues==='object')?state.recadosEntregues:{};
+        entregues[k]=Date.now();delete pend[k];n++;
+      }
+    }
+    // v7.0.9 — gravado o "já entreguei" na hora agendada: sem isto o aviso
+    // repetiria a cada abertura do programa (o recado já saiu, mas o estado não)
+    if(n){marcarEstado();persist();}
+    return n;
+  }catch(e){return 0;}
+}
+function enfileirarRecado(chave,texto,tipo){
+  try{
+    const entregues=state.recadosEntregues;
+    if(entregues&&entregues[chave])return false;   // já avisei: não repete
+    const pend=state.recadosPendentes=(state.recadosPendentes&&typeof state.recadosPendentes==='object')?state.recadosPendentes:{};
+    pend[chave]={texto:String(texto||''),tipo:tipo||'aviso'};
+    marcarEstado();
+    entregarRecados();                            // entrega na hora se já houver sessão
+    persist();
+    return true;
+  }catch(e){return false;}
+}
 let espacoAvisado=false;
 function avisarEspaco(){
   if(espacoAvisado)return;
-  espacoAvisado=true;
+  espacoAvisado=true;   // avisa uma vez por sessão (o recado fica guardado até ser lido)
   lastError='Sem espaço no navegador para o controle da nuvem.';
-  try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('aviso',
-    'O navegador ficou SEM ESPAÇO para guardar o controle da nuvem (a lista de versões e a fila). O sistema continua funcionando, mas se você fechar agora pode perder o envio do que acabou de fazer. Feche abas/limpe o histórico ou avise o suporte.',{tipo:'sync'}); }catch(e){}
+  enfileirarRecado('sem-espaco',
+    'O navegador ficou SEM ESPAÇO para guardar o controle da nuvem (a lista de versões e a fila). O sistema continua funcionando, mas se você fechar agora pode perder o envio do que acabou de fazer. Feche abas/limpe o histórico ou avise o suporte.');
 }
 function gravarEstado(){
   try{localStorage.setItem(STATE_KEY,JSON.stringify(state));estadoMudou=false;estadoGravadoEm=Date.now();return true;}
@@ -29929,6 +29998,7 @@ async function tick(reason){
   // v7.0.5 — antes de qualquer decisão, aproveita a brecha para aplicar um
   // redesenho que ficou pendente (roda a cada 3 s).
   try{tentarRedesenhoPendente();}catch(e){}
+  try{entregarRecados();}catch(e){}   // v7.0.9 — recado guardado esperando sessão
   if(state.paused||busy||!authorized())return false;
   if(!leader()){
     // não é a líder: se a janela está à vista, puxa; se está escondida, espera
@@ -30258,7 +30328,7 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function info(){return {authorized:authorized(),busy,paused:!!state.paused,recuperando:!!state.recuperacaoCursor,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
 // Estado completo para o check-up (nada é inventado: o que não se sabe vem null)
 function estadoDetalhado(){
@@ -30381,12 +30451,25 @@ function temDonoHumano(reg){
   return !!dono&&dono!=='sistema'&&dono!=='demo';
 }
 let varreduraCompleta=false;   // o motor da nuvem sabe paginar a lista de excluídos?
+// v7.0.9 — "SERÁ QUE TERMINOU?" é diferente de "SABE PAGINAR?"
+// A varredura tem teto de 40 páginas por ciclo (40.000 excluídos). Se a lista for
+// maior, o laço acaba pelo teto — e antes isso era tratado como "varri tudo":
+// carimbava na nuvem que a recuperação estava feita e o resto NUNCA mais era
+// varrido (defeito provado). Agora o cursor fica guardado e o próximo ciclo
+// continua exatamente de onde parou.
+let varreduraTerminou=false;
 // Versão mínima do motor da nuvem que faz a varredura COMPLETA (cursor composto).
 // Serve para o aviso ao dono reaparecer quando a exigência muda — e não ficar mudo
 // só porque ele já tinha visto o aviso de uma exigência antiga.
 const MOTOR_MINIMO='5.26.7';
-async function listarExcluidosDaNuvem(call,limiteTotal){
-  const todos=[];let before=0,beforeEnt='',beforeId='';varreduraCompleta=false;
+async function listarExcluidosDaNuvem(call,limiteTotal,continuar){
+  const todos=[];let before=0,beforeEnt='',beforeId='';varreduraCompleta=false;varreduraTerminou=false;
+  // continua de onde parou (só a recuperação automática usa isto: o painel da
+  // Nuvem e os testes pedem a lista do começo, como sempre pediram)
+  if(continuar){
+    const antigo=state.recuperacaoCursor;
+    if(antigo&&Number(antigo.before)>0){before=Number(antigo.before)||0;beforeEnt=String(antigo.entity||'');beforeId=String(antigo.id||'');}
+  }
   const vistos=new Set();          // v7.0.8 — nada é pedido duas vezes
   for(let volta=0;volta<40;volta++){
     // v7.0.8 — cursor COMPOSTO: quando o motor da nuvem devolve o par
@@ -30406,18 +30489,23 @@ async function listarExcluidosDaNuvem(call,limiteTotal){
     // publicado, nunca mais varreria. A prova de varredura COMPLETA agora é o par
     // (entidade, id) do cursor composto, que só o motor 5.26.7 devolve.
     if(r&&r.proximoEntity&&r.proximoId)varreduraCompleta=true;
-    if(volta===0&&!lote.length)varreduraCompleta=true;   // não há nada a recuperar
+    if(volta===0&&!lote.length){varreduraCompleta=true;varreduraTerminou=true;}   // não há nada a recuperar
     for(const reg of lote){
       if(!reg||reg.entity==null||reg.recordId==null)continue;
       const chave=String(reg.entity)+'|'+String(reg.recordId);
       if(vistos.has(chave))continue;
       vistos.add(chave);todos.push(reg);
     }
-    if(!lote.length||!r.temMais||!r.proximoBefore)break;
+    if(!lote.length||!r.temMais||!r.proximoBefore){varreduraTerminou=true;break;}   // chegou ao fim da lista
     before=Number(r.proximoBefore)||0;
     beforeEnt=String(r.proximoEntity||'');beforeId=String(r.proximoId||'');
-    if(!before)break;
-    if(limiteTotal&&todos.length>=limiteTotal)break;
+    if(!before){varreduraTerminou=true;break;}   // motor sem cursor: não há como continuar
+    if(limiteTotal&&todos.length>=limiteTotal)break;   // teto pedido por quem chamou
+  }
+  if(continuar){
+    if(varreduraTerminou){delete state.recuperacaoCursor;}
+    else if(before){state.recuperacaoCursor={before:before,entity:beforeEnt,id:beforeId};}
+    marcarEstado();
   }
   return todos;
 }
@@ -30434,6 +30522,9 @@ async function recuperarAutomatico(){
   // Nuvem continua disponível para qualquer necessidade futura.
   try{
     if(typeof db!=='undefined'&&db&&db.config&&Number(db.config.recuperacaoExcluidosEm)>0){
+      // v7.0.9 — outro computador já terminou: não deixa cursor pendurado (senão
+      // o painel diria "varrendo a nuvem agora" para sempre)
+      delete state.recuperacaoCursor;
       state.recuperacaoV1=true;persistAgora();return;
     }
   }catch(e){}
@@ -30443,9 +30534,11 @@ async function recuperarAutomatico(){
   recuperandoAgora=true;
   state.recuperacaoTentativa=Date.now();persist();
   try{
-    const excluidos=await listarExcluidosDaNuvem(call);
+    const excluidos=await listarExcluidosDaNuvem(call,0,true);   // continua de onde parou
     const jaVieram=lerRecuperados();
     const alvos=excluidos.filter(r=>r&&r.entity&&r.recordId&&!jaRecuperado(jaVieram,r.entity,r.recordId)&&temDonoHumano(r)
+      // v7.0.9 — o que ESTE computador apagou de propósito não volta (defeito provado)
+      && !ehExclusaoDele(key(r.entity,r.recordId),r.version)
       && ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos'].indexOf(r.entity)>=0
       && r.data&&typeof r.data==='object'&&Object.keys(r.data).length>0);
     let ok=0,falhas=0,primeiroErro='';
@@ -30465,11 +30558,18 @@ async function recuperarAutomatico(){
     // e tenta de novo (de 60 em 60 s) até o motor novo ser publicado. Avisa uma
     // única vez no sino, sem travar nada.
     if(!varreduraCompleta){
-      if(state.avisoMotorAntigo!==MOTOR_MINIMO){
-        state.avisoMotorAntigo=MOTOR_MINIMO;persist();
-        try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
-          'Para trazer de volta TUDO que foi apagado, falta publicar o motor novo da nuvem (rodar o atualizar_motor_nuvem.cmd). Depois disso a recuperação termina sozinha.',{tipo:'sync'}); }catch(e){}
-      }
+      // v7.0.9 — o aviso vai pelo caminho do recado: se ainda não houver sessão
+      // aberta ele NÃO se perde (antes era descartado e a marca ficava gravada).
+      enfileirarRecado('motor-antigo:'+MOTOR_MINIMO,
+        'Para trazer de volta TUDO que foi apagado, falta publicar o motor novo da nuvem (rodar o atualizar_motor_nuvem.cmd). Depois disso a recuperação termina sozinha.');
+    }else if(!varreduraTerminou){
+      // v7.0.9 — VARREDURA GRANDE, CONTINUA DE ONDE PAROU
+      // Bateu o teto de páginas por ciclo (40.000 excluídos). NÃO pode carimbar
+      // "já recuperei" (era o defeito: carimbava e o resto nunca mais era varrido)
+      // nem avisar "falta publicar o motor" (o motor está certo, faltou terminar).
+      // O cursor guardado faz o próximo ciclo continuar exatamente daqui — e é
+      // ele que o painel mostra como "varrendo a nuvem agora".
+      persist();
     }else{
       state.recuperacaoV1=true;
       // carimba na nuvem (só quando não houve falha) para os outros PCs não
@@ -30489,14 +30589,14 @@ async function recuperarAutomatico(){
       try{
         if(typeof logAction==='function')logAction('recuperacao','automatica','-',
           'Recuperação automática trouxe de volta '+ok+' registro(s): '+JSON.stringify(porEntidade));
-        if(typeof window.notificarEvento==='function')window.notificarEvento('info',
-          'Recuperação automática: '+ok+' registro(s) que tinham sido apagados por engano voltaram (contratos, impressoras, leituras). Confira as telas.',{tipo:'sync'});
+        enfileirarRecado('recuperacao',
+          'Recuperação automática: '+ok+' registro(s) que tinham sido apagados por engano voltaram (contratos, impressoras, leituras). Confira as telas.','info');
       }catch(e){}
       await pullAll({silencioso:true});
       redesenharTelaAtual();
     }else if(falhas&&/admin/i.test(primeiroErro||'')){
-      try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
-        'A recuperação do que foi apagado precisa ser feita no computador ADMINISTRADOR da nuvem.',{tipo:'sync'}); }catch(e){}
+      enfileirarRecado('precisa-admin',
+        'A recuperação do que foi apagado precisa ser feita no computador ADMINISTRADOR da nuvem.');
       state.recuperacaoV1=true;persistAgora();   // não fica tentando a cada ciclo
     }
   }catch(e){/* tenta de novo no próximo ciclo; nada aparece na tela */}
@@ -30525,6 +30625,8 @@ async function recuperarDasFotosLocais(){
         if(!item||item.id==null)return;
         const k=String(item.id);
         if(ids.has(k)||jaRecuperado(ja,entidade,k))return;
+        // v7.0.9 — o que ESTE PC apagou de propósito não volta nem pela foto
+        if(ehExclusaoDele(key(entidade,k),null))return;
         if(!temDonoHumano({data:item}))return;
         const copia=Object.assign({},item,{recuperadoDe:'foto-local',recuperadoEm:new Date().toISOString()});
         atual.push(copia);ids.add(k);voltaram++;
@@ -30619,7 +30721,7 @@ function redesenharTelaAtual(){
   }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -50428,7 +50530,10 @@ function linhaDiagnostico(){
   const erro = String(info.lastError || '');
   const instantaneo = !!(sync && typeof sync.canalInstantaneo === 'function' && !sync.canalInstantaneo());
   const pendenteTela = !!(sync && typeof sync.temRedesenhoPendente === 'function' && sync.temRedesenhoPendente());
-  return { app, quando, pend, instantaneo, pendenteTela, pausada, motivo, erro };
+  // v7.0.9 — a varredura do que foi apagado pode levar mais de um ciclo quando a
+  // nuvem tem muita coisa excluída; o painel avisa que ela continua sozinha.
+  const recuperando = !!info.recuperando;
+  return { app, quando, pend, instantaneo, pendenteTela, pausada, motivo, erro, recuperando };
 }
 // v7.0.9 — o painel mostra texto que vem de FORA (motivo da pausa e mensagem de
 // erro da nuvem). Texto de fora nunca entra no HTML sem escape: era o único ponto
@@ -50463,6 +50568,7 @@ async function instalarDiagnostico(){
   partes.push('Aviso instantâneo: <b>' + (d.instantaneo ? 'ligado' : 'desligado') + '</b>'
     + (d.pendenteTela ? ' • há novidade esperando a tela atualizar' : ''));
   if(d.pausada) partes.push('<b style="color:#b91c1c">Sincronização PARADA</b>' + (d.motivo ? ' (' + escDiag(d.motivo) + ')' : ''));
+  if(d.recuperando) partes.push('Trazer de volta o que foi apagado: <b>varrendo a nuvem agora</b> (continua sozinho, sem precisar clicar em nada)');
   if(d.erro) partes.push('<span style="color:#b45309">Último aviso da nuvem: ' + escDiag(d.erro.slice(0,160)) + '</span>');
   linha.innerHTML = partes.join('<br>');
 

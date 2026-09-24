@@ -87,10 +87,10 @@ ok('o PC manda o cursor composto quando o motor devolve o par',
   /url\+='&beforeEntity='\+encodeURIComponent\(beforeEnt\)\+'&beforeId='\+encodeURIComponent\(beforeId\)/.test(motor));
 ok('o PC SÓ considera a varredura completa quando o motor devolve o par do cursor (motor que pula não é "completo")',
   /if\(r&&r\.proximoEntity&&r\.proximoId\)varreduraCompleta=true;/.test(motor) &&
-  /if\(volta===0&&!lote\.length\)varreduraCompleta=true;/.test(motor) &&
+  /if\(volta===0&&!lote\.length\)\{varreduraCompleta=true;varreduraTerminou=true;\}/.test(motor) &&
   /const MOTOR_MINIMO='5\.26\.7';/.test(motor));
 ok('o aviso ao dono reaparece quando a exigência de motor muda',
-  /if\(state\.avisoMotorAntigo!==MOTOR_MINIMO\)/.test(motor));
+  /enfileirarRecado\('motor-antigo:'\+MOTOR_MINIMO/.test(motor));
 ok('o PC não repete registro entre páginas (conjunto do que já viu)',
   /const vistos=new Set\(\)/.test(motor) && /if\(vistos\.has\(chave\)\)continue;/.test(motor));
 

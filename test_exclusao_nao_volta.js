@@ -12,6 +12,7 @@ let passou=0;
 function ok(nome,cond){if(!cond){console.error('  \u2718 '+nome);process.exit(1);}console.log('  \u2714 '+nome);passou++;}
 const realSetTimeout=globalThis.setTimeout;
 const code=fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
+const notif=fs.readFileSync('notificacoes_patch.js','utf8');
 
 console.log('== EXCLUSÃO NÃO VOLTA (v7.0.7) ==');
 
@@ -251,7 +252,26 @@ const dormir=ms=>new Promise(r=>realSetTimeout(r,ms));
     /MARCA_EXCLUSAO_VALE=7\*24\*60\*60\*1000/.test(code));
   ok('sem espaço no navegador: o derivado sai primeiro e ele é avisado',
     /state\.versions=\{\};[\s\S]{0,200}?avisarEspaco\(\)/.test(code) &&
-    /window\.notificarEvento\('aviso',[\s\S]{0,120}?SEM ESPAÇO/.test(code));
+    /enfileirarRecado\('sem-espaco',[\s\S]{0,200}?SEM ESPAÇO/.test(code));
+
+  console.log('-- v7.0.9: o aviso do motor não se perde (o motor roda antes do login) --');
+  ok('recado que não pôde ser entregue fica guardado e sai depois (e não fica marcado como avisado)',
+    /function entregarRecados\(/.test(code) &&
+    /guardado=sino\(item\.tipo\|\|'aviso'/.test(code) && /!==false; \}catch\(e\)\{ guardado=false; \}/.test(code) &&
+    /if\(entregues&&entregues\[chave\]\)return false/.test(code));
+  ok('a entrega dos recados acontece em todo ciclo (uma vez que haja sessão)',
+    /try\{entregarRecados\(\);\}catch\(e\)\{\}/.test(code));
+  ok('o sino devolve se guardou ou não (sem sessão = false, não engole o recado)',
+    /if\(!sess\) return false;/.test(notif) && /return true;\s+\/\/ guardado de verdade/.test(notif));
+  ok('o registro do sino não estoura depois de guardar (salvar/enfeite são opcionais)',
+    /try\{ if\(typeof ntfAtualizarBadge==='function'\) ntfAtualizarBadge\(true\); \}catch\(e\)\{\}/.test(notif));
+  ok('a recuperação não ressuscita o que este PC apagou de propósito',
+    /import|ehExclusaoDele\(key\(r\.entity,r\.recordId\),r\.version\)/.test(code) &&
+    /ehExclusaoDele\(key\(entidade,k\),null\)/.test(code));
+  ok('a varredura grande continua de onde parou (não carimba \"acabei\" no meio)',
+    /varreduraTerminou=false;/.test(code) && /else if\(!varreduraTerminou\)\{/.test(code) &&
+    /state\.recuperacaoCursor=\{before:before,entity:beforeEnt,id:beforeId\}/.test(code) &&
+    /const excluidos=await listarExcluidosDaNuvem\(call,0,true\)/.test(code));
 
   console.log('-- a lista de exclusões não pode voltar a ter buraco --');
   // Levanta TODO ponto do sistema que tira registro de lista sincronizada e

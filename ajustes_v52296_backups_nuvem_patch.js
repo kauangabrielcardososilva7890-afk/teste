@@ -914,7 +914,10 @@ function linhaDiagnostico(){
   const erro = String(info.lastError || '');
   const instantaneo = !!(sync && typeof sync.canalInstantaneo === 'function' && !sync.canalInstantaneo());
   const pendenteTela = !!(sync && typeof sync.temRedesenhoPendente === 'function' && sync.temRedesenhoPendente());
-  return { app, quando, pend, instantaneo, pendenteTela, pausada, motivo, erro };
+  // v7.0.9 — a varredura do que foi apagado pode levar mais de um ciclo quando a
+  // nuvem tem muita coisa excluída; o painel avisa que ela continua sozinha.
+  const recuperando = !!info.recuperando;
+  return { app, quando, pend, instantaneo, pendenteTela, pausada, motivo, erro, recuperando };
 }
 // v7.0.9 — o painel mostra texto que vem de FORA (motivo da pausa e mensagem de
 // erro da nuvem). Texto de fora nunca entra no HTML sem escape: era o único ponto
@@ -949,6 +952,7 @@ async function instalarDiagnostico(){
   partes.push('Aviso instantâneo: <b>' + (d.instantaneo ? 'ligado' : 'desligado') + '</b>'
     + (d.pendenteTela ? ' • há novidade esperando a tela atualizar' : ''));
   if(d.pausada) partes.push('<b style="color:#b91c1c">Sincronização PARADA</b>' + (d.motivo ? ' (' + escDiag(d.motivo) + ')' : ''));
+  if(d.recuperando) partes.push('Trazer de volta o que foi apagado: <b>varrendo a nuvem agora</b> (continua sozinho, sem precisar clicar em nada)');
   if(d.erro) partes.push('<span style="color:#b45309">Último aviso da nuvem: ' + escDiag(d.erro.slice(0,160)) + '</span>');
   linha.innerHTML = partes.join('<br>');
 

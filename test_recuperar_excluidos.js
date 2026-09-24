@@ -100,7 +100,7 @@ ok('registro sem autor NÃO é recuperado', SYNC.temDonoHumano({ data:{} }) === 
 ok('registro vindo da importação do sistema antigo É recuperado (é dado real)',
    SYNC.temDonoHumano({ data:{ criadoPor:'migracao' } }) === true);
 ok('a recuperação não "gasta" a passada enquanto o motor da nuvem for antigo',
-   /if\(!varreduraCompleta\)\{/.test(motor) && /state\.avisoMotorAntigo=MOTOR_MINIMO/.test(motor));
+   /if\(!varreduraCompleta\)\{/.test(motor) && /enfileirarRecado\('motor-antigo:'\+MOTOR_MINIMO/.test(motor));
 // v7.0.8 — "motor novo" passou a significar o motor que NÃO PULA registro: a
 // prova é o par (entidade, id) do cursor composto, e não só o `temMais` (o 5.26.6
 // tinha `temMais` e mesmo assim perdia registros — provado em

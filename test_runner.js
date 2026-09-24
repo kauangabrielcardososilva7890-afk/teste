@@ -239,7 +239,8 @@ const tests=[
   "test_tela_nao_seca.js",
   "test_nuvem_rapida.js",
   "test_exclusao_nao_volta.js",
-  "test_recuperacao_completa.js"
+  "test_recuperacao_completa.js",
+  "test_recuperacao_nao_ressuscita.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

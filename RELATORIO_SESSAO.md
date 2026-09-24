@@ -5389,3 +5389,102 @@ quantos registros a base dele tem hoje (o painel da Nuvem mostra a contagem).
 2. **Nada na nuvem**: o motor 5.26.7 já foi publicado por ele.
 3. Se notar a mensagem de "sem espaço no navegador", me avise — significa base grande e
    aí vale medir o tamanho dela no painel da Nuvem.
+
+
+## 23/09/2026 (cont.) — RODADA 15 · A RECUPERAÇÃO ESTAVA RESSUSCITANDO O QUE ELE APAGOU (v7.0.10)
+
+**Pedido (literal, de novo):** *"procure por mais problemas, se achar, verifique se aquil
+realmente é um problema"*. Todo achado abaixo foi **provado** rodando o motor de verdade
+com uma nuvem de mentira em memória — antes e depois.
+
+### 1) CRÍTICO — a recuperação automática trazia de volta o que ELE apagou de propósito
+A marca de "apagado de propósito" (`excluidosDeProposito`, criada na v7.0.7 justamente
+para o registro não voltar) era usada no passe do "voltou da nuvem", **mas não** na
+recuperação. Então: apagar um contrato pela tela (de propósito) e a recuperação —
+que roda sozinha a cada minuto enquanto não termina de varrer — **trazia o contrato de
+volta**. É o "apaguei e voltou" de novo, agora pela porta da recuperação.
+
+**Prova:** cenário 1 do `test_recuperacao_nao_ressuscita.js`. Antes: `restaurados =
+["contratos|C1","parque|P9"]` (o C1 era o apagado de propósito). Depois: só `["parque|P9"]`
+— o perdido pelo defeito antigo continua voltando (a recuperação não foi enfraquecida).
+
+**Mesmo padrão em outro lugar (aplicado o conserto nas DUAS ocorrências):**
+`recuperarDasFotosLocais()` (as fotos internas do PC, IndexedDB) tinha exatamente o mesmo
+buraco e mais grave: ela restaura **todo** registro da foto que não está na base atual.
+Provado no mesmo teste (a foto trazia o `C1` de volta; agora não traz e continua trazendo
+o `C2`, que estava perdido de verdade).
+
+**Regra usada** (a mesma do "voltou da nuvem"): se a versão que está na nuvem for **mais
+nova** que a da marca, alguém editou depois — a edição vale mais e a recuperação pode
+trazer. Nada de perder edição de outro computador.
+
+> O **botão manual** "🩹 Trazer de volta o que foi excluído" **não** mudou: ele continua
+> trazendo tudo, inclusive o que ele apagou de propósito — é uma ação dele, com
+> confirmação na tela. A proteção vale só para a recuperação **automática**.
+
+### 2) ALTO — o aviso do motor se perdia para sempre (sem sessão aberta)
+O motor da nuvem começa a rodar **quando a tela abre** — basta o aparelho estar
+autorizado, não precisa ninguém logado. Mas `window.notificarEvento` (o sino) sai fora
+quando não há sessão (`getSession()` nulo), e o motor **gravava a marca de "já avisei" do
+mesmo jeito**. Resultado: se a tela estivesse no login naquele instante, o dono **nunca**
+ficava sabendo — nem do "falta publicar o motor novo", nem do "a recuperação precisa ser
+feita no computador administrador".
+
+**Prova:** cenário 2 do teste: sem sessão, o sino fica vazio (0 avisos) mas a marca era
+gravada → "agora que ele entrar, o aviso aparece? NÃO". Depois do conserto: o recado fica
+**guardado**, sai assim que houver sessão, e só então é marcado como avisado (uma única vez).
+
+**Conserto:** `notificarEvento` agora **devolve** `true`/`false` (guardou ou não) e o motor
+usa isso; os avisos passam por uma fila de recados (`recadosPendentes`/`recadosEntregues`)
+entregue a cada ciclo. Vale para os três avisos do motor: motor antigo, falta de espaço e
+"precisa do administrador" — e também para o relatório da recuperação ("N registros
+voltaram"), que se perdia do mesmo jeito.
+
+### 3) ALTO — a varredura de excluídos marcava "acabei" sem ter acabado
+`listarExcluidosDaNuvem` tem teto de 40 páginas por ciclo (40.000 excluídos). Quando a
+lista era maior, o laço terminava pelo teto — e isso era tratado como **"varri tudo"**:
+o PC carimbava na nuvem que a recuperação estava feita e o resto **nunca mais** era
+varrido (nem por ele, nem pelos outros PCs, que obedecem ao carimbo).
+
+**Prova:** cenário 3 do teste, com 45 páginas (45.000 excluídos): antes, "marcou como
+COMPLETA sem ter varrido tudo? SIM". Depois: não carimba, **guarda o cursor**, e o ciclo
+seguinte continua exatamente de onde parou (46 páginas no total, sem repetir nenhuma) e
+aí sim carimba. Provado também que o cursor **sobrevive ao fechar/reabrir o programa**.
+
+**Efeitos colaterais tratados:** esse caso não dispara mais o aviso errado de "motor
+antigo" (o motor está certo, faltou terminar) e, quando outro PC carimba a recuperação
+no meio, o cursor é descartado (senão o painel diria "varrendo agora" para sempre).
+
+### 4) MÉDIO (achado de brinde) — o sino podia estourar DEPOIS de guardar o aviso
+`notificarEvento` registrava o aviso e depois chamava `saveDB()` e a atualização do
+badge **sem proteção**: se salvar o banco falhasse (navegador sem espaço) ou o sino não
+estivesse montado, o erro subia para quem chamou — que concluía "não registrei" mesmo
+tendo registrado. Agora esses dois passos são opcionais (try/catch) e a função devolve a
+verdade: **guardado**.
+
+### 5) Verificado e NÃO é problema (com evidência)
+| Suspeita | Verificação | Veredito |
+|---|---|---|
+| A varredura é interrompida pelo teto de 40 páginas **em uso normal** | o laço só usa as 40 páginas quando há mais de 40.000 excluídos (base dele: desconhecida — **banco de produção indisponível**) | possível, agora tratado |
+| `/v1/restore` (botão do painel) | restaura por item e em lote com confirmação na tela; não passa pelo filtro novo | por desenho |
+| Exclusão de orçamento/módulo (rodada 14) | reteste com a suíte nova: 44 ✔ no `test_exclusao_nao_volta` | segue OK |
+| Custo do clique de apagar (desempenho) | banco de prova de 76.550 registros: **44 ms** (22 marca + 22 fecha) — igual à rodada anterior | sem regressão |
+
+### 6) Testes e verificação
+- **Novo:** `test_recuperacao_nao_ressuscita.js` — **20 verificações**, motor de verdade +
+  nuvem de mentira, com os quatro cenários acima (marca, foto, sem sessão, teto de páginas).
+- `test_exclusao_nao_volta.js`: 57 · `test_recuperacao_completa.js`: 17 ·
+  `test_recuperar_excluidos.js`: 57 (realinhados para a mecânica nova do aviso).
+- Suíte: **212 passaram, 0 falharam, 4 não rodaram** (falta `jsdom`).
+- Bundle 225 scripts (`4b139844c79b1c6b`) · `?v=7.0.10-c1d6e30ace7a` · `sync_build --check`
+  e `mobile/sync-www.js` OK.
+- **Não rodado:** `e2e/` (Playwright ausente) e os 4 de `jsdom`.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  quantos registros excluídos existem hoje na nuvem dele (é o que decide se a varredura
+  precisa de mais de um ciclo).
+
+### 7) Passos dele
+1. Atualizar o programa nos PCs e conferir o rodapé **v7.0.10**.
+2. Nada a fazer na nuvem (o motor 5.26.7 já está publicado).
+3. Se apagar algo de propósito, **não volta** — nem pela recuperação. Se quiser trazer
+   algo de volta de propósito, o botão do painel da Nuvem continua trazendo.

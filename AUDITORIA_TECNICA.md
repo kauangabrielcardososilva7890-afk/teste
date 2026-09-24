@@ -1437,3 +1437,67 @@ produção indisponível** (o painel da Nuvem mostra a contagem de registros).
 - Bundle 225 scripts (`1ed26ac13f913ee1`), `?v=7.0.9-326f1f40e4a6`;
   `sync_build --check` OK; `mobile/sync-www.js` OK.
 - **Não rodado:** `e2e/` (Playwright ausente) e os 4 de `jsdom`.
+
+
+## 24. RODADA 15 — A RECUPERAÇÃO AUTOMÁTICA CONTRA O DONO; AVISO PERDIDO; TETO DE PÁGINAS (23/09/2026)
+
+**Pedido:** *"procure por mais problemas, se achar, verifique se aquil realmente é um problema"*.
+Método mantido: todo achado abaixo foi reproduzido com o motor real + nuvem em memória.
+
+### 24.1 CRÍTICO — recuperação automática ressuscitava o que foi apagado de propósito
+- Filtro dos alvos (`recuperarAutomatico`): `excluidos.filter(... !jaRecuperado(...) && temDonoHumano(r) && [entidades] && r.data ...)`
+  — **não** consultava `state.excluidosDeProposito` (a marca da v7.0.7).
+- Efeito: exclusão deliberada feita pela tela podia ser desfeita pela recuperação
+  (que roda a cada 60 s enquanto a passada não termina) → "apaguei e voltou".
+- **Correção:** `ehExclusaoDele(k,versaoNaNuvem)` — se a versão da nuvem for **maior** que
+  a da marca, a edição nova vence e a recuperação pode trazer (mesma regra do passe
+  "voltou da nuvem"); senão, o registro é pulado.
+- **Mesmo padrão corrigido em `recuperarDasFotosLocais()`** (fotos internas do PC): o
+  filtro também não olhava a marca, e essa função restaura todo registro da foto que
+  não está na base atual — superfície ainda maior.
+
+### 24.2 ALTO — aviso do motor descartado quando não havia sessão (marca gravada assim mesmo)
+- `notificacoes_patch.js:54`: `const sess=getSession(); if(!sess) return;` — o sino é por
+  empresa. O motor, porém, começa no `load` (`if(authorized()){... setTimeout(recuperarAutomatico,4000)}`)
+  e roda antes de qualquer login.
+- `state.avisoMotorAntigo=MOTOR_MINIMO;persist();` era gravado **antes** de tentar o aviso,
+  que era descartado → aviso perdido para sempre.
+- **Correção:** `notificarEvento` devolve `true`/`false`; o motor tem fila de recados
+  (`state.recadosPendentes` / `state.recadosEntregues`) entregue a cada `tick()`; os três
+  avisos (motor antigo, sem espaço, precisa-admin) e o relatório da recuperação passaram
+  a usar a fila; entregar marca o estado (persist) para não repetir depois de recarregar.
+
+### 24.3 ALTO — teto de 40 páginas era tratado como fim da lista
+- `for(let volta=0;volta<40;volta++)` + `if(r&&r.proximoEntity&&r.proximoId)varreduraCompleta=true`
+  ⇒ ao estourar o teto, `varreduraCompleta` permanecia `true`, e o ramo `else` carimbava
+  `db.config.recuperacaoExcluidosEm` (marca de "recuperação feita" na nuvem) + `recuperacaoV1`.
+- **Correção:** nova flag `varreduraTerminou` (fim real da lista) separada de
+  `varreduraCompleta` (motor sabe paginar); cursor de continuação em
+  `state.recuperacaoCursor` (só na chamada automática — o painel e os testes pedem a lista
+  do começo, como sempre); o ramo novo só persiste e deixa o próximo ciclo continuar.
+  Cursor é limpo ao terminar e quando outro PC já carimbou a recuperação.
+
+### 24.4 MÉDIO — `notificarEvento` podia lançar depois de já ter guardado o aviso
+`saveDB()` e `ntfAtualizarBadge(true)` eram chamados sem proteção; erro aí subia para o
+chamador (que concluiria "não registrou"). Agora ambos são opcionais e a função devolve
+`true` (guardado) — o que também torna o novo mecanismo de fila confiável.
+
+### 24.5 Verificado e NÃO é problema
+| Suspeita | Evidência |
+|---|---|
+| Botão manual "🩹 Trazer de volta o que foi excluído" | usa `window.DIGICOPY_RECUPERAR` (plano + confirmação) e `/v1/restore` por item — não passa pelo filtro automático; ação explícita do dono |
+| Exclusões da rodada 14 (orçamento, módulo) | `test_exclusao_nao_volta.js` 57 ✔ (antes 51) |
+| Desempenho do clique de apagar | banco de prova 76.550 registros: 44 ms total (22+22) |
+
+### 24.6 Possível problema (não confirmado)
+Se a nuvem dele tiver **mais de 40.000 excluídos**, a varredura agora precisa de mais de
+um ciclo (60 s cada) — comportamento novo e correto, mas só o painel informa ("varrendo a
+nuvem agora"). **Não foi possível verificar diretamente — acesso ao banco de produção
+indisponível.**
+
+### 24.7 Testes e verificação
+- `test_recuperacao_nao_ressuscita.js` (**novo**, 20 verificações): marca na varredura,
+  marca na foto, aviso sem sessão→entregue depois, teto de páginas com cursor sobrevivendo
+  ao recarregamento (46 páginas, nenhuma repetida).
+- Suíte **212/0/4/0** (4 pulam sem `jsdom`); bundle `4b139844c79b1c6b`;
+  `?v=7.0.10-c1d6e30ace7a`; `sync_build --check` OK; `mobile/sync-www.js` OK.
