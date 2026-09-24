@@ -6132,7 +6132,7 @@ prazo, Pix, misto e venda zerada): mesmo resultado.
 ### Provas
 
 `test_pix_novo.js` **47 ✔** · `test_impressao.js` **59 ✔** · `test_venda.js` **150 ✔** (era 102) ·
-`test_redesenho_pagina.js` **73 ✔** (era 68) · suíte inteira: **227 passaram, 0 falharam, 0 não rodaram**.
+`test_redesenho_pagina.js` **77 ✔** (era 68) · suíte inteira: **227 passaram, 0 falharam, 0 não rodaram**.
 Build: `Bundle OK (228 scripts, sha256 4228e4635a65b523)` e `Sync OK (v7.0.11, 0 soltos)`. O bundle **não**
 mudou de propósito: `pix.js` e `impressao.js` são usados só pela página nova (o app de hoje não os
 carrega). Versão continua **7.0.11**.
