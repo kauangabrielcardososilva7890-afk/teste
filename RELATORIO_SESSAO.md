@@ -6298,3 +6298,90 @@ Sem resposta eu sigo com A, B e C — são leitura e teste, não mudam o funcion
 Suíte: **217 passaram, 0 falharam, 0 não rodaram** · `npm run check`: `Bundle OK: 225 scripts` ·
 `Sync OK: v7.0.11 | 225 no bundle | 0 soltos` · celular: `0 referências quebradas`. Versão **7.0.11**,
 motor **5.26.8**, nenhum dado de banco tocado.
+
+---
+
+## Rodada 23 — 24/09/2026 — O MAPA DAS CAMADAS, A TRAVA DA CAMADA DE CIMA E A INVESTIGAÇÃO DO "DADO QUE SOME"
+
+Você respondeu: a dor nº 1 é **dado que some/volta**; você usa o site agora e **só o `.exe`** quando
+estiver pronto; e pediu minha recomendação. Nesta rodada eu entreguei o mapa, a trava e fui atrás da dor.
+
+### 1. O mapa das camadas (ideia C) — `npm run mapa`
+
+Ferramenta nova que lê a ordem real de carga e diz, para cada função do sistema, **quem escreve nela e
+quem ganha**. Ela usa um analisador de código de verdade (acorn), não busca por texto.
+
+O que ela mostrou:
+
+- **1.055 nomes** globais escritos, **2.017 escritas** no total, **289 nomes escritos em 2 ou mais arquivos**.
+- `navigateTo` é escrito **37 vezes** (ganha o `ajustes_v6108_lembrar_tela_patch.js`).
+- `renderVendas` 18 vezes, `renderFinanceiro` 20, `renderConfig` 20, `showApp` 23.
+- A gravação (`saveDB`) é escrita 6 vezes: **quem ganha é a sincronização da nuvem** (é ela que decide se
+  grava no PC ou só na nuvem).
+
+**Correção de um número que eu te dei:** na rodada passada eu disse "1.100 funções". O certo é **2.017
+escritas em 1.055 nomes** — a conta antiga misturava função local (que tem o mesmo nome dentro de vários
+arquivos) com função global. Com o mapa na mão, ninguém mais precisa ler 37 arquivos para saber onde uma
+função está de verdade.
+
+### 2. A trava (ideia D) — `test_camadas_protegidas.js`
+
+Duas peças do sistema embrulham funções para proteger comportamento: a que troca a **janela do
+navegador pela janela do sistema** e a que só deixa **apagar/estornar com permissão**. O embrulho só vale
+enquanto ninguém troca aquela função depois. O teste novo reprova se um patch novo trocar uma função
+protegida **sem levar a proteção junto**.
+
+Hoje está tudo protegido: **11 funções do gate de permissão** e **13 do popup do sistema** intactas.
+Dois casos que meu primeiro rascunho marcou como suspeitos eu fui ler: `deleteProduto` usa a janela do
+sistema por conta própria e `estornarNotinha` chama a versão anterior (encadeia). Estão corretos — deixo
+registrado que a conclusão inicial estava errada e foi a leitura do trecho que resolveu.
+
+### 3. O "dado que some": achei o buraco (gravidade ALTA)
+
+O caminho vivo da gravação é o **SÓ NUVEM**. O que o código faz, com as linhas no relatório técnico:
+
+1. Quando você grava, **nada é gravado no PC** — a mudança fica na memória e o envio para a nuvem é
+   agendado para **900 milésimos de segundo depois**.
+2. A mudança só entra na **fila** quando a varredura roda; e a fila tem **teto de 100 itens**.
+3. Quando a fila enche, a varredura **para de enfileirar** — e isso **não aparece em lugar nenhum** na tela.
+4. Fechar/esconder a janela **não roda a varredura e não envia**: só grava o "estado" e a fila.
+
+**Ou seja: existe uma janela (até ~900 ms, e mais quando a fila está cheia) em que a única cópia da sua
+mudança está na memória do programa.** Se fechar no X, faltar luz, travar ou desligar nessa janela, a
+mudança não existe em lugar nenhum — e como o SÓ NUVEM remonta a base pela nuvem, ela **não volta
+sozinha**. E nada avisa.
+
+**O que eu não posso afirmar:** não tenho acesso ao seu banco nem ao seu `.exe` — **não foi possível
+verificar diretamente** que já aconteceu perda por esse caminho. O que está provado é o que o código faz.
+**Como você mesmo confirma:** no `.exe`, edite algo (um cliente, por exemplo) e feche pelo X no mesmo
+segundo; reabra e veja se a mudança está lá.
+
+**O conserto que eu recomendo (3 passos, pequenos):**
+1. **Enfileirar na hora** (a mudança entra na fila e a fila é gravada na hora; os 900 ms passam a valer só
+   para o envio, que continua agrupado) — a mudança deixa de existir só na memória.
+2. **Fechar não perde**: ao fechar, tentar enviar com `keepalive` e **avisar na tela** se ficou algo que
+   não coube.
+3. **Fila visível**: "nuvem em dia até <hora>" e "fila: N" na tela, inclusive quando encher.
+
+**Por que não fiz agora:** é o caminho do seu dado, no motor mais sensível. A regra da casa é provar
+antes de corrigir — então o primeiro passo é um teste que **reproduza a perda** (com a nuvem fingida) e
+mostre o buraco; depois entram as 3 mudanças pequenas com esse teste rodando. É a próxima rodada, se você
+mandar.
+
+### 4. Minha recomendação (o que fazer das opções)
+
+Ordem que eu faria, pelo seu caso (dor nº 1 = dado que some):
+
+1. **E (o portão que enfileira na hora)** — é o que ataca direto a sua dor. Junto vem o teste da perda.
+2. **A** (transformar cada reclamação em teste) — barato e é o que impede o "voltou a dar problema".
+3. **C** (o mapa) — **já está pronto** nesta rodada.
+4. **D** (a trava) — **já está pronto** nesta rodada.
+5. **B** (limpeza com prova) — depois, em blocos, porque não muda o dia a dia.
+6. **J** (backup e voltar atrás em 1 clique) — proteção barata para qualquer mexida.
+
+### Provas
+
+`test_camadas_protegidas.js` **9 ✓** · suíte inteira **218 passaram, 0 falharam, 0 sem rodar** ·
+`npm run check` / sync: `v7.0.11 | 225 no bundle | 0 soltos` (o bundle não mudou) · `npm run mapa` gera o
+`MAPA_CAMADAS.md`. Versão **7.0.11**, motor **5.26.8**, nada de banco tocado, nada do sistema vivo
+alterado nesta rodada.

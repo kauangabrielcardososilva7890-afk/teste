@@ -2527,3 +2527,103 @@ Versão **7.0.11** e motor **5.26.8** não mudaram. Nada de banco foi tocado (es
 3.892.210 do bundle da raiz) e nenhum script a atualiza. Não mexi (mobile está pausado por ordem dele),
 mas fica registrado: **se um dia o APK for refeito, essa pasta precisa ser regerada antes**, senão o app
 sai com o sistema de antes.
+
+---
+
+## §37 — Rodada 23 (24/09/2026): o mapa das camadas, o teste que trava a camada de cima e o "dado que some"
+
+O dono respondeu às perguntas da rodada 22: a dor nº 1 é **dado que some/volta**; ele usa o site agora e
+**só o `.exe`** depois que ficar pronto; e pediu minha recomendação sobre o que fazer primeiro. Esta
+rodada entrega o mapa (ideia C), a trava (ideia D) e a **investigação da dor nº 1**.
+
+### 37.1 Ideia C entregue — `mapa_camadas.js` + `MAPA_CAMADAS.md`
+
+Ferramenta nova (`npm run mapa`), só leitura, usando o parser **acorn** (não é busca por texto): ela lê a
+ordem real de carga do `bundle-manifest.json` e mostra, para cada nome global, **todas** as escritas na
+ordem, marcando **quem ganha**. Ela separa o que é escrito **no carregamento** (vale desde o início) do
+que é escrito **em uso** (dentro de uma função: só troca a global quando aquela função for chamada).
+
+O que o mapa revelou (números de hoje):
+
+| Medida | Número |
+|---|---|
+| Arquivos no bundle | 225 |
+| Nomes globais escritos | **1.055** |
+| Escritas totais (contando sobreposições) | **2.017** |
+| Nomes escritos em 2 ou mais arquivos | **289** |
+| `navigateTo` | **37** escritas — ganha `ajustes_v6108_lembrar_tela_patch.js:238` |
+| `showApp` | 23 — ganha `navegacao_fiscal_barra_escuro_patch.js:494` |
+| `renderConfig` / `renderFinanceiro` / `renderVendas` | 20 / 20 / 18 |
+| `saveDB` (a gravação!) | 6 escritas, 4 no carregamento — ganha `cloudflare_data_sync_patch.js:2007` |
+
+> **Correção de um número meu:** na rodada 22 eu contei "1.100 definições". O número certo, com parser e
+> separando o que é global do que é local, é **2.017 escritas em 1.055 nomes (289 repetidos)**. A
+> diferença é que a contagem antiga misturava função local (que aparece com o mesmo nome em 82 arquivos,
+> como `txt`) com escrita de global.
+
+### 37.2 Ideia D entregue — `test_camadas_protegidas.js` (9 verificações)
+
+Duas peças embrulham funções para proteger comportamento: `popup_sistema_patch.js` (troca a janela do
+navegador pela do sistema) e `permissoes_estorno_venda_patch.js` (`wrapGate`: apagar/estornar só com
+permissão). **O embrulho só vale enquanto ninguém redefine aquele nome depois.**
+
+O teste lê o mapa e reprova quando uma função protegida é trocada por um patch novo **sem** levar a
+proteção junto (tem de encadear a anterior com `orig.apply`, usar a janela do sistema ou conferir a
+permissão). Resultado de hoje: **11 nomes do gate de permissão intactos** e **13 nomes do popup
+intactos**. Dois casos que meu primeiro rascunho marcou como suspeitos foram **conferidos no código**:
+`deleteProduto` (v5.19.16) usa `confirmar(...)` (a janela do sistema) e `estornarNotinha` (v5.22.18)
+encadeia a anterior com `oldEst.apply(this, arguments)`. Os dois estão corretos — registro aqui porque a
+conclusão inicial estava errada e só a leitura do trecho resolveu.
+
+### 37.3 ACHADO — gravidade ALTA · Bug (risco de perda de dado) — investigação com evidência
+
+Dor nº 1 do dono: *"dado que some/volta"*. O caminho vivo da gravação é o **SÓ NUVEM**
+(`cloudflare_data_sync_patch.js`):
+
+| # | Evidência (arquivo:linha) | O que o código faz |
+|---|---|---|
+| 1 | `cloudflare_data_sync_patch.js:2007-2013` | `saveDB` no SÓ NUVEM **não grava no PC**: `const r = soNuvem ? true : original.apply(...)`; marca `sujo` e agenda o envio em **900 ms** |
+| 2 | `:947-949, :1009-1030, :1061` | a mudança só entra na fila quando a **varredura** roda; a fila tem teto `MAX_OUTBOX = 100` (`:16`) e, quando enche, a varredura **para de enfileirar** (`filaCheia`) |
+| 3 | `:512-514, :1030` | `filaCheia` é **estado interno**: não aparece em lugar nenhum da tela |
+| 4 | `:620-624` | `persistAgora()` grava **estado + fila** — **não** roda a varredura e **não** envia |
+| 5 | `:2044-2051` | fechar/recarregar/esconder a janela chama `fechar()` = `persistAgora()` + devolver liderança |
+| 6 | `:538` | se não couber a fila no navegador, `gravarFila()` devolve `false` e a fila fica **só na memória** |
+
+**A conclusão:** existe uma **janela** em que a única cópia da mudança está na memória do programa —
+entre a gravação e a entrada dela na fila persistida (até ~900 ms; mais, se a fila estiver cheia). Se o
+programa fechar nessa janela (fechar no X, faltar energia, travar, ou o PC desligar), **a mudança não
+existe em lugar nenhum** e, como o SÓ NUVEM remonta a base a partir do diário da nuvem, ela **não volta
+sozinha**. E nada avisa.
+
+**O que não dá para afirmar daqui:** não tenho acesso ao banco de produção nem ao `.exe` dele, então
+**não foi possível verificar diretamente** que já houve perda por esse caminho. O que está provado é o
+que o código faz. **Como confirmar:** no `.exe`, mudar algo (ex.: editar um cliente) e fechar a janela
+pelo X no mesmo segundo; reabrir e ver se a mudança está lá. E, ao lado, mostrar na tela "nuvem em dia
+até <hora>" + "fila: N" — hoje isso não existe.
+
+**Plano de correção (3 passos pequenos, nesta ordem):**
+
+1. **Enfileirar na hora**: a gravação entra na fila **imediatamente** e a fila é persistida na hora; os
+   900 ms passam a valer só para o **envio** (que continua agrupado). A mudança deixa de existir só na
+   memória.
+2. **Fechar não perde**: ao fechar/esconder a janela, além de persistir, tentar o envio com
+   `fetch(..., { keepalive: true })` (que continua valendo durante o fechamento) — e, se houver fila que
+   não coube, **avisar na tela** em vez de ficar quieto.
+3. **Fila visível**: mostrar fila e último envio confirmado na tela ("nuvem em dia até…"), inclusive
+   quando a fila encher.
+
+**Por que não fiz agora:** é o caminho do dado dele, no motor mais sensível, e a regra da casa é
+**provar antes de corrigir** — o primeiro passo desta correção é um teste que reproduza a janela (com a
+nuvem fingida) e mostre a perda; depois a correção entra em 3 mudanças pequenas com esse teste rodando.
+
+### 37.4 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| `test_camadas_protegidas.js` (novo) | **9 ✓** |
+| suíte inteira (`test_runner.js`) | **218 passaram, 0 falharam, 0 falhou aceito, 0 não rodaram** |
+| `npm run check` / `sync_build.js` | `Sync OK: v7.0.11 | 225 no bundle | 0 soltos` (bundle não mudou) |
+| `npm run mapa` | gera o `MAPA_CAMADAS.md` (1.055 nomes, 289 repetidos) |
+
+Versão **7.0.11**, motor **5.26.8**. Nada de banco tocado; nada do sistema vivo alterado nesta rodada
+(só ferramenta nova, teste novo e documentação).

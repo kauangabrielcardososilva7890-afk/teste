@@ -241,6 +241,11 @@ const tests=[
   "test_exclusao_nao_volta.js",
   "test_recuperacao_completa.js",
   "test_recuperacao_nao_ressuscita.js",
+  // v7.0.11 (rodada 23) — AS CAMADAS PROTEGIDAS: o sistema é feito de camadas que
+  // sobrescrevem funções (289 nomes são escritos por 2 ou mais arquivos). Este teste lê o
+  // MAPA_CAMADAS.md e reprova se uma função protegida (permissão de estorno/exclusão e a
+  // janela do sistema) for trocada por um patch novo SEM levar a proteção junto.
+  "test_camadas_protegidas.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"
