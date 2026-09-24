@@ -1275,3 +1275,82 @@ liga essa flag**); `removeTecnico` (código morto — sem chamador em nenhum `.j
 - **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
   quantos registros excluídos existem hoje e quantos "voltaram" na prática; a prova
   usa nuvem de mentira com o motor real.
+
+
+## 22. RODADA 13 — O PAGINADOR QUE PULAVA REGISTRO NA LISTA DE EXCLUÍDOS (23/09/2026)
+
+**Pedido:** *"procure por mais problemas, se achar, verifique se aquil realmente é um
+problema"*. Nesta rodada a verificação começou pelas mudanças da rodada anterior —
+e uma delas estava errada.
+
+### 22.1 Regressão da v7.0.7 (medida e corrigida) — custo do clique
+`marcarIntencaoDeExcluir()` chamava `localKeysSnapshot()`, que monta `Set("entidade|id")`
+de **toda a base** e é chamado **antes** de cada função de exclusão e por **todo**
+`confirmSistema`/`confirm`. Medição com 76.550 registros: **marca 83 ms + fechamento
+167 ms = 250 ms por clique**. Correção (`resumoDaBase()`): retrato **numérico**
+(`{n, soma dos ids}` por lista), diferença para descobrir **quais listas mudaram**
+durante o clique e, só para essas, varredura de `state.known` (`for..in`, sem alocar)
+marcando os ids que desapareceram. Precisão preservada — só o que existe na nuvem pode
+voltar, e é exatamente o que `state.known` guarda — e os 33 testes de exclusão seguem
+verdes. Medição depois: **35 ms**.
+
+### 22.2 CRÍTICO (motor) — `/v1/deleted` pulava registros por empate de `deleted_at`
+**Causa:** `WHERE deleted_at IS NOT NULL AND deleted_at < ? ORDER BY deleted_at DESC
+LIMIT ?`. `deleted_at` **não é único**: `handlePush` grava `const now = Date.now()` por
+mutação, e o PC envia de 10 em 10 — o lote inteiro cai no mesmo milissegundo, e lotes
+consecutivos também podem compartilhar o ms. Quando o limite da página corta um grupo
+empatado, o resto do grupo passa a ser inalcançável (`deleted_at < X` exclui todos os
+empatados em X, inclusive os que nunca foram devolvidos).
+**Prova** (`test_recuperacao_completa.js`, réplica da consulta em memória):
+3.000 exclusões em grupos de 1..10 ⇒ **2.944 alcançadas** (página 1000) e **2.599**
+(página 200); cursor composto ⇒ **3.000**.
+**Correção:** cursor composto `(deleted_at, entity, record_id)` com
+`ORDER BY deleted_at DESC, entity DESC, record_id DESC` (coerente com a PK
+`(entity, record_id)` da tabela), resposta com `proximoEntity`/`proximoId`, e o ramo
+antigo (`before` sozinho) **preservado** para PC desatualizado. PC
+(`listarExcluidosDaNuvem`): envia o par quando existe, `Set` do que já viu (sem
+repetição), laço de 20 → 40 voltas.
+**Interação verificada:** `varreduraCompleta` (que libera o carimbo
+`config.recuperacaoExcluidosEm` na nuvem) **não pode** aceitar o motor que pula. Como o
+5.26.6 já devolvia `temMais`, o critério passou a ser o **par do cursor**; e o aviso ao
+dono usa `MOTOR_MINIMO='5.26.7'` (reaparece quando a exigência muda, em vez de ficar
+mudo por já ter avisado antes).
+**Dependência:** exige publicar o motor **5.26.7** (`atualizar_motor_nuvem.cmd`).
+
+### 22.3 MÉDIO — memória de recuperação por id (colisão entre entidades)
+`marcarRecuperado(recordId)` guardava a chave só pelo id; `jaVieram[String(r.recordId)]`
+consultava igual. Contrato `7` e impressora de parque `7` se confundiam e a segunda
+nunca era recuperada (prova no teste). Correção: chave `entidade|recordId` na escrita,
+leitura aceitando as duas formas (compatibilidade com o que já está gravado), nos dois
+usos (varredura da nuvem e fotos locais do IndexedDB).
+
+### 22.4 Verificações que NÃO confirmaram problema
+| Suspeita | Evidência |
+|---|---|
+| Faxina de demonstração apaga técnico real | `ehTecnicoDemo` (app.js) compara **id + nome + especialidade** com a lista fixa do demo; `varrerDemonstracao` roda uma vez (`state.faxina`) |
+| `devolverSumidos` ressuscita dado apagado de propósito | roda **uma vez por PC** (`state.devolucao===DEVOLUCAO`), usa só a foto `antes_espelhar_nuvem` (era do espelho) e filtra demo — é a função de devolver o que o espelho levou, por desenho |
+| `/v1/changes` pula registro | `changes.seq` é `INTEGER PRIMARY KEY AUTOINCREMENT` (único) — sem empate |
+| `excluirTodos` | `DELETE /v1/backups` — apaga **backups**, não registros do sistema |
+| `wrangler.toml` ausente | a configuração é `cloudflare-worker/wrangler.jsonc` (verificado em rodadas anteriores) |
+
+### 22.5 Possível problema (não confirmado; sem mudança)
+- `devolverSumidos` só devolve na primeira vez em cada PC; se um PC nunca rodou a
+  devolução e tiver uma foto antiga, registros apagados de propósito **depois** da foto
+  poderiam voltar. Para confirmar seria preciso inspecionar as fotos do IndexedDB nos
+  PCs dele (não tenho acesso). Não alterei: é caminho de recuperação de dado e a função
+  é, por desenho, de recuperar.
+
+### 22.6 Testes e verificação
+- Novo `test_recuperacao_completa.js` (**17 verificações**) no `test_runner.js`.
+- Realinhados `test_recuperar_excluidos.js` (cursor composto, memória por entidade,
+  carimbo 5.26.7), `test_ajustes_v52271.js`, `test_ajustes_v52275.js`,
+  `test_ajustes_v5266.js` (a versão do **painel do gerente** é outra e ficou 5.26.6 —
+  o `PAINEL_GERENTE v…` não é o motor da nuvem).
+- Suíte: **211 passaram, 0 falharam, 4 não rodaram** (jsdom). Carimbo 5.26.7 propagado
+  para 39 ocorrências em testes + 3 HTMLs de documento.
+- Bundle 225 scripts (`58b583891c10d31c`), `?v=7.0.8-4bce5f155784`; `sync_build --check`
+  e `mobile/sync-www.js` OK.
+- **Não rodado:** `e2e/` (Playwright ausente) e os 4 de `jsdom`.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  a distribuição real de `deleted_at` na tabela `records` e quantos registros ficaram de
+  fora das varreduras anteriores.

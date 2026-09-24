@@ -114,7 +114,15 @@ const dormir=ms=>new Promise(r=>realSetTimeout(r,ms));
   ok('a marca fica gravada no estado (sobrevive a fechar o programa)',
     /excluidosDeProposito/.test(code)&&/MARCA_EXCLUSAO_VALE/.test(code));
   ok('a marca é gravada na hora do clique, comparando antes/depois da função',
-    /let intencaoAntes=null;/.test(code)&&/intencaoAntes=localKeysSnapshot\(\)/.test(code)&&/function fecharIntencaoDeExclusao\(\)/.test(code));
+    /let intencaoAntes=null;/.test(code)&&/intencaoAntes=resumoDaBase\(\)/.test(code)&&
+    /function fecharIntencaoDeExclusao\(\)/.test(code)&&/const antes=intencaoAntes;intencaoAntes=null;/.test(code));
+  // v7.0.8 — o retrato é NUMÉRICO (o conjunto da base inteira custava 250 ms por
+  // clique, medido; a versão leve custa ~35 ms) e continua exato: só lista cuja
+  // contagem/soma de ids mudou durante o clique é investigada.
+  ok('o retrato do clique é numérico e barato (sem montar a base inteira)',
+    /function resumoDaBase\(\)/.test(code)&&!/intencaoAntes=localKeysSnapshot\(\)/.test(code));
+  ok('a marca usa os registros que o PC conhece (só o que pode voltar da nuvem)',
+    /for\(const k in state\.known\)/.test(code)&&/if\(mudaram\.indexOf\(ent\)<0/.test(code));
   ok('registro que VOLTOU da nuvem sai de novo e a ordem vai junto',
     /if\(pos<0\)continue;[\s\S]{0,600}?arr\.splice\(pos,1\)/.test(code));
   ok('se outro PC editou depois, a edição vale (não apaga por cima)',

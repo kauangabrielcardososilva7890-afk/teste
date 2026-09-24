@@ -238,7 +238,8 @@ const tests=[
   // v7.0.5 — a tela não seca mais (defeito do foco no botão) + diagnóstico
   "test_tela_nao_seca.js",
   "test_nuvem_rapida.js",
-  "test_exclusao_nao_volta.js"
+  "test_exclusao_nao_volta.js",
+  "test_recuperacao_completa.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

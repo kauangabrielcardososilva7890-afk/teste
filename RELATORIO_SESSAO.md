@@ -5212,3 +5212,85 @@ Duas linhas em `ajustes_v52245_rodape_versao_patch.js` que "não perdiam" um bot
 ### 7) O que depende dele
 Atualizar o programa nos PCs e conferir o rodapé **v7.0.7** (site recarrega; `.exe`
 republicar). **Nada na nuvem** (motor 5.26.6 continua valendo) e **nada de senha**.
+
+
+## 23/09/2026 (cont.) — RODADA 13 · "VERIFIQUE SE É PROBLEMA" — O PAGINADOR QUE PULAVA (v7.0.8)
+
+**Pedido dele (de novo, literal):** *"procure por mais problemas, se achar, verifique
+se aquil realmente é um problema"*. Método mantido: **provar antes de afirmar** — e,
+nesta rodada, comecei conferindo **as minhas próprias correções** da rodada anterior.
+
+### 1) Defeito da MINHA v7.0.7 — o clique de apagar custava 250 ms (consertado)
+Medi no banco de prova (76.550 registros): o retrato que eu tirava a cada clique
+montava um conjunto com **a base inteira** ("entidade|id" de 76 mil registros) →
+**marca 83 ms + fechamento 167 ms = 250 ms** de tela parada por clique, e o mesmo em
+**todo diálogo de confirmação**. Conserto: o retrato passou a ser **numérico** (quantos
+registros e uma soma dos ids por lista); ao terminar o clique, o motor descobre por
+esse resumo **quais listas mudaram** e só então olha os registros que aquele PC
+conhece na nuvem (que é o conjunto que importa: só o que existe na nuvem pode voltar).
+**250 ms → 35 ms**, e continua exato (os 33 testes de exclusão seguem verdes).
+
+### 2) CRÍTICO — o paginador da lista de excluídos PULAVA registros (defeito provado)
+A consulta `/v1/deleted` paginava só por `deleted_at < ?`. Só que **muitos registros
+são excluídos no MESMO milissegundo** (o PC manda as exclusões de 10 em 10, e o lote
+inteiro leva o mesmo carimbo). Quando a página terminava **no meio do grupo empatado**,
+o resto do grupo ficava de fora **para sempre** — a página seguinte pedia "mais antigo
+que X" e os empatados em X nunca voltavam.
+
+**Prova em memória** (agora no teste permanente): com 3.000 exclusões em grupos de 1 a
+10 do mesmo milissegundo, a paginação de hoje alcançava **2.944** (perdeu 56) com
+página de 1.000 e **2.599** (perdeu 401) com página de 200. Era **literalmente** o
+"a recuperação trouxe só parte" das impressoras e contratos.
+
+**Conserto:** cursor **composto** `(deleted_at, entity, record_id)` — a nuvem devolve o
+par do último registro da página e o PC pede a próxima a partir dele. Ordenação
+igual ao cursor (nada de "terra de ninguém"), pedido **antigo continua aceito** (PC
+que ainda não atualizou não quebra) e o PC **não repete** registro entre páginas.
+Com o cursor novo: **3.000 de 3.000**.
+
+**Armadilha que eu quase deixei passar:** o PC considerava "varredura completa" só por
+existir `temMais` — e o motor 5.26.6 **tem** `temMais` e **pula** registros. Se eu
+deixasse assim, o PC carimbaria na nuvem "recuperação já feita" usando o motor que pula,
+e a varredura completa **nunca mais** aconteceria. Agora a prova de varredura completa é
+o **par do cursor** (só o 5.26.7 devolve), e o aviso ao dono reaparece quando a exigência
+muda (`MOTOR_MINIMO='5.26.7'`).
+
+### 3) MÉDIO — a memória do "já recuperei" confundia listas diferentes
+Era guardada **só pelo id** do registro. Como cada lista tem a sua numeração, um
+contrato de id 7 e uma impressora de id 7 se confundiam: o segundo era dado como "já
+recuperado" e **nunca mais voltava**. Prova no teste (pularia `parque/7`). Agora a
+chave é `entidade|id`, **aceitando as chaves antigas** na leitura (nada do que já foi
+recuperado volta a ser recuperado).
+
+### 4) Motor da nuvem 5.26.7 — PRECISA SER PUBLICADO POR ELE
+A correção do paginador é no motor (a nuvem). **Sem publicar, a varredura continua
+pulando.** Comando de sempre: `atualizar_motor_nuvem.cmd` (dentro de `cloudflare-worker`).
+O PC avisa sozinho no sino enquanto o motor publicado for antigo.
+
+### 5) Verificado e **NÃO** é problema (com evidência)
+| Suspeita | Verificação | Veredito |
+|---|---|---|
+| Faxina apaga técnico de verdade | `ehTecnicoDemo` exige **id + nome + especialidade** exatos do técnico de exemplo (`t1`/`Carlos Mendes`/`Laser Mono`) | não é problema |
+| `devolverSumidos` ressuscita dado apagado | roda **uma única vez por PC**, só a partir da foto 'antes_espelhar_nuvem' (era do espelho, v5.22.72-76) e ignora lixo de demonstração | risco limitado, **por desenho** (é a função de devolver o que o espelho levou) |
+| Cursor do diário (`/v1/changes`) | `seq` é chave primária única → sem empate | não é problema |
+| `excluirTodos` | apaga **backups** da nuvem, não dados | não é problema |
+
+### 6) Testes desta rodada
+- **Novo `test_recuperacao_completa.js`** (17 verificações): a prova em memória do
+  paginador (antes x depois), a consulta real do motor, o cursor que o PC manda, a
+  memória por entidade+id e o carimbo do motor.
+- Suíte: **211 passaram, 0 falharam, 4 não rodaram** (falta `jsdom`).
+- `test_exclusao_nao_volta.js` (da v7.0.7) segue verde: **33 verificações**.
+- Banco de prova: 1ª carga **~1,1 s** (era 17,2 s na v7.0.5), repouso **~5 ms** (era
+  767 ms) e clique de apagar agora **35 ms** (era 250 ms na v7.0.7).
+- **Não rodado:** `e2e/` (Playwright não instalado) e os 4 que exigem `jsdom`.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  quantos registros excluídos existem hoje na nuvem e quantos ficaram fora da última
+  varredura. A prova foi feita com um banco em memória que reproduz a consulta real.
+
+### 7) Passos dele
+1. **Publicar o motor da nuvem** (`atualizar_motor_nuvem.cmd`) — sem isso a varredura
+   continua pulando registro.
+2. Atualizar o programa nos PCs e conferir o rodapé **v7.0.8**.
+3. Se faltar dado, usar o botão **"🩹 Trazer de volta o que foi excluído"** no painel da
+   Nuvem depois de publicar o motor — é ele que varre a lista inteira com o cursor novo.

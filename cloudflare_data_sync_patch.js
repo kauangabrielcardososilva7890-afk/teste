@@ -97,10 +97,40 @@ let intencaoAte=0;
 //      60 s); se tiver VOLTADO da nuvem, ele sai da lista de novo e a ordem vai
 //      junto. Se a nuvem recusar a exclusão, a marca sai e o motor para de
 //      insistir (nada de laço batendo na porta).
+// v7.0.8 — O CUSTO DO CLIQUE (defeito da minha própria v7.0.7, medido)
+// O retrato que eu tirava a cada clique montava um conjunto com TODA a base
+// (junção "entidade|id" de 76 mil registros): 250 ms de tela parada por clique de
+// apagar. Agora o retrato é só NÚMEROS (quantos registros e uma soma dos ids) —
+// custa alguns milissegundos. Quando o clique termina, o motor descobre QUAIS
+// listas mudaram por esse resumo e só então olha os registros conhecidos daquela
+// lista (que é o conjunto que importa: só o que existe na nuvem pode voltar).
 let intencaoAntes=null;
+function resumoDaBase(){
+  const out=Object.create(null);
+  if(typeof db==='undefined'||!db)return out;
+  const M=definicoes();
+  for(const e of Object.keys(M)){
+    const v=db[e];
+    if(Array.isArray(v)){
+      let n=0,soma=0;
+      for(let i=0;i<v.length;i++){
+        const it=v[i];if(!it||it.id==null)continue;
+        n++;const t=String(it.id);let h=0;
+        for(let j=0;j<t.length;j++)h=(h*31+t.charCodeAt(j))|0;
+        soma=(soma+h)|0;
+      }
+      out[e]={n:n,soma:soma};
+    }else if(v&&typeof v==='object'&&M[e]==='map'){
+      const chaves=Object.keys(v);let soma=0;
+      for(const c of chaves){let h=0;for(let j=0;j<c.length;j++)h=(h*31+c.charCodeAt(j))|0;soma=(soma+h)|0;}
+      out[e]={n:chaves.length,soma:soma};
+    }
+  }
+  return out;
+}
 function marcarIntencaoDeExcluir(){
   intencaoAte=Date.now()+JANELA_INTENCAO; sujo=true;
-  if(!intencaoAntes){try{intencaoAntes=localKeysSnapshot();}catch(e){intencaoAntes=null;}}
+  if(!intencaoAntes){try{intencaoAntes=resumoDaBase();}catch(e){intencaoAntes=null;}}
   state.intencaoExclusaoEm=Date.now();marcarEstado();persist();
 }
 function podeMarcarExclusao(k){
@@ -110,21 +140,42 @@ function podeMarcarExclusao(k){
 }
 function fecharIntencaoDeExclusao(){
   try{
-    if(!intencaoAntes)return 0;
-    const depois=localKeysSnapshot();
+    const antes=intencaoAntes;intencaoAntes=null;
+    if(!antes)return 0;
+    // 1) quais LISTAS mudaram durante o clique? (comparação de números, barata)
+    const depois=resumoDaBase();
+    const mudaram=[];
+    for(const e of Object.keys(antes)){
+      const a=antes[e],b=depois[e];
+      if(!b||b.n!==a.n||b.soma!==a.soma)mudaram.push(e);
+    }
+    if(!mudaram.length)return 0;
+    // 2) ids que existem nestas listas AGORA (só destas listas)
+    const presentes=Object.create(null);
+    mudaram.forEach(e=>{
+      const v=Array.isArray(db[e])?db[e]:null;const set=new Set();
+      if(v)for(let i=0;i<v.length;i++){const it=v[i];if(it&&it.id!=null)set.add(String(it.id));}
+      presentes[e]=set;
+    });
+    // 3) dos registros que ESTE PC conhece (os que existem na nuvem e podem
+    //    voltar), marca os que saíram destas listas
     const alvo=state.excluidosDeProposito=(state.excluidosDeProposito&&typeof state.excluidosDeProposito==='object')?state.excluidosDeProposito:{};
     let marcados=0;
-    intencaoAntes.forEach(k=>{
-      if(depois.has(k)||!podeMarcarExclusao(k))return;
-      alvo[k]={em:Date.now(),v:Number(state.versions[k]||0)};marcados++;
-    });
+    for(const k in state.known){
+      const corte=k.indexOf('|');if(corte<=0)continue;
+      const ent=k.slice(0,corte);
+      if(mudaram.indexOf(ent)<0||!podeMarcarExclusao(k))continue;
+      const set=presentes[ent];
+      if(set&&set.has(k.slice(corte+1)))continue;
+      if(!alvo[k])marcados++;
+      alvo[k]={em:Date.now(),v:Number(state.versions[k]||0)};
+    }
     const agora=Date.now();
     Object.keys(alvo).forEach(k=>{ if(agora-Number((alvo[k]&&alvo[k].em)||0)>MARCA_EXCLUSAO_VALE)delete alvo[k]; });
     const chaves=Object.keys(alvo);
     if(chaves.length>2000)chaves.slice(0,chaves.length-2000).forEach(k=>delete alvo[k]);
     if(marcados)marcarEstado();
   }catch(e){}
-  intencaoAntes=null;
   return 0;
 }
 function temMarcaDeExclusao(k){const a=state.excluidosDeProposito;return !!(a&&a[k]);}
@@ -1514,7 +1565,19 @@ try{document.addEventListener('visibilitychange',()=>{if(!document.hidden)canalI
 // coisa de propósito ela NÃO volta sozinha de novo.
 const RECUP_LEDGER='digicopy_cf_recuperados_v1';
 function lerRecuperados(){try{return JSON.parse(localStorage.getItem(RECUP_LEDGER)||'{}')||{};}catch(e){return {};}}
-function marcarRecuperado(id){try{const m=lerRecuperados();m[String(id)]=Date.now();localStorage.setItem(RECUP_LEDGER,JSON.stringify(m));}catch(e){}}
+// v7.0.8 — A CHAVE PRECISA DIZER DE QUEM É. A memória "já recuperei" era só pelo
+// id do registro; como cada lista tem a sua numeração, um contrato de id 7 e uma
+// impressora de parque de id 7 se confundiam: o segundo era dado como "já
+// recuperado" e nunca mais voltava. Prova em test_recuperacao_completa.js.
+// A leitura aceita as duas formas (as chaves antigas continuam valendo), então
+// nada do que já foi recuperado volta a ser recuperado.
+function jaRecuperado(memoria,entity,recordId){
+  const m=memoria||{};
+  return !!(m[String(entity)+'|'+String(recordId)]||m[String(recordId)]);
+}
+function marcarRecuperado(entity,recordId){
+  try{const m=lerRecuperados();m[String(entity)+'|'+String(recordId)]=Date.now();localStorage.setItem(RECUP_LEDGER,JSON.stringify(m));}catch(e){}
+}
 function temDonoHumano(reg){
   // Quem NÃO tem dono: o dado de exemplo do sistema (sem autor, ou 'sistema').
   // Quem TEM dono: usuário de tela (usr_...) e também 'migracao' — este último é
@@ -1525,16 +1588,41 @@ function temDonoHumano(reg){
   return !!dono&&dono!=='sistema'&&dono!=='demo';
 }
 let varreduraCompleta=false;   // o motor da nuvem sabe paginar a lista de excluídos?
+// Versão mínima do motor da nuvem que faz a varredura COMPLETA (cursor composto).
+// Serve para o aviso ao dono reaparecer quando a exigência muda — e não ficar mudo
+// só porque ele já tinha visto o aviso de uma exigência antiga.
+const MOTOR_MINIMO='5.26.7';
 async function listarExcluidosDaNuvem(call,limiteTotal){
-  const todos=[];let before=0;varreduraCompleta=false;
-  for(let volta=0;volta<20;volta++){
-    const url='/v1/deleted?limit=1000'+(before?('&before='+before):'');
+  const todos=[];let before=0,beforeEnt='',beforeId='';varreduraCompleta=false;
+  const vistos=new Set();          // v7.0.8 — nada é pedido duas vezes
+  for(let volta=0;volta<40;volta++){
+    // v7.0.8 — cursor COMPOSTO: quando o motor da nuvem devolve o par
+    // (entidade, id) do último registro da página, o PC pede a próxima a partir
+    // dele. Sem isso, os registros excluídos NO MESMO milissegundo que caíam no
+    // fim de uma página nunca eram alcançados (defeito provado: 56 de 3.000 numa
+    // página de 1000). Com motor antigo, o pedido sai como sempre saiu.
+    let url='/v1/deleted?limit=1000';
+    if(before)url+='&before='+before;
+    if(before&&beforeEnt&&beforeId)url+='&beforeEntity='+encodeURIComponent(beforeEnt)+'&beforeId='+encodeURIComponent(beforeId);
     let r;try{r=await call(url,{method:'GET'});}catch(e){ if(volta===0)throw e; break; }
-    if(r&&typeof r.temMais!=='undefined')varreduraCompleta=true;   // motor novo
     const lote=(r&&r.records)||[];
-    todos.push(...lote);
+    // v7.0.8 — MOTOR QUE PULA NÃO PODE SER CHAMADO DE COMPLETO
+    // O motor 5.26.6 já tinha `temMais`, mas a paginação dele PULAVA registros
+    // (defeito provado). Se o PC olhasse só `temMais`, diria "varri tudo" e
+    // carimbaria na nuvem que a recuperação já foi feita — e o motor novo, quando
+    // publicado, nunca mais varreria. A prova de varredura COMPLETA agora é o par
+    // (entidade, id) do cursor composto, que só o motor 5.26.7 devolve.
+    if(r&&r.proximoEntity&&r.proximoId)varreduraCompleta=true;
+    if(volta===0&&!lote.length)varreduraCompleta=true;   // não há nada a recuperar
+    for(const reg of lote){
+      if(!reg||reg.entity==null||reg.recordId==null)continue;
+      const chave=String(reg.entity)+'|'+String(reg.recordId);
+      if(vistos.has(chave))continue;
+      vistos.add(chave);todos.push(reg);
+    }
     if(!lote.length||!r.temMais||!r.proximoBefore)break;
     before=Number(r.proximoBefore)||0;
+    beforeEnt=String(r.proximoEntity||'');beforeId=String(r.proximoId||'');
     if(!before)break;
     if(limiteTotal&&todos.length>=limiteTotal)break;
   }
@@ -1564,14 +1652,14 @@ async function recuperarAutomatico(){
   try{
     const excluidos=await listarExcluidosDaNuvem(call);
     const jaVieram=lerRecuperados();
-    const alvos=excluidos.filter(r=>r&&r.entity&&r.recordId&&!jaVieram[String(r.recordId)]&&temDonoHumano(r)
+    const alvos=excluidos.filter(r=>r&&r.entity&&r.recordId&&!jaRecuperado(jaVieram,r.entity,r.recordId)&&temDonoHumano(r)
       && ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos'].indexOf(r.entity)>=0
       && r.data&&typeof r.data==='object'&&Object.keys(r.data).length>0);
     let ok=0,falhas=0,primeiroErro='';
     for(const reg of alvos){
       try{
         const r=await call('/v1/restore',{method:'POST',body:JSON.stringify({entity:reg.entity,recordId:reg.recordId})});
-        if(r&&r.ok!==false){ok++;marcarRecuperado(reg.recordId);}
+        if(r&&r.ok!==false){ok++;marcarRecuperado(reg.entity,reg.recordId);}
         else{falhas++;primeiroErro=primeiroErro||((r&&r.message)||'');}
       }catch(e){falhas++;primeiroErro=primeiroErro||((e&&e.message)||String(e));}
     }
@@ -1584,8 +1672,8 @@ async function recuperarAutomatico(){
     // e tenta de novo (de 60 em 60 s) até o motor novo ser publicado. Avisa uma
     // única vez no sino, sem travar nada.
     if(!varreduraCompleta){
-      if(!state.avisoMotorAntigo){
-        state.avisoMotorAntigo=true;persist();
+      if(state.avisoMotorAntigo!==MOTOR_MINIMO){
+        state.avisoMotorAntigo=MOTOR_MINIMO;persist();
         try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
           'Para trazer de volta TUDO que foi apagado, falta publicar o motor novo da nuvem (rodar o atualizar_motor_nuvem.cmd). Depois disso a recuperação termina sozinha.',{tipo:'sync'}); }catch(e){}
       }
@@ -1643,12 +1731,12 @@ async function recuperarDasFotosLocais(){
       antigo.forEach(item=>{
         if(!item||item.id==null)return;
         const k=String(item.id);
-        if(ids.has(k)||ja[k])return;
+        if(ids.has(k)||jaRecuperado(ja,entidade,k))return;
         if(!temDonoHumano({data:item}))return;
         const copia=Object.assign({},item,{recuperadoDe:'foto-local',recuperadoEm:new Date().toISOString()});
         atual.push(copia);ids.add(k);voltaram++;
         porEntidade[entidade]=(porEntidade[entidade]||0)+1;
-        marcarRecuperado(k);
+        marcarRecuperado(entidade,k);
       });
     }
   }

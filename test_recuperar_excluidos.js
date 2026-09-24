@@ -100,12 +100,25 @@ ok('registro sem autor NÃO é recuperado', SYNC.temDonoHumano({ data:{} }) === 
 ok('registro vindo da importação do sistema antigo É recuperado (é dado real)',
    SYNC.temDonoHumano({ data:{ criadoPor:'migracao' } }) === true);
 ok('a recuperação não "gasta" a passada enquanto o motor da nuvem for antigo',
-   /if\(!varreduraCompleta\)\{/.test(motor) && /state\.avisoMotorAntigo=true/.test(motor));
+   /if\(!varreduraCompleta\)\{/.test(motor) && /state\.avisoMotorAntigo=MOTOR_MINIMO/.test(motor));
+// v7.0.8 — "motor novo" passou a significar o motor que NÃO PULA registro: a
+// prova é o par (entidade, id) do cursor composto, e não só o `temMais` (o 5.26.6
+// tinha `temMais` e mesmo assim perdia registros — provado em
+// test_recuperacao_completa.js). Sem isto, o carimbo na nuvem diria "já recuperei"
+// e a varredura completa nunca aconteceria depois de publicar o motor certo.
+ok('só marca a varredura completa quando o motor devolve o cursor composto',
+   /if\(r&&r\.proximoEntity&&r\.proximoId\)varreduraCompleta=true;/.test(motor));
 ok('a recuperação automática existe e é chamada sozinha', /async function recuperarAutomatico\(/.test(motor) && /setTimeout\(\(\)=>\{ try\{recuperarAutomatico\(\);\}catch\(e\)\{\} \},4000\)/.test(motor));
 ok('roda uma vez por PC (não fica repetindo)',
    /state\.recuperacaoV1=true/.test(motor) && /if\(state\.recuperacaoV1\|\|recuperandoAgora\)return;/.test(motor));
 ok('nunca traz duas vezes o mesmo registro (lista do que já trouxe)',
-   /RECUP_LEDGER/.test(motor) && /function marcarRecuperado/.test(motor) && /!jaVieram\[String\(r\.recordId\)\]/.test(motor));
+   /RECUP_LEDGER/.test(motor) && /function marcarRecuperado/.test(motor) && /!jaRecuperado\(jaVieram,r\.entity,r\.recordId\)/.test(motor));
+// v7.0.8 — a lista do que já trouxe passou a ser por ENTIDADE+id: antes era só
+// pelo id, e duas listas com o mesmo id (contrato 7 x parque 7) se confundiam —
+// uma delas nunca era recuperada. A leitura aceita as chaves antigas.
+ok('a lista do que já trouxe diz de QUEM é o id (e aceita as chaves antigas)',
+   /function jaRecuperado\(memoria,entity,recordId\)/.test(motor) &&
+   /m\[String\(entity\)\+'\|'\+String\(recordId\)\]\|\|m\[String\(recordId\)\]/.test(motor));
 ok('só tenta de novo a cada 60s se falhar (não fica batendo na porta)', /recuperacaoTentativa/.test(motor) && /<60000\)return/.test(motor));
 ok('avisa no sino o que voltou', /Recuperação automática: '/.test(motor));
 ok('registra na Auditoria', /logAction\('recuperacao','automatica'/.test(motor));
@@ -115,7 +128,13 @@ ok('as fotos só devolvem contrato/parque/leitura/chamado',
 ok('registro vindo de foto fica marcado (rastreável)', /recuperadoDe:'foto-local'/.test(motor));
 ok('o IndexedDB sabe listar as fotos', /listSnapshots:getAllSnapshots/.test(fs.readFileSync('indexeddb_persistence_patch.js','utf8')));
 ok('a varredura da nuvem é paginada (alcança o que foi apagado há meses)',
-   /for\(let volta=0;volta<20;volta\+\+\)/.test(motor) && /'&before='\+before/.test(motor));
+   /for\(let volta=0;volta<40;volta\+\+\)/.test(motor) && /url\+='&before='\+before/.test(motor));
+// v7.0.8 — cursor COMPOSTO (deleted_at, entidade, id) e nada pedido duas vezes:
+// sem ele, os registros excluídos no mesmo milissegundo que caíam no fim de uma
+// página nunca eram alcançados (defeito provado em test_recuperacao_completa.js).
+ok('a paginação usa o cursor composto e não repete registro',
+   /beforeEntity=/.test(motor) && /beforeId=/.test(motor) &&
+   /if\(vistos\.has\(chave\)\)continue;/.test(motor));
 
 console.log('\n== 7) AVISO INSTANTÂNEO (a nuvem avisa o PC) ==');
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
@@ -126,6 +145,6 @@ ok('PC com motor novo + motor de nuvem antigo volta sozinho para o ritmo normal'
    /if\(st===404\|\|st===400\)\{ canalInstantaneoParado=true; \}/.test(motor));
 ok('o canal só abre com a janela à vista (não gasta à toa)',
    /if\(typeof document!=='undefined'&&document\.hidden\)return;/.test(motor));
-ok('a nuvem carimba a versao nova do motor', /WORKER_VERSION = '5\.26\.6'/.test(worker));
+ok('a nuvem carimba a versao nova do motor', /WORKER_VERSION = '5\.26\.7'/.test(worker));
 
 console.log('\nRESULTADO: ' + passou + ' verificações — recuperação em massa segura e explicada!');

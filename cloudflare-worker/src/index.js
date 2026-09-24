@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.6';
+const WORKER_VERSION = '5.26.7';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -637,29 +637,55 @@ async function handleChangesWatch(request, env, ctx) {
   return json({ ok: true, novidade: false, maxSeq });
 }
 
+// v7.0.7 (motor) — PAGINAÇÃO QUE NÃO PULA MAIS REGISTRO (defeito provado)
+// A consulta de exclusão paginava só por `deleted_at < ?`. Só que MUITOS registros
+// são excluídos no MESMO milissegundo — o PC manda as exclusões de 10 em 10 e o
+// lote inteiro fica com o mesmo `deleted_at`. Quando a página terminava no meio de
+// um grupo empatado, tudo o que sobrava daquele grupo ficava de fora PARA SEMPRE
+// (a página seguinte pedia "mais antigo que X" e os empatados em X nunca voltavam).
+// Prova em memória (`test_recuperacao_completa.js`): com página de 1000, 56 de
+// 3.000 registros não eram alcançados; com página de 200, 401 de 3.000. Era isso
+// que fazia a recuperação "trazer só parte" do que foi apagado.
+// Correção: cursor COMPOSTO (deleted_at, entity, record_id) — a mesma ordem que o
+// banco usa para ordenar, então nenhum registro fica em terra de ninguém. Continua
+// aceitando o pedido antigo (só `before`), para não quebrar PC que ainda não
+// atualizou.
 async function handleDeleted(request, env) {
   await requireAdmin(request, env);
   const url = new URL(request.url);
-  // v7.0.4 — a recuperação precisa alcançar o que foi excluído há meses, não só
-  // os últimos 200. Agora aceita `before` (deleted_at < before) e página de até
-  // 1000, e devolve a data do mais antigo da leva para o PC pedir a próxima.
   const limit = Math.min(1000, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '200', 10) || 200));
   const beforeBruto = Number.parseInt(url.searchParams.get('before') || '0', 10) || 0;
-  const query = beforeBruto
-    ? env.DB.prepare(
-        `SELECT * FROM records WHERE deleted_at IS NOT NULL AND deleted_at < ?
-         ORDER BY deleted_at DESC LIMIT ?`).bind(beforeBruto, limit)
-    : env.DB.prepare(
-        `SELECT * FROM records WHERE deleted_at IS NOT NULL
-         ORDER BY deleted_at DESC LIMIT ?`).bind(limit);
+  const antesEntity = String(url.searchParams.get('beforeEntity') || '');
+  const antesId = String(url.searchParams.get('beforeId') || '');
+  const ORDEM = 'ORDER BY deleted_at DESC, entity DESC, record_id DESC LIMIT ?';
+  let query;
+  if (beforeBruto && antesEntity && antesId) {
+    query = env.DB.prepare(
+      `SELECT * FROM records WHERE deleted_at IS NOT NULL
+        AND (deleted_at < ? OR (deleted_at = ? AND (entity < ? OR (entity = ? AND record_id < ?))))
+        ${ORDEM}`).bind(beforeBruto, beforeBruto, antesEntity, antesEntity, antesId, limit);
+  } else if (beforeBruto) {
+    query = env.DB.prepare(
+      `SELECT * FROM records WHERE deleted_at IS NOT NULL AND deleted_at < ?
+        ${ORDEM}`).bind(beforeBruto, limit);
+  } else {
+    query = env.DB.prepare(
+      `SELECT * FROM records WHERE deleted_at IS NOT NULL
+        ${ORDEM}`).bind(limit);
+  }
   const rows = await query.all();
   const registros = (rows.results || []).map(publicRecord);
-  const ultimo = registros.length ? Number(registros[registros.length - 1].deletedAt) || 0 : 0;
+  const ultimoReg = registros.length ? registros[registros.length - 1] : null;
+  const ultimo = ultimoReg ? Number(ultimoReg.deletedAt) || 0 : 0;
   return json({
     ok: true,
     records: registros,
     temMais: registros.length >= limit,
-    proximoBefore: ultimo || undefined
+    proximoBefore: ultimo || undefined,
+    // v7.0.7 — o par que fecha o cursor: sem ele o PC só consegue pedir "mais
+    // antigo que", e os empatados do fim da página se perdem
+    proximoEntity: ultimoReg ? ultimoReg.entity : undefined,
+    proximoId: ultimoReg ? ultimoReg.recordId : undefined
   });
 }
 

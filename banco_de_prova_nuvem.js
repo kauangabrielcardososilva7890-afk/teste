@@ -84,6 +84,10 @@ db.config={};db._seq={};db.modulosDinamicos={};
     const ti=Date.now();await S.tick('agendado');ritmo.push(Date.now()-ti);
   }
   console.log('ciclos automáticos seguintes (3 s de intervalo): '+ritmo.join(' · ')+' ms');
+  // ── CUSTO DO CLIQUE DE APAGAR (a marca da v7.0.7 tira dois retratos da base) ──
+  const t3=Date.now();S.marcarIntencaoDeExcluir();const t4=Date.now();
+  const t5=Date.now();S.fecharIntencaoDeExclusao();const t6=Date.now();
+  console.log('CUSTO DO CLIQUE: marca='+(t4-t3)+' ms · fecha='+(t6-t5)+' ms · total='+((t4-t3)+(t6-t5))+' ms');
   console.log('tamanho do estado salvo no navegador: '+
     Math.round((store['digicopy_cf_sync_state_v1']||'').length/1024)+' KB');
 })().catch(e=>{console.error('erro no banco de prova:',e&&e.stack||e);process.exit(1);});

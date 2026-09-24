@@ -119,6 +119,6 @@ ok('patch na 207 (autocura 208; perfis 209; permissões 210; menu fiscal v6.0.6 
 ok('motor no bundle gerado', bundle.indexOf('MOTOR FISCAL v6.0.1') >= 0);
 ok('package.json na 6.0.1', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.1', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker atualizado 5.26.6 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.6'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
+ok('worker atualizado 5.26.7 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.7'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.1 (MOTOR FISCAL COMPLETO: transmissão SEFAZ-MG, DANFE A4, cancelamento, inutilização, QR NFC-e — tudo em homologação primeiro, provedor de provas nos retornos reais).');
