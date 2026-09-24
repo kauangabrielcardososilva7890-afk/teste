@@ -5488,3 +5488,118 @@ verdade: **guardado**.
 2. Nada a fazer na nuvem (o motor 5.26.7 já está publicado).
 3. Se apagar algo de propósito, **não volta** — nem pela recuperação. Se quiser trazer
    algo de volta de propósito, o botão do painel da Nuvem continua trazendo.
+
+## 24/09/2026 — RODADA 16 · O CAMINHO PÚBLICO DO ORÇAMENTO (motor da nuvem 5.26.8)
+
+**Pedido (literal, de novo):** *"procure por mais problemas, se achar, verifique se aquil
+realmente é um problema"*. A caça desta vez foi para o lado que ninguém tinha olhado:
+**a rota pública do orçamento** — a que o CLIENTE usa (abrir o link, autorizar/recusar).
+É código da nuvem (`cloudflare-worker/src/index.js`), então cada achado foi provado
+**rodando o motor de verdade** sobre um banco SQLite com as migrations reais do projeto —
+teste novo `test_worker_publico.js` (motor importado e chamado com `fetch(Request, env, ctx)`).
+
+### 1) ALTO — um link forjado podia encher a base de vendas e queimar a cota do dia
+Quando o token do orçamento **não existe** na nuvem, o motor monta a venda a partir do que
+vem **dentro do próprio link** (`?d=...`). Esse caminho é público por desenho (é o cliente
+respondendo) e **não tinha limite nenhum**: um link inventado podia criar venda + aviso
+quantas vezes quisesse — entrando nas listas do dono e gastando a cota.
+**Conserto:** teto de **40** criações "sem cadastro" por dia (tabela `system_meta`, chave
+`orc_pub_sem_cadastro_<dia>`); do 41º em diante responde `429 PUBLIC_FALLBACK_LIMIT` e
+**não grava nada**. O uso normal (orçamento que já está na nuvem) nem passa por esse caminho.
+Para o dono saber de onde veio, a venda e o orçamento criados assim ficam marcados
+`semCadastroNoSistema:true`.
+**Prova:** cenário 5 do teste — a criação normal passa; com o teto batido, 429 e zero vendas.
+
+### 2) ALTO — o freio da cota e o medidor não viam o caminho público
+O freio preventivo ("nunca deixar estourar") existia **só** no envio dos PCs (`handlePush`).
+A rota pública gravava direto, sem freio e **sem contar** no medidor do dia — justamente o
+caminho que qualquer pessoa na rua pode chamar.
+**Conserto:** o freio virou **uma função só** (`freioDeCota`) usada pelos dois caminhos, e as
+gravações do público passam a contar (`somarUso`: **3** ao autorizar — orçamento + venda +
+aviso — e **1** ao recusar). O aparelho público e o freio agora vêm **depois** da validação:
+pedido sem ação (400) não grava nada, nem a linha do aparelho.
+**Prova:** cenário 4 — depois de autorizar, o medidor do dia marca 3; com o medidor em
+95.000, a rota pública responde 429 e não grava nada.
+
+### 3) MÉDIO — a revogação do aparelho público não segurava (a linha era apagada e recriada)
+O "aparelho" que assina as ações do cliente (`public-orcamento`) era criado com
+**`INSERT OR REPLACE`** — e no SQLite isso é **APAGAR + CRIAR de novo**. Cada acesso do
+cliente apagava a linha e criava outra; iam embora com ela: `revoked_at` e `excluido_em`
+(a revogação e a exclusão feitas no painel **voltavam para vazio**) e o `created_at` (a
+lista de aparelhos mostrava ele como "criado agora", toda vez).
+**Conserto:** `INSERT ... ON CONFLICT(id) DO UPDATE SET last_seen_at=excluded.last_seen_at`
+— a linha nasce uma vez e só a visita é atualizada.
+**Prova (antes × depois, com o motor de verdade):** `_tmp_prova_revogacao.js` (temporário,
+apagado) — motor antigo: revoguei (`revoked_at=555`, `excluido_em=666`), o cliente decidiu
+de novo → a linha voltou com os dois **em branco** ("a revogação segurou? NÃO"). Motor novo:
+os dois continuam 555/666 e o `created_at` não muda ("segurou? SIM").
+**Detalhe que o próprio teste achou (e vale para o futuro):** num `OR REPLACE` o conflito
+pode ser de **outro** índice — `token_hash` é ÚNICO, então subir o mesmo hash apagaria a
+linha de **outro** aparelho (o banco recusou por chave estrangeira no fim do comando). Com
+`ON CONFLICT(id)` isso é impossível: só a linha do aparelho público pode ser tocada.
+
+### 4) ALTO (desempenho) — achar o orçamento pelo token trazia a lista inteira
+`findOrcamentoByToken` fazia `SELECT * FROM records WHERE entity='orcamentos'` — **todos** os
+orçamentos — e abria o JSON de cada um dentro do motor, a cada acesso do cliente (abrir o
+link e responder). Quanto mais orçamentos, mais pesado: duas idas e voltas com a base toda
+comprometem o **teto de tempo de processamento** do motor — quem quebraria primeiro é o link
+do cliente. **Era o código de verdade**, não hipótese.
+**Conserto:** procura primeiro pelo **id do registro** (índice), depois deixa o **banco**
+filtrar o token dentro do JSON (`data_json LIKE ? ESCAPE`, curingas `\ % _` escapados e o
+valor conferido no motor) — uma linha. O laço antigo ficou só como **última tentativa**,
+para nenhum link antigo deixar de abrir.
+**Prova:** cenário 3 — com 300 orçamentos, o motor **não** pede a lista inteira, acha o
+certo, e o link antigo (por id do registro) continua abrindo.
+> Continua sendo uma varredura **dentro do banco** (não há índice JSON). Resolver de vez
+> pediria coluna + migração; fica anotado como melhoria futura, não como pendência.
+
+### 5) BAIXO — pedido recusado ainda gravava a linha do aparelho
+Mesma lição do `handlePush` (rodada 2): validar **antes** de gravar. `ensurePublicDevice`
+rodava antes da validação, então um POST sem ação (400) criava a linha do aparelho sem
+gravar nada útil. **Conserto:** validação primeiro; aparelho e freio depois.
+**Prova:** cenário 1 — "pedido recusado não grava NADA".
+
+### 6) MÉDIO — o contador da cota falava uma unidade e o freio, outra
+O freio compara com **linhas** gravadas (a estimativa dele é `mutations.length * 2`, porque
+cada alteração grava o registro + o evento), mas o contador somava **1 por alteração**. Ou
+seja: o teto de 95.000 só era alcançado com ~190.000 linhas de verdade — no plano grátis
+(100 mil linhas/dia) o freio ia disparar **depois** do corte.
+**Conserto:** `somarUso(env, Math.max(1, mutations.length) * 2, ...)` — a mesma unidade do
+freio e do medidor oficial da Cloudflare (`rowsWritten`). Segue conservador (alteração que
+não grava nada também conta 2). Hoje ele está no **plano pago** (50 milhões/mês), então isso
+não muda o dia a dia — é blindagem para o caso de voltar ao grátis.
+
+### 7) Verificado e NÃO é problema (com evidência)
+| Suspeita | Verificação | Veredito |
+|---|---|---|
+| Link do cliente quando a nuvem pausa por cota | a página abre o WhatsApp **independente** da resposta HTTP (não checa status) — o cliente nunca fica na mão | por desenho |
+| O token do orçamento em si | `tokenNovo()` = 18 bytes de `crypto.getRandomValues` (rodada 14) | segue forte |
+| Responder o mesmo orçamento duas vezes | devolve "Orçamento já processado." sem criar outra venda | ok (cenário 1) |
+| `applyMutation` (validação de lote/versão) | segue com `baseVersion` obrigatório, dedupe de `mutationId` e 409 de conflito | ok |
+| Outros carimbos de versão | painel do gerente tem versão própria (5.26.3), intacta; só o motor da nuvem virou 5.26.8 | ok |
+
+### 8) Testes e verificação
+- **Novo:** `test_worker_publico.js` — **32 verificações**, com o motor de verdade sobre
+  SQLite + migrations reais (fluxo do cliente, aparelho público, busca do token, cota e
+  teto). Entrou no `test_runner.js`.
+- **Antes × depois:** o mesmo teste rodado contra o motor antigo (`git show HEAD:...`)
+  **reprova**; contra o novo, passa.
+- Suíte: **213 passaram, 0 falharam, 4 não rodaram** (falta `jsdom`). O
+  `test_sync_quota_guard.js` ganhou a verificação da unidade.
+- Carimbos re-ancorados (17 arquivos de teste + 3 HTMLs de doc) para **5.26.8**;
+  `cloudflare-worker/motor_para_colar.js` regerado (+ `.sha256`); `package-lock.json`
+  sincronizado com o `package.json` (0.4.8 → 0.4.9).
+- **Nada mudou no programa (app v7.0.10):** esta rodada é **só do motor da nuvem**. O
+  `MOTOR_MINIMO` do app continua 5.26.7 (5.26.8 é mais novo — não aparece aviso de "motor
+  antigo").
+- **Não rodado:** `e2e/` (Playwright ausente) e os 4 de `jsdom`.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  quantos orçamentos existem hoje na base (é o que diz o peso real da varredura antiga) e
+  se algum acesso de cliente já falhou por causa dela.
+
+### 9) Passos dele (só isso)
+1. **Publicar o motor da nuvem 5.26.8** — o caminho de sempre: `atualizar_motor_nuvem.cmd`
+   (duplo clique) **ou** colar o `cloudflare-worker/motor_para_colar.js` no painel da
+   Cloudflare **ou** o botão "Publicar motor da nuvem" na aba Actions.
+2. Conferir em `.../health` que aparece **5.26.8**.
+3. **Nos PCs: nada a fazer** (o programa segue v7.0.10, igual à rodada anterior).

@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.26.5   (igual ao src/index.js)
- * GERADO EM: 2026-09-22 19:17 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.26.8   (igual ao src/index.js)
+ * GERADO EM: 2026-09-24 01:01 UTC
  * sha256 do código (sem este cabeçalho):
- *   93e7ef302c0e33743372a9074080cd4d1ff15f7a45dfc221b970e35405ab358c
+ *   ab0ee01dd623a020663b3f1a1e8d7a67e50afe10f61149a3f4619151813d12a2
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,9 +35,9 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.26.5";
+var WORKER_VERSION = "5.26.8";
 var MAX_MUTATIONS = 100;
-var MAX_CHANGE_LIMIT = 500;
+var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
 var JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -540,6 +540,31 @@ async function applyMutation(env, device, mutation) {
   };
 }
 __name(applyMutation, "applyMutation");
+var LIMITE_ESCRITA_DIA = 95e3;
+async function freioDeCota(env, estimativa) {
+  try {
+    const usoAgora = await env.DB.prepare("SELECT escritas AS w FROM uso_diario WHERE dia = ?").bind(hojeUTC()).first();
+    const escritasAteAgora = Number(usoAgora && usoAgora.w || 0);
+    if (escritasAteAgora + Number(estimativa || 0) > LIMITE_ESCRITA_DIA) {
+      return json({ ok: false, quota: true, error: "pre-stop DIGICOPY: daily row write limit pr\xF3ximo do teto \u2014 envio pausado at\xE9 a virada do dia (por volta das 21h); as mudan\xE7as ficam guardadas neste PC." }, 429);
+    }
+  } catch (eFreio) {
+    console.error("FREIO_COTA_FALHOU", eFreio);
+  }
+  return null;
+}
+__name(freioDeCota, "freioDeCota");
+var CAP_PUBLICO_SEM_CADASTRO_DIA = 40;
+async function contarSemCadastro(env) {
+  const chave = "orc_pub_sem_cadastro_" + hojeUTC();
+  await env.DB.prepare(
+    `INSERT INTO system_meta(key, value, updated_at) VALUES (?, '1', ?)
+       ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1, updated_at = ?`
+  ).bind(chave, Date.now(), Date.now()).run();
+  const lido = await env.DB.prepare("SELECT value FROM system_meta WHERE key = ?").bind(chave).first();
+  return Number(lido && lido.value || 0);
+}
+__name(contarSemCadastro, "contarSemCadastro");
 async function handlePush(request, env, ctx) {
   const device = await authenticate(request, env);
   try {
@@ -549,21 +574,12 @@ async function handlePush(request, env, ctx) {
   }
   const body = await readBody(request);
   const mutations = body.mutations;
-  somarUso(env, Array.isArray(mutations) ? Math.max(1, mutations.length) : 1, 0, ctx);
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
     throw new ApiError(400, "INVALID_MUTATION_BATCH", `Envie de 1 a ${MAX_MUTATIONS} altera\xE7\xF5es.`);
   }
-  const LIMITE_ESCRITA_DIA = 95e3;
-  try {
-    const usoAgora = await env.DB.prepare("SELECT escritas AS w FROM uso_diario WHERE dia = ?").bind(hojeUTC()).first();
-    const escritasAteAgora = Number(usoAgora && usoAgora.w || 0);
-    const estimativaDesteLote = mutations.length * 2;
-    if (escritasAteAgora + estimativaDesteLote > LIMITE_ESCRITA_DIA) {
-      return json({ ok: false, quota: true, error: "pre-stop DIGICOPY: daily row write limit pr\xF3ximo do teto \u2014 envio pausado at\xE9 a virada do dia (por volta das 21h); as mudan\xE7as ficam guardadas neste PC." }, 429);
-    }
-  } catch (eFreio) {
-    console.error("FREIO_COTA_FALHOU", eFreio);
-  }
+  const freio = await freioDeCota(env, mutations.length * 2);
+  if (freio) return freio;
+  somarUso(env, Math.max(1, mutations.length) * 2, 0, ctx);
   const results = [];
   for (let index = 0; index < mutations.length; index++) {
     try {
@@ -610,15 +626,68 @@ async function handleChanges(request, env, ctx) {
   return json({ ok: true, cursor, nextCursor, hasMore, changes });
 }
 __name(handleChanges, "handleChanges");
+async function handleChangesWatch(request, env, ctx) {
+  await authenticate(request, env);
+  const url = new URL(request.url);
+  const cursor = Math.max(0, Number.parseInt(url.searchParams.get("cursor") || "0", 10) || 0);
+  const pedido = Number.parseInt(url.searchParams.get("timeout") || "20", 10) || 20;
+  const tetoSegundos = Math.min(25, Math.max(3, pedido));
+  somarUso(env, 0, 30, ctx);
+  const inicio = Date.now();
+  let maxSeq = 0;
+  try {
+    while (Date.now() - inicio < tetoSegundos * 1e3) {
+      const r = await env.DB.prepare("SELECT MAX(seq) AS maxSeq FROM changes").first();
+      maxSeq = Number(r && r.maxSeq) || 0;
+      if (maxSeq > cursor) return json({ ok: true, novidade: true, maxSeq });
+      await new Promise((resolve) => setTimeout(resolve, 900));
+    }
+  } catch (e) {
+    return json({ ok: true, novidade: false, maxSeq });
+  }
+  return json({ ok: true, novidade: false, maxSeq });
+}
+__name(handleChangesWatch, "handleChangesWatch");
 async function handleDeleted(request, env) {
   await requireAdmin(request, env);
   const url = new URL(request.url);
-  const limit = Math.min(200, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "100", 10) || 100));
-  const rows = await env.DB.prepare(
-    `SELECT * FROM records WHERE deleted_at IS NOT NULL
-     ORDER BY deleted_at DESC LIMIT ?`
-  ).bind(limit).all();
-  return json({ ok: true, records: (rows.results || []).map(publicRecord) });
+  const limit = Math.min(1e3, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "200", 10) || 200));
+  const beforeBruto = Number.parseInt(url.searchParams.get("before") || "0", 10) || 0;
+  const antesEntity = String(url.searchParams.get("beforeEntity") || "");
+  const antesId = String(url.searchParams.get("beforeId") || "");
+  const ORDEM = "ORDER BY deleted_at DESC, entity DESC, record_id DESC LIMIT ?";
+  let query;
+  if (beforeBruto && antesEntity && antesId) {
+    query = env.DB.prepare(
+      `SELECT * FROM records WHERE deleted_at IS NOT NULL
+        AND (deleted_at < ? OR (deleted_at = ? AND (entity < ? OR (entity = ? AND record_id < ?))))
+        ${ORDEM}`
+    ).bind(beforeBruto, beforeBruto, antesEntity, antesEntity, antesId, limit);
+  } else if (beforeBruto) {
+    query = env.DB.prepare(
+      `SELECT * FROM records WHERE deleted_at IS NOT NULL AND deleted_at < ?
+        ${ORDEM}`
+    ).bind(beforeBruto, limit);
+  } else {
+    query = env.DB.prepare(
+      `SELECT * FROM records WHERE deleted_at IS NOT NULL
+        ${ORDEM}`
+    ).bind(limit);
+  }
+  const rows = await query.all();
+  const registros = (rows.results || []).map(publicRecord);
+  const ultimoReg = registros.length ? registros[registros.length - 1] : null;
+  const ultimo = ultimoReg ? Number(ultimoReg.deletedAt) || 0 : 0;
+  return json({
+    ok: true,
+    records: registros,
+    temMais: registros.length >= limit,
+    proximoBefore: ultimo || void 0,
+    // v7.0.7 — o par que fecha o cursor: sem ele o PC só consegue pedir "mais
+    // antigo que", e os empatados do fim da página se perdem
+    proximoEntity: ultimoReg ? ultimoReg.entity : void 0,
+    proximoId: ultimoReg ? ultimoReg.recordId : void 0
+  });
 }
 __name(handleDeleted, "handleDeleted");
 async function handleRestore(request, env) {
@@ -1193,14 +1262,27 @@ __name(parsePayloadD, "parsePayloadD");
 async function ensurePublicDevice(env) {
   const now = Date.now();
   await env.DB.prepare(
-    `INSERT OR REPLACE INTO devices (id, name, token_hash, role, created_at, last_seen_at)
-     VALUES ('public-orcamento', 'Aprova\xE7\xE3o P\xFAblica', 'public_orcamento_sys_hash', 'device', ?, ?)`
+    `INSERT INTO devices (id, name, token_hash, role, created_at, last_seen_at)
+     VALUES ('public-orcamento', 'Aprova\xE7\xE3o P\xFAblica', 'public_orcamento_sys_hash', 'device', ?, ?)
+     ON CONFLICT(id) DO UPDATE SET last_seen_at = excluded.last_seen_at`
   ).bind(now, now).run();
 }
 __name(ensurePublicDevice, "ensurePublicDevice");
 async function findOrcamentoByToken(env, token) {
   const code = cleanText(token, 120);
   if (!code || code.length < 6) return null;
+  const porId = await env.DB.prepare(
+    `SELECT * FROM records WHERE entity = 'orcamentos' AND record_id = ? LIMIT 1`
+  ).bind(code).first();
+  if (porId) return { row: porId, data: parseDataJson(porId.data_json) || {} };
+  const escapado = String(code).replace(/[\\%_]/g, (m) => "\\" + m);
+  const porToken = await env.DB.prepare(
+    `SELECT * FROM records WHERE entity = 'orcamentos' AND data_json LIKE ? ESCAPE '\\' LIMIT 1`
+  ).bind('%"token":"' + escapado + '"%').first();
+  if (porToken) {
+    const data = parseDataJson(porToken.data_json) || {};
+    if (String(data.token || "") === code) return { row: porToken, data };
+  }
   const rows = await env.DB.prepare(
     `SELECT * FROM records WHERE entity = 'orcamentos'`
   ).all();
@@ -1257,15 +1339,18 @@ async function handleOrcamentoGet(url, env) {
   return json(publicOrcamentoPayload(found.data));
 }
 __name(handleOrcamentoGet, "handleOrcamentoGet");
-async function handleOrcamentoPost(request, env) {
+async function handleOrcamentoPost(request, env, ctx) {
   if (!env.DB) throw new ApiError(503, "DATABASE_NOT_BOUND", "Banco D1 n\xE3o vinculado.");
-  await ensurePublicDevice(env);
   const body = await readBody(request);
   const acao = body.acao === "recusar" ? "recusar" : body.acao === "aprovar" ? "aprovar" : "";
   if (!acao) throw new ApiError(400, "INVALID_ACTION", "Informe aprovar ou recusar.");
   const token = cleanText(body.c, 120);
+  await ensurePublicDevice(env);
+  const freioPublico = await freioDeCota(env, acao === "aprovar" ? 3 : 1);
+  if (freioPublico) return freioPublico;
   let found = await findOrcamentoByToken(env, token);
   const device = { id: "public-orcamento" };
+  const semCadastro = !found;
   let data = null;
   let recordId = null;
   let baseVersion = 0;
@@ -1277,6 +1362,19 @@ async function handleOrcamentoPost(request, env) {
       return json({ ok: true, status: data.status, vendaId: data.vendaId || null, vendaNumero: data.vendaNumero || "", message: "Or\xE7amento j\xE1 processado." });
     }
   } else {
+    let usadosHoje = 0;
+    try {
+      usadosHoje = await contarSemCadastro(env);
+    } catch (eConta) {
+      usadosHoje = 0;
+    }
+    if (usadosHoje > CAP_PUBLICO_SEM_CADASTRO_DIA) {
+      throw new ApiError(
+        429,
+        "PUBLIC_FALLBACK_LIMIT",
+        "N\xE3o consegui registrar a decis\xE3o agora. Avise a empresa pelo WhatsApp que o or\xE7amento foi respondido."
+      );
+    }
     const payloadD = parsePayloadD(body.d) || {};
     recordId = "orc_" + (body.numero ? String(body.numero).replace(/\D/g, "") : Date.now().toString(36));
     data = {
@@ -1295,10 +1393,12 @@ async function handleOrcamentoPost(request, env) {
       lojaWhatsapp: body.whatsapp || payloadD.w || "",
       os: payloadD.os || null,
       status: "aberto",
+      semCadastroNoSistema: true,
       criadoEm: (/* @__PURE__ */ new Date()).toISOString()
     };
     baseVersion = 0;
   }
+  somarUso(env, acao === "aprovar" ? 3 : 1, 0, ctx);
   if (acao === "recusar") {
     if (data.status === "aprovado") {
       throw new ApiError(409, "ALREADY_APPROVED", "Este or\xE7amento j\xE1 foi autorizado.");
@@ -1331,6 +1431,7 @@ async function handleOrcamentoPost(request, env) {
     status: "aguardar",
     origemOrcamentoId: data.id || recordId,
     os: data.os || null,
+    semCadastroNoSistema: !!semCadastro,
     criadoPor: data.criadoPor || "cliente",
     criadoPorNome: data.criadoPorNome || "Cliente",
     criadoEm: (/* @__PURE__ */ new Date()).toISOString()
@@ -1389,7 +1490,7 @@ async function route(request, env, ctx) {
   if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) return handleHealth(env);
   if (request.method === "GET" && url.pathname === "/pix") return handlePix(url);
   if (request.method === "GET" && url.pathname === "/orcamento") return handleOrcamentoGet(url, env);
-  if (request.method === "POST" && url.pathname === "/orcamento") return handleOrcamentoPost(request, env);
+  if (request.method === "POST" && url.pathname === "/orcamento") return handleOrcamentoPost(request, env, ctx);
   if (!env.DB) throw new ApiError(503, "DATABASE_NOT_BOUND", "Banco D1 n\xE3o vinculado.");
   if (request.method === "POST" && url.pathname === "/v1/setup") return handleSetup(request, env);
   if (request.method === "POST" && url.pathname === "/v1/recover") return handleRecovery(request, env);
@@ -1397,6 +1498,7 @@ async function route(request, env, ctx) {
   if (request.method === "POST" && url.pathname === "/v1/enroll") return handleEnroll(request, env);
   if (request.method === "POST" && url.pathname === "/v1/changes") return handlePush(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/changes") return handleChanges(request, env, ctx);
+  if (request.method === "GET" && url.pathname === "/v1/changes/watch") return handleChangesWatch(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/deleted") return handleDeleted(request, env);
   if (request.method === "POST" && url.pathname === "/v1/restore") return handleRestore(request, env);
   if (request.method === "GET" && url.pathname === "/v1/review/revoked-records") return handleRevokedDeviceRecords(request, env);

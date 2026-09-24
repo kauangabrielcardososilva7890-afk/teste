@@ -240,7 +240,11 @@ const tests=[
   "test_nuvem_rapida.js",
   "test_exclusao_nao_volta.js",
   "test_recuperacao_completa.js",
-  "test_recuperacao_nao_ressuscita.js"
+  "test_recuperacao_nao_ressuscita.js",
+  // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
+  // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
+  // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"
+  "test_worker_publico.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

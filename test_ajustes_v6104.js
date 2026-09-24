@@ -114,7 +114,7 @@ console.log('== Publicar o motor: o PASSO REAL (ordem dele: esquecer o worker) =
 ok(relHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0, 'o relatório ensina o arquivo que existe (atualizar_motor_nuvem.cmd)');
 ok(relHtml.indexOf('CLOUDFLARE_API_TOKEN') < 0 && relHtml.indexOf('New workflow') < 0,
    'não manda mais mexer em token/painel/GitHub');
-ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.26.7"') >= 0,
+ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.26.8"') >= 0,
    'explica as respostas que a janela pede e o que tem que aparecer no fim');
 ok(fs.existsSync('atualizar_motor_nuvem.cmd') && /wrangler d1 migrations apply DB --remote/.test(fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8')),
    'o passo ensinado é o do arquivo de verdade (mesmos comandos)');

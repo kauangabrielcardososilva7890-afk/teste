@@ -54,8 +54,8 @@ ok('tela Nuvem abre pra todo PC (trava antiga de usuário removida; papel é do 
 ok('desconectar só a si (rótulo claro + explicação)', sync.indexOf('Desconectar ESTE computador') >= 0 && sync.indexOf('Tira só ESTE computador') >= 0);
 ok('zona de admin segue trancada no papel do aparelho', sync.indexOf("d.role==='admin'") >= 0);
 
-console.log('== PERFIS DA NUVEM (worker 5.26.7) ==');
-ok('worker na 5.26.7', wk.indexOf("WORKER_VERSION = '5.26.7'") >= 0);
+console.log('== PERFIS DA NUVEM (worker 5.26.8) ==');
+ok('worker na 5.26.8', wk.indexOf("WORKER_VERSION = '5.26.8'") >= 0);
 ok('enroll-cnpj aceita a senha do GERENTE → role admin', wk.indexOf("via = 'cnpj-gerente'") >= 0 && wk.indexOf("role = 'admin'") >= 0);
 ok('senha errada (conexão OU gerente) cai no MESMO erro de sempre (anti-oráculo)', wk.indexOf("if (!gerOk) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha de conexão incorretos.');") >= 0);
 ok('admin só com senhas DIFERENTES (gerente ≠ conexão)', wk.indexOf('seg.gerente_hash !== seg.conn_hash') >= 0);

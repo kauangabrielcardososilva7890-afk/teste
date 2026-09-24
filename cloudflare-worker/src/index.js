@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.7';
+const WORKER_VERSION = '5.26.8';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -525,6 +525,40 @@ async function applyMutation(env, device, mutation) {
   };
 }
 
+// FREIO PREVENTIVO DA COTA (v5.24.5 / v5.26.8) — a ordem do dono é "nunca deixar
+// estourar". O plano grátis corta TUDO no teto de 100 mil escritas/dia e só volta
+// na virada (21h em Brasília). A nuvem para de aceitar gravação um pouco ANTES do
+// teto (folga de segurança) e devolve uma pausa amigável: o app guarda as mudanças
+// no PC e reenvia sozinho. A mensagem carrega as palavras "daily row write limit"
+// de propósito: é assim que o app reconhece a pausa e mostra o aviso em português.
+const LIMITE_ESCRITA_DIA = 95000;
+async function freioDeCota(env, estimativa) {
+  try {
+    const usoAgora = await env.DB.prepare('SELECT escritas AS w FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
+    const escritasAteAgora = Number((usoAgora && usoAgora.w) || 0);
+    if (escritasAteAgora + Number(estimativa || 0) > LIMITE_ESCRITA_DIA) {
+      return json({ ok: false, quota: true, error: 'pre-stop DIGICOPY: daily row write limit próximo do teto — envio pausado até a virada do dia (por volta das 21h); as mudanças ficam guardadas neste PC.' }, 429);
+    }
+  } catch (eFreio) { console.error('FREIO_COTA_FALHOU', eFreio); /* segue o fluxo: o app já trata o erro real da cota */ }
+  return null;
+}
+// v5.26.8 — TETO PARA A CRIAÇÃO "SEM CADASTRO" (segurança do caminho público)
+// O link do cliente pode chegar antes de o orçamento existir na nuvem e, nesse
+// caso, o motor cria a venda a partir do que veio DENTRO DO PRÓPRIO LINK (`d`).
+// Como esse caminho é público e não tem como provar quem mandou, ele passa a ser
+// contado por dia: uso normal é raro (o orçamento já está na nuvem, e aí o token
+// é achado e este caminho nem é usado); um link forjado não consegue encher a
+// base nem queimar a cota do dia.
+const CAP_PUBLICO_SEM_CADASTRO_DIA = 40;
+async function contarSemCadastro(env) {
+  const chave = 'orc_pub_sem_cadastro_' + hojeUTC();
+  await env.DB.prepare(
+    `INSERT INTO system_meta(key, value, updated_at) VALUES (?, '1', ?)
+       ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1, updated_at = ?`
+  ).bind(chave, Date.now(), Date.now()).run();
+  const lido = await env.DB.prepare('SELECT value FROM system_meta WHERE key = ?').bind(chave).first();
+  return Number((lido && lido.value) || 0);
+}
 async function handlePush(request, env, ctx) {
   const device = await authenticate(request, env);
   try{ await checarTrocaDeVersao(request, env, ctx); }catch(e){ console.error('BACKUP_VERSAO_CHECAR_FALHOU', e); }
@@ -533,22 +567,12 @@ async function handlePush(request, env, ctx) {
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
     throw new ApiError(400, 'INVALID_MUTATION_BATCH', `Envie de 1 a ${MAX_MUTATIONS} alterações.`);
   }
-  // FREIO PREVENTIVO DA COTA (v5.24.5) — a ordem do dono é "nunca deixar
-  // estourar". O plano grátis corta TUDO no teto de 100 mil escritas/dia
-  // e só volta na virada (21h em Brasília). Aqui a própria nuvem para de
-  // aceitar gravação um pouco ANTES do teto (folga de segurança) e devolve
-  // uma pausa amigável: o app guarda as mudanças no PC e reenvia sozinho.
-  // A mensagem carrega as palavras "daily row write limit" de propósito:
-  // é assim que o app reconhece a pausa e mostra o aviso em português.
-  const LIMITE_ESCRITA_DIA = 95000;
-  try {
-    const usoAgora = await env.DB.prepare('SELECT escritas AS w FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
-    const escritasAteAgora = Number((usoAgora && usoAgora.w) || 0);
-    const estimativaDesteLote = mutations.length * 2; // cada alteração grava o registro + o evento
-    if (escritasAteAgora + estimativaDesteLote > LIMITE_ESCRITA_DIA) {
-      return json({ ok: false, quota: true, error: 'pre-stop DIGICOPY: daily row write limit próximo do teto — envio pausado até a virada do dia (por volta das 21h); as mudanças ficam guardadas neste PC.' }, 429);
-    }
-  } catch (eFreio) { console.error('FREIO_COTA_FALHOU', eFreio); /* segue o fluxo: o app já trata o erro real da cota */ }
+  // FREIO PREVENTIVO DA COTA — a ordem do dono é "nunca deixar estourar".
+  // v5.26.8 — O FREIO VIROU UM SÓ: antes ele existia apenas aqui (no envio dos
+  // PCs) e o caminho público do orçamento gravava direto, sem freio e sem contar
+  // no medidor do dia. Agora os dois usam a mesma função.
+  const freio = await freioDeCota(env, mutations.length * 2); // cada alteração grava o registro + o evento
+  if (freio) return freio;
   // AUDITORIA 23/09/2026 — a contagem do dia mudou de lugar DE PROPÓSITO.
   //   ANTES: contava o lote antes de saber se ele era válido e ANTES do freio.
   //   Lote inválido (400) e lote recusado pelo freio (429) somavam no contador
@@ -559,7 +583,15 @@ async function handlePush(request, env, ctx) {
   //   a contagem segue ANTES das gravações e o lote aceito é contado inteiro,
   //   mesmo que alguma alteração dele vire duplicata/sem mudança. Do lado da
   //   segurança da cota, contador a mais é seguro; contador a menos, não.
-  somarUso(env, Math.max(1, mutations.length), 0, ctx);
+  // v5.26.8 — A UNIDADE ESTAVA TROCADA: o freio compara com LINHAS gravadas
+  // (a estimativa dele é `mutations.length * 2`, porque cada alteração grava o
+  // registro + o evento), mas o contador somava 1 por alteração. Ou seja: o teto
+  // de 95.000 era alcançado com ~190.000 linhas de verdade — no plano grátis
+  // (100 mil linhas/dia) o freio só ia disparar DEPOIS do corte. Agora o
+  // contador fala a mesma língua do freio e do medidor oficial da Cloudflare
+  // (rowsWritten). Segue conservador: alteração que não grava nada (idêntica ou
+  // repetida) também conta 2.
+  somarUso(env, Math.max(1, mutations.length) * 2, 0, ctx);
   const results = [];
   for (let index = 0; index < mutations.length; index++) {
     try {
@@ -1270,15 +1302,46 @@ function parsePayloadD(raw) {
 
 async function ensurePublicDevice(env) {
   const now = Date.now();
+  // v5.26.8 — AQUI ERA `INSERT OR REPLACE`, E ISSO APAGAVA A LINHA DO APARELHO.
+  // No SQLite, "OR REPLACE" é APAGAR + CRIAR de novo (conferido no próprio SQLite):
+  // a linha do aparelho público era reescrita do zero a CADA acesso do cliente —
+  // e com ela iam embora `revoked_at` e `excluido_em` (a revogação/exclusão feita
+  // no painel voltava a vazio) e o `created_at` voltava a ser "agora". Agora é
+  // `ON CONFLICT ... DO UPDATE`: a linha nasce uma vez e só a visita é atualizada.
+  // (É o mesmo padrão já usado no resto deste motor.)
   await env.DB.prepare(
-    `INSERT OR REPLACE INTO devices (id, name, token_hash, role, created_at, last_seen_at)
-     VALUES ('public-orcamento', 'Aprovação Pública', 'public_orcamento_sys_hash', 'device', ?, ?)`
+    `INSERT INTO devices (id, name, token_hash, role, created_at, last_seen_at)
+     VALUES ('public-orcamento', 'Aprovação Pública', 'public_orcamento_sys_hash', 'device', ?, ?)
+     ON CONFLICT(id) DO UPDATE SET last_seen_at = excluded.last_seen_at`
   ).bind(now, now).run();
 }
 
 async function findOrcamentoByToken(env, token) {
   const code = cleanText(token, 120);
   if (!code || code.length < 6) return null;
+  // v5.26.8 — ANTES ISTO TRAZIA TODOS OS ORÇAMENTOS PARA O WORKER e abria o JSON
+  // de cada um, a cada acesso do cliente (abrir o link e autorizar). Quanto mais
+  // orçamentos na base, mais pesado — e o motor da nuvem tem teto de tempo de
+  // processamento: com a base crescendo, o link do cliente é que falharia.
+  // Agora: (1) procura pelo ID do registro (índice principal) e (2) deixa o BANCO
+  // filtrar o token dentro do JSON, trazendo UMA linha. O laço antigo continua
+  // como última tentativa, para nenhum link deixar de achar o orçamento.
+  const porId = await env.DB.prepare(
+    `SELECT * FROM records WHERE entity = 'orcamentos' AND record_id = ? LIMIT 1`
+  ).bind(code).first();
+  if (porId) return { row: porId, data: parseDataJson(porId.data_json) || {} };
+  // o padrão do JSON é o que o próprio motor grava (JSON.stringify, sem espaços);
+  // os curingas do LIKE vêm de texto de fora, então vão escapados
+  const escapado = String(code).replace(/[\\%_]/g, (m) => '\\' + m);
+  const porToken = await env.DB.prepare(
+    `SELECT * FROM records WHERE entity = 'orcamentos' AND data_json LIKE ? ESCAPE '\\' LIMIT 1`
+  ).bind('%"token":"' + escapado + '"%').first();
+  if (porToken) {
+    const data = parseDataJson(porToken.data_json) || {};
+    if (String(data.token || '') === code) return { row: porToken, data };
+  }
+  // última tentativa (comportamento antigo) — só roda quando as duas acima não
+  // acharam; mantém funcionando qualquer link gravado em formato diferente
   const rows = await env.DB.prepare(
     `SELECT * FROM records WHERE entity = 'orcamentos'`
   ).all();
@@ -1335,15 +1398,23 @@ async function handleOrcamentoGet(url, env) {
   return json(publicOrcamentoPayload(found.data));
 }
 
-async function handleOrcamentoPost(request, env) {
+async function handleOrcamentoPost(request, env, ctx) {
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
-  await ensurePublicDevice(env);
   const body = await readBody(request);
   const acao = body.acao === 'recusar' ? 'recusar' : (body.acao === 'aprovar' ? 'aprovar' : '');
   if (!acao) throw new ApiError(400, 'INVALID_ACTION', 'Informe aprovar ou recusar.');
   const token = cleanText(body.c, 120);
+  // v5.26.8 — O APARELHO PÚBLICO E O FREIO VÊM DEPOIS DA VALIDAÇÃO
+  // Pedido inválido (sem ação) não grava NADA — nem a linha do aparelho público.
+  // É a mesma lição do handlePush: o que foi recusado não pode contar na cota.
+  await ensurePublicDevice(env);
+  const freioPublico = await freioDeCota(env, acao === 'aprovar' ? 3 : 1);
+  if (freioPublico) return freioPublico;
   let found = await findOrcamentoByToken(env, token);
   const device = { id: 'public-orcamento' };
+  // v5.26.8 — este orçamento veio DENTRO DO LINK (não existe na nuvem): fica
+  // marcado nos dois registros, para o dono saber de onde saiu a venda.
+  const semCadastro = !found;
 
   let data = null;
   let recordId = null;
@@ -1358,6 +1429,14 @@ async function handleOrcamentoPost(request, env) {
       return json({ ok: true, status: data.status, vendaId: data.vendaId || null, vendaNumero: data.vendaNumero || '', message: 'Orçamento já processado.' });
     }
   } else {
+    // ── CAMINHO "SEM CADASTRO" (link antes de o orçamento chegar na nuvem) ────
+    // v5.26.8 — como é público e não há como provar quem mandou, tem TETO por dia.
+    let usadosHoje = 0;
+    try { usadosHoje = await contarSemCadastro(env); } catch (eConta) { usadosHoje = 0; }
+    if (usadosHoje > CAP_PUBLICO_SEM_CADASTRO_DIA) {
+      throw new ApiError(429, 'PUBLIC_FALLBACK_LIMIT',
+        'Não consegui registrar a decisão agora. Avise a empresa pelo WhatsApp que o orçamento foi respondido.');
+    }
     // Decodifica payload de fallback se fornecido
     const payloadD = parsePayloadD(body.d) || {};
     recordId = 'orc_' + (body.numero ? String(body.numero).replace(/\D/g, '') : Date.now().toString(36));
@@ -1377,10 +1456,15 @@ async function handleOrcamentoPost(request, env) {
       lojaWhatsapp: body.whatsapp || payloadD.w || '',
       os: payloadD.os || null,
       status: 'aberto',
+      semCadastroNoSistema: true,
       criadoEm: new Date().toISOString()
     };
     baseVersion = 0;
   }
+
+  // v5.26.8 — ESTE CAMINHO CONTA NA COTA DO DIA (antes gravava sem contar: o
+  // medidor e o freio preventivo só viam o envio dos PCs).
+  somarUso(env, acao === 'aprovar' ? 3 : 1, 0, ctx);   // orçamento (+ venda + aviso)
 
   if (acao === 'recusar') {
     if (data.status === 'aprovado') {
@@ -1416,6 +1500,7 @@ async function handleOrcamentoPost(request, env) {
     status: 'aguardar',
     origemOrcamentoId: data.id || recordId,
     os: data.os || null,
+    semCadastroNoSistema: !!semCadastro,
     criadoPor: data.criadoPor || 'cliente',
     criadoPorNome: data.criadoPorNome || 'Cliente',
     criadoEm: new Date().toISOString()
@@ -1480,7 +1565,7 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) return handleHealth(env);
   if (request.method === 'GET' && url.pathname === '/pix') return handlePix(url);
   if (request.method === 'GET' && url.pathname === '/orcamento') return handleOrcamentoGet(url, env);
-  if (request.method === 'POST' && url.pathname === '/orcamento') return handleOrcamentoPost(request, env);
+  if (request.method === 'POST' && url.pathname === '/orcamento') return handleOrcamentoPost(request, env, ctx);
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
   if (request.method === 'POST' && url.pathname === '/v1/setup') return handleSetup(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/recover') return handleRecovery(request, env);

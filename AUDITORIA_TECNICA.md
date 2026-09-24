@@ -1501,3 +1501,99 @@ indisponível.**
   ao recarregamento (46 páginas, nenhuma repetida).
 - Suíte **212/0/4/0** (4 pulam sem `jsdom`); bundle `4b139844c79b1c6b`;
   `?v=7.0.10-c1d6e30ace7a`; `sync_build --check` OK; `mobile/sync-www.js` OK.
+
+## 25. RODADA 16 — O CAMINHO PÚBLICO DO ORÇAMENTO (motor da nuvem 5.26.8) (24/09/2026)
+
+**Pedido:** *"procure por mais problemas, se achar, verifique se aquil realmente é um problema"*.
+**Método (novo, mais forte):** o motor da nuvem é importado como módulo e chamado com
+`fetch(Request, env, ctx)` real, sobre **SQLite em memória** com as **migrations reais** do
+projeto; o D1 é um adaptador de mentira com a mesma API (`prepare/bind/first/all/run/batch/exec`)
+e as chaves estrangeiras ligadas (como o próprio projeto liga na 0001). O D1 é SQLite — então o
+banco de prova tem as mesmas regras (inclusive `OR REPLACE`). Teste permanente:
+`test_worker_publico.js`; script temporário de revogação: `_tmp_prova_revogacao.js` (apagado).
+
+### 25.1 ALTO (Segurança) — criação "sem cadastro" sem teto por dia
+- Local: `handleOrcamentoPost`, ramo `else` de `findOrcamentoByToken` (quando o token não existe na nuvem).
+- Causa: caminho público por desenho (o cliente responde antes de o orçamento chegar na nuvem) e **sem
+  limite**: monta venda/orçamento a partir de `parsePayloadD(body.d)`.
+- Efeito: link forjado → vendas/avisos ilimitados na base do dono + cota do dia queimada.
+- Correção: `CAP_PUBLICO_SEM_CADASTRO_DIA = 40` + `contarSemCadastro()` (`system_meta`,
+  chave `orc_pub_sem_cadastro_<dia>`), `429 PUBLIC_FALLBACK_LIMIT` **antes de qualquer gravação**;
+  marca `semCadastroNoSistema:true` na venda e no orçamento.
+- Evidência: `test_worker_publico.js` cenário 5; contra o motor antigo, o teste reprova.
+
+### 25.2 ALTO — freio preventivo e medidor não cobriam a rota pública
+- Local: freio em `handlePush` (`LIMITE_ESCRITA_DIA = 95000`, v5.24.5) e `somarUso` só ali.
+- Causa: a rota pública foi escrita antes do freio existir e nunca foi revisitada.
+- Efeito: o **único** caminho anônimo do sistema era o único sem freio e sem contagem — o
+  invariante "nunca deixar estourar" tinha um furo público.
+- Correção: `freioDeCota(env, estimativa)` extraída e usada pelos dois caminhos (texto
+  `daily row write limit próximo` preservado — o app reconhece por ele); `somarUso(env,
+  acao==='aprovar' ? 3 : 1, 0, ctx)` no público; `ensurePublicDevice` + freio **depois** da
+  validação; `handleOrcamentoPost(request, env, ctx)` e a rota passam o `ctx`.
+- Evidência: cenário 4 — medidor do dia = 3 após autorizar; com `uso_diario = 95000`, 429 e
+  nenhuma venda criada.
+
+### 25.3 MÉDIO (Integridade) — `INSERT OR REPLACE` no aparelho público
+- Local: `ensurePublicDevice` (ex-:1271).
+- Causa: no SQLite, `OR REPLACE` = **apagar + criar**; a linha do aparelho era recriada a cada
+  acesso do cliente.
+- Efeito: `revoked_at` e `excluido_em` voltavam a **NULL** (revogação/exclusão feitas no painel
+  não seguravam) e `created_at` virava "agora" (lista de aparelhos mentia).
+- Secundário (mecanismo provado, hoje inalcançável em produção): o conflito pode ser de **outro**
+  índice — `token_hash` é `UNIQUE` — e o `OR REPLACE` apagaria a linha de **outro** aparelho (o
+  banco recusou por chave estrangeira no próprio teste).
+- Correção: `INSERT INTO devices (...) ON CONFLICT(id) DO UPDATE SET last_seen_at = excluded.last_seen_at`.
+- Evidência (antes × depois): `_tmp_prova_revogacao.js` — motor antigo: 555/666 → **NULL**;
+  motor novo: 555/666 preservados e `created_at` intacto.
+
+### 25.4 ALTO (Performance) — busca do token com varredura completa
+- Local: `findOrcamentoByToken` (ex-:1279).
+- Causa: `.all()` de todas as linhas `entity='orcamentos'` + `JSON.parse` por linha, a cada
+  acesso público (abrir o link e responder).
+- Efeito: cresce com o nº de orçamentos (rows read + CPU do Worker). Compromete o teto de CPU
+  do motor — quem falha primeiro é o link do cliente.
+- Correção: `record_id = ?` (índice primário) → `data_json LIKE ? ESCAPE '\'` com curingas
+  `\ % _` escapados e **valor conferido no motor** (falso positivo cai no fallback) → laço
+  antigo só como última tentativa.
+- Evidência: cenário 3 — com 300 orçamentos, nenhuma consulta de lista completa; link antigo
+  por id ainda abre.
+- Melhoria futura (não pendência, exige migração + backfill): coluna `token` indexada.
+
+### 25.5 BAIXO — pedido recusado (400) gravava a linha do aparelho
+- Mesma lição da rodada 2 (`handlePush`): validar antes de gravar. Correção de ordem.
+- Evidência: cenário 1 — "pedido recusado não grava NADA".
+
+### 25.6 MÉDIO — unidade do contador × unidade do freio
+- Local: `somarUso(env, Math.max(1, mutations.length), 0, ctx)` (lotes) contra
+  `freioDeCota(env, mutations.length * 2)` (linhas: registro + evento).
+- Causa: um lado mudou sem o outro.
+- Efeito: no plano grátis (100 mil linhas/dia), o freio só ia disparar em ~190 mil linhas — depois
+  do corte.
+- Correção: `Math.max(1, mutations.length) * 2` (unidade = linhas, igual ao medidor oficial
+  `rowsWritten` da Cloudflare) e checagem nova no `test_sync_quota_guard.js`.
+- Nota: no plano pago (50 M/mês) não há efeito prático hoje; é blindagem para o recuo ao grátis
+  documentado em `usoHoje()`.
+
+### 25.7 Verificado e NÃO é problema (com evidência)
+| Suspeita | Verificação | Veredito |
+|---|---|---|
+| Cliente fica na mão quando a nuvem pausa/recusa | a página do link abre o WhatsApp **sem olhar o status** da resposta | por desenho |
+| Token do orçamento | `tokenNovo()` = 18 bytes `crypto.getRandomValues` (rodada 14) | forte |
+| Responder o mesmo orçamento 2× | "Orçamento já processado." sem criar outra venda | ok |
+| `applyMutation` / `handleDeleted` / `handleRestore` | inalterados nesta rodada; validações e cursores conferidos | ok |
+| Painel do gerente / outros carimbos | versão própria (5.26.3) intacta; só o motor virou 5.26.8 | ok |
+
+### 25.8 Testes, carimbos e o que não rodou
+- Novo: `test_worker_publico.js` (32 ✔) incluído no `test_runner.js`; **antes × depois**:
+  contra o motor antigo o teste **reprova**.
+- Suíte: **213 ✔ / 0 ✘ / 4 não rodaram** (falta `jsdom`). `test_sync_quota_guard.js` +1 checagem.
+- Carimbos re-ancorados: 17 arquivos `test_ajustes_v5xxx/v6xxx` + `test_recuperacao_completa`,
+  `test_recuperar_excluidos`, `test_relatorio_teste_nf` e 3 HTMLs de doc → **5.26.8**.
+  `cloudflare-worker/motor_para_colar.js` regerado (127.699 bytes) + `.sha256`;
+  `package-lock.json` sincronizado (0.4.8 → 0.4.9).
+- **Nada mudou no app** (v7.0.10): `MOTOR_MINIMO` segue 5.26.7; nenhum PC precisa atualizar.
+- Não rodado: `e2e/` (Playwright ausente) e os 4 de `jsdom`.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  quantos orçamentos existem hoje na base (peso real da varredura antiga) e se algum acesso de
+  cliente já falhou por causa dela.

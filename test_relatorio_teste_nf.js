@@ -186,7 +186,7 @@ ok('a seção não pede token, painel nem GitHub',
    html.indexOf('CLOUDFLARE_API_TOKEN') < 0 && html.indexOf('New workflow') < 0 &&
    html.indexOf('sem painel, sem token, sem GitHub') >= 0);
 ok('explica os 4 passos que a janela mostra (listar, migrar, publicar, health)',
-   html.indexOf('Proceed? (y/n)') >= 0 && html.indexOf('wrangler deploy') >= 0 && html.indexOf('"versao":"5.26.7"') >= 0);
+   html.indexOf('Proceed? (y/n)') >= 0 && html.indexOf('wrangler deploy') >= 0 && html.indexOf('"versao":"5.26.8"') >= 0);
 ok('diz que a janela fica aberta e que é para mandar foto',
    /tire uma foto|Foto e me manda|foto dela/i.test(html));
 ok('o arquivo do .cmd existe de verdade no repositório (o passo não é invenção)',

@@ -40,8 +40,11 @@ console.log('== CONTAGEM DO DIA SÓ CONTA LOTE ACEITO (Worker) ==');
 {
   const iValida = worker.indexOf('INVALID_MUTATION_BATCH');
   const iFreio = worker.indexOf('LIMITE_ESCRITA_DIA');
-  const iConta = worker.indexOf("somarUso(env, Math.max(1, mutations.length), 0, ctx)");
+  const iConta = worker.indexOf("somarUso(env, Math.max(1, mutations.length) * 2, 0, ctx)");
   ok('a contagem do dia existe no handlePush', iConta >= 0);
+  ok('a contagem fala a MESMA unidade do freio (linhas: 2 por alteração)',
+    /somarUso\(env, Math\.max\(1, mutations\.length\) \* 2, 0, ctx\)/.test(worker) &&
+    /freioDeCota\(env, mutations\.length \* 2\)/.test(worker));
   ok('a contagem vem DEPOIS da validação do lote', iValida >= 0 && iConta > iValida);
   ok('a contagem vem DEPOIS do freio preventivo', iFreio >= 0 && iConta > iFreio);
   ok('a contagem continua ANTES das gravações', iConta < worker.indexOf('const results = []', iConta));
