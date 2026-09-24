@@ -30,6 +30,38 @@ peça, menos lugar para dar problema). Se eu te prometesse "zero defeito", estar
 
 ---
 
+## 1.1) AS SUAS DECISÕES (24/09/2026) — e o que muda no plano
+
+**Sua pergunta, direta: *"daria certo refazer do zero mas seguindo a mesma temática que
+foi feita a anterior?"* — Sim, dá certo, e é assim que eu vou fazer.** "Temática" aqui é a
+cara que você conhece: **os mesmos nomes de menu, as mesmas telas, o mesmo padrão visual,
+os mesmos fluxos** (o link do orçamento, o WhatsApp, o modal do sistema). O que muda é o
+**miolo** — e é exatamente aí que mora a causa dos problemas de hoje (item 3). Você **não**
+vai reaprender a usar o sistema.
+
+| Sua resposta | O que fica decidido | Onde eu registro |
+|---|---|---|
+| "refazer do zero, mesma temática" | reconstrução do zero, **mantendo telas, nomes e fluxos** | `REDESENHO_BLUEPRINT.md` |
+| "uso tudo, incluindo o fiscal" | **fiscal entra já** — começando em **homologação** (nota de teste, sem valor fiscal). Produção só com a palavra `PRODUCAO` e a sua ação: isso é regra fiscal, não escolha minha (item 22 das `REGRAS_PERMANENTES.md`) | blueprint, item 3 |
+| "prefiro de uma vez, mas se for bom fazer por fase pra eu explicar ela, eu falo pra você" | **construção por partes, virada da chave UMA vez só** (o de hoje fica no ar até lá). Quando um pedaço ficar pronto eu te mostro e **você decide se quer testar** — você não é obrigado a testar pedaço nenhum | fases, item 7 |
+| "dá um backup de emergência e depois zera, **MAS ANTES eu preciso ter esse backup**" | **o backup vem primeiro e fica na sua mão.** Enquanto você não tiver o arquivo guardado, **nada é zerado** — e quem faz o arquivo é você, pelos botões que já existem no sistema (eu não tenho acesso ao banco de produção) | item 9 |
+
+**Resposta ao seu motivo** ("assim você tem mais controle e mais noção de onde vem o
+problema"): é exatamente isso que eu ganho com o sistema menor — **um mapa** (o
+`REDESENHO_BLUEPRINT.md`, item por item) e **uma regra escrita uma vez só**. Hoje a mesma
+regra (ex.: exclusão) está decidida em **82 pontos diferentes**; no novo, em um.
+
+### O que eu NÃO vou fazer sem você mandar (nem agora, nem depois)
+
+- **não zero nada** — nem aqui, nem na nuvem. O "zerar" só acontece na virada da chave,
+  depois do backup estar **na sua mão**, e com você acompanhando;
+- **não apago a base atual** — ela fica arquivada (nota fiscal precisa ficar guardável);
+- **não publico nada em produção** — a nuvem quem publica é você;
+- **não mexo no que está funcionando** no sistema de hoje enquanto o novo não estiver
+  provado: as correções das rodadas 12 a 16 continuam valendo.
+
+---
+
 ## 2) O que o sistema é hoje (medido agora, não é achismo)
 
 | Medida | Número |
@@ -125,15 +157,21 @@ aqui; agora o ganho está em **menos peças**.
 
 ## 7) Fases (cada uma entrega algo que funciona — nenhuma deixa a loja parada)
 
+**Como fica com as suas decisões:** eu **construo por partes** (para cada parte ter teste e
+poder ser conferida), mas a **virada da chave é uma só, no fim** — como você preferiu. O
+sistema de hoje fica publicado e funcionando o tempo todo; a troca acontece num dia que
+**você** escolher. Em cada parte pronta eu te aviso: se você quiser olhar naquele momento,
+olha; se preferir ver tudo junto no fim, vê tudo junto.
+
 | Fase | O que entrego | Como você confere |
 |---|---|---|
-| **0 · Agora** | suas 4 respostas + o mapa do que você usa | lendo este documento e respondendo |
-| **1** | núcleo novo no PC + as primeiras telas (clientes/produtos), funcionando **ao lado** do sistema de hoje | abre os dois, compara |
-| **2** | nuvem nova (mesma conta) + backup funcionando com o núcleo | vê sincronizar entre 2 PCs |
-| **3** | telas do dia a dia (vendas/OS/orçamento/financeiro) | usa um dia inteiro |
+| **0 · Agora** | plano + mapa do sistema (`REDESENHO_BLUEPRINT.md`) + **backup de emergência na sua mão** | lê e guarda o arquivo |
+| **1** | núcleo novo no PC + as primeiras telas (clientes/produtos), funcionando **ao lado** do de hoje | abre os dois, compara (se quiser) |
+| **2** | nuvem nova (mesma conta dele) + backup e sincronização pelo núcleo | vê sincronizar entre 2 PCs |
+| **3** | telas do dia (vendas/OS/orçamento/financeiro) | usa (se quiser) |
 | **4** | o resto (contratos + parque + leituras, chamados, painel do gerente) | usa e me diz o que faltou |
-| **5** | fiscal (por último, com calma) | homologação antes de valer |
-| **6** | **a virada da chave** — só com você mandando; o antigo fica de consulta até você pedir para arquivar | você decide o dia |
+| **5** | fiscal (NF-e/NFC-e) em homologação | homologação antes de valer |
+| **6** | **a virada da chave** — uma vez só, com você mandando; o antigo fica de consulta até você pedir para arquivar | você decide o dia |
 
 ---
 
@@ -146,10 +184,11 @@ aqui; agora o ganho está em **menos peças**.
 | defeito novo passar | cada pedaço só entra com teste; roda a suíte antes de trocar; teste que reproduz o defeito antes de consertar |
 | você perder tempo testando coisa torta | te entrego o "o que testar" em 3 linhas, não uma lista de links |
 | mexer sem você saber | tudo na branch desta sessão, com registro no `RELATORIO_SESSAO.md` |
+| zerar antes de ter o backup | **regra dura:** nada é zerado antes de o arquivo estar na mão dele (a fase 0 só termina com isso confirmado) |
 
 ---
 
-## 9) O que eu preciso de você (é só resposta — **nenhuma senha, nenhum token**)
+## 9) O que eu preciso de você (respostas e o backup — **nenhuma senha, nenhum token**)
 
 1. **As 4 respostas da tela de perguntas** (escopo, o que você usa, forma da troca, dados).
    Sem elas eu estaria adivinhando — e adivinhar é o que não quero fazer.
@@ -158,5 +197,22 @@ aqui; agora o ganho está em **menos peças**.
 3. **Na hora da virada (fase 6):** publicar o motor da nuvem, do jeito que você já sabe
    (`atualizar_motor_nuvem.cmd`, ou colar no painel, ou o botão no GitHub).
 
+## 10) O BACKUP DE EMERGÊNCIA — passo a passo (isto é com você, hoje)
+
+Eu **não tenho acesso ao banco de produção** (nem quero: seu pedido e as regras da casa
+dizem que token/senha não passam por chat). Então quem faz o arquivo é você — pelos botões
+que **já existem** no sistema de hoje. São 4 passos, e o que sai é a **base inteira**
+(registros + aparelhos, **sem** nenhuma senha ou token dentro):
+
+1. Entre no sistema com um **usuário de cargo Admin** (o menu de backup é do Admin).
+2. Abra o menu **Nuvem** → card **"Backups na nuvem"**.
+3. Aperte **📸 Backup manual** — ele guarda na nuvem **e baixa o arquivo no PC**.
+4. Aperte **📥 Baixar todos os backups** — desce um **`.zip`** com tudo.
+
+**Depois:** guarde esses dois arquivos **fora do PC** (pen drive, e-mail para você mesmo, ou
+Drive). Só quando você me disser "o backup está comigo" é que a gente pode pensar em zerar —
+e o zerar acontece **na virada da chave**, com você acompanhando, nunca antes.
+
 **Não preciso de:** senha, token, certificado, CSC, acesso ao banco, nem que você instale
-nada agora.
+nada agora. Se algum botão do item 3/4 não existir na tela que você abrir, me diga o que
+apareceu — eu confiro no código e te digo o caminho certo.

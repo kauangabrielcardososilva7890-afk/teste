@@ -5637,3 +5637,47 @@ acesso a nada.
 **Branch:** `arena/01a0cf4a-teste` — motor da nuvem já publicado **5.26.8** (`77cb8ec`,
 rodada 16); app segue **v7.0.10**; este documento entra como commit próprio (sem bump de
 versão: documentação não muda o programa).
+
+### 24/09/2026 (cont.) — RODADA 17-B · AS DECISÕES DELE E O BACKUP DE EMERGÊNCIA (v0.0 — ainda sem código novo)
+
+**Respostas dele (literais, resumidas):**
+1. *"Daria certo refazer do zero mas seguindo a mesma temática que foi feita esse anterior?
+   Tá dando muito problema, e não vejo outra alternativa a não ser fazer isso, pois aí você
+   vai ter mais controle e mais noção de onde vem esse problema."* → **reconstrução do
+   zero, mantendo telas/nomes/fluxos** (a "temática"); o miolo é o que muda.
+2. O que usa de verdade: **opção "d" — tudo, incluindo o fiscal**.
+3. Troca: *"prefiro de uma vez, mas se uma parte for bom fazer por fase pra eu explicar ela,
+   eu falo pra você"* → **construção por partes, virada da chave uma vez só**; ele testa
+   pedaço quando quiser.
+4. Dados: *"na vdd zera não, dá um backup de emergência e depois zera, MAS ANTES eu preciso
+   ter esse backup"* → **backup primeiro, na mão dele; nada é zerado antes disso.**
+
+**Documentos atualizados:** `PLANO_REDESENHO.md` ganhou a seção **1.1 (as decisões dele e o
+que muda no plano)**, as fases reescritas (construção por partes + virada única), uma trava
+nova nos riscos ("zerar antes de ter o backup") e o item **10 — o passo a passo do backup de
+emergência** (4 passos com os botões que já existem hoje: entrar como **Admin**, menu
+**Nuvem** → card **"Backups na nuvem"**, **📸 Backup manual** [nuvem + arquivo no PC] e
+**📥 Baixar todos os backups (`.zip`)**). **Novo documento:** `REDESENHO_BLUEPRINT.md` (v0.1)
+— o mapa: 18 listas com onde vivem, as 16 telas + 10 modais, os 10 fluxos que não podem
+mudar, o que ainda vou confirmar com ele (as 12 "automações"/grades do sistema antigo,
+navegador embutido, PIX, módulos dinâmicos) e as regras que o novo já nasce cumprindo.
+
+**Conferido no código (para o backup não ser chute):** `gerarBackup()` (worker:2258) guarda a
+**base inteira** — registros paginados (até 500×1.000) + aparelhos **sem `token_hash`**; o
+botão é `POST /v1/backup/agora`, exige **usuário Admin** (`requireUsuarioAdmin`), e o card
+oferece também `📥 Baixar todos os backups (.zip)` e `📥 Restaurar a partir de um arquivo de
+backup`. O painel é `ajustes_v52296_backups_nuvem_patch.js`; o backup diário roda sozinho às
+**18:30** (agendado na própria nuvem, sem PC ligado).
+
+**Estado do git nesta rodada:** o ambiente **recriou o checkout** (`.git` re-clonado em
+`26649cc`, o commit-base da sessão) enquanto os arquivos do trabalho continuavam no
+workspace. Reapontado com `git fetch origin arena/01a0cf4a-teste` + `git reset --mixed
+FETCH_HEAD` → HEAD de volta ao commit real **`77cb8ec`** (motor 5.26.8), sem perder nada
+(conferido: `git status` só com os arquivos desta rodada). Nada foi apagado nem revertido.
+
+**Nada de código mudou nesta rodada** (documentação + mapa). App segue **v7.0.10**; motor da
+nuvem publicado **5.26.8**.
+
+**Próxima rodada (fase 1):** começar o núcleo novo (listas, regra única, lápides) com as
+primeiras telas provadas, rodando **ao lado** do sistema de hoje. Nada disso toca o que
+está no ar.
