@@ -5603,3 +5603,37 @@ não muda o dia a dia — é blindagem para o caso de voltar ao grátis.
    Cloudflare **ou** o botão "Publicar motor da nuvem" na aba Actions.
 2. Conferir em `.../health` que aparece **5.26.8**.
 3. **Nos PCs: nada a fazer** (o programa segue v7.0.10, igual à rodada anterior).
+
+## 24/09/2026 (cont.) — RODADA 17 · PEDIDO DE "REDESENHAR TUDO": PLANO E PERGUNTAS (sem mudança de código)
+
+**Pedido literal:** *"tá realmente dando muito problema... eu dou a permissão de você
+redesenhar TUDO novamente, pode fazer tudo denovo, os dados que contenho não são
+necessários, e pode me falar o que precisa, pode redesenhar TUDO, porém aí tem que fazer
+funcionar sem NENHUM problema, qualquer coisa pode pedir pra mim o que precisar"*.
+
+**O que foi feito nesta rodada:** só **medir, diagnosticar e propor** — **nenhuma linha de
+código alterada, nenhuma versão mexida, nada apagado**. O registro da rodada está no
+[`PLANO_REDESENHO.md`](PLANO_REDESENHO.md) (documento de decisão): o que o sistema é hoje
+(medido), por que os problemas nascem (causa, com prova nas rodadas 12/15/16), o que
+reescrever tudo resolve **e o que não resolve**, os **3 caminhos** com recomendação (C:
+sistema novo e menor, por partes, com o de hoje no ar), a arquitetura alvo em língua
+simples, as fases 0-6, riscos × travas e o que eu preciso dele.
+
+**Medidas levantadas agora** (para o plano não ser conversa): 702 arquivos versionados ·
+482 `.js` na raiz · **219 `*_patch.js`** (136 `ajustes_*`) · 26 telas no `app.js` · 79.367
+linhas na raiz sem o pacote · `app.bundle.js` com 60.232 linhas · motor de sincronização do
+PC 2.067 linhas · motor da nuvem 2.466 linhas · 13 arquivos de fiscal.
+
+**Honestidade registrada no plano:** "zero problema" não é algo que se possa prometer em
+softuário desse tamanho; o que dá para garantir é (1) nada do que ele usa hoje para de
+funcionar, (2) cada pedaço novo só entra provado por teste e (3) o sistema novo é menor.
+Isso foi dito com essas palavras, de propósito.
+
+**Estado:** aguardando as **4 respostas** dele (escopo · o que usa no dia · forma da troca ·
+dados). **Nada será executado antes das respostas** — regra 4 do `REGRAS_PERMANENTES.md`
+(ambiguidade real → perguntar, não inventar interpretação). Não foi pedido senha, token nem
+acesso a nada.
+
+**Branch:** `arena/01a0cf4a-teste` — motor da nuvem já publicado **5.26.8** (`77cb8ec`,
+rodada 16); app segue **v7.0.10**; este documento entra como commit próprio (sem bump de
+versão: documentação não muda o programa).
