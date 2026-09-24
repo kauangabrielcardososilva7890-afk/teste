@@ -2272,3 +2272,105 @@ cá. Nenhum arquivo do APK foi editado à mão.
   **não** responde se o coração aceita o dado. Quem responde isso é a importação de verdade, com
   `camposForaDoPadrao` / `recusadosImpossiveis`. Para o dia da virada: importar a base numa cópia e conferir
   que `recusadosImpossiveis` = **0**.
+
+---
+
+## 34. RODADA 20 — A FILA DA VENDA INTEIRA: IMPRESSÃO (MEIA FOLHA / FOLHA INTEIRA COM OS), PIX COM LINK PÚBLICO, COMPROVANTE MANUAL, CARNÊ, ESTORNO E A ABA OS DENTRO DA VENDA (24/09/2026)
+
+**Pedido dele (24/09):** *"cansei de um só por vez, faz tudo"* — executar a fila inteira numa rodada.
+Esta seção cobre **as cinco peças juntas**: `novo/impressao.js` (notinha e carnê), `novo/pix.js` (QR,
+copia e cola, link público, comprovante manual, cartão de configuração), a **aba OS** dentro da venda,
+o **estorno** e a **tela de configuração da chave Pix**.
+
+Nada disso foi inventado: cada regra é cópia do que roda hoje, e o teste **compara as duas pontas**.
+
+### 34.1 O que a fila entregou (arquivo por arquivo)
+
+| Arquivo | O que passou a existir |
+|---|---|
+| `novo/impressao.js` (novo) | notinha em **meia folha A4** (`138mm`, com a linha de ✂) e **folha inteira** (`278mm`) quando a venda tem OS, com o bloco da Ordem de Serviço, as **duas assinaturas** (cliente/técnico) ou a assinatura única da venda comum; **carnê** com um canhoto por parcela; `paraArquivo` sai **sem** auto-impressão (é o que o Word recebe hoje) |
+| `novo/pix.js` (novo) | `PIX_PURE` fiel (CRC16 incluso), payload da venda com **valor exato** e txid `VD<numero>`, QR + copia e cola, **link público** (`PIX_PUBLICO` = worker `/pix`), **comprovante manual** (Pix não dá baixa sozinho), bloco do Pix na notinha e **cartão de configuração** da chave |
+| `novo/venda.js` | a **aba OS** (15 campos, os mesmos de hoje), o número da OS pela série própria, o **espelho nos Chamados** (`db.os`), o serviço da OS entrando no **total**, a **busca por número de série**, o painel do **Pix no recebimento**, os botões **🖨 Notinha / 🖨 Carnê**, o **↩ Estornar** com janela do próprio sistema e os campos **data de saída / prazo de entrega / destino / observações** |
+| `novo/financeiro.js` | título **estornado** com tarja própria (`fin-pill-estornado`) e **fora da soma de "em aberto"** |
+| `novo/index.html` | os dois scripts novos na ordem certa (depois de `selecao.js`, antes de `venda.js`), a tela **Configurações → Pix (chave e QR)**, o CSS que faltava (`.nfx-corpo`, `.vnd-os-*`, `.px-*`, `.fin-pill-estornado`) e o menu da venda sem o *"falta impressão e PIX"* |
+| `test_pix_novo.js` e `test_impressao.js` (novos) | 47 ✔ e 59 ✔ — os diferenciais desta rodada |
+
+### 34.2 Achado 1 — gravidade MÉDIA · Bug (o próprio código novo) — corrigido
+
+`gravarConfig` (a gravação da chave Pix) **não registrava a lista `config`** no núcleo: quem chamasse
+"só gravar" levava `lista desconhecida: config`. Quem salvava primeiro **pelo cartão** funcionava (porque
+a leitura registrava antes) — o defeito só aparecia fora da ordem da tela. **Foi o próprio teste que pegou**
+(o bloco 7 do `test_pix_novo.js` grava **antes** de ler, de propósito). Correção: a lista se registra
+dentro do `gravarConfig` também. **Padrão procurado no resto do repo:** `financeiro.js` e `venda.js`
+registram no `criar…` e só salvam por dentro da tela (nenhum outro ponto com o mesmo defeito).
+
+### 34.3 Achado 2 — gravidade ALTA · Bug (paridade, o papel sairia sem data) — corrigido
+
+A venda do núcleo novo era gravada **sem `data` e sem `atendenteNome`** (o `vosGravarVenda` de hoje grava
+os dois, e a notinha imprime "Nº … / data / Atendente"). Sem isso, a notinha sairia com data **01/01/1970**
+no rodapé de auditoria — foi o teste da busca por série que mostrou o **24/09/2026** certo depois da
+correção. Junto entraram os quatro campos que faltavam na tela (**data de saída, prazo de entrega,
+destino, observações**) e que o papel de hoje imprime. **Causa raiz:** a tela nova nasceu só com o que o
+teste da venda cobria; o papel é que precisava deles.
+
+### 34.4 Achado 3 — gravidade MÉDIA · Bug (divergência silenciosa de regra) — corrigido
+
+A cópia de `vosOsTemAlgumDado` que eu tinha escrito **não era fiel** em dois pontos: incluía o **desconto
+da OS** como "tem dado" (hoje **não** conta: só o desconto não faz a OS existir) e tratava `contador: 0`
+(número) como preenchido (hoje o `0||''` de hoje trata como vazio). Duas diferenças pequenas que mudariam
+o papel em casos de borda. Agora as duas cópias (`novo/venda.js` e `novo/impressao.js`) são **linha por
+linha** a função de hoje, e o teste compara **12 casos** contra a função viva.
+
+### 34.5 O que o teste pegou de errado em mim (registrado, sem esconder)
+
+1. **Nome de arquivo colidindo:** eu escrevi o teste novo do Pix como `test_pix.js` — que **já existia** e é
+   o teste do **vetor oficial do Banco Central** contra o `PIX_PURE` de hoje. O arquivo foi **restaurado
+   do commit** (`git show HEAD:test_pix.js`) e o teste novo passou a se chamar **`test_pix_novo.js`**. A
+   lição entrou no cabeçalho dos dois arquivos.
+2. **Botão morto depois de redesenhar:** o `montarConfig` do cartão do Pix ligava os botões **uma vez**;
+   ao sair e voltar para a tela, o `desenhar()` trocava o HTML e os botões ficavam **sem eventos**. O teste
+   da página pegou. Agora desenhar e religar andam juntos.
+3. **Título não pode sumir no estorno:** a marcação (`estornado`, com tarja) foi mantida e o valor ficou
+   **fora** da soma de aberto — exatamente como o financeiro de hoje faz.
+
+### 34.6 O que ficou de fora (registrado, sem promessa)
+
+- **Escolher uma OS já existente ao lançar a venda** (`f.osSelecionada` no `vosGravarVenda` de hoje):
+  a venda nova lança OS **nova** (ou acha o equipamento pela busca de série), mas não "puxa" um chamado
+  aberto para dentro da venda. É a próxima peça da aba OS.
+- **Tela de Chamados** (a lista `db.os`): o espelho já nasce gravado (o chamado existe, com número,
+  status e vínculo com a venda), mas a **tela** de Chamados do núcleo novo ainda não foi migrada
+  (o menu já a mostra como *fase 3*).
+- **Word da notinha** (`vosExportarNotinhaWord`): o `paraArquivo` já existe no gerador (é o mesmo caminho),
+  mas o botão "Word" da tela nova não entrou nesta rodada.
+- **Permissão de estornar** (`permissoes_estorno_venda_patch.js` — `wrapGate('estornarVenda')` e o
+  campo "Estornar registros"): no sistema de hoje o botão é escondido de quem não tem a permissão. Na
+  página nova **ainda não existe controle de usuário/permissão** (é a tela "Usuários e permissões",
+  fase 4) — então o botão aparece para quem usa a página. Registrado como **pendência de paridade**, não
+  como defeito novo.
+- **Recibo v5.22.17** continua fora do escopo (é o mesmo de sempre).
+
+### 34.7 Provas da rodada
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_pix_novo.js` (novo) | **47 ✔** | o copia e cola é **idêntico** ao `PIX_PURE` de hoje em 6 casos (CRC16 em 7, limpeza em 5, tipo de chave em 8, QR em 4), o link público igual, o comprovante manual igual **campo por campo**, e o cartão de configuração |
+| `test_impressao.js` (novo) | **59 ✔** | "OS completa" e "tem algum dado" iguais às funções vivas em 10 e 12 casos, meia folha × folha inteira, bloco da OS, duas assinaturas, carnê (3 canhotos/3 cortes), Pix no papel com o aviso de hoje, `paraArquivo` sem auto-print, **XSS**: nome com `<script>` não vira elemento (aberto no jsdom) e janela bloqueada devolve `false` |
+| `test_venda.js` | **150 ✔** (era 102) | o estorno roda **lado a lado** com o `estornarUmaVenda` de hoje em 5 casos (à vista, a prazo, Pix, misto, zerada), a aba OS grava/numera/espelha, venda só de serviço, o Pix no recebimento com o título **aberto**, os botões de impressão e o estornar com a janela do sistema |
+| `test_redesenho_pagina.js` | **73 ✔** (era 68) | a tela do Pix na página: tipo detectado ao digitar, salvar grava no núcleo, o aviso aparece no rodapé (sem janela nativa), a chave continua lá depois de sair e voltar, e o "Testar QR" funciona |
+| suíte inteira (`test_runner.js`) | **227 passaram, 0 falharam, 0 não rodaram** (eram 225 arquivos) | nada regrediu; os dois arquivos novos entraram na lista |
+| build | `Bundle OK: 228 scripts, sha256 4228e4635a65b523` · `Sync OK: v7.0.11 \| 228 no bundle \| 0 soltos` | o bundle **não** mudou: `novo/pix.js` e `novo/impressao.js` são usados só pela **página nova** (o app de hoje não os carrega), então não entraram no manifesto |
+
+A versão continua **7.0.11** (não houve mudança de versão nesta rodada).
+
+### 34.8 Como ele confere no navegador
+
+1. **Configurações → Pix (chave e QR):** digitar a chave (o tipo aparece na hora), salvar e clicar em
+   **Testar QR** (é um QR de R$ 1,00, de teste — nada é gravado nem cobrado).
+2. **Nova venda / Notinha:** escolher cliente e produto, abrir a **aba OS** (o aviso verde diz quando a OS
+   está completa), **Salvar** e clicar em **🖨 Notinha** — sai meia folha; com a OS completa, sai **folha
+   inteira** com as duas assinaturas.
+3. **Faturar → Pix:** o QR aparece **na própria janela** com o valor exato e o aviso do comprovante; o
+   título fica **ABERTO** no financeiro até alguém conferir.
+4. **↩ Estornar** (na venda faturada): a janela avisa que o estoque não se mexe e que o número não muda;
+   confirmando, os títulos ficam com tarja **estornado** no financeiro e a venda volta a ser editável.

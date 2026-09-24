@@ -6062,3 +6062,95 @@ bundle foi regenerado junto (o coração novo roda dentro do conferente do paine
 **Para ele testar:** na página nova, **Cadastros → Clientes**: cadastrar dois e apagar o último — o
 próximo cadastro pega um código **maior** (o apagado não volta). E no **Financeiro**, lançar um título a
 receber novo: a janela mostra as datas antes de salvar e o título sai com número de série próprio.
+
+---
+
+## Rodada 20 — 24/09/2026 — A FILA INTEIRA DA VENDA (impressão, Pix, comprovante, carnê, estorno e a aba OS)
+
+**O pedido:** *"cansei de um só por vez, faz tudo"*. A fila era: impressão da notinha (meia folha e folha
+inteira com OS), Pix com link público, comprovante manual, carnê, estorno e a aba OS dentro da venda.
+Tudo isso entrou **junto**, nesta rodada.
+
+### O que já funciona na página nova, hoje
+
+**Notinha e carnê.** A notinha sai em **meia folha A4** (com a linha de ✂ para picar) e vira **folha
+inteira** quando a venda tem OS — com o bloco da Ordem de Serviço, o mesmo do papel que a impressora
+imprime hoje, e as **duas assinaturas** (cliente e técnico). Venda comum leva a assinatura única com o
+"Recebi em ___/___/____". O **carnê** sai com um canhoto por parcela, cada um com vencimento, valor e o
+espaço da assinatura de quem recebeu. Os dois são os **mesmos papéis de hoje** — as regras foram copiadas
+do `vendas_os_patch.js` e o teste **compara os dois lados**.
+
+**A aba OS dentro da venda.** É onde ele digita a Ordem de Serviço: nº de série, modelo, patrimônio,
+contador, tipo, técnico, garantia, situação, defeito, serviços executados e peças. O aviso na tela diz, a
+cada tecla, se a OS está completa (sai folha inteira) ou o que ainda falta. O **serviço da OS entra no
+total** na hora. O botão **🔎 Buscar série** procura o equipamento no que já passou pela loja e preenche o
+que estiver em branco. A OS nasce numerada pela série dela e **aparece nos Chamados** (o espelho que o
+sistema de hoje mantém).
+
+**Pix com link público.** O código que o coração novo gera é **igual byte a byte** ao de hoje — inclusive
+o CRC16 — e isso não é promessa: o teste roda os dois lado a lado em 6 casos. O QR aparece **dentro da
+janela de recebimento**, com o valor exato da venda e o **copia e cola**. No papel entra o bloco do Pix com
+o **link da página de pagamento** (o mesmo endereço da nuvem que ele já usa hoje).
+
+**Comprovante manual.** Em Pix o título **não nasce pago**: nasce **aberto**, com o aviso escrito (letra
+por letra, o mesmo texto de hoje) para conferir o comprovante antes de dar baixa. A regra foi comparada
+**campo por campo** com o `reabrirTituloPix` que roda hoje.
+
+**Configurações → Pix (chave e QR).** O cartão onde ele cadastra a chave (mesmos campos e limites de hoje,
+com o **tipo detectado** ao digitar) e um **Testar QR** que mostra um QR de R$ 1,00 — só para ver, nada é
+gravado nem cobrado. A chave é registro do núcleo: **sobe para a nuvem** como qualquer gravação e volta
+numa restauração.
+
+**Estorno.** Na venda faturada, no lugar do Faturar aparece **↩ Estornar**. A janela do **próprio sistema**
+avisa: os títulos ficam marcados como **estornado** no financeiro (com tarja e **fora da soma de aberto**),
+o **estoque não se mexe** e o número da venda **não volta**. A venda volta a poder ser editada — e o número
+dela continua o mesmo. O estorno novo foi rodado **lado a lado** com o de hoje em 5 casos (à vista, a
+prazo, Pix, misto e venda zerada): mesmo resultado.
+
+### Os achados desta rodada (provados antes de corrigir)
+
+1. **MÉDIO — Bug no código novo:** a gravação da chave Pix não registrava a lista `config` no núcleo, então
+   "gravar primeiro, ler depois" dava `lista desconhecida: config`. **Quem pegou foi o teste**, de
+   propósito. Corrigido, e o padrão foi procurado no resto (`venda.js` e `financeiro.js` registram no
+   `criar…`, só salvam pela tela — sem o mesmo defeito).
+2. **ALTO — paridade:** a venda era gravada **sem data e sem o nome de quem atendeu** — e a notinha imprime
+   os dois. Sem isso o papel sairia com data de 1970 no pé. Junto entraram os quatro campos que faltavam na
+   tela e que o papel de hoje imprime: **data de saída, prazo de entrega, destino e observações**.
+3. **MÉDIO — divergência de regra:** minha cópia do "a OS tem algum dado" tinha duas diferenças do que roda
+   hoje (contava o desconto da OS e tratava contador `0` como preenchido). Agora é cópia fiel, provada em
+   12 casos contra a função viva.
+
+### O que o teste pegou de errado em mim (sem esconder)
+
+- **Eu sobrescrevi um teste que já existia:** escrevi o teste novo do Pix como `test_pix.js` — mas esse
+  nome já era do teste do **vetor oficial do Banco Central** contra o Pix de hoje. O arquivo foi
+  **restaurado do commit** e o teste novo virou **`test_pix_novo.js`**. Ficou registrado no cabeçalho dos
+  dois para não repetir.
+- **Botão morto:** o cartão do Pix ligava os botões uma vez; ao sair e voltar para a tela, o redesenho
+  trocava o HTML e os botões ficavam sem função. Corrigido (desenhar e religar juntos).
+
+### Provas
+
+`test_pix_novo.js` **47 ✔** · `test_impressao.js` **59 ✔** · `test_venda.js` **150 ✔** (era 102) ·
+`test_redesenho_pagina.js` **73 ✔** (era 68) · suíte inteira: **227 passaram, 0 falharam, 0 não rodaram**.
+Build: `Bundle OK (228 scripts, sha256 4228e4635a65b523)` e `Sync OK (v7.0.11, 0 soltos)`. O bundle **não**
+mudou de propósito: `pix.js` e `impressao.js` são usados só pela página nova (o app de hoje não os
+carrega). Versão continua **7.0.11**.
+
+### Ficou para a próxima (registrado)
+
+- **Escolher uma OS já existente** ao lançar a venda (hoje a venda lança OS nova, ou acha o equipamento
+  pela busca de série — mas não puxa um chamado aberto para dentro da venda).
+- **Tela de Chamados** do núcleo novo (o chamado já nasce gravado; falta a tela).
+- **Botão Word** da notinha (o gerador já aceita `paraArquivo`, que é o mesmo caminho de hoje).
+- **Recibo v5.22.17** continua fora do escopo.
+
+### Para ele testar (no navegador, na página nova)
+
+1. **Configurações → Pix (chave e QR)** → digitar a chave e salvar; **Testar QR** mostra o QR de R$ 1,00.
+2. **Nova venda / Notinha** → escolher cliente e produto, abrir a **aba OS** (o aviso verde diz quando está
+   completa), **Salvar** e clicar em **🖨 Notinha**: com a OS completa sai **folha inteira** com as duas
+   assinaturas; sem OS sai **meia folha**.
+3. **Faturar → Pix**: o QR aparece na janela e o título fica **ABERTO** no financeiro (Pix não dá baixa
+   sozinho).
+4. **↩ Estornar** na venda faturada: os títulos ganham a tarja **estornado** e a venda volta a ser editada.

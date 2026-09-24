@@ -126,6 +126,10 @@
   }
   // v5.22.43 (`estaPago`): "pago", "baixado" ou "quitado" contam como pago.
   function estaPago(c) { return /pago|baixad|quitad/i.test(texto(c && c.status)); }
+  // O ESTORNO (v6.0.5): o título da venda estornada não some — fica marcado como
+  // 'estornado' (com tarja própria) e FORA das somas de aberto. A regra de filtro
+  // continua a de hoje (`estaPago`); quem trata a tarja é a TELA.
+  function ehEstornado(c) { return texto(c && c.status).trim().toLowerCase() === 'estornado' || !!(c && c.estornado); }
 
   // Cópia fiel do `filtraLancamentos` do v5.22.43 (aceita { ref } ou o próprio registro).
   function filtraLancamentos(lista, opcoes) {
@@ -220,7 +224,7 @@
     addMeses: addMeses, montarRepeticoes: montarRepeticoes, aplicarBaixaTitulo: aplicarBaixaTitulo,
     codigoNorm: codigoNorm, valorIgual: valorIgual, datasDoLancamento: datasDoLancamento,
     bateHoje: bateHoje, noIntervalo: noIntervalo, estaPago: estaPago,
-    filtraLancamentos: filtraLancamentos, ordenarLancamentos: ordenarLancamentos, ORDENS: ORDENS,
+    filtraLancamentos: filtraLancamentos, ordenarLancamentos: ordenarLancamentos, ORDENS: ORDENS, ehEstornado: ehEstornado,
     novoReceber: novoReceber, novaDespesa: novaDespesa
   };
 
@@ -598,7 +602,8 @@
         '<td>' + escapar(nomeDe(c)) + '</td>' +
         '<td><b class="' + (x.tipo === 'Pagar' ? 'fin-vermelho' : '') + '">' + moeda(c.valor) + '</b></td>' +
         '<td>' + dataBR(c.vencimento) + '</td>' +
-        '<td><span class="fin-pill' + (estaPago(c) ? ' fin-pill-ok' : '') + '">' + (estaPago(c) ? 'pago' : 'aberto') + '</span></td>' +
+        '<td><span class="fin-pill' + (ehEstornado(c) ? ' fin-pill-estornado' : (estaPago(c) ? ' fin-pill-ok' : '')) + '">' +
+          (ehEstornado(c) ? 'estornado' : (estaPago(c) ? 'pago' : 'aberto')) + '</span></td>' +
         '<td>' + (apagado
           ? '<button type="button" class="nfx-mini" data-restaurar="' + escapar(c.id) + '" title="Trazer de volta">♻️ Restaurar</button>'
           : '<button type="button" class="nfx-mini" data-historico="' + escapar(c.id) + '" title="Ver a ficha">👁️</button>') +
@@ -609,14 +614,19 @@
     function desenhar() {
       var todos = filtrados();
       var visiveis = todos.slice(0, estado.limite);
-      var abertos = todos.filter(function (x) { return !estaPago(x.ref); });
+      // estornado NÃO entra na conta de "em aberto": ele está fora do fluxo (é o que
+      // o dono pediu na v6.0.5 — aparece na lista, mas não suja a soma)
+      var abertos = todos.filter(function (x) { return !estaPago(x.ref) && !ehEstornado(x.ref); });
+      var estornados = todos.filter(function (x) { return ehEstornado(x.ref); });
       var somaAberto = abertos.reduce(function (s, x) { return s + n(x.ref.valor, 0); }, 0);
       var datasAbertos = estado.modo === 'abertos';
 
       alvo.innerHTML =
         '<div class="fin-topo">' +
           '<div><span class="vnd-rotulo">Financeiro</span><b>Contas a receber e a pagar</b>' +
-            '<div class="vnd-sub">' + todos.length + ' lançamento(s) no filtro • em aberto: <b>' + moeda(somaAberto) + '</b></div>' +
+            '<div class="vnd-sub">' + todos.length + ' lançamento(s) no filtro • em aberto: <b>' + moeda(somaAberto) + '</b>' +
+              (estornados.length ? (' • <span class="fin-vermelho">estornado: ' + moeda(estornados.reduce(function (s, x) { return s + n(x.ref.valor, 0); }, 0)) + ' (' + estornados.length + ')</span>') : '') +
+            '</div>' +
           '</div>' +
           '<div class="vnd-acoes">' +
             (estado.tipo === 'Pagar'

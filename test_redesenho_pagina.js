@@ -18,14 +18,15 @@ const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost
 const w = dom.window;
 
 // As três peças do núcleo entram na ordem da página; depois roda o script da página.
-['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'financeiro.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
+['nucleo.js', 'ponte.js', 'selecao.js', 'pix.js', 'impressao.js', 'venda.js', 'financeiro.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
 const trecho = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 w.eval(trecho);
 const doc = w.document;
 
 console.log('== PÁGINA DO SISTEMA NOVO (mesmo menu, coração novo) ==');
 ok('a página abre na tela de Clientes', doc.getElementById('titulo-tela').textContent === 'Clientes');
-ok('o menu traz os itens do sistema de hoje (18)', doc.querySelectorAll('[data-tela]').length === 18);
+ok('o menu traz os itens do sistema de hoje + o que já está pronto (19)', doc.querySelectorAll('[data-tela]').length === 19,
+  String(doc.querySelectorAll('[data-tela]').length));
 ['Cadastros', 'Atendimento', 'Locação', 'Fiscal', 'Financeiro', 'Buscador Escola', 'Configurações'].forEach(rot => {
   ok('o menu tem "' + rot + '"', [...doc.querySelectorAll('[data-menu]')].some(b => b.textContent.indexOf(rot) >= 0));
 });
@@ -125,8 +126,9 @@ console.log('-- a VENDA (notinha) funciona dentro da página --');
       .dispatchEvent(new w.Event('click', { bubbles: true }));
   };
   irVendas();
-  ok('o item do menu diz o que já está pronto e o que ainda falta na venda (sem prometer demais)',
-    /falta impressão e PIX/.test([...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas').textContent));
+  ok('o item do menu da venda diz que ela está pronta (com impressão, Pix e OS)',
+    /pronta \(impressão, Pix e OS\)/.test([...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas').textContent),
+    [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas').textContent);
   ok('e o título da tela muda para a venda', doc.getElementById('titulo-tela').textContent === 'Nova venda / Notinha');
   ok('a notinha abre com as duas caixas de seleção e a situação',
     !!doc.querySelector('[data-caixa-cliente] [data-termo]') && !!doc.querySelector('[data-caixa-produto] [data-termo]') && !!doc.querySelector('[data-status]'));
@@ -209,7 +211,7 @@ console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM 
 {
   const dom2 = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost/?exemplo=1', pretendToBeVisual: true });
   const w2 = dom2.window;
-  ['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'financeiro.js', 'telas.js'].forEach(f => w2.eval(fs.readFileSync('novo/' + f, 'utf8')));
+  ['nucleo.js', 'ponte.js', 'selecao.js', 'pix.js', 'impressao.js', 'venda.js', 'financeiro.js', 'telas.js'].forEach(f => w2.eval(fs.readFileSync('novo/' + f, 'utf8')));
   w2.eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
   const d2 = w2.document;
   const criar = (campo, valor) => { const c = d2.querySelector('[data-campo="' + campo + '"]'); c.value = valor; return c; };
@@ -250,6 +252,42 @@ console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM 
   ok('e a tela de contas a receber do exemplo mostra os 2 títulos', d2.querySelectorAll('#tela tbody tr[data-linha-fin]').length === 2,
     'linhas=' + d2.querySelectorAll('#tela tbody tr[data-linha-fin]').length);
   try { w2.close(); } catch (e) {}
+}
+
+console.log('-- a tela do Pix (Configurações) funciona de verdade na página --');
+{
+  const irPix = () => {
+    doc.querySelectorAll('.module').forEach(m => m.classList.remove('aberto'));
+    [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'pix')
+      .dispatchEvent(new w.Event('click', { bubbles: true }));
+  };
+  irPix();
+  const alvo = doc.getElementById('tela');
+  ok('a tela do Pix abre com o cartão da chave', doc.getElementById('titulo-tela').textContent === 'Configurações — Pix' &&
+    !!alvo.querySelector('[data-cfg-pix-chave]'));
+  const chave = alvo.querySelector('[data-cfg-pix-chave]');
+  chave.value = '12345678000199';
+  chave.dispatchEvent(new w.Event('input', { bubbles: true }));
+  ok('digitando a chave, o tipo aparece na hora (sem apertar nada)',
+    /CNPJ/.test(alvo.querySelector('[data-cfg-pix-tipo]').textContent), alvo.querySelector('[data-cfg-pix-tipo]').textContent);
+  alvo.querySelector('[data-cfg-pix-nome]').value = 'DIGICOPY';
+  alvo.querySelector('[data-cfg-pix-cidade]').value = 'MONTES CLAROS';
+  alvo.querySelector('[data-cfg-pix-salvar]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('salvar grava a chave no núcleo (e o aviso aparece no rodapé, sem janela nativa)',
+    /Chave Pix salva/.test(doc.getElementById('st-bd').textContent), doc.getElementById('st-bd').textContent);
+  // sai da tela e volta: a chave tem de estar lá (foi gravada no núcleo, não na tela)
+  [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'clientes')
+    .dispatchEvent(new w.Event('click', { bubbles: true }));
+  irPix();
+  ok('a chave continua no cartão depois de sair e voltar para a tela (ficou gravada)',
+    alvo.querySelector('[data-cfg-pix-chave]').value === '12345678000199' &&
+    alvo.querySelector('[data-cfg-pix-nome]').value === 'DIGICOPY',
+    alvo.querySelector('[data-cfg-pix-chave]').value);
+  alvo.querySelector('[data-cfg-pix-testar]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('o teste do QR mostra a imagem e o código de exemplo (nada é gravado nem cobrado)',
+    alvo.querySelector('[data-cfg-pix-preview]').hidden === false &&
+    /api.qrserver.com/.test(alvo.querySelector('[data-cfg-pix-preview]').innerHTML) &&
+    /Nada foi gravado/.test(alvo.querySelector('[data-cfg-pix-preview]').textContent));
 }
 
 console.log('\nRESULTADO: ' + passou + ' verificações passaram — a página nova tem a cara do sistema e o coração novo.');

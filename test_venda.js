@@ -36,7 +36,10 @@ const codigoVenda = fonteVenda.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filt
 // as três peças carregadas de verdade (núcleo, caixa de seleção e a venda)
 w.eval(fs.readFileSync('novo/nucleo.js', 'utf8'));
 w.eval(fs.readFileSync('novo/selecao.js', 'utf8'));
+w.eval(fs.readFileSync('novo/pix.js', 'utf8'));
+w.eval(fs.readFileSync('novo/impressao.js', 'utf8'));
 w.eval(fonteVenda);
+w.eval(fs.readFileSync('novo/financeiro.js', 'utf8'));
 
 console.log('== VENDA DO NÚCLEO NOVO (fase 3) ==');
 ok('sem alert/confirm/prompt nativos no arquivo novo', !/\balert\s*\(|\bconfirm\s*\(|\bprompt\s*\(/.test(codigoVenda));
@@ -447,6 +450,345 @@ console.log('-- 5) A TELA: cliente, item, estoque, total, salvar e faturar --');
     !!modalFat() === false && !/\b(alert|confirm|prompt)\s*\(/.test(w.DIGICOPY_VENDA.criarVenda.toString()));
   ok('a fila da nuvem registrou tudo (vendas, itens e financeiro)',
     nucleo.mudancas().length >= 6, 'mudanças=' + nucleo.mudancas().length);
+}
+
+
+console.log('-- 6) A OS NA VENDA e o ESTORNO (diferencial contra o que roda hoje) --');
+{
+  const R = w.DIGICOPY_VENDA.regras;
+  // ── a peça pura do estorno de hoje (ajustes_v5240_relatorio_grande_patch.js:30-160) ──
+  // o arquivo termina com `module.exports = _pureV5240`, então dá para rodá-lo aqui mesmo:
+  // as partes de tela dele só rodam quando existe `document` (que não existe no Node).
+  // O arquivo de hoje não é um módulo puro (ele mexe em `window.estornarVenda` no nível de
+  // cima), então ele roda aqui com um window de mentira — e as partes de tela dele só rodam
+  // quando existe `document`, que não é o caso.
+  const dbFake = { vendas: [], contasReceber: [] };
+  const fonteEstorno = fs.readFileSync('ajustes_v5240_relatorio_grande_patch.js', 'utf8');
+  const moduloFake = { exports: {} };
+  const janelaFake = { db: dbFake };
+  new Function('window', 'module', 'db', 'getSession', 'logAction', 'document', 'setTimeout', 'setInterval',
+    fonteEstorno)(janelaFake, moduloFake, dbFake, () => ({ usuarioNome: 'Kauan' }), () => { }, undefined, () => 0, () => 0);
+  const vivo = moduloFake.exports;
+  ok('a regra viva do estorno foi carregada (`V5240_RELATORIO_PURE`)',
+    !!vivo && typeof vivo.estornarUmaVenda === 'function' && typeof vivo.ehFaturada === 'function');
+
+  // 6.1 — quem pode ser estornado (a lista de status é a de hoje)
+  const status = ['', 'aguardar', 'orcamento', 'aprovado', 'faturado', 'FINALIZADA', 'concluido', 'pago', 'estornada', 'cancelada'];
+  const difStatus = status.filter((st) => R.jaFaturada(st) !== vivo.ehFaturada(st));
+  ok('a regra "venda faturada" bate com a de hoje nos ' + status.length + ' status' + (difStatus.length ? ' — DIFERENTE em ' + JSON.stringify(difStatus) : ''), difStatus.length === 0);
+
+  // 6.2 — o estorno lado a lado: a venda e os títulos saem iguais aos de hoje
+  const casos = [
+    { nome: 'à vista (1 título já pago)', status: 'faturado', forma: 'Dinheiro', parcelas: [], crs: [{ id: 't1', status: 'pago', autoBaixa: true, valor: 80 }] },
+    { nome: 'a prazo (3 títulos abertos)', status: 'faturado', forma: 'Prazo', parcelas: [{ n: 1 }], crs: [{ id: 't1', status: 'aberto', valor: 30 }, { id: 't2', status: 'aberto', valor: 30 }, { id: 't3', status: 'aberto', valor: 30 }] },
+    { nome: 'pix (título aberto pelo comprovante manual)', status: 'finalizada', forma: 'Pix', parcelas: [], crs: [{ id: 't1', status: 'aberto', autoBaixa: false, valor: 80 }] },
+    { nome: 'misto (1 pago + 2 abertos)', status: 'pago', forma: 'Conta', parcelas: [], crs: [{ id: 't1', status: 'pago' }, { id: 't2', status: 'aberto' }, { id: 't3', status: 'aberto' }] },
+    { nome: 'venda zerada (título "Sem cobrança" pago)', status: 'concluido', forma: 'Grátis', parcelas: [], crs: [] }
+  ];
+  let iguais = 0, titulosDiferentes = [];
+  casos.forEach((c, i) => {
+    const venda = { id: 'v' + i, numero: String(16000 + i), status: c.status, formaPagamento: c.forma, parcelas: c.parcelas.slice(), total: 90, clienteId: 'c1' };
+    dbFake.vendas = [venda];
+    dbFake.contasReceber = c.crs.map((x) => Object.assign({ vendaId: venda.id, descricao: 'venda', vencimento: '2026-10-01T00:00:00.000Z' }, x));
+    const meu = R.estornoDaVenda(venda, c.crs.map((x) => Object.assign({ vendaId: venda.id }, x)), 'Kauan', new Date());
+    const dele = vivo.estornarUmaVenda(venda);   // mexe no venda e nos títulos de verdade
+    const vendaOk = meu && venda.status === meu.venda.status && venda.estornoDe === meu.venda.estornoDe &&
+      venda.formaPagamento === meu.venda.formaPagamento && JSON.stringify(venda.parcelas) === JSON.stringify(meu.venda.parcelas) &&
+      venda.estornadoPor === meu.venda.estornadoPor;
+    // o `estornadoEm` é o instante do clique (cada lado pega o dele), então ele é conferido
+    // pelo FORMATO: os dois têm de gravar a data completa (ISO com hora e fuso)
+    const isoOk = (x) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(String(x || ''));
+    const titulosOk = dbFake.contasReceber.every((t, k) =>
+      t.status === meu.titulos[k].status && t.estornoDe === meu.titulos[k].estornoDe &&
+      t.estornadoPor === meu.titulos[k].estornadoPor && isoOk(t.estornadoEm) && isoOk(meu.titulos[k].estornadoEm));
+    const contasOk = dele.titulos === meu.quantos && dele.pagos === meu.pagos;
+    if (!(vendaOk && titulosOk && contasOk)) titulosDiferentes.push({ caso: c.nome, vendaOk: vendaOk, titulosOk: titulosOk, contasOk: contasOk,
+      meu: JSON.stringify(meu), dele: JSON.stringify({ v: venda, cr: dbFake.contasReceber }) });
+    else iguais++;
+  });
+  ok('o estorno sai IGUAL ao de hoje nos ' + casos.length + ' casos (venda e títulos)'
+    + (titulosDiferentes.length ? ' — DIFERENTE: ' + JSON.stringify(titulosDiferentes[0]).slice(0, 400) : ''), iguais === casos.length);
+  ok('e o estoque NÃO é tocado pelo estorno (é a regra do dono)',
+    R.estornoDaVenda({ id: 'v', status: 'faturado' }, [], 'x', new Date()).venda.itens === undefined);
+
+  // 6.3 — o que NÃO pode ser estornado continua recusado, com o mesmo recado de hoje
+  ok('venda em orçamento não pode ser estornada (a regra de hoje exige faturada)',
+    R.estornoDaVenda({ id: 'v', status: 'orcamento' }, [], 'x', new Date()) === null);
+  ok('venda já estornada não pode ser estornada de novo',
+    R.estornoDaVenda({ id: 'v', status: 'estornada' }, [], 'x', new Date()) === null);
+
+  // 6.4 — A ABA OS: as regras do núcleo novo são as mesmas duas funções de hoje
+  const srcOs = fs.readFileSync('vendas_os_patch.js', 'utf8');
+  const iniPuro = srcOs.indexOf('/* VOS_PURE_START */');
+  w.eval(srcOs.slice(iniPuro, srcOs.indexOf('window.__vosPure =', iniPuro)) +
+    srcOs.slice(srcOs.indexOf('window.__vosPure =', iniPuro), srcOs.indexOf('}', srcOs.indexOf('window.__vosPure =', iniPuro)) + 1));
+  const iniSerie = srcOs.indexOf('function vosOsTemAlgumDado');
+  w.eval(srcOs.slice(iniSerie, srcOs.indexOf('\n}', iniSerie) + 2));
+  const casosOs = [
+    {}, { modelo: 'Kyocera' }, { modelo: 'K', numeroSerie: 'S' }, { modelo: 'K', numeroSerie: 'S', patrimonio: 'P' },
+    { modelo: 'K', numeroSerie: 'S', contador: 0 }, { modelo: 'K', numeroSerie: 'S', contador: '0' },
+    { desconto: 10 }, { desconto: 10, valorServico: 5 }, { defeito: 'x' }, { contador: 0 },
+    { modelo: 'K', numeroSerie: 'S', patrimonio: 'P', contador: '9', situacao: 'Entregue', valorServico: 80, desconto: 10 }
+  ];
+  const difComp = casosOs.filter((os) => R.osCompleta(os) !== w.__vosPure.vosOsCompleta(os));
+  const difTem = casosOs.filter((os) => R.osTemAlgumDado(os) !== w.vosOsTemAlgumDado(os));
+  ok('a regra "OS completa" da venda nova é a mesma de hoje nos ' + casosOs.length + ' casos'
+    + (difComp.length ? ' — DIFERENTE em ' + JSON.stringify(difComp) : ''), difComp.length === 0);
+  ok('e a regra "a OS tem algum dado" também (o desconto sozinho NÃO faz a OS existir, como hoje)'
+    + (difTem.length ? ' — DIFERENTE em ' + JSON.stringify(difTem) : ''), difTem.length === 0);
+  ok('a lista de faltantes da OS é a mesma conversa de hoje (modelo, série, patrimônio/contador)',
+    R.osFalta({}).length === 3 && R.osFalta({ modelo: 'K', numeroSerie: 'S' }).length === 1 && R.osFalta({ modelo: 'K', numeroSerie: 'S', contador: 0 }).length === 0,
+    JSON.stringify([R.osFalta({}), R.osFalta({ modelo: 'K', numeroSerie: 'S' })]));
+  ok('as listas da aba OS são as MESMAS de hoje (tipo, garantia e situação, na mesma ordem)',
+    R.TIPOS_OS.join('|') === 'Manutenção corretiva|Manutenção preventiva|Instalação|Retirada|Troca de equipamento|Recarga no local|Outros' &&
+    R.GARANTIAS.join('|') === 'Sem garantia|7 dias|30 dias|60 dias|90 dias' &&
+    R.SITUACOES_OS.join('|') === 'Aberta|Em execução|Aguardando peça|Concluída|Entregue');
+  ok('o total da venda soma o serviço da OS e tira o desconto da OS (igual ao vosResumoVenda de hoje)',
+    R.calcularTotais([{ subtotal: 100 }], 10, { valorServico: 80, desconto: 5 }).total === 165 &&
+    R.calcularTotais([{ subtotal: 100 }], 10, {}).total === 90);
+}
+
+console.log('-- 7) A TELA: a aba OS grava a OS junto da venda, numera e espelha nos Chamados --');
+{
+  const R = w.DIGICOPY_VENDA.regras;
+  const nucleo = w.DIGICOPY_NUCLEO.criar({ empresaId: 'e1', origem: 'teste', guardar: function () { } });
+  nucleo.registrarLista('produtos', { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' }, estoque: { tipo: 'numero' }, estoqueInfinito: { tipo: 'boleano' }, sku: { tipo: 'texto' } });
+  nucleo.registrarLista('clientes', { nome: { obrigatorio: true, tipo: 'texto' } });
+  nucleo.salvar('clientes', { id: 'c1', nome: 'José Ávila' });
+  nucleo.salvar('produtos', { id: 'p1', nome: 'Cartucho HP 664', categoria: 'Cartucho', preco: 50, estoque: 10, sku: 'HP664' });
+
+  const div = doc.createElement('div');
+  doc.body.appendChild(div);
+  const tela = w.DIGICOPY_VENDA.criarVenda({ nucleo: nucleo, elemento: div, empresaId: 'e1' });
+  const alvo = div;
+  const clicar = (sel) => alvo.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+  const digitar = (sel, v) => { const e = alvo.querySelector(sel); e.value = v; e.dispatchEvent(new w.Event('change', { bubbles: true })); return e; };
+  // a caixa de seleção escolhe com Enter (é o mesmo jeito do bloco 5 deste teste)
+  const escolher = (caixa, termo) => {
+    const e = alvo.querySelector(caixa + ' [data-termo]');
+    e.value = termo;
+    e.dispatchEvent(new w.Event('input', { bubbles: true }));
+    e.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  };
+
+  escolher('[data-caixa-cliente]', 'José');   // a venda sem cliente não grava (regra de hoje)
+  escolher('[data-caixa-produto]', 'HP 664');
+  digitar('[data-qtd]', '1');
+  digitar('[data-vunit]', '50');
+  clicar('[data-add]');
+  ok('a venda tem 1 item e a aba OS aparece na tela (é onde ele digita a OS)',
+    nucleo.listar('vendas').length === 0 && !!alvo.querySelector('[data-os-bloco]') && !!alvo.querySelector('[data-os="numeroSerie"]'));
+
+  digitar('[data-os="numeroSerie"]', 'SN12345');
+  digitar('[data-os="modelo"]', 'Kyocera M2040');
+  digitar('[data-os="patrimonio"]', 'PAT7');
+  digitar('[data-os="contador"]', '1533');
+  digitar('[data-os="defeito"]', 'atolando papel');
+  digitar('[data-os="valorServico"]', '80');
+  ok('enquanto ele digita, a tela já avisa que a OS está completa (folha inteira)',
+    !!alvo.querySelector('[data-os-selo]') && alvo.querySelector('[data-os-selo]').hidden === false);
+  ok('e o serviço da OS entra no TOTAL na hora (50 + 80 = 130,00)',
+    (alvo.querySelector('[data-tot-total]') || {}).textContent === '130,00' &&
+    (alvo.querySelector('[data-tot-serv]') || {}).textContent === '80,00' &&
+    alvo.querySelector('[data-tot-serv-box]').hidden === false,
+    JSON.stringify([(alvo.querySelector('[data-tot-total]') || {}).textContent, (alvo.querySelector('[data-tot-serv]') || {}).textContent]));
+
+  clicar('[data-salvar]');
+  const vendaGravada = nucleo.listar('vendas')[0];
+  ok('a venda foi gravada com a OS dentro dela (e o número da OS saiu da série)',
+    !!vendaGravada && !!vendaGravada.os && vendaGravada.os.numero === '1' && vendaGravada.os.numeroSerie === 'SN12345',
+    JSON.stringify(vendaGravada && vendaGravada.os) + ' vendas=' + JSON.stringify(nucleo.listar('vendas').map((v) => [v.numero, v.os && v.os.numero])));
+  ok('a OS gravada nasce marcada como completa e com o valor do serviço',
+    vendaGravada.os.completa === true && vendaGravada.os.valorServico === 80);
+  const chamado = nucleo.listar('os')[0];
+  ok('e ela aparece nos CHAMADOS (o espelho `db.os` de hoje) ligada à venda',
+    !!chamado && chamado.vendaId === vendaGravada.id && chamado.numero === '1');
+  ok('com o defeito no campo "problema", a descrição do serviço e a situação traduzida',
+    chamado.problema === 'atolando papel' && chamado.serie === 'SN12345' && chamado.patrimonio === 'PAT7' &&
+    chamado.prioridade === 'normal' && chamado.status === 'aberto');
+  ok('o total da venda gravada é o da tela (itens + serviço da OS)',
+    vendaGravada.total === 130, String(vendaGravada.total));
+
+  // salvar de novo não cria um SEGUNDO chamado nem troca o número da OS
+  clicar('[data-salvar]');
+  ok('salvar duas vezes não cria um segundo chamado para a mesma venda',
+    nucleo.listar('os').length === 1 && nucleo.listar('vendas')[0].os.numero === '1',
+    'chamados=' + nucleo.listar('os').length);
+  ok('e o número da OS NÃO anda quando a venda é salva de novo (o contador não é gasto à toa)',
+    nucleo.listar('vendas')[0].os.numero === '1');
+
+  // a busca por número de série acha a OS na própria venda
+  digitar('[data-os="numeroSerie"]', 'SN12345');
+  clicar('[data-os-buscar]');
+  const info = alvo.querySelector('[data-os-serial-info]');
+  ok('a busca por número de série reconhece um equipamento que já passou pela loja',
+    !!info && info.hidden === false && /SN12345/.test(info.textContent), info ? info.textContent : 'sem aviso');
+
+  // venda SÓ de serviço: com a OS preenchida, dá para salvar sem item (é a regra de hoje)
+  clicar('[data-nova]');
+  ok('a venda nova limpa também a aba OS (nada de OS vazada da venda anterior)',
+    alvo.querySelector('[data-os="numeroSerie"]').value === '' && alvo.querySelector('[data-os-selo]').hidden === true);
+  escolher('[data-caixa-cliente]', 'José');   // a venda sem cliente não grava (regra de hoje)
+  digitar('[data-os="defeito"]', 'não liga');
+  digitar('[data-os="valorServico"]', '120');
+  clicar('[data-salvar]');
+  const soServico = nucleo.listar('vendas').filter((v) => v.numero === '2')[0];
+  ok('venda só de serviço da OS grava sem item (ao menos um item OU um serviço de OS)',
+    !!soServico && soServico.itens.length === 0 && soServico.total === 120 && !soServico.os.numeroSerie && soServico.os.numero === '2',
+    JSON.stringify(soServico && [soServico.total, soServico.os]) +
+    ' erro=' + JSON.stringify((alvo.querySelector('[data-erro-box]') || {}).textContent) +
+    ' cliente=' + JSON.stringify(tela.estadoAtual().cliente && tela.estadoAtual().cliente.nome));
+  ok('e essa OS incompleta NÃO marca folha inteira (ela diz o que falta)',
+    soServico.os.completa === false && R.osFalta(soServico.os).length === 3 &&
+    R.osFalta(soServico.os)[0] === 'Modelo do equipamento', JSON.stringify(R.osFalta(soServico.os)));
+}
+
+console.log('-- 8) A TELA: o PIX no recebimento e o título que NÃO dá baixa sozinho --');
+{
+  const nucleo = w.DIGICOPY_NUCLEO.criar({ empresaId: 'e1', origem: 'teste', guardar: function () { } });
+  nucleo.registrarLista('produtos', { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' }, estoque: { tipo: 'numero' }, estoqueInfinito: { tipo: 'boleano' } });
+  nucleo.registrarLista('clientes', { nome: { obrigatorio: true, tipo: 'texto' } });
+  nucleo.salvar('clientes', { id: 'c1', nome: 'José Ávila' });
+  nucleo.salvar('produtos', { id: 'p1', nome: 'Cartucho HP 664', categoria: 'Cartucho', preco: 80, estoque: 10 });
+  w.DIGICOPY_PIX.regras.gravarConfig(nucleo, { chave: '12345678000199', nome: 'DIGICOPY', cidade: 'MONTES CLAROS' });
+
+  const div = doc.createElement('div');
+  doc.body.appendChild(div);
+  w.DIGICOPY_VENDA.criarVenda({ nucleo: nucleo, elemento: div, empresaId: 'e1' });
+  const alvo = div;
+  const clicarDoc = (sel) => doc.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+  const clicar = (sel) => alvo.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+  const digitar = (sel, v) => { const e = alvo.querySelector(sel); e.value = v; e.dispatchEvent(new w.Event('change', { bubbles: true })); };
+
+  const escolher = (caixa, termo) => {
+    const e = alvo.querySelector(caixa + ' [data-termo]');
+    e.value = termo;
+    e.dispatchEvent(new w.Event('input', { bubbles: true }));
+    e.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  };
+  escolher('[data-caixa-cliente]', 'José');
+  escolher('[data-caixa-produto]', 'HP 664');
+  digitar('[data-qtd]', '1'); digitar('[data-vunit]', '80');
+  clicar('[data-add]');
+  clicar('[data-salvar]');
+  clicar('[data-faturar]');
+  const modal = () => doc.querySelector('[data-fat-modal]');
+  ok('a janela de recebimento tem o lugar do Pix (ele aparece quando escolher Pix)', !!modal().querySelector('[data-pix-box]'));
+  ok('e ainda não mostra QR nenhum enquanto a forma não é Pix',
+    modal().querySelector('[data-pix-box]').hidden === true && modal().querySelector('[data-pix-box]').innerHTML === '');
+
+  clicarDoc('[data-forma="Pix"]');
+  const box = modal().querySelector('[data-pix-box]');
+  const venda = nucleo.listar('vendas')[0];
+  const payload = w.DIGICOPY_PIX.regras.payloadDaVenda(venda, w.DIGICOPY_PIX.regras.lerConfig(nucleo));
+  ok('escolhendo Pix, o QR aparece na própria janela com o código do valor exato da venda',
+    box.hidden === false && box.innerHTML.indexOf('data-pix-codigo') > 0 && box.innerHTML.indexOf(payload) > 0);
+  ok('e o aviso do comprovante manual aparece junto (Pix não dá baixa sozinho)',
+    /comprovante/i.test(box.textContent) && /WhatsApp/.test(box.textContent));
+  ok('o botão de copiar existe e usa a área de transferência (sem janela nativa de prompt)',
+    !!box.querySelector('[data-pix-copiar]') && !/\b(prompt|alert|confirm)\s*\(/.test(w.DIGICOPY_PIX.copiarPayload.toString()));
+
+  clicarDoc('[data-fat-concluir]');
+  const titulo = nucleo.listar('contasReceber')[0];
+  ok('o título da venda Pix nasce ABERTO (nada de baixa automática)',
+    !!titulo && titulo.status === 'aberto' && titulo.autoBaixa === false && titulo.pagamentoData === null,
+    JSON.stringify(titulo));
+  ok('com o aviso do comprovante escrito na observação (ele lê no financeiro)',
+    /comprovante no WhatsApp/.test(titulo.observacao));
+  ok('e a venda ficou faturada com a forma Pix',
+    nucleo.listar('vendas')[0].status === 'faturado' && nucleo.listar('vendas')[0].formaPagamento === 'Pix');
+  ok('o aviso na tela explica que o título ficou aberto esperando o comprovante',
+    /ABERTO/.test(alvo.textContent) && /comprovante/i.test(alvo.textContent));
+}
+
+console.log('-- 9) A TELA: imprimir a notinha e o carnê (e o aviso quando o navegador bloqueia) --');
+{
+  const nucleo = w.DIGICOPY_NUCLEO.criar({ empresaId: 'e1', origem: 'teste', guardar: function () { } });
+  nucleo.registrarLista('clientes', { nome: { obrigatorio: true, tipo: 'texto' } });
+  nucleo.salvar('clientes', { id: 'c1', nome: 'José Ávila' });
+  const div = doc.createElement('div');
+  doc.body.appendChild(div);
+  const tela = w.DIGICOPY_VENDA.criarVenda({ nucleo: nucleo, elemento: div, empresaId: 'e1' });
+  const alvo = div;
+  const clicar = (sel) => alvo.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+
+  ok('venda ainda não gravada: os botões de impressão não aparecem (não tem o que imprimir)',
+    !alvo.querySelector('[data-print-notinha]') && !alvo.querySelector('[data-print-carne]'));
+
+  nucleo.salvar('vendas', { id: 'vx', numero: '16001', clienteId: 'c1', clienteNome: 'José Ávila', itens: [{ descricao: 'Cartucho', qtd: 1, preco: 80, subtotal: 80 }], desconto: 0, total: 80, status: 'aguardar', formaPagamento: 'Dinheiro', data: '2026-09-24T13:00:00.000Z' });
+  tela.estadoAtual().vendaId = 'vx';
+  tela.estadoAtual().numero = '16001';
+  tela.desenhar();
+  ok('com a venda gravada os botões de imprimir aparecem (notinha e carnê)',
+    !!alvo.querySelector('[data-print-notinha]') && !!alvo.querySelector('[data-print-carne]'));
+
+  let escrito = null;
+  w.open = function () { return { document: { write: (h) => { escrito = h; }, close: () => { } }, focus: () => { } }; };
+  clicar('[data-print-notinha]');
+  ok('a notinha da venda sai em MEIA FOLHA (a venda não tem OS) e com o número certo',
+    !!escrito && escrito.indexOf('class="pagina meia"') > 0 && escrito.indexOf('Nº 16001') > 0);
+  ok('e a tela avisa que mandou imprimir (sem janela nativa)',
+    /enviada para a impressora/.test(alvo.textContent) && /meia folha/.test(alvo.textContent));
+
+  clicar('[data-print-carne]');
+  ok('venda sem parcela: o carnê avisa em vez de abrir papel vazio',
+    /não tem parcelas/.test(alvo.textContent) && escrito.indexOf('Nº 16001') > 0);
+
+  w.open = function () { return null; };   // navegador bloqueou a janela
+  clicar('[data-print-notinha]');
+  ok('janela bloqueada pelo navegador: avisa na tela para liberar o pop-up (nada de alert nativo)',
+    /bloqueou a janela de impressão/.test(alvo.textContent) && /pop-up/.test(alvo.textContent));
+  delete w.open;
+}
+
+console.log('-- 10) A TELA: estornar (títulos marcados no financeiro e venda liberada de novo) --');
+{
+  const nucleo = w.DIGICOPY_NUCLEO.criar({ empresaId: 'e1', origem: 'teste', guardar: function () { } });
+  nucleo.registrarLista('clientes', { nome: { obrigatorio: true, tipo: 'texto' } });
+  nucleo.salvar('clientes', { id: 'c1', nome: 'José Ávila' });
+
+  const div = doc.createElement('div');
+  doc.body.appendChild(div);
+  // a tela é criada primeiro (é ela que registra as listas da venda no núcleo, como na vida real)
+  const tela = w.DIGICOPY_VENDA.criarVenda({ nucleo: nucleo, elemento: div, empresaId: 'e1' });
+  const alvo = div;
+  nucleo.salvar('vendas', { id: 'vf', numero: '16001', clienteId: 'c1', clienteNome: 'José Ávila', itens: [{ descricao: 'Cartucho', qtd: 1, preco: 80, subtotal: 80 }], total: 80, status: 'faturado', formaPagamento: 'Dinheiro', data: '2026-09-24T13:00:00.000Z', parcelas: [] });
+  nucleo.salvar('contasReceber', { id: 'crf', vendaId: 'vf', descricao: 'Venda 16001', valor: 80, status: 'pago', vencimento: '2026-09-24T00:00:00.000Z', autoBaixa: true });
+  tela.estadoAtual().vendaId = 'vf';
+  tela.estadoAtual().numero = '16001';
+  tela.estadoAtual().status = 'faturado';
+  tela.estadoAtual().cliente = nucleo.obter('clientes', 'c1');
+  tela.desenhar();
+  const clicar = (sel) => alvo.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+
+  ok('a venda faturada mostra o botão de estornar no lugar do faturar',
+    !!alvo.querySelector('[data-estornar]') && !alvo.querySelector('[data-faturar]'));
+  clicar('[data-estornar]');
+  const conf = doc.querySelector('[data-conf-modal]');
+  ok('o estorno pede confirmação numa janela do PRÓPRIO sistema (nada de confirm nativo)',
+    !!conf && /Estornar a venda 16001/.test(conf.textContent));
+  ok('e a janela avisa que o estoque não se mexe e que o número não muda',
+    /estoque/i.test(conf.textContent) && /não muda|não se mexe/i.test(conf.textContent));
+  conf.querySelector('[data-conf-nao]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('cancelando, a venda continua faturada (nada foi mexido)',
+    nucleo.obter('vendas', 'vf').status === 'faturado' && nucleo.obter('contasReceber', 'crf').status === 'pago');
+
+  clicar('[data-estornar]');
+  doc.querySelector('[data-conf-modal] [data-conf-sim]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  const vendaDepois = nucleo.obter('vendas', 'vf');
+  const crDepois = nucleo.obter('contasReceber', 'crf');
+  ok('confirmando, a venda fica estornada e volta a poder ser editada',
+    vendaDepois.status === 'estornada' && vendaDepois.estornoDe === 'faturado' && vendaDepois.formaPagamento === 'Não faturado' && vendaDepois.parcelas.length === 0);
+  ok('e o título NÃO sumiu: ficou marcado como estornado no financeiro (é a regra do dono)',
+    crDepois.status === 'estornado' && crDepois.estornoDe === 'pago' && !!crDepois.estornadoEm && !!crDepois.estornadoPor,
+    JSON.stringify(crDepois));
+  ok('a tela voltou a mostrar os campos liberados e o botão de faturar',
+    !alvo.querySelector('[data-faturar]') === false && !!alvo.querySelector('[data-faturar]') && !alvo.querySelector('[data-estornar]'));
+
+  // o financeiro do núcleo novo mostra a tarja e deixa o estornado FORA da soma de aberto
+  const F = w.DIGICOPY_FINANCEIRO.regras;
+  ok('o financeiro novo sabe reconhecer um título estornado (tarja própria)',
+    F.ehEstornado(crDepois) === true && F.ehEstornado({ status: 'aberto' }) === false && F.ehEstornado({ estornado: true }) === true);
 }
 
 console.log('\nRESULTADO: ' + passou + ' verificações passaram — a venda do núcleo novo responde como o sistema de hoje (numeração, item, estoque, total, financeiro) e a tela funciona.');

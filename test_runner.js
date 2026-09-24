@@ -255,6 +255,16 @@ const tests=[
   // busca de 8 campos, modos Hoje/Abertos/Todos, despesa e lixeira provados contra as regras
   // do sistema de hoje + a tela funcionando ponta a ponta
   "test_financeiro.js",
+  // v7.0.11 (rodada 20) — o PIX do núcleo novo: o código copia e cola é comparado BYTE A BYTE
+  // com o PIX_PURE que roda hoje (CRC16 incluído), o link da página pública é o mesmo, o
+  // comprovante continua manual (Pix não dá baixa sozinho) e o cartão de configuração funciona.
+  // (o `test_pix.js` do repositório — o vetor oficial do Banco Central — continua na lista
+  // de cima, intacto: este é o do sistema NOVO.)
+  "test_pix_novo.js",
+  // v7.0.11 (rodada 20) — o PAPEL: notinha em meia folha, folha inteira quando a venda tem OS
+  // (com o bloco da Ordem de Serviço e as duas assinaturas) e o carnê com um canhoto por
+  // parcela, provados contra o que o sistema de hoje imprime
+  "test_impressao.js",
   // v7.0.11 (rodada 18-B) — o conferente do núcleo novo dentro do SISTEMA DE HOJE:
   // conferência sob demanda no painel da Nuvem (não grava nada, não escuta gravação)
   "test_ponte_no_sistema.js",

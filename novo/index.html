@@ -97,6 +97,39 @@
   .vnd-parc-campos input{height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 10px;font-size:13px;width:100%}
   .vnd-btn-fraco{background:#f8fafc;color:#334155}
   .vnd-tag-pagar{background:rgba(185,28,28,.1);color:#b91c1c}
+  .vnd-os{margin-top:14px;border:1px solid var(--linha);border-radius:14px;padding:12px;background:#f8fafc}
+  .vnd-os-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:#0a1e8a;margin-bottom:8px}
+  .vnd-os-linha{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
+  .vnd-os-linha .vnd-campo{min-width:150px}
+  .vnd-campo-largo{flex:1;min-width:220px}
+  .vnd-os input,.vnd-os select{height:34px;border:1px solid var(--linha);border-radius:9px;padding:0 8px;font-size:12.5px;background:#fff}
+  .vnd-dica{margin-top:6px;padding:8px 10px;border-radius:10px;font-size:12.5px}
+  .vnd-dica-ok{background:#dcfce7;color:#166534}
+  .vnd-dica-falta{background:#fef3c7;color:#92400e}
+  .vnd-pix{margin:8px 0 10px}
+  .px-painel{display:flex;gap:14px;align-items:center;border:1px solid #7dd3fc;background:#f0f9ff;border-radius:12px;padding:12px;flex-wrap:wrap}
+  .px-qr{background:#fff;border:1px solid var(--linha);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:4px;align-items:center}
+  .px-sem-net{font-size:10px;color:#94a3b8;max-width:150px;text-align:center}
+  .px-lado{flex:1;min-width:240px}
+  .px-titulo{margin:0;font-weight:800;color:#0c4a6e}
+  .px-sub{margin:4px 0 0;font-size:12px;color:#475569}
+  .px-copia{display:flex;gap:8px;margin-top:8px}
+  .px-copia input{flex:1;min-width:0;height:34px;border:1px solid var(--linha);border-radius:9px;padding:0 8px;font-family:monospace;font-size:11px}
+  .px-aviso{margin-top:8px;padding:8px 10px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:12.5px}
+  .px-aviso-manual{margin:8px 0 0;font-size:12px;color:#92400e}
+  .fin-pill-estornado{background:rgba(120,53,15,.12);color:#78350f}
+  .px-cfg{max-width:760px;border:1px solid var(--linha);border-radius:16px;padding:16px;background:#f8fafc}
+  .px-cfg-titulo{margin:0 0 4px;font-size:14.5px;color:#0a1e8a}
+  .px-cfg-sub{margin:0 0 12px;font-size:12px;color:#475569;line-height:1.45}
+  .px-cfg-tipo{margin:4px 0 10px;font-size:11.5px;color:#64748b}
+  .px-cfg-linha{display:flex;gap:10px;flex-wrap:wrap}
+  .px-cfg-linha .vnd-campo{flex:1;min-width:200px}
+  .px-cfg input{height:38px;border:1px solid var(--linha);border-radius:10px;padding:0 10px;font-size:13px;background:#fff}
+  .px-cfg-botoes{display:flex;gap:8px;margin-top:12px}
+  .px-cfg-preview{margin-top:12px;border:1px solid var(--linha);border-radius:12px;padding:12px;background:#fff;text-align:center}
+  .px-cfg-nota{margin:8px 0 0;font-size:11px;color:#94a3b8}
+  .px-cfg-codigo{width:100%;margin-top:6px;font-family:monospace;font-size:11px}
+  .nfx-corpo{font-size:13px;color:#334155;line-height:1.5}
   /* o financeiro (novo/financeiro.js) */
   .fin-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
   .fin-sub{font-size:11.5px;color:#64748b;margin:4px 0}
@@ -163,7 +196,7 @@
     <div class="module" data-modulo="atendimento">
       <button type="button" data-menu="atendimento"><i>🧾</i>Atendimento</button>
       <div class="module-menu">
-        <button type="button" data-tela="vendas"><i>🛒</i>Nova venda / Notinha<small>falta impressão e PIX</small></button>
+        <button type="button" data-tela="vendas"><i>🛒</i>Nova venda / Notinha<small>pronta (impressão, Pix e OS)</small></button>
         <button type="button" data-tela="orcamentos"><i>📋</i>Orçamentos<small>fase 3</small></button>
         <button type="button" data-tela="os"><i>🔧</i>Abrir chamado<small>fase 3</small></button>
       </div>
@@ -201,6 +234,7 @@
         <button type="button" data-tela="usuarios"><i>👥</i>Usuários e permissões<small>fase 4</small></button>
         <button type="button" data-tela="auditoria"><i>🧭</i>Auditoria<small>fase 4</small></button>
         <button type="button" data-tela="nuvem"><i>☁️</i>Nuvem e backups<small>fase 2</small></button>
+        <button type="button" data-tela="pix"><i>💠</i>Pix (chave e QR)<small>pronta</small></button>
       </div>
     </div>
   </nav>
@@ -221,6 +255,8 @@
 <script src="nucleo.js"></script>
 <script src="ponte.js"></script>
 <script src="selecao.js"></script>
+<script src="pix.js"></script>
+<script src="impressao.js"></script>
 <script src="venda.js"></script>
 <script src="financeiro.js"></script>
 <script src="telas.js"></script>
@@ -264,9 +300,23 @@
   var telas = window.DIGICOPY_TELAS.criarTelas({ nucleo: nucleo, elemento: document.getElementById('tela'), documento: document });
   var titulos = { clientes: 'Clientes', produtos: 'Produtos e serviços', vendas: 'Nova venda / Notinha', contasReceber: 'Contas a receber', contasPagar: 'Contas a pagar' };
   var vendaTela = null;
+  var pixTela = null;
   var finTelas = {};
   var selo = { inicio: null, orcamentos: 3, os: 3, contratos: 4, parque: 4, leituras: 4, 'fiscal-nfe': 5, 'fiscal-catalogo': 5, 'fiscal-cert': 5, escola: 4, usuarios: 4, auditoria: 4, nuvem: 2 };
 
+  // aviso na tela (nunca alert/confirm/prompt): escreve no rodapé e some sozinho
+  function lfbAviso(txt, deuCerto){
+    var st = document.getElementById('st-bd');
+    if (!st) return;
+    var antes = st.getAttribute('data-antes') || st.textContent;
+    st.setAttribute('data-antes', antes);
+    st.textContent = (deuCerto === false ? '⚠️ ' : '✅ ') + txt;
+    st.style.color = deuCerto === false ? '#b91c1c' : '#166534';
+    clearTimeout(window.__pixAvisoTimer);
+    window.__pixAvisoTimer = setTimeout(function(){
+      st.textContent = antes; st.style.color = '';
+    }, 6000);
+  }
   function pintarStatus(){
     document.getElementById('st-nucleo').textContent = 'coração: v' + nucleo.versao + ' (núcleo)';
     document.getElementById('st-fila').textContent = 'fila da nuvem: ' + (nucleo.mudancas().length || 0);
@@ -289,7 +339,8 @@
       titulos.vendas && (document.getElementById('titulo-tela').textContent = titulos.vendas);
       if (!vendaTela) {
         vendaTela = window.DIGICOPY_VENDA.criarVenda({
-          nucleo: nucleo, elemento: alvo, empresaId: 'rascunho', documento: document, aoMudar: pintarStatus
+          nucleo: nucleo, elemento: alvo, empresaId: 'rascunho', documento: document, aoMudar: pintarStatus,
+          empresa: { nome: 'DIGICOPY', fantasia: 'DIGICOPY' }, usuarioNome: 'Atendente'
         });
       } else {
         vendaTela.desenhar();
@@ -311,10 +362,24 @@
       pintarStatus();
       return;
     }
+    if (tela === 'pix') {
+      document.getElementById('titulo-tela').textContent = 'Configurações — Pix';
+      if (!pixTela) {
+        pixTela = window.DIGICOPY_PIX.montarConfig({
+          nucleo: nucleo, elemento: alvo,
+          aoAvisar: function (txt, deuCerto) { pintarStatus(); lfbAviso ? lfbAviso(txt, deuCerto) : null; }
+        });
+      } else {
+        pixTela.desenhar();
+      }
+      pintarStatus();
+      return;
+    }
     if (tela === 'inicio') {
       document.getElementById('titulo-tela').textContent = 'Início';
       alvo.innerHTML = '<div class="em-construcao">O coração novo (lápide, versão, fila da nuvem) com as telas de ' +
-        '<b>Clientes</b>, <b>Produtos</b>, <b>Nova venda / Notinha</b> (com recebimento) e <b>Financeiro</b>. ' +
+        '<b>Clientes</b>, <b>Produtos</b>, <b>Nova venda / Notinha</b> (recebimento, impressão da notinha e do carnê, ' +
+        'OS com folha inteira e Pix com comprovante) e <b>Financeiro</b>. ' +
         'O menu acima é o <b>mesmo</b> do sistema de hoje — cada item entra provando por teste, sem parar a loja. ' +
         'Nada aqui toca o sistema atual nem a nuvem.</div>';
       return;
