@@ -41,6 +41,20 @@
   .nfx-btn{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--linha);font-weight:800;font-size:12.5px;cursor:pointer}
   .nfx-btn-forte{background:var(--azul);border-color:var(--azul);color:#fff}
   .nfx-btn-fraco{background:#fff;color:var(--azul)}
+  .nfx-bar select{height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 8px;font-size:12.5px;background:#fff;max-width:210px}
+  /* a caixa de seleção inteligente (novo/selecao.js) — entra nas telas de venda/orçamento na fase 3 */
+  .sfx-caixa{position:relative}
+  .sfx-linha{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .sfx-linha select{height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 8px;font-size:12.5px;background:#fff;max-width:200px}
+  .sfx-linha input{flex:1;min-width:170px;height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 12px;font-size:13px}
+  .sfx-linha button{height:36px;width:42px;border:1px solid var(--linha);border-radius:10px;background:#fff;cursor:pointer}
+  .sfx-resultados{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);max-height:260px;overflow:auto;background:#fff;border:1px solid var(--linha);border-radius:12px;box-shadow:0 12px 30px rgba(15,23,42,.12)}
+  .sfx-escondido{display:none}
+  .sfx-item{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:8px 12px;background:#fff;border:0;border-bottom:1px solid #eef1f8;cursor:pointer;font-size:13px}
+  .sfx-item:hover,.sfx-item.sfx-ativo{background:#eef2ff}
+  .sfx-titulo{font-weight:600;color:#0f172a}
+  .sfx-detalhe{color:#64748b;font-size:12px;white-space:nowrap}
+  .sfx-vazio{padding:10px 12px;color:#64748b;font-size:12.5px}
   .nfx-tabela{width:100%;border-collapse:collapse;font-size:13px}
   .nfx-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px}
   .nfx-tabela td{padding:9px 8px;border-bottom:1px solid #eef1f8}
@@ -141,6 +155,7 @@
 
 <script src="nucleo.js"></script>
 <script src="ponte.js"></script>
+<script src="selecao.js"></script>
 <script src="telas.js"></script>
 <script>
 (function(){
@@ -164,7 +179,7 @@
   var banco = { clientes: [], produtos: [] };
   var ponte = window.DIGICOPY_PONTE.ligar({ db: banco, nucleo: nucleo, origem: 'este-pc',
     schemas: {
-      clientes: { nome: { obrigatorio: true, tipo: 'texto' }, fone: { tipo: 'texto' }, cidade: { tipo: 'texto' } },
+      clientes: { nome: { obrigatorio: true, tipo: 'texto' }, telefone: { tipo: 'texto' }, cidade: { tipo: 'texto' } },
       produtos: { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' } }
     } });
   ponte.primeiraVarredura();

@@ -1795,3 +1795,80 @@ mais a cada patch novo).
   ato do dono).
 - `novo/index.html` + `novo/telas.js` seguem **fora** do bundle (página de teste da fase 1); o que entrou
   foram só o coração e a ponte, para a conferência.
+
+## 29. RODADA 18-C — A CAIXA DE SELEÇÃO INTELIGENTE (e a decisão do caminho) (24/09/2026)
+
+**Pedido do dono:** *"eu quero cada função que tinha antes, a caixa de seleção inteligente de
+escolher cliente, produto... TUDO"* + *"eu só quero seguir o caminho que mais compensa seguir pra
+resolver tudo... vou deixar nas suas mãos de TUDO, você escolhe, mas escolha o melhor caminho para dar
+o menor problema possível"*.
+
+### 29.1 A DECISÃO: continuar o redesenho (caminho **C**), com paridade obrigatória
+
+Ele delegou a escolha. Decidido: **continuar o caminho C** (sistema novo por partes, o de hoje no ar
+até a virada única), com uma regra dura acrescentada: **nenhuma função fica para trás — e isso é
+provado, não prometido**.
+
+Justificativa escrita (exigência da regra de mudança arquitetural):
+
+| | O que é | Por que **sim** | Por que **não** |
+|---|---|---|---|
+| A | reescrever tudo e trocar num dia | fica tudo novo de uma vez | a loja para até terminar; fiscal refeito na pressa; risco concentrado. **Recusado** |
+| B | manter as telas atuais, trocar só o miolo | risco baixo | não encolhe nada: cada tela velha continua com as regras próprias — a prova está nesta própria rodada (a mesma busca está **implementada 3 vezes** no sistema de hoje: `CLI_PURE`, o `filtraClientes` do v5.22.19 e o `cvSearchCliente` do notinha, com resultados diferentes) |
+| **C** | **sistema novo por partes, o de hoje no ar** | nada para de funcionar; cada pedaço entra provado (esta rodada: **864 comparações** de busca iguais ao sistema de hoje); o sistema encolhe; dá para desistir de um pedaço sem estragar o resto | é o caminho mais longo. **Escolhido** |
+
+**O que sustenta a escolha (e não é opinião):** no caminho C, a paridade deixa de ser promessa e vira
+teste. Só nesta rodada, a **prova diferencial** pegou **2 divergências reais** que passariam batido numa
+reescrita "no olho":
+1. `campo = Código` com termo **sem número** devolve a **lista inteira** no sistema de hoje
+   (`ajustes_v52236_*` envelopando o `CLI_PURE`) — reproduzido de propósito no módulo novo;
+2. os campos de cliente do sistema de hoje se chamam **`telefone`/`codigo`/`documento`/`cep`** — o novo
+   estava com `fone`. Corrigido no novo (`novo/telas.js`, `novo/index.html`, testes): sem isso, a busca
+   por Telefone não achava nada **e** a migração de dados quebraria depois.
+
+O risco conhecido do caminho C é **tempo** — e a trava continua a mesma: cada parte provada, sem
+promessa de "zero defeito" (ver §1 do `PLANO_REDESENHO.md`).
+
+### 29.2 O que foi construído: `novo/selecao.js` (v1.0.0)
+
+A versão do núcleo novo do filtro auxiliar que ele usa hoje — **uma implementação só** para um
+comportamento que hoje vive em **9 lugares** (`vos-cli-search`, `fin-cli-termo`, `ctr-cli-busca`,
+`ctr-cli-busca-simples`, `ctrd-cli-busca`, `ca-busca-cliente`, `nv-cliente-search`, `cv-cliente-search`,
+`neo-cli-search`):
+
+- **Regras puras** (idênticas às de hoje): dobra de acento/maiúscula; termo numérico com 3+ dígitos
+  acha dentro de CPF/CNPJ, telefone, WhatsApp e CEP; **Código é exato** (48 = 048 = código antigo 48,
+  e não acha 480/1048); e-mail olha o e-mail 2; **produto** fora de Recarga/inativo/excluído e com
+  **categoria unificada**; **recarga** por Código/Descrição/Marca.
+- **A caixa**: campo "onde buscar" (os mesmos 16 campos, na mesma ordem), caixa de digitar, lupa,
+  sugestões com **nome + documento/preço**, setas ↑/↓, **Enter escolhe**, **Esc fecha**, clique escolhe,
+  "Nenhum cliente/produto/recarga", limite de 12 (cliente) e 14 (produto/recarga) por vez.
+- **Não grava nada**: sem `db`, sem nuvem, sem `localStorage`, sem `alert/confirm/prompt`. É tela + busca.
+- Nas telas já migradas a busca passou a usar essa regra: barra com o campo "onde buscar" (16 campos em
+  Clientes, categorias em Produtos), busca por **Enter ou lupa** (regra do sistema de hoje), rodapé
+  dizendo em qual campo filtrou. Sem o módulo carregado a tela continua funcionando (busca simples) —
+  nunca quebra por dependência ausente.
+
+### 29.3 Provas
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_selecao.js` (**novo**) | **35 ✔** | **paridade diferencial**: 544 comparações de cliente (16 campos × 34 termos), 288 de produto, 32 de recarga — **todas com a mesma resposta do sistema de hoje**, carregando de verdade o `CLI_PURE`, o `FILTROS_BUSCA_PURE` e o v5.22.36 do repositório; mais a lista de campos idêntica, o código exato, e a tela (digitar, setas, Enter, Esc, clique, limites, "não achei") |
+| `test_redesenho_pagina.js` | **34 ✔** (era 24) | na página nova: o campo "onde buscar" com os 16 campos; "jose" acha "José Ávila" e "MARIA JOSE"; campo **Cidade** busca só na cidade; campo **Telefone** acha por número dentro do telefone; Produtos traz as categorias; rodapé diz o campo |
+| `test_telas.js` / `test_ponte.js` | 38 ✔ / 50 ✔ | nada regrediu com a troca de `fone` → `telefone` |
+
+**Suíte: 223 passaram, 0 falharam, 0 não rodaram** (com `jsdom`). Nada no sistema de hoje mudou nesta
+rodada: o app publicado continua **v7.0.11** (`?v=7.0.11-cd1b595e0a7b`, bundle `3a341ce6d072e7de`) e o
+motor da nuvem **5.26.8** (publicado — conferido no `/health`).
+
+### 29.4 Paridade: onde estamos e qual é o próximo
+
+- **Feito:** coração (lápide/dedup/outbox), ponte, telas Clientes/Produtos, conferência sob demanda no
+  sistema de hoje, e agora a **seleção inteligente** (regra + caixa) com paridade provada.
+- **Próximo (fase 3):** as telas do dia — **venda/notinha** (onde a caixa de seleção vive hoje: escolher
+  cliente e produto, item a item, estoque, total, notinha), OS e orçamento — usando esta caixa. Depois
+  financeiro, e na fase 4 contratos/parque/leituras/chamados/painel do gerente.
+- **Pendências registradas:** os campos do cadastro completo de cliente (`codigo`, `documento`, `cep`,
+  `whatsapp`, `fantasia`, `rgIE`, `endereco`, `bairro`, `contato`, `email`, `observacao`, `estado`) ainda
+  não existem no núcleo novo — o seletor já os mostra (paridade do controle) e vão ganhar dados quando o
+  cadastro completo entrar na fase 3/4. `modulosDinamicos` segue sem formato definido (fase 2/4).

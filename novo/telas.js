@@ -26,6 +26,27 @@
   }
   function texto(v) { return v == null ? '' : String(v); }
 
+  // ── A BUSCA INTELIGENTE (o campo "onde buscar" que ele usa no sistema de hoje) ──
+  // A regra mora em `novo/selecao.js` — a mesma do CLI_PURE/FILTROS_BUSCA_PURE de hoje,
+  // provada caso a caso no `test_selecao.js`. Se a peça não estiver carregada, a tela
+  // continua funcionando com a busca simples de antes (nunca quebra por causa disso).
+  var SEL = raiz.DIGICOPY_SELECAO || null;
+  function camposDaLista(nome) {
+    if (!SEL) return null;
+    if (nome === 'clientes') return SEL.busca.CAMPOS_CLIENTE;
+    if (nome === 'produtos') {
+      return [['', 'Todas categorias']].concat(SEL.busca.CATS_PRODUTO.map(function (c) { return [c, c]; }));
+    }
+    return null;
+  }
+  function campoInicialDaLista(nome) { return nome === 'produtos' ? '' : 'todos'; }
+  function filtraPelaRegra(nome, registros, termo, campo) {
+    if (!SEL) return null;
+    if (nome === 'clientes') return SEL.busca.filtraClientes(registros, termo, campo);
+    if (nome === 'produtos') return SEL.busca.filtraProdutos(registros, termo, campo);
+    return null;
+  }
+
   // ── O MODAL DO SISTEMA (substitui prompt/confirm/alert, que são proibidos) ──
   function abrirModal(dono, opcoes) {
     var o = opcoes || {};
@@ -73,13 +94,13 @@
   var LISTAS = {
     clientes: {
       rotulo: 'Clientes',
-      colunas: [{ campo: 'nome', titulo: 'Nome' }, { campo: 'fone', titulo: 'Fone' }, { campo: 'cidade', titulo: 'Cidade' }],
+      colunas: [{ campo: 'nome', titulo: 'Nome' }, { campo: 'telefone', titulo: 'Telefone' }, { campo: 'cidade', titulo: 'Cidade' }],
       campos: [
         { campo: 'nome', rotulo: 'Nome', obrigatorio: true },
-        { campo: 'fone', rotulo: 'Fone' },
+        { campo: 'telefone', rotulo: 'Telefone' },
         { campo: 'cidade', rotulo: 'Cidade' }
       ],
-      schema: { nome: { obrigatorio: true, tipo: 'texto' }, fone: { tipo: 'texto' }, cidade: { tipo: 'texto' } }
+      schema: { nome: { obrigatorio: true, tipo: 'texto' }, telefone: { tipo: 'texto' }, cidade: { tipo: 'texto' } }
     },
     produtos: {
       rotulo: 'Produtos',
@@ -103,18 +124,23 @@
 
     Object.keys(LISTAS).forEach(function (nome) { nucleo.registrarLista(nome, LISTAS[nome].schema); });
 
-    var estado = { lista: 'clientes', busca: '', mostrando: 'vivos' };
+    var estado = { lista: 'clientes', busca: '', mostrando: 'vivos', campo: 'todos' };
     var linha = "Nada aqui ainda. Use ➕ Novo para cadastrar.";
 
     function registros() {
       var todos = nucleo.listar(estado.lista, estado.mostrando === 'apagados'
         ? { somenteApagados: true }
         : { ordenarPor: 'nome' });
-      var b = estado.busca.trim().toLowerCase();
+      var b = estado.busca.trim();
       if (!b) return todos;
+      if (estado.mostrando !== 'apagados') {
+        var pelaRegra = filtraPelaRegra(estado.lista, todos, b, estado.campo);
+        if (pelaRegra) return pelaRegra;
+      }
+      var low = b.toLowerCase();
       return todos.filter(function (r) {
         return LISTAS[estado.lista].colunas.some(function (c) {
-          return texto(r[c.campo]).toLowerCase().indexOf(b) >= 0;
+          return texto(r[c.campo]).toLowerCase().indexOf(low) >= 0;
         });
       });
     }
@@ -145,11 +171,22 @@
       }).join('');
       var colunas = LISTAS[estado.lista].colunas.map(function (c) { return '<th>' + escapar(c.titulo) + '</th>'; }).join('') + '<th></th>';
 
+      var campos = camposDaLista(estado.lista);
+      var rotuloCampo = '';
+      var seletor = '';
+      if (campos) {
+        if (!campos.some(function (c) { return c[0] === estado.campo; })) estado.campo = campoInicialDaLista(estado.lista);
+        campos.forEach(function (c) { if (c[0] === estado.campo) rotuloCampo = c[1]; });
+        seletor = '<select data-campo-busca aria-label="Onde buscar">' +
+          campos.map(function (c) { return '<option value="' + escapar(c[0]) + '">' + escapar(c[1]) + '</option>'; }).join('') +
+          '</select>';
+      }
       alvo.innerHTML =
         '<div class="nfx-cabecalho">' +
           '<div class="nfx-abas">' + abas + '</div>' +
           '<div class="nfx-bar">' +
-            '<input type="search" data-busca placeholder="Buscar (Enter ou 🔍)" value="' + escapar(estado.busca) + '">' +
+            seletor +
+            '<input type="search" data-busca placeholder="' + (estado.lista === 'clientes' ? 'Digite nome, código, CPF/CNPJ ou telefone' : 'Digite a descrição ou o código do produto') + '" value="' + escapar(estado.busca) + '">' +
             '<button type="button" class="nfx-btn nfx-btn-fraco" data-acao="buscar">🔍</button>' +
             '<button type="button" class="nfx-btn nfx-btn-forte" data-acao="novo">➕ Novo</button>' +
             '<button type="button" class="nfx-btn nfx-btn-fraco" data-acao="alternar-lixeira">' +
@@ -160,18 +197,31 @@
         '<table class="nfx-tabela"><thead><tr>' + colunas + '</tr></thead><tbody data-corpo>' + corpoTabela() + '</tbody></table>' +
         '<div class="nfx-rodape" data-rodape>' +
           '<span>' + info.vivos + ' ' + escapar(LISTAS[estado.lista].rotulo.toLowerCase()) +
-          (estado.busca ? ' · filtrado por "' + escapar(estado.busca) + '"' : '') +
+          (estado.busca ? ' · filtrado por "' + escapar(estado.busca) + '"' + (rotuloCampo ? ' em ' + escapar(rotuloCampo) : '') : '') +
           (estado.mostrando === 'apagados' ? ' · mostrando os EXCLUÍDOS' : '') + '</span>' +
           '<span>' + (resumo.mudancasPendentes || 0) + ' mudança(s) na fila da nuvem</span>' +
         '</div>';
 
       alvo.querySelectorAll('[data-aba]').forEach(function (b) {
-        b.addEventListener('click', function () { estado.lista = b.getAttribute('data-aba'); estado.busca = ''; estado.mostrando = 'vivos'; desenhar(); });
+        b.addEventListener('click', function () {
+          estado.lista = b.getAttribute('data-aba');
+          estado.busca = ''; estado.mostrando = 'vivos';
+          estado.campo = campoInicialDaLista(estado.lista);
+          desenhar();
+        });
       });
       var campoBusca = alvo.querySelector('[data-busca]');
       campoBusca.addEventListener('keydown', function (ev) {
         if (ev.key === 'Enter') { estado.busca = campoBusca.value; desenhar(); }
       });
+      var campoOnde = alvo.querySelector('[data-campo-busca]');
+      if (campoOnde) {
+        campoOnde.value = estado.campo;
+        campoOnde.addEventListener('change', function () {
+          estado.campo = campoOnde.value;
+          if (estado.busca.trim()) desenhar();   // trocar o campo refaz a busca na hora
+        });
+      }
       alvo.querySelectorAll('[data-acao]').forEach(function (b) {
         b.addEventListener('click', function () { agir(b.getAttribute('data-acao'), b.getAttribute('data-id')); });
       });

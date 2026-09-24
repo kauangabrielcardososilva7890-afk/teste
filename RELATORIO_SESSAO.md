@@ -5838,3 +5838,34 @@ travavam o **tamanho** do manifesto foram ajustados no mínimo (`=== 225` → `>
 **Suíte: 222/0/0/0 com `jsdom`** (215/0/7 sem). App **v7.0.11** · bundle `3a341ce6d072e7de` ·
 `?v=7.0.11-cd1b595e0a7b` · motor da nuvem **5.26.8** (publicar é do dono) · `sync_build --check` OK ·
 `mobile/sync-www.js` OK. Detalhes técnicos no `AUDITORIA_TECNICA.md` §28.
+
+### Rodada 18-C (24/09/2026) — a caixa de seleção inteligente (e a decisão do caminho)
+
+**Ele deixou a escolha comigo. Decidi: continuar o sistema novo (caminho C), com uma regra dura a mais —
+nenhuma função fica para trás, e isso é provado por teste, não prometido.** Justificativa escrita na
+`AUDITORIA_TECNICA.md` §29.1 (o que cada caminho custa, por que A e B foram recusados, e o que sustenta
+o C).
+
+**A peça que ele citou foi reconstruída:** a **caixa de seleção inteligente** (escolher cliente, produto
+e recarga) virou `novo/selecao.js` — o campo **"onde buscar"** (os mesmos 16 campos de cliente, as
+categorias no produto, código/descrição/marca na recarga), a lupa, o Enter, as setas, o Esc, o clique, os
+limites e as mensagens de "não achei". Hoje isso está implementado em **9 lugares diferentes** no sistema
+velho; no núcleo novo é **um só**.
+
+**A prova é diferencial:** `test_selecao.js` (**35 ✔**) carrega as regras do **próprio sistema de hoje**
+(`CLI_PURE`, `FILTROS_BUSCA_PURE`, o código exato do v5.22.36) e compara caso a caso com o módulo novo:
+**544 comparações de cliente + 288 de produto + 32 de recarga, todas com a mesma resposta.** E ela pegou
+**2 divergências reais** que eu não teria visto de olho: (1) no campo **Código**, termo sem número
+devolve a lista inteira no sistema de hoje — reproduzido de propósito; (2) os campos de cliente se
+chamam **`telefone`** (não `fone`) — corrigido no núcleo novo, porque sem isso a busca por Telefone não
+acharia nada **e** a migração dos dados quebraria depois.
+
+**Nas telas já migradas** a busca passou a usar essa regra: barra com o campo "onde buscar", busca por
+Enter ou lupa, e o rodapé dizendo em qual campo filtrou. `test_redesenho_pagina.js` foi de 24 para
+**34 verificações** provando isso na página.
+
+**Suíte: 223/0/0/0 com `jsdom`.** O sistema de hoje não mudou nesta rodada: app publicado continua
+**v7.0.11**, motor da nuvem **5.26.8** (publicado — conferi o `/health`).
+
+**Próximo (fase 3):** as telas do dia — **venda/notinha** (onde essa caixa vive hoje: escolher cliente e
+produto, item a item, estoque, total), OS e orçamento.

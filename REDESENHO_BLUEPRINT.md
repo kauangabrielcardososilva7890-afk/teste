@@ -96,6 +96,7 @@ comportamento a levantar no dia da reescrita daquela tela.
 | Buscador Escola | buscador (menu próprio) + tela de login | `buscador_escola_patch.js`, `escola_*.html` ✔ |
 | Navegador embutido | aba de navegação dentro do sistema | `navegador_embutido_patch.js` ✔ |
 | Utilitários | popup do sistema, avisos/erro/auditoria, permissões, configurações, rodapé/versão, tema escuro, login 2 etapas, atalhos de menu | `popup_sistema_patch.js`, `avisos_*`, `permissoes_*`, `ajustes_v52213_*` ✔ |
+| **Seleção inteligente** (o filtro auxiliar) | o campo **"onde buscar"** ao lado da caixa de digitar, com lupa e Enter, em **9 lugares** (venda, nova venda, financeiro, contratos, contas a receber, orçamento, clientes…) + a **caixa de sugestão** dentro da venda + **categoria** no produto + **etiqueta** na recarga | `ajustes_v52219_*`, `ajustes_v52236_*`, `clientes_patch.js` (`CLI_PURE`), `notinha_patch.js` ✔ — **núcleo novo: `novo/selecao.js`, paridade provada caso a caso (`test_selecao.js`)** |
 | Módulos dinâmicos | listas criadas dentro do sistema | `app.js` (`modulosDinamicos`) ◻ |
 | Empacotamento | `.exe` (Electron), atualização do programa, cache, resiliência, bundle | `main.js`, `exe_*`, `build_*` ✔ |
 

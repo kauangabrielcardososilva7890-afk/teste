@@ -43,7 +43,7 @@ console.log('== A PONTE: telas de hoje + coração novo ==');
 console.log('-- 1) ligar numa base que já existe não perde nem inventa nada --');
 {
   const app = novoSistema();
-  app.criar('clientes', { nome: 'Ana', fone: '38999990000' });
+  app.criar('clientes', { nome: 'Ana', telefone: '38999990000' });
   app.criar('clientes', { nome: 'Bruno' });
   app.criar('produtos', { nome: 'Toner', preco: 100 });
   const r = app.ponte.primeiraVarredura();      // só leitura: conhece o que já existe
@@ -213,10 +213,10 @@ console.log('-- 10) as telas continuam vendo listas NORMAIS (nada de formato est
 {
   const app = novoSistema();
   app.ponte.primeiraVarredura();
-  app.criar('clientes', { nome: 'Ana', fone: '38999990000' });
+  app.criar('clientes', { nome: 'Ana', telefone: '38999990000' });
   app.salvar();
   ok('db.clientes continua uma lista', Array.isArray(app.db.clientes));
-  ok('com os campos da tela no lugar', app.db.clientes[0].nome === 'Ana' && app.db.clientes[0].fone === '38999990000');
+  ok('com os campos da tela no lugar', app.db.clientes[0].nome === 'Ana' && app.db.clientes[0].telefone === '38999990000');
   ok('dá para filtrar, achar e mapear como sempre', app.db.clientes.filter(c => c.nome === 'Ana').length === 1 && app.db.clientes.map(c => c.nome)[0] === 'Ana');
   ok('o resto do db (config, modulosDinamicos) fica intocado', app.db.config.empresa.nome === 'DIGICOPY' && typeof app.db.modulosDinamicos === 'object');
   ok('a ponte não mexe em listas que não são de registros', app.ponte.listas().indexOf('config') < 0);

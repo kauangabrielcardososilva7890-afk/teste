@@ -52,7 +52,7 @@ console.log('-- 1) cadastrar pelo modal do sistema --');
   ok('o modal do sistema abre (nada de prompt nativo)', !!doc.querySelector('[data-modal]'));
   ok('o primeiro campo já vem focado (digitar sem clicar)', doc.activeElement && doc.activeElement.getAttribute('data-campo') === 'nome');
   digitar('[data-campo="nome"]', 'Ana');
-  digitar('[data-campo="fone"]', '38999990000');
+  digitar('[data-campo="telefone"]', '38999990000');
   clicar('[data-modal-ok]');
   ok('o cadastro foi para o núcleo (1 registro)', nucleo.contar('clientes') === 1);
   ok('o modal fechou', !doc.querySelector('[data-modal]'));
@@ -63,11 +63,11 @@ console.log('-- 1) cadastrar pelo modal do sistema --');
 console.log('-- 2) erro de validação fica no modal, sem perder o digitado --');
 {
   abrirNovo();
-  digitar('[data-campo="fone"]', '38000000000');   // sem o nome (obrigatório)
+  digitar('[data-campo="telefone"]', '38000000000');   // sem o nome (obrigatório)
   clicar('[data-modal-ok]');
   ok('o modal CONTINUA aberto e mostra o motivo', !!doc.querySelector('[data-modal]') && /obrigatório/.test(doc.querySelector('[data-erro]').textContent));
   ok('nada foi gravado', nucleo.contar('clientes') === 1);
-  ok('o que já tinha sido digitado não se perde', doc.querySelector('[data-campo="fone"]').value === '38000000000');
+  ok('o que já tinha sido digitado não se perde', doc.querySelector('[data-campo="telefone"]').value === '38000000000');
   clicar('[data-modal-cancelar]');
   ok('cancelar fecha sem gravar', !doc.querySelector('[data-modal]') && nucleo.contar('clientes') === 1);
 }

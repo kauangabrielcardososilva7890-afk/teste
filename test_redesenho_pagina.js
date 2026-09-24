@@ -18,7 +18,7 @@ const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost
 const w = dom.window;
 
 // As três peças do núcleo entram na ordem da página; depois roda o script da página.
-['nucleo.js', 'ponte.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
+['nucleo.js', 'ponte.js', 'selecao.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
 const trecho = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 w.eval(trecho);
 const doc = w.document;
@@ -66,6 +66,55 @@ console.log('-- a ponte está ligada na página (mesmo mecanismo do sistema de h
   ok('a ponte existe e está no modo ligado', !!w.__ponte && w.__ponte.modo() === 'ligado');
   ok('a lista do "db" que a página usa continua uma lista comum', Array.isArray(w.__dbNovo.produtos));
   ok('a página não usa alert/confirm/prompt nativos', !/\b(alert|confirm|prompt)\s*\(/.test(trecho));
+}
+
+console.log('-- a BUSCA tem o campo "onde buscar" (igual ao sistema de hoje) --');
+{
+  // alguns clientes com caso difícil de propósito (acento, maiúscula, telefone, cidade)
+  w.__nucleoNovo.salvar('clientes', { id: 'cli-1', nome: 'José Ávila', telefone: '(38) 99999-1234', cidade: 'Montes Claros' });
+  w.__nucleoNovo.salvar('clientes', { id: 'cli-2', nome: 'Loja 480', telefone: '(11) 3232-4800', cidade: 'São Paulo' });
+  w.__nucleoNovo.salvar('clientes', { id: 'cli-3', nome: 'MARIA JOSE', telefone: '(38) 3232-1010', cidade: 'montes claros' });
+  const abrirClientes = () => {
+    [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'clientes')
+      .dispatchEvent(new w.Event('click', { bubbles: true }));
+    doc.querySelector('[data-aba="clientes"]').dispatchEvent(new w.Event('click', { bubbles: true }));
+    return doc.querySelectorAll('[data-linha]').length;
+  };
+  ok('a aba Clientes desenha os 3 clientes', abrirClientes() === 3);
+  const seletor = doc.querySelector('[data-campo-busca]');
+  ok('a barra de busca tem o campo de onde buscar', !!seletor);
+  ok('com os 16 campos do sistema de hoje, começando em "Pesquisar em tudo"',
+    seletor.options.length === 16 && seletor.options[0].textContent === 'Pesquisar em tudo');
+  const buscar = (termo) => {
+    const campo = doc.querySelector('[data-busca]');
+    campo.value = termo;
+    campo.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    return [...doc.querySelectorAll('[data-linha]')].map(tr => tr.textContent).join(' | ');
+  };
+  const porNome = buscar('jose');
+  ok('buscar "jose" acha "José Ávila" e "MARIA JOSE" (sem acento e sem maiúscula)',
+    /José Ávila/.test(porNome) && /MARIA JOSE/.test(porNome) && !/Loja 480/.test(porNome), porNome);
+  seletor.value = 'cidade';
+  seletor.dispatchEvent(new w.Event('change', { bubbles: true }));
+  const porCidade = buscar('montes');
+  ok('trocar para o campo "Cidade" busca SÓ na cidade', /José Ávila/.test(porCidade) && /MARIA JOSE/.test(porCidade) && !/Loja 480/.test(porCidade), porCidade);
+  seletor.value = 'telefone';
+  seletor.dispatchEvent(new w.Event('change', { bubbles: true }));
+  const porFone = buscar('3232');
+  ok('trocar para "Telefone" acha por número dentro do telefone', /Loja 480/.test(porFone) && /MARIA JOSE/.test(porFone) && !/José Ávila/.test(porFone), porFone);
+  seletor.value = 'todos';
+  seletor.dispatchEvent(new w.Event('change', { bubbles: true }));
+  const nada = buscar('zzzz');
+  ok('quando não acha, a lista fica vazia (sem inventar registro)', nada === '');
+  ok('e o rodapé diz em que campo ele filtrou', /filtrado por/.test(doc.querySelector('.nfx-rodape').textContent));
+  buscar('');
+  ok('limpar a busca mostra os 3 de novo', doc.querySelectorAll('[data-linha]').length === 3);
+  // Produtos: o campo de busca é a categoria
+  doc.querySelector('[data-aba="produtos"]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  const selProd = doc.querySelector('[data-campo-busca]');
+  ok('em Produtos o campo de busca é a categoria, começando em "Todas categorias"',
+    selProd.options.length === 13 && selProd.options[0].textContent === 'Todas categorias');
+  doc.querySelector('[data-aba="clientes"]').dispatchEvent(new w.Event('click', { bubbles: true }));
 }
 
 console.log('\nRESULTADO: ' + passou + ' verificações passaram — a página nova tem a cara do sistema e o coração novo.');
