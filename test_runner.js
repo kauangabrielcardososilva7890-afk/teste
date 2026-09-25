@@ -280,7 +280,12 @@ const tests=[
   // sozinhas (fora das telas ao vivo) + a carga segurava o programa até o fim do
   // histórico + a abertura agora lê a FOTO da nuvem (/v1/snapshot, motor 5.28.0)
   // em vez de recontar o diário (com motor antigo, o diário assume sozinho).
-  "test_dado_aparece_outro_pc.js"
+  "test_dado_aparece_outro_pc.js",
+  // v7.0.20 (rodada 32, ideia L) — "tem vários problemas, eu não consigo
+  // identificar": 1 clique monta o pacote (versão + tela + últimos erros, SEM
+  // segredo) e abre o popup de copiar. Mora no aviso de erro e no check-up
+  // (NÃO é botão de rodapé, por ordem dele).
+  "test_mandar_erro.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

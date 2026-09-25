@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 226 | sha256: baabe71acae990ec
+ * scripts: 227 | sha256: bb771d37a2eaa1b4
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -32704,6 +32704,7 @@ window.dcCheckupNuvem=async function(){
       '<button type="button" id="dc-ck-baixar" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">⬇️ Baixar tudo da nuvem de novo</button>'+
       '<button type="button" id="dc-ck-enviar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0a1e8a;font-weight:800;font-size:12.5px;cursor:pointer">⬆️ Enviar este PC inteiro</button>'+
       '<button type="button" id="dc-ck-copiar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:800;font-size:12.5px;cursor:pointer">📋 Copiar resumo</button>'+
+      '<button type="button" id="dc-ck-mandar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #0f766e;background:#fff;color:#0f766e;font-weight:800;font-size:12.5px;cursor:pointer">📤 Mandar o que quebrou</button>'+
     '</div>'+
     '<p style="font-size:11.5px;color:#64748b;margin:9px 0 0">“Baixar tudo de novo” só faz este PC ler o diário da nuvem desde o começo — o que já está mais novo aqui não é mexido, e a nuvem não é alterada.</p>'+
     '<pre id="dc-ck-resumo" style="display:none"></pre>';
@@ -32729,6 +32730,10 @@ window.dcCheckupNuvem=async function(){
     if(!ok) return;
     try{ recadinho('Enviando...'); await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud(); recadinho('Enviado. Os outros PCs recebem no próximo ciclo.'); }
     catch(e){ recadinho('Erro: '+(e.message||e),true); }
+  };
+  document.getElementById('dc-ck-mandar').onclick=function(){
+    if(typeof window.digicopyMandarErro==='function'){ try{ window.digicopyMandarErro(); }catch(e){ recadinho('Erro: '+(e.message||e),true); } }
+    else recadinho('Atualize o sistema para mandar o erro (botão novo).',true);
   };
   document.getElementById('dc-ck-copiar').onclick=function(){
     const pre=document.getElementById('dc-ck-resumo');
@@ -41787,12 +41792,18 @@ function avisarErroNaTela(){
       +'<p style="font-size:13px;color:#475569;margin:0 0 14px;line-height:1.5">Foi criado/atualizado um arquivo <b>erro.txt</b> falando sobre o erro. Mande esse arquivo ao técnico do sistema.</p>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
       +'<button id="aviso-erro-txt-abrir" style="height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">'+(ehDesktop?'Abrir o erro.txt':'Baixar o erro.txt')+'</button>'
+      +(typeof window.digicopyMandarErro==='function'?'<button id="aviso-erro-txt-mandar" style="height:42px;padding:0 18px;border-radius:10px;background:#0f766e;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">\uD83D\uDCE4 Mandar o que quebrou</button>':'')
       +'<button id="aviso-erro-txt-ok" style="height:42px;padding:0 22px;border-radius:10px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:13px;font-weight:800;cursor:pointer">OK</button>'
       +'</div></div>';
     document.body.appendChild(div);
     document.getElementById('aviso-erro-txt-abrir').onclick=function(){
       abrirOuBaixarErroTxt();  // mesma ação do botão do rodapé (uma só fonte)
       var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
+    var bm=document.getElementById('aviso-erro-txt-mandar');
+    if(bm) bm.onclick=function(){
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+      try{ window.digicopyMandarErro(); }catch(e){}
     };
     document.getElementById('aviso-erro-txt-ok').onclick=function(){
       var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
@@ -60928,15 +60939,81 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7015_nuvem_explica_patch.js", e); }
 ;
 
+/* ===== ajustes_v7020_mandar_erro_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// MANDAR O QUE QUEBROU — v7.0.20 (rodada 32, ideia L)
+// A DOR (dele): "tem vários problemas, eu não consigo identificar".
+// 1 clique monta o pacote (versão + tela + últimos erros, SEM segredo) e abre
+// o popup de copiar do sistema — ele cola no chat e a manutenção recebe a prova.
+// NÃO é botão de rodapé (o do rodapé não volta, por ordem dele): mora no aviso
+// de erro (na hora que quebra) e no check-up da nuvem (quando está estranho mas
+// não quebrou nada). Não envia nada sozinho, não toca na nuvem, não pede senha.
+// Lê a mesma lista do erro.txt (v52239) — zero mudança no que já existe.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if(typeof window==='undefined')return;
+  var CHAVE_ERROS='digicopy_erros_txt';   // mesma chave do erro.txt (v52239)
+  var QTD_LINHAS=15;
+  // segredo nunca viaja: chave=valor vira chave=***
+  var RE_BEARER_SOOLTO=/\bBearer\s+[A-Za-z0-9\-._~+/=]{4,}/g;
+  var RE_CHAVE_VALOR=/(senha|password|passwd|token|authorization|bearer|api[_-]?key|secret|client[_-]?secret)(\s*[:=]\s*)([^\s&;"']+)/gi;
+  function redigir(s){
+    return String(s==null?'':s).replace(RE_BEARER_SOOLTO,'Bearer ***').replace(RE_CHAVE_VALOR,'$1$2***');
+  }
+  function telaAtual(){
+    try{
+      var raiz=document.getElementById('modal-root');
+      if(raiz&&!raiz.classList.contains('hidden')&&window.modalContext&&window.modalContext.type)
+        return 'janela: '+window.modalContext.type;
+      var lista=document.querySelectorAll('section.view, div.view');
+      for(var i=0;i<lista.length;i++){
+        if(!lista[i].classList.contains('hidden')&&lista[i].id) return String(lista[i].id).replace(/^view-/,'');
+      }
+      var at=document.querySelector('[data-nav].bg-blue-50, [data-nav].active');
+      if(at&&at.getAttribute('data-nav')) return String(at.getAttribute('data-nav'));
+    }catch(e){}
+    return 'não sei';
+  }
+  function ultimosErros(){
+    try{
+      var bruto=JSON.parse((typeof localStorage!=='undefined'?localStorage.getItem(CHAVE_ERROS):null)||'[]');
+      if(!Array.isArray(bruto))return [];
+      return bruto.slice(-QTD_LINHAS);
+    }catch(e){return [];}
+  }
+  function montarPacote(){
+    var versao=(typeof window.DIGICOPY_APP_VERSION==='string')?window.DIGICOPY_APP_VERSION:'?';
+    var quando=''; try{ quando=new Date().toLocaleString('pt-BR'); }catch(e){ quando=new Date().toISOString(); }
+    var erros=ultimosErros();
+    var linhas=['DIGICOPY — o que quebrou (para mandar à manutenção)',
+      'app: v'+versao+' | tela: '+telaAtual()+' | quando: '+quando,
+      erros.length?('erros (últimos '+erros.length+'):'):'(nenhum erro registrado — está estranho mas não quebrou nada)'];
+    for(var i=0;i<erros.length;i++) linhas.push(redigir(erros[i]));
+    return linhas.join('\n');
+  }
+  window.digicopyMandarErro=function(){
+    var pacote=montarPacote();
+    try{
+      if(typeof window.mostrarTextoCopiar==='function') return window.mostrarTextoCopiar('Mandar o que quebrou — cole no chat da manutenção', pacote);
+    }catch(e){}
+    try{ if(typeof window.toast==='function') window.toast('Não deu para abrir o pacote. Tente de novo.','error'); }catch(e2){}
+    return null;
+  };
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7020_mandar_erro_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 226;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 227;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 226 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 227 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

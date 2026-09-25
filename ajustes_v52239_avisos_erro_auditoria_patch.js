@@ -379,12 +379,18 @@ function avisarErroNaTela(){
       +'<p style="font-size:13px;color:#475569;margin:0 0 14px;line-height:1.5">Foi criado/atualizado um arquivo <b>erro.txt</b> falando sobre o erro. Mande esse arquivo ao técnico do sistema.</p>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
       +'<button id="aviso-erro-txt-abrir" style="height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">'+(ehDesktop?'Abrir o erro.txt':'Baixar o erro.txt')+'</button>'
+      +(typeof window.digicopyMandarErro==='function'?'<button id="aviso-erro-txt-mandar" style="height:42px;padding:0 18px;border-radius:10px;background:#0f766e;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">\uD83D\uDCE4 Mandar o que quebrou</button>':'')
       +'<button id="aviso-erro-txt-ok" style="height:42px;padding:0 22px;border-radius:10px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:13px;font-weight:800;cursor:pointer">OK</button>'
       +'</div></div>';
     document.body.appendChild(div);
     document.getElementById('aviso-erro-txt-abrir').onclick=function(){
       abrirOuBaixarErroTxt();  // mesma ação do botão do rodapé (uma só fonte)
       var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
+    var bm=document.getElementById('aviso-erro-txt-mandar');
+    if(bm) bm.onclick=function(){
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+      try{ window.digicopyMandarErro(); }catch(e){}
     };
     document.getElementById('aviso-erro-txt-ok').onclick=function(){
       var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();

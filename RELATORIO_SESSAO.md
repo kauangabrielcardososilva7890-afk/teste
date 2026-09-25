@@ -7032,3 +7032,71 @@ site https://teste-60f.pages.dev e ZIP
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 Para o dono valer a velocidade: mergear o PR #31 + publicar o motor (duplo clique em
 `atualizar_motor_nuvem.cmd`) + conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.19`).
+
+## Rodada 32 — 25/09/2026 — "ANALISA TUDO, SÃO VÁRIOS PROBLEMAS" — VARREDURA GERAL + MANDAR O QUE QUEBROU (IDEIA L)
+
+### 1. Suas respostas (as 2 perguntas que eu fiz)
+
+1. **Usa o app no celular?** → ainda não; PC primeiro, celular depois, quando o PC estiver pronto.
+   Decisão registrada: o Android (parado na v6.1.10) NÃO é atualizado nem apagado agora — fica para
+   quando ele pedir. Nenhum teste novo o vigia por enquanto (de propósito).
+2. **Por onde começo?** → "tudo". Ordem: L agora (este conserto — é o que revela o resto com prova);
+   F (esperas cegas) em seguida; a r31 chegar nas mãos dele depende dele (merge do PR + publicar motor).
+
+### 2. A análise (varredura geral — o que eu olhei e o que achei)
+
+Olhei: 4 cliques sem função (todos em telas fósseis que nunca abrem — só limpeza, sem efeito para ele);
+10 tipos de janela (todos abrem com conteúdo); ponte do `.exe` (todos os canais têm resposta, inclusive
+o gerente); alertas nativos (todos embrulhados no popup do sistema); 14 telas (13 ao vivo + config de
+propósito); vigias de fundo (só 1 redesenha, com guarda); impressão (cadeia intacta); pausa (só em perda
+de autorização, com erro alto, e destrava sozinha); conflitos e recusas (sino/toast avisam); saúde da
+nuvem (freio nunca disparou, zero relatos hoje); motor no ar ainda 5.27.0 (5.28.0 aguarda ele).
+Achados de verdade: (1) Android na v6.1.10 sem teste nem script (parado — decisão acima); (2) 650+
+`catch` vazios (amostra de 18: guardas inofensivos — risco estrutural, sem defeito pontual provado);
+(3) 44 "esperas cegas" + 35 vigias (ideia F — candidato nº 1 para defeito que vem e vai na loja).
+O conserto desta rodada (ideia L, `ajustes_v7020_mandar_erro_patch.js`): `digicopyMandarErro()` lê a
+mesma lista do erro.txt (últimos 15), junta versão + tela + hora, redige segredos (`senha/token/Bearer`
+e chaves viram `***`) e abre o popup de copiar do sistema. Botão no aviso de erro (v52239, com guarda:
+sem o patch, o aviso é o de sempre) e no check-up (v5227, `dc-ck-mandar`). Sem erro nenhum, o pacote
+diz isso e leva tela + versão (serve para o "está estranho").
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Botões mortos (4 nomes sem definição — todos em templates substituídos, nunca renderizam); janela
+  vazia (10/10 tipos tratados, 10/10 conteúdos existem); canal do `.exe` sem resposta (todos têm);
+  tela sem auto-atualizar (mapa completo na r31); redesenho em loop (1, com guarda); log sem teto
+  (500); impressão quebrada (embrulhos com guarda); pausa silenciosa (só com erro alto); conflito
+  mudo (sino avisa); `saveDB` que estoura (assíncrono — os `try` ao redor são inofensivos).
+- Envio automático do pacote para a nuvem (precisaria de motor novo + conversa de privacidade — o
+  copiar-e-colar resolve sem nada disso); botão no rodapé (ordem dele, travada em teste).
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- O pacote mostra os erros REGISTRADOS — falha engolida por `catch` vazio continua invisível (é o
+  que a ideia F + o uso do botão vão revelar aos poucos, com prova de cada caso).
+- Ele precisa COPIAR e COLAR no chat — nada chega sozinho (de propósito: sem motor novo, sem dado
+  saindo sem ele ver).
+- A tela detectada é a da frente na hora do clique ("não sei" se não der para saber) — melhor esforço,
+  nunca trava o pacote.
+
+### 5. Provas
+
+`test_mandar_erro.js` **21 ✓** (patch no bundle depois do popup/erro.txt + sem rodapé; pacote com
+versão/tela/últimos 15 no popup de verdade; `token=`/`senha=`/Bearer redigidos; sem-erro leva tela +
+versão; botão no aviso com e sem o patch; fio do check-up) — **falha sem o conserto** (`✘ o patch
+existe`) e pegou 2 defeitos meus no caminho (Bearer com espaço vazava; teste prendia a palavra no
+comentário). Suíte inteira **224 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 227 scripts,
+sha256 bb771d37a2eaa1b4` · `Sync OK` · celular `www` sincronizado · mapa de camadas regerado
+(`npm run mapa`) + 7 âncoras de cauda do manifesto reancoradas (+1, ritual documentado desde a v5.22.93).
+**App 7.0.20 · motor da nuvem 5.28.0** (motor sem mudança — segue valendo publicar o 5.28.0 da r31).
+Checklist de 24 perguntas respondido antes de programar.
+
+### 6. Nota de branch (para o próximo chat)
+
+`package.json` ainda diz `branch: arena/01a0cf4a-teste` (teste prende). Trabalho commitado e empurrado
+na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto. PR #31 atualizado com a r32 (comentário).
+Links desta rodada: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono: mergear o PR #31 + publicar o motor (duplo clique em `atualizar_motor_nuvem.cmd`) +
+conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.20`). Próximo da fila ("tudo"): ideia F
+(esperas cegas) — blocos com teste comparando antes/depois.
