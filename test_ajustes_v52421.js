@@ -77,9 +77,10 @@ ok(bundle.includes('__orcUltimaLista'), 'bundle: resgate presente');
 ok(bundle.includes('finAplicarFiltroV52421'), 'bundle: financeiro novo presente');
 ok(bundle.includes('cli-btn-remover-filtro'), 'bundle: clientes novo presente');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('__orcUltimaLista'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: versão 5.24.34');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.34<'), 'index: rodapé v5.24.34');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.34"'), 'package.json 5.24.34');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: versão v' + pkg.version);
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(/"version": "\d+\.\d+\.\d+"/.test(fs.readFileSync('package.json', 'utf8')), 'package.json com versão válida (v' + pkg.version + ')');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 pacote 1 (P1 resgate orçamento, P2, P3, P4, P9, P10, P11).');
+console.log('\nTudo OK — v' + pkg.version + ' pacote 1 (P1 resgate orçamento, P2, P3, P4, P9, P10, P11).');

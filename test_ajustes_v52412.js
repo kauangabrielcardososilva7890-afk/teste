@@ -43,14 +43,16 @@ ok(mBundle.includes('const iaDesligar'), 'bundle do CELULAR contém a isenção'
 
 // Carimbos de versão (rodapé = prova que ele exige em cada teste).
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: DIGICOPY_APP_VERSION 5.24.34');
-ok(idx.includes('>v5.24.34<'), 'index: rodapé v5.24.34');
-ok(idx.includes('app.bundle.js?v=5.24.34'), 'index: cache-bust do bundle v5.24.34');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok(idx.includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: DIGICOPY_APP_VERSION v' + pkg.version);
+ok(idx.includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(idx.includes('app.bundle.js?v=' + pkg.version), 'index: cache-bust do bundle v' + pkg.version);
 ok(!idx.includes('5.24.11'), 'index: nenhum carimbo velho sobrou');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
-ok(mob.includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'mobile: DIGICOPY_APP_VERSION 5.24.34');
+ok(mob.includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'mobile: DIGICOPY_APP_VERSION v' + pkg.version);
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
-ok(worker.includes("'5.24.34'"), 'worker carimbado 5.24.34');
+const vW = (worker.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
+ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').includes('Worker ' + vW), 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 (Imprimir na faturada destravado).');
+console.log('\nTudo OK — v' + pkg.version + ' (Imprimir na faturada destravado).');

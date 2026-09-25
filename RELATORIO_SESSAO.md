@@ -7170,3 +7170,85 @@ https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/are
 Para o dono: mergear o PR #31 + publicar o motor (duplo clique em `atualizar_motor_nuvem.cmd`) +
 conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.20`). Próximo da fila ("tudo"): ideia E
 (portão único de escrita) — gradual, com teste antes/depois; ideia F segue depois.
+
+## Rodada 34 — 25/09/2026 — MOTOR 5.28.0 PUBLICADO POR ELE + TAREFAS 1–2 DA AUDITORIA EXTERNA (20 ÓRFÃOS + BRANCH) — APP v7.0.21
+
+### 1. O pedido (prompt externo colado por ele + motor no ar)
+
+1. Ele publicou o motor com o `.cmd`: `/health` confirmado AQUI DE FORA em `versao 5.28.0`
+   (API 0.4.9, freio pago, campo `saude` nascido). Motor: pronto, sem republicar nesta rodada.
+2. Ele colou o diagnóstico externo (outra IA, zip da sessão) com prompt de 3 tarefas. Ordem feita:
+   tarefa 1 (20 órfãos) + tarefa 2 (branch) nesta rodada; tarefa 3 = ideia E (já autorizada no "tudo"
+   da r33) começa na próxima — os 20 arquivos + o bump deram a rodada cheia.
+
+### 2. O que foi feito
+
+**Tarefa 1 — 20 órfãos reparados e registrados (0 órfãos, nada apagado).** Rodei os 20 e cataloguei
+6 categorias de falha (NÃO era "só o bloco integridade" — ver §3 das divergências): (a) literais de
+versão do app (19 arquivos → checagem viva contra `pkg.version` em runtime; `pkg.version === literal`
+virou checagem de formato x.y.z); (b) carimbo do worker (12 arquivos → consistência src×motor colado,
+SEM comparar com `pkg.version` — numerações independentes, como o prompt exigiu); (c) manifest/header
+(v5240: posição virou `includes` + ordem relativa v5240<v5243; v5240+v5243: 196 virou nº lido do header
+do bundle); (d) freio/teto (v5245 `LIMITE_ESCRITA_DIA` → estrutural `freioDecide`+ponto único; números
+seguem só no farol; v52418 `tetoEscritas: 100000` → plano pago ativo); (e) cópias (v5243 Backup →
+mensagem atual do período; v52419 ficha → frase v7.0.15 do freio preventivo, verbo por verbo);
+(f) tamanho (v52413 ratchet 3,1 MB → teto de 6 MB). **v5184** (o único que quebrava de verdade):
+o patch v5184 virou fóssil (IIFE de 64 linhas que não exporta nada — ver §3); o teste agora avalia o
+definidor vivo (`ajustes_v5189_patch.js`, último no manifest) e prende os 9 asserts de layout lado a
+lado (cobertura única — irmãos v5186/87/89 só cobrem mesclagem de dados). Mensagens finais `v5.24.34`
+viraram runtime; carimbos históricos em comentário, intactos. Registro: +20 no runner.
+
+**Tarefa 2 — branch era resíduo SIM (prova), corrigida em 7 lugares + app v7.0.21.** Provas:
+`arena/01a0cf4a-teste` congelada na r29 (58 arquivos/2868 linhas atrás); mensagem da trava diz "é a da
+sessão"; `sync_build` avisava a divergência; `npm run links` imprimia ZIP velho. Trocas: `package.json`
+(campo), `test_reclamacoes_do_dono.js` (trava — mensagem continua válida), `PASSO_A_PASSO...` (6 pontos:
+título, carimbo, INSTRUÇÃO de trocar o Pages, preview-URL, rodapé), `BUILD_EXE.md` (2 ZIPs),
+`cloudflare-worker/README.md` (production branch — ver §4), 3 patches (githack → branch atual; v52254
+é `PAGINA_FALLBACK` nomeado; invariante do v52263 preservado). Consequência: bundle regerado
+(`npm run bundle` + `npm run sync` + `mobile/sync-www.js` mecânico) + bump ritual para **v7.0.21**
+(`mudar_versao` + 4 guias 7.0.20→7.0.21). Motor e worker: intocados.
+
+### 3. Onde a auditoria externa errou ou não viu (regra 1: com prova, antes de agir)
+
+- "Todos os 20 falham no MESMO bloco integridade": só 8 têm o bloco; v5184 quebrava no harness
+  (TypeError, alvo fóssil) e v52413/418/419/243/245 tinham falha de comportamento/cópia/tamanho junto.
+  O conserto cobriu as 6 categorias, não só versão.
+- Ela não viu o acoplamento: trocar o campo branch QUEBRA o `test_ajustes_v52263.js` (guarda que amarra
+  githack dos patches à branch) → a tarefa 2 exigiu os 3 patches + regen + bump (v7.0.21), não só o campo.
+- Githack × Pages (origem confirmada): v52240 pôs Pages por cima (`digicopy-orcament.pages.dev`),
+  v52249/v52254 mantêm githack (fallback nomeado no v52254). Repo privado = githack não serve nada na
+  prática; a troca de branch nele tem efeito zero em produção e preserva o invariante. REMOVER o githack
+  e inverter a guarda (proibir em vez de amarrar) é decisão de produto — pergunta dele na próxima rodada.
+- Acertos dela que confirmo: freio pago, snapshot/watch chamados de verdade, suite 217/0/9, bundle
+  `bb771d37`, 0 arquivos de produção mortos, risco estrutural SÓ NUVEM × queda de luz (escolha, não bug).
+
+### 4. Honestidade: o que este conserto NÃO cobre
+
+- Teto de 6 MB do bundle (v52413) é juízo meu (folga ~50% sobre 3,9 MB; pega duplicação acidental,
+  não trava feature) — número revisável, não medido.
+- `ajustes_v5184_patch.js` (fóssil morto com prova: IIFE sem export, só console.log) CONTINUA no bundle
+  — removê-lo é poda de produto (ideia B fase 2 / ideia E), fora da tarefa 1.
+- Production branch do Cloudflare (README) atualizada no papel; o painel dele ainda aponta a sessão
+  antiga — como ele publica pelo `.cmd` (funciona), não é urgente (passo opcional no §6).
+- Ideia E (portão de escrita) NÃO começou — próxima rodada. Fóssil `mobile/android` intocado (pausado).
+
+### 5. Provas
+
+20 órfãos verdes individualmente (8 F `Tudo certo v7.0.20!`→v7.0.21 após bump; 11 X `Tudo OK`;
+v5184 9/9) + suíte **237 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK · `sync:check` OK
+(`v7.0.21 | 227 no bundle | 0 soltos`, sem aviso de branch) · `npm run links` com ZIP da sessão ·
+`auditar_mortos`: 0 órfãos · D-trava verde (troca de string não cria global). 3 falhas no caminho
+(v6105/v6106/reclamacoes — guias presos na 7.0.20), consertadas antes de fechar. Checklist de 24
+respondido antes de programar (ponto principal: regra 4 não exigiu pergunta — invariantes testados
+decidiram; a pergunta githack/Pages vai na próxima).
+REGRA 45 (guardar_repo): não usado — fluxo da sessão (commit+push na branch + PR) cumpre o propósito
+(nada só no sandbox); `guardar_repo` empurra para fora da branch da sessão (tentado no passado, não serve aqui).
+
+### 6. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31 atualizado com a
+r34 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono (passo a passo no chat): mergear o PR #31 + conferir o rodapé (**v7.0.21** agora) +
+(opcional) trocar a Production branch no painel da Cloudflare. Motor: nada a fazer (5.28.0 no ar).
+Próximo: ideia E bloco 1 (portão de escrita, gradual, antes/depois) + pergunta githack/Pages.

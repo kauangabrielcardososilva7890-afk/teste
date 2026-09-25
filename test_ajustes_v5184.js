@@ -1,3 +1,11 @@
+// test_ajustes_v5184.js — PDF do chamado lado a lado (item 3 da v5.18.4).
+// O QUE ESTE TESTE PRENDE: a FUNÇÃO "lado a lado" (caixas Dados do Cliente +
+// Dados de Atendimento em grid 1fr 1fr), não o arquivo onde ela nasceu.
+// Por que ele avalia o v5189 e não o v5184: o arquivo `ajustes_v5184_patch.js`
+// virou fóssil (IIFE que não exporta nada — ver RELATORIO_SESSAO.md r34); o
+// `window.imprimirChamadoPDF` que vale hoje é o do `ajustes_v5189_patch.js`
+// (último definidor no manifest; v5186 definiu a base, v5187 embrulhou, v5189
+// redefiniu com o layout). Reparado na r34 (tarefa 1 da auditoria externa).
 const fs = require('fs');
 
 function ok(name, cond){
@@ -5,7 +13,7 @@ function ok(name, cond){
   console.log('  ✔ ' + name);
 }
 
-const code = fs.readFileSync('ajustes_v5184_patch.js', 'utf8');
+const code = fs.readFileSync('ajustes_v5189_patch.js', 'utf8');
 
 let writtenHtml = '';
 const documentMock = {
@@ -16,6 +24,7 @@ const windowMock = {
   DIGICOPY_LOGO: './logo.png',
   fmtMoney: (v) => 'R$ ' + Number(v).toFixed(2).replace('.', ','),
   getSession: () => ({ empresaId: 'e1', usuarioNome: 'Técnico' }),
+  addEventListener: () => {}, // o patch registra validação de clique ao carregar
   open: () => ({ document: { write: (h) => { writtenHtml = h; }, close: () => {} } })
 };
 const db = {

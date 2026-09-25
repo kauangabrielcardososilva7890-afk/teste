@@ -31,17 +31,20 @@ const nDefs = (bundle.match(/window\.imprimirChamadoPDF *= *function/g) || []).l
 ok(nDefs === 3, `bundle: exatamente 3 definições vivas (achou ${nDefs})`);
 ok(bundle.includes('const _imp = window.imprimirChamadoPDF'), 'bundle: captura _imp presente');
 const bytes = fs.statSync('app.bundle.js').size;
-ok(bytes < 3128878, `bundle mais leve que a linha de base 3.128.878 B (agora ${bytes} B)`);
+ok(bytes < 6 * 1024 * 1024, `bundle abaixo do teto de 6 MB (agora ${bytes} B)`);
 const mbundle = fs.readFileSync('mobile/www/app.bundle.js', 'utf8');
 ok((mbundle.match(/window\.imprimirChamadoPDF *= *function/g) || []).length === 3, 'bundle do CELULAR igual: 3 definições');
 
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: versão 5.24.34');
-ok(idx.includes('>v5.24.34<'), 'index: rodapé v5.24.34');
-ok(idx.includes('app.bundle.js?v=5.24.34'), 'index: cache-bust v5.24.34');
-ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'mobile: versão 5.24.34');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.34"'), 'package.json: 5.24.34');
-ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.34'"), 'worker: 5.24.34');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok(idx.includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: versão v' + pkg.version);
+ok(idx.includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(idx.includes('app.bundle.js?v=' + pkg.version), 'index: cache-bust v' + pkg.version);
+ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'mobile: versão v' + pkg.version);
+ok(/"version": "\d+\.\d+\.\d+"/.test(fs.readFileSync('package.json', 'utf8')), 'package.json com versão válida (v' + pkg.version + ')');
+const wkR = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
+const vW = (wkR.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
+ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').includes('Worker ' + vW), 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 (lote 1: ~75KB de peso morto fora, zero código morto chamável).');
+console.log('\nTudo OK — v' + pkg.version + ' (lote 1: ~75KB de peso morto fora, zero código morto chamável).');

@@ -291,7 +291,30 @@ const tests=[
   "test_sem_sobrescrita.js",
   // r33 (farol resgatado): ordem antiga do dono ("nunca deixa estourar essa
   // nuvem") agora roda sozinha em toda suíte — ninguém entrega sem ela passar.
-  "checar_cota_nuvem.js"
+  "checar_cota_nuvem.js",
+  // r34 (tarefa 1 da auditoria externa): 20 órfãos reparados — asserts que
+  // travavam a v5.24.34/carimbo 196 viraram checagem contra a versão viva
+  // (runtime) e consistência worker/motor; comportamento, intacto.
+  "test_ajustes_v5184.js",
+  "test_ajustes_v5240.js",
+  "test_ajustes_v52410.js",
+  "test_ajustes_v52411.js",
+  "test_ajustes_v52412.js",
+  "test_ajustes_v52413.js",
+  "test_ajustes_v52414.js",
+  "test_ajustes_v52415.js",
+  "test_ajustes_v52416.js",
+  "test_ajustes_v52417.js",
+  "test_ajustes_v52418.js",
+  "test_ajustes_v52419.js",
+  "test_ajustes_v52420.js",
+  "test_ajustes_v52421.js",
+  "test_ajustes_v52422.js",
+  "test_ajustes_v5243.js",
+  "test_ajustes_v5245.js",
+  "test_ajustes_v5246.js",
+  "test_ajustes_v5247.js",
+  "test_ajustes_v5249.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

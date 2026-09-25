@@ -17,6 +17,7 @@ function ok(cond, msg) {
 // quem precisar chamar. O que este teste garante agora é isso: botão fora do
 // rodapé, motor de pé.
 const idx = fs.readFileSync('index.html', 'utf8');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 ok(!idx.includes('digicopyAbrirOuBaixarErroTxt()'), 'index: rodapé NÃO tem mais o botão erro.txt (ordem de 23/09)');
 ok(!idx.includes('<i class="ph ph-file-text"></i> erro.txt'), 'index: o rótulo erro.txt saiu do rodapé');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
@@ -33,7 +34,7 @@ ok((av.match(/abrirOuBaixarErroTxt\(\); *\/\/ mesma ação/) || av.includes('// 
 
 // (B) destrava do teto interno — Workers Paid $5 confirmado.
 const wk = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
-ok(!/tetoEscritas: 100000/.test(wk), 'worker: teto velho de escritas fora');
+ok(wk.includes('const PLANO = PLANO_PAGO;'), 'worker: plano pago ativo no ponto único');
 ok(wk.includes('tetoEscritas: 50000000'), 'worker: escritas = 50 milhões/mês (plano pago)');
 ok(wk.includes('tetoLeituras: 25000000000'), 'worker: leituras = 25 BILHÕES/mês (adeus 4.947.140/5.000.000)');
 ok(wk.includes('ASSINATURA PAGA CONFIRMADA'), 'worker: comentário registra a virada confirmada por ele');
@@ -41,11 +42,12 @@ ok(wk.includes('ASSINATURA PAGA CONFIRMADA'), 'worker: comentário registra a vi
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('digicopyAbrirOuBaixarErroTxt'), 'bundle: ação pública presente');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('digicopyAbrirOuBaixarErroTxt'), 'bundle do CELULAR igual');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: versão 5.24.34');
-ok(idx.includes('>v5.24.34<'), 'index: rodapé v5.24.34');
-ok(idx.includes('app.bundle.js?v=5.24.34'), 'index: cache-bust v5.24.34');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.34"'), 'package.json 5.24.34');
-ok(wk.includes("'5.24.34'"), 'worker carimbado 5.24.34');
+ok(idx.includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: versão v' + pkg.version);
+ok(idx.includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(idx.includes('app.bundle.js?v=' + pkg.version), 'index: cache-bust v' + pkg.version);
+ok(/"version": "\d+\.\d+\.\d+"/.test(fs.readFileSync('package.json', 'utf8')), 'package.json com versão válida (v' + pkg.version + ')');
+const vW = (wk.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
+ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').includes('Worker ' + vW), 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 (botão erro.txt no rodapé + teto do plano pago destravado).');
+console.log('\nTudo OK — v' + pkg.version + ' (botão erro.txt no rodapé + teto do plano pago destravado).');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Passo a passo — Worker e Site de teste · Digicopy · branch arena/01a0cf4a-teste</title>
+<title>Passo a passo — Worker e Site de teste · Digicopy · branch arena/01a0d9c3-teste</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -33,7 +33,7 @@
 
 <header>
   <h1>Passo a passo — publicar o Worker e trocar a branch do site de teste</h1>
-  <p>Sistema Digicopy · branch desta sessão: <code>arena/01a0cf4a-teste</code> · app v7.0.20 · worker do repositório: API 0.4.9 / Worker 5.28.0 · 24/09/2026</p>
+  <p>Sistema Digicopy · branch desta sessão: <code>arena/01a0d9c3-teste</code> · app v7.0.21 · worker do repositório: API 0.4.9 / Worker 5.28.0 · 24/09/2026</p>
 </header>
 
 <div class="caixa">
@@ -68,7 +68,7 @@
     </ul>
   </li>
   <li>Em <b>Branch control</b>, troque a <b>Production branch</b> (branch de produção) para:
-    <br><code>arena/01a0cf4a-teste</code> &nbsp;→ clique em <b>Save</b>.</li>
+    <br><code>arena/01a0d9c3-teste</code> &nbsp;→ clique em <b>Save</b>.</li>
   <li>Vá na aba <b>Deployments</b> e clique em <b>Retry deployment</b> (ou aguarde: o push que já foi feito nesta branch dispara uma build nova em segundos).</li>
   <li><b>Conferir:</b> abra no navegador
     <br><code>https://digicopy-sync-api.digicopyonline.workers.dev/health</code>
@@ -126,30 +126,30 @@
 <ol>
   <li>Na mesma tela <b>Workers &amp; Pages</b>, clique no projeto <b><code>teste-60f</code></b>.</li>
   <li>Abra <b>Settings</b> → <b>Builds &amp; deployments</b> → <b>Production branch</b>.</li>
-  <li>Troque para <code>arena/01a0cf4a-teste</code> → <b>Save</b>.</li>
+  <li>Troque para <code>arena/01a0d9c3-teste</code> → <b>Save</b>.</li>
   <li>Confira que a configuração de build segue: <b>Framework</b> = <i>Nenhum</i>,
       <b>Build command</b> = <i>vazio</i>, <b>Output directory</b> = <code>/</code>
       (o repositório é estático puro — não tem passo de build).</li>
   <li>Vá em <b>Deployments</b> → <b>Retry deployment</b> (ou aguarde o push desta branch disparar um novo).</li>
   <li><b>Conferir:</b> abra <code>https://teste-60f.pages.dev</code>, dê <b>Ctrl+F5</b> e olhe o
-      <b>rodapé</b>: tem que mostrar <b>v7.0.20</b>.</li>
+      <b>rodapé</b>: tem que mostrar <b>v7.0.21</b>.</li>
 </ol>
 
 <div class="caixa">
   <b>Alternativa sem mexer no painel:</b> o alias de preview da branch costuma responder em
-  <code>https://arena-01a0cf4a-teste.teste-60f.pages.dev</code> — mas aí você volta a ter dois
+  <code>https://arena-01a0d9c3-teste.teste-60f.pages.dev</code> — mas aí você volta a ter dois
   links diferentes. A troca da Production branch mantém <b>um link só</b>, que é a regra do projeto.
 </div>
 
 <h2>Parte 3 — Depois que você trocar</h2>
 <ul>
   <li>Me avise “troquei”: eu passo a tratar o push nesta branch como <b>publicação</b> (worker e site).</li>
-  <li>Se o <code>/health</code> mostrar 5.28.0 e o rodapé mostar v7.0.20, o cadeado está fechado: site e nuvem desta sessão no ar.</li>
+  <li>Se o <code>/health</code> mostrar 5.28.0 e o rodapé mostar v7.0.21, o cadeado está fechado: site e nuvem desta sessão no ar.</li>
   <li>Qualquer tela estranha: <b>Ctrl+F5</b> antes de tudo (o Pages serve versão em cache).</li>
 </ul>
 
 <footer>
-  Guia do responsável · Sistema Digicopy v7.0.20 · branch <code>arena/01a0cf4a-teste</code> ·
+  Guia do responsável · Sistema Digicopy v7.0.21 · branch <code>arena/01a0d9c3-teste</code> ·
   link de teste: <b>https://teste-60f.pages.dev</b> · saúde da nuvem:
   <b>https://digicopy-sync-api.digicopyonline.workers.dev/health</b><br>
   Nunca coloque token, senha, CSC ou certificado neste guia, no chat ou no repositório.
