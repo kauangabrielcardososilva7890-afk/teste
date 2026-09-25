@@ -7341,3 +7341,48 @@ Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. 
 atualizado com a r36 (comentário). Links: site https://teste-60f.pages.dev e ZIP
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 Próximo: ideia E bloco 2 (primeira leva da migração dos 254, com teste antes/depois).
+
+## Rodada 37 — 25/09/2026 — "DELETA OS DADOS DA NUVEM" — CAMINHO PRONTO E CONFERIDO (O CLIQUE É DELE, SÓ O PC ADMIN TEM A CHAVE)
+
+### 1. Pedido
+
+Dono autorizou ("pode deletar") + mandou continuar. Limite honesto: o reset exige o token do
+aparelho admin (só existe no PC dele) — não há credencial no sandbox, nem deve haver. O que
+eu fiz: conferi o caminho inteiro no código, travei a segurança com teste novo e deixei o
+passo a passo de 1 minuto.
+
+### 2. O que foi conferido (código lido, não chute)
+
+- Motor `POST /v1/admin/reset-cloud` (`handleResetCloud`): exige confirmação `APAGAR NUVEM` +
+só 1 aparelho ativo; ANTES de apagar, guarda foto completa em "Backup seguranca/Backup antes
+de zerar a nuvem <data>.json" — se o backup falhar, NÃO apaga. Apaga: records, changes,
+enrollment_codes, resumo. Mantém: aparelhos, segurança, backups, sessões (sem risco de lockout).
+- App (`resetCloudOnly`): salva snapshot local `antes_zerar_nuvem` no IndexedDB, zera o estado,
+pausa e mostra a escolha ("Enviar os dados deste PC" republica por id, sem duplicar).
+- Botão `#dc-reset-cloud` na tela Nuvem (área admin): 2 confirmações; mesma tela lista e
+bloqueia os outros aparelhos (pré-requisito do reset).
+- ANTES (conferido de fora): `/health` → motor 5.28.0, D1 ok, freio pago sem disparo.
+
+### 3. Teste novo + provas
+
+- `test_ajustes_v52296.js`: assert "foto de segurança antes do apagar (ordem garantida no
+motor)" — VERDE. Suíte **238 passaram, 0 falharam, 9 jsdom-skip**. Sem bump (só teste+doc;
+app continua v7.0.23).
+
+### 4. Passo a passo para o dono (no PC administrador, com o sistema aberto)
+
+1. Abrir a tela **Nuvem** (menu, usuário admin).
+2. Na área **Administração**: listar aparelhos e **bloquear os outros** (só este fica ativo).
+3. Clicar **zerar/apagar a nuvem**, confirmar 2 vezes. A nuvem esvazia (foto de segurança
+guardada sozinha na pasta "Backup seguranca").
+4. Na escolha seguinte: **"Enviar os dados deste PC para a nuvem"** (sobe tudo de novo, sem
+duplicar) — ou "Não enviar", se quiser a nuvem vazia mesmo.
+5. Conferir: os números da Nuvem zeram (ou sobem de novo após o envio).
+
+### 5. Nota de branch (para o próximo chat)
+
+Commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31 atualizado com
+a r37 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+DEPOIS do clique dele: conferir `/health` (saude zerada) e seguir ideia E bloco 2 (já em
+andamento na r38 desta mesma sessão).

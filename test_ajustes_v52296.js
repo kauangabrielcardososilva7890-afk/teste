@@ -164,5 +164,13 @@ ok(patch.indexOf('function escDiag(') >= 0 && patch.indexOf('escDiag(d.motivo)')
    patch.indexOf('+ escDiag((e && e.message) || e)') >= 0,
    'diagnóstico: texto da nuvem entra escapado no HTML (sem injeção)');
 
+// r37 (pedido do dono: zerar a nuvem) — o motor guarda a foto de segurança
+// ANTES de apagar: se o backup falhar, o reset não acontece.
+const iniReset = worker.indexOf('async function handleResetCloud');
+const blocoReset = worker.slice(iniReset, worker.indexOf('async function ', iniReset + 10));
+ok(iniReset >= 0 && blocoReset.indexOf('Backup antes de zerar a nuvem') >= 0 &&
+   blocoReset.indexOf('Backup antes de zerar a nuvem') < blocoReset.indexOf('DELETE FROM records'),
+   'zerar a nuvem: foto de segurança antes do apagar (ordem garantida no motor)');
+
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
 console.log('\nTudo certo v5.23.8!');
