@@ -267,7 +267,14 @@ const tests=[
   // v5.27.0 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"
-  "test_worker_publico.js"
+  "test_worker_publico.js",
+  // v7.0.18 (rodada 30) — "cadastra a impressora no contrato e ela some quando fecha
+  // e abre": a fila pendente subia depois de reabrir e a nuvem confirmava, mas a
+  // confirmação não colocava o registro na base (o eco é pulado pelo guarda de versão)
+  // — ficava na nuvem e invisível no PC até a próxima reabertura. E a recusa da nuvem
+  // (result.error) era descartada em silêncio. Este teste reprova se o confirmado não
+  // aparecer na tela e se a recusa não avisar (toast + sino + saúde).
+  "test_impressora_nao_some_reabrir.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

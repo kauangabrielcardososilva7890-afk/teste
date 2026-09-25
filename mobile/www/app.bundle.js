@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 226 | sha256: bd50bd1865033995
+ * scripts: 226 | sha256: b639e066f343b848
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -30040,6 +30040,42 @@ function rememberConflict(item,result){
     localStorage.setItem(CONFLICT_KEY,JSON.stringify(list.slice(0,20)));
   }catch(e){}
 }
+// v7.0.18 — O QUE A NUVEM CONFIRMOU TEM DE ESTAR NA BASE (defeito provado)
+// O caso: ele gravou e o programa fechou antes de subir (faltou luz, travou,
+// fechou sem internet, ou a fila estava grande e a gravação não coube no envio
+// de despedida). Ao reabrir no modo SÓ NUVEM a base começa vazia, a fila pendente
+// SOBE e a nuvem confirma — mas a confirmação só atualizava o livro-caixa e
+// consumia a fila, sem colocar o registro na base. O eco da nuvem é pulado pelo
+// guarda de versão ("já conheço esta versão") e o registro ficava na nuvem, mas
+// INVISÍVEL neste PC até a próxima reabertura: o "sumiu ao fechar e abrir".
+// O conserto: ao confirmar um upsert, se o registro NÃO está na base, ele entra
+// com os dados que acabaram de subir. NUNCA sobrescreve o que está na tela: uma
+// edição mais nova pode estar esperando a vez — ela sobe no próximo ciclo.
+function materializarConfirmado(item){
+  try{
+    const mut=item&&item.mutation;
+    if(!mut||mut.operation!=='upsert'||!mut.data||typeof db==='undefined'||!db)return;
+    const mode=(definicoes()[mut.entity])||(mut.entity&&!NAO_SINCRONIZA.has(mut.entity)?'array':null);
+    if(!mode)return;
+    let mudou=false;
+    if(mode==='array'){
+      if(!Array.isArray(db[mut.entity]))db[mut.entity]=[];
+      if(posicaoNaLista(mut.entity,mut.recordId)<0){db[mut.entity].push(mut.data);mudou=true;}
+    }else if(mode==='map'){
+      if(!db[mut.entity]||typeof db[mut.entity]!=='object')db[mut.entity]={};
+      if(!Object.prototype.hasOwnProperty.call(db[mut.entity],mut.recordId)&&mut.data&&Object.prototype.hasOwnProperty.call(mut.data,'value')){db[mut.entity][mut.recordId]=mut.data.value;mudou=true;}
+    }else if(mode==='root'){
+      if(typeof db[mut.entity]==='undefined'){db[mut.entity]=mut.data;mudou=true;}
+    }else if(mode==='contador'){
+      if(mut.data&&typeof mut.data==='object'){
+        if(!db[mut.entity]||typeof db[mut.entity]!=='object')db[mut.entity]={};
+        const alvo=db[mut.entity];
+        for(const nome of Object.keys(mut.data)){const nv=Number(mut.data[nome])||0,aq=Number(alvo[nome])||0;if(nv>aq){alvo[nome]=nv;mudou=true;}}
+      }
+    }
+    if(mudou)marcarEstado();
+  }catch(e){/* materializar nunca pode atrapalhar a fila */ }
+}
 // Tamanho do lote em uso. Cai pela metade quando a nuvem reclama e volta a
 // crescer sozinho quando ela aceita — o PC nunca fica travado nem afoga o D1.
 let lote=PUSH_BATCH;
@@ -30071,6 +30107,7 @@ async function pushOutbox(){
     for(const result of (response.results||[])){
       const item=batch[result.index];if(!item)continue;
       if(result.ok){
+        if(item.mutation&&item.mutation.operation!=='delete')materializarConfirmado(item);   // v7.0.18: confirmado tem de aparecer
         state.versions[item.key]=Number(result.version)||state.versions[item.key]||0;
         if(item.mutation.operation==='delete'){delete state.known[item.key];delete state.hashes[item.key];limparMarcaDeExclusao(item.key);}
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
@@ -30094,6 +30131,18 @@ async function pushOutbox(){
         remove.add(item.mutation.mutationId);
       }else if(result.error){
         rememberConflict(item,result);limparMarcaDeExclusao(item.key);remove.add(item.mutation.mutationId);
+        // v7.0.18 — RECUSA DA NUVEM NUNCA MAIS EM SILÊNCIO (defeito provado: o item
+        // era descartado sem nenhum aviso e, no SÓ NUVEM, sumia ao fechar e reabrir).
+        // O registro continua na tela (está na base local); ele precisa saber que NÃO subiu.
+        try{
+          const codigoErro=(result.error&&(result.error.codigo||result.error.code))||'recusado';
+          const onde=(item.mutation&&item.mutation.entity)||'?';
+          relatarSaude('recusado',onde+' '+codigoErro);
+          if(typeof window!=='undefined'){
+            if(typeof window.toast==='function')window.toast('A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.','error');
+            if(typeof window.notificarEvento==='function')window.notificarEvento('info','A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.',{tipo:'sync'});
+          }
+        }catch(e){}
       }
     }
     outbox=outbox.filter(x=>!remove.has(x.mutation.mutationId));persist();

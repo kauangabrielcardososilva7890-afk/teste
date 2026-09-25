@@ -6893,3 +6893,73 @@ suíte inteira **221 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 226 s
 - **Falta 1 passo:** publicar de novo (o motor **5.27.0**) para nascer o campo **`saude`** no `/health` —
   aí os relatos do app começam a chegar e eu passo a ver daqui o que a sua máquina enfrenta, sem você
   precisar fazer nada.
+
+## Rodada 30 — 25/09/2026 — "CADASTRA A IMPRESSORA E ELA SOME AO FECHAR E ABRIR" — ACHADO E CONSERTADO (COM PROVA)
+
+### 1. Suas respostas (as 4 perguntas que eu fiz)
+
+1. **Quando some?** → "quando fecha e abre o programa" (não some com ele aberto). Foi essa resposta que
+   apontou para o caminho certo: gravação → fila → fechamento → reabertura no modo SÓ NUVEM.
+2. **Limpeza de arquivos?** → só os 100% mortos e provados. Apaguei 3 testes mortos (ninguém referencia,
+   alvo não existe): `test_correcoes_relatorio.js`, `test_vendas_chamados_reparo.js`,
+   `test_ajustes_v5188.js`.
+3. **Nuvem?** → só corrigir o sumiço, sem função nova. Feito: nenhum recurso novo, só o conserto.
+4. **Motor da nuvem publicado?** → você não lembrava; eu conferi de fora: **5.27.0 já está no ar**, freio do
+   plano pago (`tetoDia 1.000.000`, `disparouHoje: false`) e campo `saude` nascido (vazio — coerente com um
+   defeito silencioso: nada era relatado). **Você não precisa publicar nada nesta rodada.**
+
+### 2. O defeito (provado vermelho → verde)
+
+O caminho, passo a passo: ele gravou e o programa fechou ANTES de subir (faltou luz, travou, fechou sem
+internet, ou a fila estava grande e a gravação não coube no envio de despedida de 55 KB). Ao reabrir no SÓ
+NUVEM, a base começa vazia, a fila pendente SOBE e a nuvem confirma — mas a confirmação (`result.ok` no
+`pushOutbox`) só atualizava o livro-caixa (`versions`/`known`/`hashes`) e consumia a fila, SEM colocar o
+registro na base. O eco da nuvem é pulado pelo guarda de versão (`applyRemote`: versão ≤ conhecida → pula) e
+o registro ficava **na nuvem, mas INVISÍVEL neste PC até a próxima reabertura** — o "sumiu ao fechar e abrir".
+Reproduzido: `banco=false nuvem=true fila=false`, zero avisos.
+O conserto (`cloudflare_data_sync_patch.js`, função nova `materializarConfirmado`): ao confirmar um upsert,
+se o registro NÃO está na base, ele entra com os dados que acabaram de subir — **nunca sobrescreve** o que
+está na tela (uma edição mais nova pode estar esperando a vez; ela sobe no próximo ciclo). Vale para os 4
+modos (lista, mapa, raiz, contador).
+Segundo defeito da mesma família: a recusa da nuvem (`result.error`) era descartada SEM NENHUM AVISO (só uma
+nota no navegador) — e no SÓ NUVEM sumia ao fechar e reabrir. Agora a recusa avisa na hora: **toast de erro +
+sino + relato de saúde `recusado`** (aparece no `/health` → `saude`, para eu ver daqui se acontecer).
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Colisão de id entre PCs (`uid()` tem 7 caracteres aleatórios); `heldLocalOnly` (nunca populado);
+  limpeza de demo (só roda na migração Firebird, com padrão de número seed); cascata v52023 (só no "Excluir
+  selecionados", com dois avisos); perfil temporário do `.exe` (o lançador usa o perfil normal — `localStorage`
+  persiste); `confirmSistema` ausente (existe em `popup_sistema_patch.js`); rejeição do motor real a gravação
+  normal (o 5.27.0 só recusa registro > 700 KB ou dado malformado — gravação normal sempre passa).
+- Caminhos conferidos e inocentes: `scanLocal` não gera exclusão para chave pendente; boot SÓ NUVEM não apaga
+  fila; keepalive entrega quando há internet.
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- **Edição** (não criação) fechada antes de subir, com despedida falha: ao reabrir, a base recebe a versão
+  velha (v1), o push confirma a nova (v2) e a tela pode ficar na velha até a próxima reabertura — e a
+  revarredura pode reenviar o conteúdo velho. Distinguir "velho" de "editado de novo" com o livro-caixa atual
+  é impossível sem adivinhar — e adivinhar quebraria a edição rápida (dois salvamentos seguidos). Documentado
+  para uma rodada futura com desenho próprio (conjunto de hashes confirmados por chave); NÃO inventado agora.
+- O `result.error` agora é BARULHENTO, mas o registro recusado continua subindo só se ele editar/salvar de
+  novo (os relatos `recusado` no `/health` avisam se isso um dia acontecer de verdade).
+
+### 5. Provas
+
+`test_impressora_nao_some_reabrir.js` **7 ✓** (controle + A PROVA `banco=true` + recusa barulhenta: toast,
+sino, saúde) — **falha sem o conserto** (`✘ E ESTÁ NA TELA (não some) [banco=false fila=false]`, verificado
+com o conserto escondido via `git stash`) e passa com ele · suíte inteira **222 passaram, 0 falharam, 0 não
+rodaram** (com `jsdom` instalado de verdade — antes os testes de motor pulavam sem rodar) · `Bundle OK: 226
+scripts, sha256 b639e066f343b848` · `Sync OK` · celular sincronizado (`mobile/www`).
+**App 7.0.18 · motor da nuvem 5.27.0** (motor sem mudança — nada para publicar na Cloudflare).
+Checklist de 24 perguntas respondido antes de programar (análise da tarefa; sem suposição sem prova).
+
+### 6. Nota de branch (para o próximo chat)
+
+O `package.json` desta árvore ainda diz `branch: arena/01a0cf4a-teste` porque `test_reclamacoes_do_dono.js`
+prende esse valor (regra "a branch do package.json é a da sessão"). O trabalho desta rodada está commitado e
+empurrado na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto — o `npm run guardar` empurraria para
+a branch do `package.json` (a anterior), então foi bypassado de propósito. Links desta rodada:
+site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
