@@ -6963,3 +6963,72 @@ empurrado na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto — o
 a branch do `package.json` (a anterior), então foi bypassado de propósito. Links desta rodada:
 site https://teste-60f.pages.dev e ZIP
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+
+## Rodada 31 — 25/09/2026 — "O DADO NÃO APARECE NO OUTRO PC / DEMORA PARA APARECER TUDO" — TELAS AO VIVO + FOTO DA NUVEM (MOTOR 5.28.0)
+
+### 1. Suas respostas (as 3 perguntas que eu fiz)
+
+1. **Aviso ao fechar com a fila cheia?** → "n sei, n apareceu nd disso" = NÃO construí (ele nunca viu o
+   cenário; popup que ninguém pediu vira ruído).
+2. **Foto da nuvem na abertura?** → "quero algo instantaneo, não mais rápido" = CONSTRUÍ (motor 5.28.0 +
+   cliente 7.0.19). É o mais perto do instantâneo que existe sem guardar nada no PC.
+3. **Empresa nos dois PCs?** → a mesma (filtro de empresa descartado como causa do "não aparece").
+
+### 2. Os defeitos (provados vermelho → verde)
+
+Medição antes de mexer (bancada descartável, apagada depois): com os dois PCs abertos, o que A grava aparece
+no banco de B em **~1s** (canal de aviso + tique de 3s sãos); o boot relia o diário inteiro (**60 mil mudanças
+= 69 idas e voltas** + ~1s de CPU no harness — o tempo real é rede).
+Defeito 1: VENDAS e LEITURAS estavam fora das telas ao vivo ("telas de documento") — o dado CHEGAVA no banco do
+outro PC, mas a lista na tela continuava velha até trocar de tela e voltar. Os dois renders são só releitura da
+lista (o que se digita fica em modal/campo, protegido pela trava de sempre) — agora são ao vivo. CONFIG continua
+de fora de propósito: o render dela escreve `.value` nos campos e apagaria digitação não salva.
+Defeito 2: na remontagem com aviso ("Baixar tudo", primeira abertura), a tela azul SEGURAVA o programa até o fim
+do histórico. Agora o passe rápido libera na hora: o aviso afina (faixinha embaixo, sem bloquear) e a tela se
+atualiza; o resto compõe atrás.
+Defeito 3 (velocidade): a abertura relia a história inteira. Agora lê a FOTO (`GET /v1/snapshot`: vivos paginados
+pela chave primária + `snapshotSeq` lido ANTES) e segue no incremental dali em diante. Prova de corrida: o que é
+gravado DURANTE a foto tem seq maior e chega pelo incremental; o que a foto alcançou com versão nova faz o
+diário pular (trava de versão de sempre). Motor antigo (404) ou foto gigante (>500 mil vivos): o diário assume
+sozinho — sem dia de virada, nos dois sentidos.
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Empresa diferente nos PCs (ele confirmou: mesma); canal de aviso/tique quebrados (medido ~1s); cursor por
+  página (o laço avança pelo cursor de cada página — seguro); `devolverSumidos`/`varrerDemonstracao` (flags
+  one-shot de migração, não rodam por tique); páginas maiores no diário (precisaria de motor novo do mesmo jeito,
+  ganho menor, risco de resposta gigante no D1); foto salva no PC (ordem NADA-SALVO-NO-PC continua de pé);
+  popup de fechamento (ele nunca viu o cenário). SÓ-NUVEM no boot diário não mostra overlay (trickle silencioso
+  por tiques) — a foto ajuda esse caminho também, porque ele parte do cursor 0.
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- **"Instantâneo" = sem recontar história** — a foto ainda baixa o estado atual (base de 80 mil = dezenas de
+  páginas de 1000: segundos, não minutos). Rede lenta continua sendo rede lenta; o que sumiu foi o minuto parado.
+- Foto gigante (>500 mil registros vivos): o diário assume (correto, lento) — 10x além da realidade dele.
+- A velocidade nova só vale com os DOIS atualizados (app 7.0.19 + motor 5.28.0 no ar); com um dos dois velho,
+  funciona pelo caminho de sempre (lento, correto).
+- CONFIG continua sem auto-atualizar de propósito (apagaria o que ele digitou e ainda não salvou).
+
+### 5. Provas
+
+`test_dado_aparece_outro_pc.js` **27 ✓** (mapa 14 + progressiva 5 + regime 1 + foto 4 + fallback 404 em 3) —
+**falha sem o conserto** (`✘ tela "vendas" é ao vivo`, verificado com o conserto escondido via `git stash`) ·
+`test_worker_publico.js` **50 ✓** (+7 da foto: paginação por chave, `snapshotSeq` = MAX(seq), excluído fora, o
+que nasce durante a foto chega pelo incremental, união foto+incremental, 401 sem credencial — **falha contra o
+motor sem a rota**) · `test_sync_tela_ao_vivo.js` 44/44 (§3 atualizado: vendas/leituras ao vivo) · suíte inteira
+**223 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 226 scripts, sha256 baabe71acae990ec` · `Sync OK` ·
+celular sincronizado (`mobile/www`) · `motor_para_colar.js` regerado (5.28.0) + `.sha256`.
+**App 7.0.19 · motor da nuvem 5.28.0** (MOTOR COM MUDANÇA — precisa publicar: `atualizar_motor_nuvem.cmd`).
+
+### 6. Nota de branch (para o próximo chat)
+
+O `package.json` desta árvore ainda diz `branch: arena/01a0cf4a-teste` porque `test_reclamacoes_do_dono.js`
+prende esse valor (regra "a branch do package.json é a da sessão"). O trabalho desta rodada está commitado e
+empurrado na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto — o `npm run guardar` empurraria para
+a branch do `package.json` (a anterior), então foi bypassado de propósito. PR #31 (de `arena/01a0d9c3-teste`
+para `arena/01a0cf4a-teste`) atualizado com a r31. Links desta rodada:
+site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono valer a velocidade: mergear o PR #31 + publicar o motor (duplo clique em
+`atualizar_motor_nuvem.cmd`) + conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.19`).

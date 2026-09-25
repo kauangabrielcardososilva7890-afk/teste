@@ -274,7 +274,13 @@ const tests=[
   // — ficava na nuvem e invisível no PC até a próxima reabertura. E a recusa da nuvem
   // (result.error) era descartada em silêncio. Este teste reprova se o confirmado não
   // aparecer na tela e se a recusa não avisar (toast + sino + saúde).
-  "test_impressora_nao_some_reabrir.js"
+  "test_impressora_nao_some_reabrir.js",
+  // v7.0.19 (rodada 31) — "às vezes um dado criado não aparece em outro PC;
+  // demora sincronizar para aparecer tudo": VENDAS e LEITURAS nunca se atualizavam
+  // sozinhas (fora das telas ao vivo) + a carga segurava o programa até o fim do
+  // histórico + a abertura agora lê a FOTO da nuvem (/v1/snapshot, motor 5.28.0)
+  // em vez de recontar o diário (com motor antigo, o diário assume sozinho).
+  "test_dado_aparece_outro_pc.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

@@ -167,7 +167,7 @@ ok('tem a PARTE I com o navegador embutido (novo de 22/09 nº5; só no programa 
 // que está no package.json (mvp.version), que é justamente o que este teste quer
 // garantir: relatório e guia falando da MESMA versão que o sistema publica.
 ok('o relatório é da versão publicada agora (v' + mvp.version + ')',
-  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.27.0') >= 0);
+  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.28.0') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 
