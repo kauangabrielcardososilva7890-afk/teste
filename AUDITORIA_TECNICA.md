@@ -3123,3 +3123,19 @@ Cada correção desta rodada tem uma trava que **só pode negar**, nunca apagar 
 - **Não é possível verificar diretamente** se o freio disparou na conta dele, nem o estado do app na máquina dele (banco e máquina fora do alcance). A partir da publicação do motor, o `/health` (`freio`, `saude`) e o check-up respondem isso sem ele fazer nada.
 - A correção do freio **só vale depois da publicação** do motor; a do app vale no próximo carregamento (o site publica sozinho).
 - Nenhum dado foi apagado nesta rodada, nada de banco foi tocado e **eu não publiquei nada**.
+
+### 43.8 Verificação depois do push (conferida de fora, na hora)
+
+- **O dono publicou o motor**: `GET /health` passou a responder **`"versao":"5.26.9"`** com
+  `"freio":{"plano":"pago","tetoDia":1000000,"disparouHoje":false,"ultimoDisparoEm":null,"motivo":null}`.
+  Ou seja: **o freio do plano grátis saiu do ar** e o teto aplicado agora é o do plano pago — o que barrava
+  a conta dele deixou de existir. O banco respondeu `ok`.
+- **Atenção ao alcance dessa prova:** `disparouHoje:false` conta a partir da publicação (o registro nasce
+  com o motor novo) — **não** é resposta sobre o que aconteceu antes; essa parte segue sem verificação
+  direta (o banco não é acessível daqui).
+- **O que ainda falta publicar:** o campo **`saude`** só existe no **5.27.0** (relato de saúde). Enquanto o
+  motor no ar não tiver esse campo, os relatos do app ainda não chegam — é o único passo que falta para a
+  manutenção enxergar de fora.
+- **Site/app:** o site (`teste-60f.pages.dev`) publica sozinho a cada push da branch; na conferência
+  imediata ele ainda servia o build anterior (`sha256 51730a9ef2b9649a`, rodada 28) — o do 7.0.17 é
+  `bd50bd1865033995`. O atraso é da publicação automática, não de erro.

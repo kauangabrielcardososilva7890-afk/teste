@@ -6882,3 +6882,14 @@ mim sozinho.
 suíte inteira **221 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 226 scripts, sha256
 0e1f39c6d050c982` · `Sync OK: v7.0.17 | 226 | 0 soltos` · celular `0 referências quebradas`.
 **App 7.0.17 · motor da nuvem 5.27.0** (o `.sha256` foi regerado; nada publicado).
+
+### 6. O que a conferência de fora mostrou DEPOIS de você publicar
+
+- `GET /health` respondeu **`versao: 5.26.9`** com **`freio: {plano: pago, tetoDia: 1.000.000,
+  disparouHoje: false}`** → **o freio do plano grátis saiu do ar**. Era isso que podia estar parando a
+  gravação no meio do dia.
+- **Cuidado com o que isso prova:** o `disparouHoje: false` conta a partir da publicação — não responde
+  pelo que já passou.
+- **Falta 1 passo:** publicar de novo (o motor **5.27.0**) para nascer o campo **`saude`** no `/health` —
+  aí os relatos do app começam a chegar e eu passo a ver daqui o que a sua máquina enfrenta, sem você
+  precisar fazer nada.
