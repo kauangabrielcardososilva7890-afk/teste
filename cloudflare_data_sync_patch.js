@@ -1505,15 +1505,19 @@ async function tick(reason){
     return false;
   }finally{if(cargaAberta)mostrarCargaNuvem(false);if(busy){busy=false;scheduleHeartbeat();}}
 }
-// LIMITE DIÁRIO DO BANCO GRÁTIS (v5.22.80)
-// O plano grátis da Cloudflare tem um teto de gravações por dia. Quando ele
-// estoura, TODA consulta volta com erro em inglês e parece que o sistema
-// quebrou. Não quebrou: nada se perdeu, o envio só fica esperando o teto virar,
-// o que acontece à meia-noite no horário de Londres (21h no horário de
-// Brasília). Aqui o sistema reconhece isso, avisa em português e para de bater
-// na porta à toa — cada tentativa inútil consome mais do limite de amanhã.
+// LIMITE DE GRAVAÇÃO DA NUVEM (v5.22.80; ajustado na v7.0.15, rodada 28)
+// A Cloudflare tem teto de gravações: no plano grátis é por dia; no PAGO (que é
+// o do dono) é por mês — e quem segura antes de estourar é o FREIO PREVENTIVO do
+// motor da nuvem, que devolve "daily row write limit" (dia) ou "monthly row write
+// limit" (mês). Quando isso aparece, TODA gravação volta com erro em inglês e
+// parece que o sistema quebrou. Não quebrou: nada se perdeu, o envio só fica
+// esperando o teto virar (meia-noite de Londres = 21h em Brasília). Aqui o
+// sistema reconhece, avisa em português e para de bater na porta à toa — cada
+// tentativa inútil consome limite à toa.
+// ACHADO DA RODADA 28: o freio do motor usava o número do plano GRÁTIS mesmo
+// numa conta PAGA; o app dormia até as 21h por causa de um teto que não era dele.
 function ehLimiteDiario(msg){
-  return /free tier daily|daily row (write|read) limit|exceeded .*limit/i.test(String(msg||''));
+  return /free tier daily|daily row (write|read) limit|monthly row write limit|exceeded .*limit/i.test(String(msg||''));
 }
 function viradaDoLimite(){
   const agora=new Date();
@@ -1525,7 +1529,9 @@ function recadoDoLimite(){
   const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
   // v5.24.34 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
   // do plano ($5 fixos, teto mensal gigantesco — praticamente inalcançável).
-  return 'A nuvem atingiu o limite de gravação do período (raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
+  // v7.0.15 — o recado diz DE ONDE vem a parada (freio preventivo do motor, não o
+  // teto do plano): foi essa confusão que fez parecer que ele estava no grátis.
+  return 'A nuvem aplicou o freio preventivo de gravações (para não estourar o limite do plano — raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
     +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
 }
 function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick('agendado'),Math.max(250,delay||800));}
@@ -1759,6 +1765,17 @@ async function apiStatus(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   const resposta=await call('/v1/status',{method:'GET'});
   const totais=(resposta&&resposta.totals)?resposta.totals:resposta;
+  // v7.0.16 — O FREIO PREVENTIVO VEM JUNTO (achado da rodada 28). O /health do
+  // motor da nuvem responde se o freio disparou hoje, o plano e o teto aplicado —
+  // leitura pública de 1 linha, sem token e sem volume de dados. É assim que o
+  // check-up consegue dizer "a nuvem está recusando gravação agora" em vez de o
+  // dono ver "os dados não aparecem" sem explicação.
+  if(totais&&typeof totais==='object'){
+    try{
+      const saude=await call('/health',{method:'GET'});
+      if(saude&&saude.freio)totais.freio=saude.freio;
+    }catch(e){/* sem o /health, o resto da contagem continua valendo */}
+  }
   return totais||{};
 }
 function estadoDetalhado(){

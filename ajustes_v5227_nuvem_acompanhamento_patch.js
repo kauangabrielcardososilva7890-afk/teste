@@ -175,6 +175,14 @@ window.dcCheckupNuvemResumo=function(estado, nuvem){
   L.push('Último envio OK: '+(estado.lastOk?new Date(estado.lastOk).toLocaleString('pt-BR'):'nunca'));
   L.push('Último erro: '+(estado.lastError||'nenhum'));
   L.push('Leitura da nuvem até o número: '+(estado.cursor||0));
+  // v7.0.16 (rodada 28) — o freio preventivo do motor da nuvem entra no resumo:
+  // é a linha que diz se a nuvem está recusando gravação (o caso "os dados não
+  // aparecem") e qual teto está valendo — pago ou grátis.
+  if(nuvem&&nuvem.freio){
+    const f=nuvem.freio;
+    L.push('Freio preventivo da nuvem: '+(f.disparouHoje?('DISPAROU HOJE'+(f.motivo?(' (freio de '+f.motivo+')'):'')):'não disparou hoje')
+      +' · plano '+(f.plano||'?')+' · teto do dia: '+(f.tetoDia||'?')+(f.ultimoDisparoEm?(' · último: '+new Date(f.ultimoDisparoEm).toLocaleString('pt-BR')):''));
+  }
   if(estado.porListaLocal&&Object.keys(estado.porListaLocal).length) L.push('Listas deste PC → '+upLista(estado.porListaLocal).join(' | '));
   if(nuvem&&nuvem.byEntity){ const nb=Object.keys(nuvem.byEntity).map(function(k){ return k+': '+(Number(nuvem.byEntity[k]&&nuvem.byEntity[k].active)||0); }).sort(); L.push('Listas na nuvem → '+nb.join(' | ')); }
   else L.push('Listas na nuvem → (não consegui contar agora)');
@@ -213,6 +221,12 @@ window.dcCheckupNuvem=async function(){
         'Abra a janela da <b>Nuvem</b> e escolha: <b>“Enviar os dados deste PC para a nuvem”</b> (se este PC é o certo) ou <b>“Não enviar os dados atuais”</b> (se a nuvem é a certa).</p></div>'
       : '')+
     (estado.lastError?'<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px"><b>Último erro:</b> '+String(estado.lastError).replace(/[<>&]/g,'')+'</div>':'')+
+    (nuvem&&nuvem.freio
+      ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Freio preventivo da nuvem: <b>'
+        +(nuvem.freio.disparouHoje?('disparou hoje'+(nuvem.freio.motivo?(' (freio de '+String(nuvem.freio.motivo).replace(/[<>&]/g,'')+')'):'')):'não disparou hoje')
+        +'</b> · plano <b>'+String(nuvem.freio.plano||'?').replace(/[<>&]/g,'')+'</b> · teto do dia: '+String(nuvem.freio.tetoDia||'?')+'. '
+        +'Se o freio disparar, o que você digita fica guardado neste PC e sobe sozinho depois — nada é perdido.</p>'
+      : '')+
     (erroNuvem?'<p style="font-size:11.5px;color:#9a3412;margin:0 0 8px">Não consegui contar a nuvem agora ('+String(erroNuvem).replace(/[<>&]/g,'')+'). Os botões de conserto funcionam do mesmo jeito.</p>':'')+
     '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 4px">Lista por lista (aqui x nuvem)</h4>'+linhaLocal+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">'+

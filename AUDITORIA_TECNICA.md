@@ -2952,3 +2952,82 @@ são do manifesto, como `r.timeline[...length - 2]`), e o mapa regerado. **Vers�
   da §40 diz com qual empresa a conexão está falando).
 - A faixa **não** substitui o check-up: ela é o aviso no meio do trabalho; o check-up continua sendo a
   tela com a comparação lista por lista e o resumo para copiar.
+
+## §42 — Rodada 28 (24/09/2026): "eu não uso o teto grátis, e sim o pago" — o freio da nuvem estava com o número errado (corrigido na FONTE)
+
+### 42.1 O dono estava certo, e o meu texto da rodada 27 estava errado
+
+Na §41 eu escrevi "teto grátis; volta ~21h". **O dono corrigiu: a conta dele é PAGA** (Workers Paid US$5,
+confirmado por ele em 14/09 e registrado no próprio motor desde a v5.24.34). Fui ao código da fonte.
+
+### 42.2 O ACHADO — CRÍTICO · Correção (raiz do "os dados não demonstram")
+
+O motor da nuvem tinha **duas fontes de verdade para o plano**, e elas discordavam:
+
+| Onde | O que dizia | Desde |
+|---|---|---|
+| `usoHoje()` (o que a aba Nuvem mostra) | **PAGO**: teto de 50.000.000 de escritas / 25.000.000.000 de leituras | v5.24.34 |
+| `freioDeCota()` (o que **para** a nuvem) | **GRÁTIS**: `LIMITE_ESCRITA_DIA = 95000` por dia | v5.24.5 (nunca acompanhou) |
+
+**Efeito numa conta paga:** ao cruzar 95.000 linhas gravadas no dia, a nuvem recusava gravação (429
+`quota:true`) até a virada do dia (21h em Brasília). O app pausa o envio e dorme; **o que era digitado num
+PC não subia e não aparecia no outro** — exatamente "os dados não demonstram" — sem nenhuma relação com o
+teto real dele. Meu aviso novo (§41) só *explicava* o sintoma; a causa estava aqui.
+
+**Como a divergência nasceu:** o freio foi escrito no mundo grátis (v5.24.5) e, quando o dono assinou o
+plano pago (14/09), só a função que *mostra* os números foi atualizada. O texto do aviso já dizia "raro no
+plano pago" — mas o freio continuava agindo como grátis. **Raiz: número repetido em dois lugares.**
+
+### 42.3 A correção (na fonte, sem arquivo novo de conserto)
+
+1. **`cloudflare-worker/src/index.js` — uma fonte só:** `PLANO_PAGO` (freio 1.000.000/dia + 45.000.000/mês,
+   tetos 50M/25B) e `PLANO_GRATIS` (recuo: 95.000/dia), com **uma linha** de troca (`const PLANO = PLANO_PAGO`).
+   `freioDeCota()`, `usoHoje()` e a decisão (`freioDecide()`) passam a ler **o mesmo objeto**.
+2. **Freio do mês** (o teto do plano pago é mensal): soma o mês e barra em 45M — e o recado passa a dizer
+   `monthly row write limit`. O recado do dia continua com `daily row write limit` (é como o app reconhece).
+3. **Registro do disparo:** quando (e só quando) o freio dispara, uma linha em `system_meta`
+   (`freio_ultimo`: dia, hora, motivo). Um freio que não dispara não custa nada.
+4. **Conferência de fora — `/health`:** passa a responder `freio` (`plano`, `tetoDia`, `disparouHoje`,
+   `ultimoDisparoEm`, `motivo`). Público, sem token e **sem expor volume de dados do negócio** — é o que
+   permite à manutenção saber se a nuvem está recusando gravação **sem o dono precisar abrir nada**.
+5. **App (`cloudflare_data_sync_patch.js`):** `ehLimiteDiario` reconhece o recado do mês; `recadoDoLimite()`
+   diz que é o **freio preventivo** (não "teto grátis"/diário); `apiStatus()` traz o freio junto.
+6. **Check-up (`ajustes_v5227_...`):** mostra "Freio preventivo da nuvem: não disparou hoje / disparou hoje
+   (freio de dia) · plano pago · teto do dia" — e **essa linha entra no "Copiar resumo"**.
+
+**Versões:** motor da nuvem **5.26.8 → 5.26.9** (o `motor_para_colar.js` e o `.sha256` foram regerados com
+`node gerar_motor_nuvem.js`; nada foi publicado) · app **7.0.15 → 7.0.16**. **Publicar o motor é do dono**
+(`atualizar_motor_nuvem.cmd` ou `npx wrangler deploy`); o repositório **não** publica sozinho (não existe
+workflow do GitHub aqui — conferido).
+
+### 42.4 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| `test_worker_publico.js` (motor real em banco de prova) | **36 ✓** — inclui a **CONTRA-PROVA**: com 95.000 linhas no dia a conta **paga** já **não** é barrada; e no teto real (1.000.001) a nuvem pausa com `quota:true`, não grava nada e **registra** o disparo; o `/health` responde `plano: pago`, `tetoDia: 1000000`, `disparouHoje: true` |
+| `cloudflare-worker && npm test` (funções puras) | **✓** novo bloco do freio (`freioDecide` nas duas contas; 99.000+2.000 barra no grátis e **passa** no pago) |
+| `test_sync_quota_guard.js` | ✓ + 3 travas novas (o freio lê o PLANO; freio do mês existe; o app reconhece os dois recados) |
+| `test_ajustes_v52280.js` | ✓ + 2 travas novas (o aviso não chama o dono de grátis; o recado do mês é reconhecido) |
+| `test_nuvem_explica.js` | **13 → 16 ✓** (a contagem traz o freio; o resumo do check-up leva a linha) |
+| `test_reclamacoes_do_dono.js` | **78 → 86 ✓** (linhas 22 e 23 da lista + 4 travas) |
+| suíte completa | **221 passaram, 0 falharam, 0 não rodaram** |
+| bundle / sync / celular | `226 scripts, sha256 51730a9ef2b9649a` · `Sync OK: v7.0.16 \| 226 no bundle \| 0 soltos` · celular `0 referências quebradas` |
+
+**Churn do bump:** 26 arquivos com a versão do motor ancorada (20 testes, 3 HTMLs de doc, o runner e 1 MD)
+foram re-ancorados `5.26.8 → 5.26.9`, além das 2 formas escapadas em regex que a troca simples não pegava
+(`test_recuperar_excluidos.js`, `test_recuperacao_completa.js`) — exatamente a armadilha da rodada 25.
+
+### 42.5 O que eu consigo e o que eu NÃO consigo ver (resposta ao "o que falta para identificar o problema")
+
+- **Consigo, e usei nesta rodada:** o motor publicado é público — `GET /health` respondeu
+  **`"versao":"5.26.8"`, banco `ok`**. Ou seja: **o motor que está no ar é o mesmo código deste
+  repositório**. É isso que autoriza tratar a leitura do código como prova do que roda na nuvem dele — e é
+  assim que eu confiro depois da publicação (tem de passar a responder `"versao":"5.26.9"` **e** trazer o
+  campo `freio`).
+- **Consigo agora:** `/health` passa a dizer se o freio disparou (depois de ele publicar).
+- **NÃO consigo:** ler o banco de produção (`uso_diario`), o estado do app na máquina dele nem os logs do
+  worker. **Não foi possível verificar diretamente** se o freio chegou a disparar na conta dele — o que
+  está provado é que o freio usava o número errado e que ele **podia** disparar com uso normal do dia.
+  Depois da publicação, o `/health` (de fora) e o check-up (na tela dele) fecham essa dúvida.
+- **O que depende dele:** publicar o motor (1 duplo clique no `atualizar_motor_nuvem.cmd`). Enquanto o
+  motor 5.26.8 estiver no ar, o freio continua com o número do grátis.

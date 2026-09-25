@@ -39,7 +39,10 @@ ok('reconhecer a pausa ainda agenda a volta na virada', /state\.limiteAte\s*=\s*
 console.log('== CONTAGEM DO DIA SÓ CONTA LOTE ACEITO (Worker) ==');
 {
   const iValida = worker.indexOf('INVALID_MUTATION_BATCH');
-  const iFreio = worker.indexOf('LIMITE_ESCRITA_DIA');
+  // v5.26.9 (rodada 28) — o freio deixou de ter número solto e passou a ler o
+  // PLANO (`PLANO.freioDia`): era justamente o número solto do plano grátis que
+  // barrava a conta PAGA. A âncora acompanha a fonte da verdade nova.
+  const iFreio = worker.indexOf('PLANO.freioDia');
   const iConta = worker.indexOf("somarUso(env, Math.max(1, mutations.length) * 2, 0, ctx)");
   ok('a contagem do dia existe no handlePush', iConta >= 0);
   ok('a contagem fala a MESMA unidade do freio (linhas: 2 por alteração)',
@@ -47,6 +50,12 @@ console.log('== CONTAGEM DO DIA SÓ CONTA LOTE ACEITO (Worker) ==');
     /freioDeCota\(env, mutations\.length \* 2\)/.test(worker));
   ok('a contagem vem DEPOIS da validação do lote', iValida >= 0 && iConta > iValida);
   ok('a contagem vem DEPOIS do freio preventivo', iFreio >= 0 && iConta > iFreio);
+  ok('o freio do dia lê o PLANO (uma fonte só: pago 1.000.000/dia, grátis 95.000 como recuo)',
+    /freioDia:\s*1000000/.test(worker) && /freioDia:\s*95000/.test(worker) && /const PLANO = PLANO_PAGO/.test(worker));
+  ok('o freio do MÊS existe no plano pago (50 milhões/mês, com 10% de folga)',
+    /freioMes:\s*45000000/.test(worker) && /PLANO\.freioMes > 0/.test(worker));
+  ok('o app reconhece os DOIS recados do freio (dia e mês), senão ficaria batendo na porta',
+    /daily row \(write\|read\) limit\|monthly row write limit/.test(cloudData));
   ok('a contagem continua ANTES das gravações', iConta < worker.indexOf('const results = []', iConta));
   ok('não sobrou contagem antes da validação', worker.indexOf("somarUso(env, Array.isArray(mutations)") < 0);
 }

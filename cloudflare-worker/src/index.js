@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.8';
+const WORKER_VERSION = '5.26.9';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -221,12 +221,30 @@ async function handleHealth(env) {
       database = 'error';
     }
   }
+  // v5.26.9 — O FREIO PREVENTIVO APARECE AQUI. É o que permite conferir de fora
+  // (sem token, sem abrir o sistema e sem expor volume de dados) se a nuvem está
+  // recusando gravação agora — a causa que deixava "os dados sem aparecer".
+  let freio = { plano: PLANO.pago ? 'pago' : 'gratis', tetoDia: PLANO.freioDia, disparouHoje: false, ultimoDisparoEm: null, motivo: null };
+  if (env.DB) {
+    try {
+      const linhaFreio = await env.DB.prepare(
+        "SELECT value FROM system_meta WHERE key = 'freio_ultimo' LIMIT 1"
+      ).first();
+      if (linhaFreio && linhaFreio.value) {
+        const reg = JSON.parse(linhaFreio.value);
+        freio.ultimoDisparoEm = Number(reg.em) || null;
+        freio.motivo = reg.motivo || null;
+        freio.disparouHoje = reg.dia === hojeUTC();
+      }
+    } catch (_f) { /* sem registro = nunca disparou */ }
+  }
   return json({
     ok: true,
     service: 'digicopy-sync-api',
     version: API_VERSION,
     database,
     schemaVersion,
+    freio,
     setupConfigured: !!env.SETUP_SECRET,
     versao: WORKER_VERSION,
     ready: database === 'ok' && schemaVersion === '2' && !!env.SETUP_SECRET,
@@ -525,22 +543,79 @@ async function applyMutation(env, device, mutation) {
   };
 }
 
-// FREIO PREVENTIVO DA COTA (v5.24.5 / v5.26.8) — a ordem do dono é "nunca deixar
-// estourar". O plano grátis corta TUDO no teto de 100 mil escritas/dia e só volta
-// na virada (21h em Brasília). A nuvem para de aceitar gravação um pouco ANTES do
-// teto (folga de segurança) e devolve uma pausa amigável: o app guarda as mudanças
-// no PC e reenvia sozinho. A mensagem carrega as palavras "daily row write limit"
-// de propósito: é assim que o app reconhece a pausa e mostra o aviso em português.
-const LIMITE_ESCRITA_DIA = 95000;
+// ═══════════════════════════════════════════════════════════════════════════
+// O PLANO DA NUVEM — UMA FONTE DA VERDADE (v5.26.9)
+// ═══════════════════════════════════════════════════════════════════════════
+// ACHADO DA AUDITORIA (24/09/2026, rodada 28) — o dono está no plano PAGO
+// (Workers Paid US$5, confirmado por ele em 14/09) e o programa JÁ SABIA disso:
+// `usoHoje()` mostra o teto do plano pago desde a v5.24.34. Mas o FREIO
+// PREVENTIVO logo abaixo continuou com o número do plano GRÁTIS — 95.000
+// linhas por dia. Efeito numa conta paga: a nuvem parava de aceitar gravação no
+// meio do dia, o app pausava até a virada (21h em Brasília) e o que era digitado
+// num PC não aparecia no outro — "os dados não demonstram" SEM relação nenhuma
+// com o teto real dele. Os dois números passam a sair daqui, do mesmo lugar.
+const PLANO_PAGO = {
+  pago: true,
+  freioDia: 1000000,        // freio preventivo de gravações no DIA (plano pago)
+  freioMes: 45000000,       // teto do plano (50 milhões/mês) com 10% de folga
+  tetoEscritas: 50000000,   // o que a aba Nuvem mostra (números do mês)
+  tetoLeituras: 25000000000
+};
+const PLANO_GRATIS = {
+  pago: false,
+  freioDia: 95000,
+  freioMes: 0,              // 0 = sem freio de mês (no grátis o teto é diário)
+  tetoEscritas: 100000,
+  tetoLeituras: 5000000
+};
+// PONTO DE RECUO ÚNICO: se um dia voltar para o grátis, troque SÓ esta linha.
+const PLANO = PLANO_PAGO;
+
+// A decisão do freio separada da consulta ao banco (é o que os testes provam):
+// devolve '' (passa), 'dia' ou 'mes'.
+function freioDecide(noDia, noMes, estimativa, plano) {
+  const p = plano || PLANO;
+  const est = Math.max(0, Number(estimativa) || 0);
+  if (Math.max(0, Number(noDia) || 0) + est > p.freioDia) return 'dia';
+  if (p.freioMes > 0 && Math.max(0, Number(noMes) || 0) + est > p.freioMes) return 'mes';
+  return '';
+}
+// FREIO PREVENTIVO DA COTA (v5.24.5, ajustado na v5.26.9) — a ordem do dono é
+// "nunca deixar estourar". A nuvem para de aceitar gravação um pouco ANTES do
+// teto (folga de segurança) e devolve uma pausa amigável: o app guarda as
+// mudanças no PC e reenvia sozinho. A mensagem carrega "daily row write limit" /
+// "monthly row write limit" de propósito: é assim que o app reconhece a pausa e
+// mostra o aviso em português.
 async function freioDeCota(env, estimativa) {
   try {
     const usoAgora = await env.DB.prepare('SELECT escritas AS w FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
     const escritasAteAgora = Number((usoAgora && usoAgora.w) || 0);
-    if (escritasAteAgora + Number(estimativa || 0) > LIMITE_ESCRITA_DIA) {
-      return json({ ok: false, quota: true, error: 'pre-stop DIGICOPY: daily row write limit próximo do teto — envio pausado até a virada do dia (por volta das 21h); as mudanças ficam guardadas neste PC.' }, 429);
+    let noMes = 0;
+    if (PLANO.freioMes > 0) {
+      const soma = await env.DB.prepare('SELECT SUM(escritas) AS w FROM uso_diario WHERE dia LIKE ?')
+        .bind(hojeUTC().slice(0, 7) + '%').first();
+      noMes = Number((soma && soma.w) || 0);
+    }
+    const motivo = freioDecide(escritasAteAgora, noMes, estimativa);
+    if (motivo) {
+      await registrarFreio(env, motivo);
+      return json({ ok: false, quota: true, error: motivo === 'mes'
+        ? 'pre-stop DIGICOPY: monthly row write limit do plano próximo do teto — envio pausado para não estourar; as mudanças ficam guardadas neste PC.'
+        : 'pre-stop DIGICOPY: daily row write limit próximo do teto — envio pausado até a virada do dia (por volta das 21h); as mudanças ficam guardadas neste PC.' }, 429);
     }
   } catch (eFreio) { console.error('FREIO_COTA_FALHOU', eFreio); /* segue o fluxo: o app já trata o erro real da cota */ }
   return null;
+}
+// Registro do disparo (1 gravação, e SÓ quando o freio dispara): é o que permite
+// conferir DE FORA, pelo /health, se a nuvem está recusando gravação — sem o dono
+// abrir nada e sem expor volume nenhum de dados dele.
+async function registrarFreio(env, motivo) {
+  try {
+    const agora = Date.now();
+    await env.DB.prepare(`INSERT INTO system_meta(key, value, updated_at) VALUES ('freio_ultimo', ?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`)
+      .bind(JSON.stringify({ dia: hojeUTC(), em: agora, motivo }), agora).run();
+  } catch (e) { console.error('FREIO_REGISTRO_FALHOU', e); }
 }
 // v5.26.8 — TETO PARA A CRIAÇÃO "SEM CADASTRO" (segurança do caminho público)
 // O link do cliente pode chegar antes de o orçamento existir na nuvem e, nesse
@@ -1240,14 +1315,16 @@ async function usoHoje(env){
     // trocar aqui de (50000000, 25000000000) para (100000, 5000000) e rodar
     // `npm run deploy` nesta pasta (recuo completo no RELATORIO_SESSAO.md).
     const r = await env.DB.prepare('SELECT dia, escritas, leituras FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
+    // v5.26.9 — os tetos saem do PLANO (uma fonte só): era daqui que vinha a
+    // divergência com o freio preventivo, que ficou preso no número do grátis.
     return {
       dia: hojeUTC(),
       escritas: (r && Number(r.escritas)) || 0,
       leituras: (r && Number(r.leituras)) || 0,
-      tetoEscritas: 50000000,
-      tetoLeituras: 25000000000
+      tetoEscritas: PLANO.tetoEscritas,
+      tetoLeituras: PLANO.tetoLeituras
     };
-  }catch(e){ return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: 50000000, tetoLeituras: 25000000000 }; }
+  }catch(e){ return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: PLANO.tetoEscritas, tetoLeituras: PLANO.tetoLeituras }; }
 }
 
 async function handleStatus(request, env, ctx) {
@@ -2463,4 +2540,4 @@ export default {
   }
 };
 
-export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
+export const __test = { freioDecide, PLANO_PAGO, PLANO_GRATIS, hojeUTC, cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };

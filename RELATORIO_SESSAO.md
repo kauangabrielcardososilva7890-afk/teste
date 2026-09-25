@@ -6747,3 +6747,67 @@ conta, e a faixa pagaria de 15 em 15 segundos (tela congelando).
 - A faixa **não** resolve nuvem genuinamente vazia (loja nova ou conexão de outra loja) — nesse caso ela
   mostra a contagem e o aviso diz com qual empresa a conexão está falando.
 - Nada aqui mexeu em banco, servidor ou no `.exe`: é tudo no app. O motor da nuvem continua **5.26.8**.
+
+## Rodada 28 — 24/09/2026 — VOCÊ ESTAVA CERTO: O FREIO DA NUVEM ESTAVA COM O NÚMERO DO PLANO GRÁTIS (CORRIGIDO NA FONTE)
+
+**Suas palavras:** *"ue, eu n to usando o teto gratis... e sim o pago. que tal invez de ficar criando
+arquivos que corrigem esse tal problema corrigir na propria fonte, o que falta pra vc identificar o
+problema e tentar corrigir?"*
+
+### 1. Eu estava errado e você estava certo
+
+Na rodada passada eu escrevi "teto grátis". **Você paga a nuvem** — e essa foi a pista que faltava.
+
+### 2. O problema, na fonte (não em arquivo novo)
+
+O motor da nuvem tinha **dois lugares** com o número do plano, e eles discordavam:
+
+- a tela Nuvem (que você vê) já usava o **plano pago** desde 14/09 — teto de 50 milhões;
+- o **freio que para a nuvem** continuou com o número do **plano grátis**: **95.000 linhas por dia**.
+
+Resultado numa conta paga: passando de 95.000 linhas num dia, a nuvem **recusava tudo** até as 21h, o envio
+ficava pausado e **o que você digitava num PC não subia e não aparecia no outro**. É o "os dados não
+demonstram" — e não tinha nada a ver com o seu limite real, que é 500 vezes maior.
+
+**Corrigi na fonte, onde o erro nasceu:** agora o plano é **um lugar só** no motor. O freio passou a valer
+**1.000.000 por dia e 45.000.000 por mês** (o teto do seu plano, com folga), e o número do grátis só existe
+como uma linha de recuo, se um dia você voltar. Não criei conserto em cima: mexi no motor.
+
+### 3. O que faltava para eu achar isso (e o que falta agora)
+
+- **O que me deixou achar:** o motor no ar é público — eu consultei e ele responde `versao: 5.26.8`, o
+  **mesmo código** deste repositório. Isso me autoriza a tratar o código como prova do que roda na sua nuvem.
+- **O que eu não consigo:** ler o seu banco e nem ver a sua máquina. Então eu **não posso afirmar** que o
+  freio disparou na sua conta — consigo provar que ele usava o número errado e que podia disparar.
+- **O que eu fiz para não depender de você da próxima vez:** o `/health` da nuvem passou a responder
+  **se o freio disparou hoje** (plano, teto do dia, hora e motivo) — sem token, sem abrir nada e **sem
+  mostrar nenhum dado seu**. E o **check-up** dentro do sistema mostra a mesma linha, com o botão
+  "Copiar resumo" levando ela junto.
+
+### 4. Provas (rodadas de verdade, não texto)
+
+- Motor no banco de prova: **36 verificações**, incluindo a **contra-prova** — com 95.000 linhas no dia a
+  conta **paga não é mais barrada** (era o bug) e, no teto real (1.000.001), a nuvem pausa, não grava nada
+  e **registra** o disparo.
+- Funções puras do motor: prova viva de que 99.000 + 2.000 **barra no grátis** e **passa no pago**.
+- `test_sync_quota_guard.js`, `test_ajustes_v52280.js`: travas novas do plano e dos dois recados.
+- `test_nuvem_explica.js` **16 ✓** · `test_reclamacoes_do_dono.js` **86 ✓** (linhas 22 e 23 na lista).
+- Suíte inteira: **221 passaram, 0 falharam, 0 não rodaram**.
+- `Bundle OK: 226 scripts` · `Sync OK: v7.0.16 | 226 | 0 soltos` · celular **0 referências quebradas**.
+- **Versões:** app **7.0.16** · motor da nuvem **5.26.9** (o `.sha256` foi regerado; **nada foi publicado**).
+
+### 5. O que depende de você (1 passo)
+
+**Publicar o motor:** duplo clique em **`atualizar_motor_nuvem.cmd`** (ele aplica migração e publica). Sem
+isso, o freio do grátis continua valendo no ar. Depois de publicar, eu consigo conferir de fora pelo
+`/health` (tem de aparecer `5.26.9` e o campo do freio) — e você vê o mesmo no check-up.
+
+### 6. Limites honestos
+
+- **Não foi possível verificar diretamente** se o freio chegou a disparar na sua conta (banco e máquina
+  fora do meu alcance). O que está provado: o freio usava o número do plano errado, e isso sozinho já
+  explicava o sintoma.
+- A correção só passa a valer **depois da publicação** do motor. Enquanto o 5.26.8 estiver no ar, o
+  comportamento antigo continua.
+- Nada de banco foi tocado, nenhum dado foi apagado e **eu não publiquei nada** (não existe publicação
+  automática neste repositório — conferido).

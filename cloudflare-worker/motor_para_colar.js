@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.26.8   (igual ao src/index.js)
- * GERADO EM: 2026-09-24 01:01 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.26.9   (igual ao src/index.js)
+ * GERADO EM: 2026-09-25 17:35 UTC
  * sha256 do código (sem este cabeçalho):
- *   ab0ee01dd623a020663b3f1a1e8d7a67e50afe10f61149a3f4619151813d12a2
+ *   42b24e30ed8c87d1a7d45c4a90905be46b533ffa2c7ad1c262d1ca74b0cd1a21
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,7 +35,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.26.8";
+var WORKER_VERSION = "5.26.9";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -239,12 +239,28 @@ async function handleHealth(env) {
       database = "error";
     }
   }
+  let freio = { plano: PLANO.pago ? "pago" : "gratis", tetoDia: PLANO.freioDia, disparouHoje: false, ultimoDisparoEm: null, motivo: null };
+  if (env.DB) {
+    try {
+      const linhaFreio = await env.DB.prepare(
+        "SELECT value FROM system_meta WHERE key = 'freio_ultimo' LIMIT 1"
+      ).first();
+      if (linhaFreio && linhaFreio.value) {
+        const reg = JSON.parse(linhaFreio.value);
+        freio.ultimoDisparoEm = Number(reg.em) || null;
+        freio.motivo = reg.motivo || null;
+        freio.disparouHoje = reg.dia === hojeUTC();
+      }
+    } catch (_f) {
+    }
+  }
   return json({
     ok: true,
     service: "digicopy-sync-api",
     version: API_VERSION,
     database,
     schemaVersion,
+    freio,
     setupConfigured: !!env.SETUP_SECRET,
     versao: WORKER_VERSION,
     ready: database === "ok" && schemaVersion === "2" && !!env.SETUP_SECRET,
@@ -540,13 +556,46 @@ async function applyMutation(env, device, mutation) {
   };
 }
 __name(applyMutation, "applyMutation");
-var LIMITE_ESCRITA_DIA = 95e3;
+var PLANO_PAGO = {
+  pago: true,
+  freioDia: 1e6,
+  // freio preventivo de gravações no DIA (plano pago)
+  freioMes: 45e6,
+  // teto do plano (50 milhões/mês) com 10% de folga
+  tetoEscritas: 5e7,
+  // o que a aba Nuvem mostra (números do mês)
+  tetoLeituras: 25e9
+};
+var PLANO_GRATIS = {
+  pago: false,
+  freioDia: 95e3,
+  freioMes: 0,
+  // 0 = sem freio de mês (no grátis o teto é diário)
+  tetoEscritas: 1e5,
+  tetoLeituras: 5e6
+};
+var PLANO = PLANO_PAGO;
+function freioDecide(noDia, noMes, estimativa, plano) {
+  const p = plano || PLANO;
+  const est = Math.max(0, Number(estimativa) || 0);
+  if (Math.max(0, Number(noDia) || 0) + est > p.freioDia) return "dia";
+  if (p.freioMes > 0 && Math.max(0, Number(noMes) || 0) + est > p.freioMes) return "mes";
+  return "";
+}
+__name(freioDecide, "freioDecide");
 async function freioDeCota(env, estimativa) {
   try {
     const usoAgora = await env.DB.prepare("SELECT escritas AS w FROM uso_diario WHERE dia = ?").bind(hojeUTC()).first();
     const escritasAteAgora = Number(usoAgora && usoAgora.w || 0);
-    if (escritasAteAgora + Number(estimativa || 0) > LIMITE_ESCRITA_DIA) {
-      return json({ ok: false, quota: true, error: "pre-stop DIGICOPY: daily row write limit pr\xF3ximo do teto \u2014 envio pausado at\xE9 a virada do dia (por volta das 21h); as mudan\xE7as ficam guardadas neste PC." }, 429);
+    let noMes = 0;
+    if (PLANO.freioMes > 0) {
+      const soma = await env.DB.prepare("SELECT SUM(escritas) AS w FROM uso_diario WHERE dia LIKE ?").bind(hojeUTC().slice(0, 7) + "%").first();
+      noMes = Number(soma && soma.w || 0);
+    }
+    const motivo = freioDecide(escritasAteAgora, noMes, estimativa);
+    if (motivo) {
+      await registrarFreio(env, motivo);
+      return json({ ok: false, quota: true, error: motivo === "mes" ? "pre-stop DIGICOPY: monthly row write limit do plano pr\xF3ximo do teto \u2014 envio pausado para n\xE3o estourar; as mudan\xE7as ficam guardadas neste PC." : "pre-stop DIGICOPY: daily row write limit pr\xF3ximo do teto \u2014 envio pausado at\xE9 a virada do dia (por volta das 21h); as mudan\xE7as ficam guardadas neste PC." }, 429);
     }
   } catch (eFreio) {
     console.error("FREIO_COTA_FALHOU", eFreio);
@@ -554,6 +603,16 @@ async function freioDeCota(env, estimativa) {
   return null;
 }
 __name(freioDeCota, "freioDeCota");
+async function registrarFreio(env, motivo) {
+  try {
+    const agora = Date.now();
+    await env.DB.prepare(`INSERT INTO system_meta(key, value, updated_at) VALUES ('freio_ultimo', ?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`).bind(JSON.stringify({ dia: hojeUTC(), em: agora, motivo }), agora).run();
+  } catch (e) {
+    console.error("FREIO_REGISTRO_FALHOU", e);
+  }
+}
+__name(registrarFreio, "registrarFreio");
 var CAP_PUBLICO_SEM_CADASTRO_DIA = 40;
 async function contarSemCadastro(env) {
   const chave = "orc_pub_sem_cadastro_" + hojeUTC();
@@ -1191,11 +1250,11 @@ async function usoHoje(env) {
       dia: hojeUTC(),
       escritas: r && Number(r.escritas) || 0,
       leituras: r && Number(r.leituras) || 0,
-      tetoEscritas: 5e7,
-      tetoLeituras: 25e9
+      tetoEscritas: PLANO.tetoEscritas,
+      tetoLeituras: PLANO.tetoLeituras
     };
   } catch (e) {
-    return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: 5e7, tetoLeituras: 25e9 };
+    return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: PLANO.tetoEscritas, tetoLeituras: PLANO.tetoLeituras };
   }
 }
 __name(usoHoje, "usoHoje");
@@ -2348,7 +2407,7 @@ var index_default = {
     }
   }
 };
-var __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
+var __test = { freioDecide, PLANO_PAGO, PLANO_GRATIS, hojeUTC, cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
 export {
   __test,
   index_default as default

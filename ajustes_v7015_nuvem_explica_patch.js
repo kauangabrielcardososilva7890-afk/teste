@@ -208,7 +208,7 @@
       const limiteAte = Number(inf.limiteAte) || 0;
       if (limiteAte > Date.now()) {
         const hora = new Date(limiteAte).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        mostrar('A nuvem atingiu o <b>limite de hoje</b> — nada foi perdido. Ela volta a funcionar por volta das <b>' + hora + '</b>.',
+        mostrar('A nuvem aplicou o <b>freio preventivo de gravações</b> para não estourar o limite do plano — <b>nada foi perdido</b>. O envio volta sozinho por volta das <b>' + hora + '</b>.',
           [{ rotulo: 'Ver check-up', id: 'v7015-bt-limite', acao: irCheckup }], '#92400e');
         return;
       }

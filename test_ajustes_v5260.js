@@ -90,7 +90,7 @@ ok('worker: imagens servidas em /img/ só de versão viva', wk.indexOf("url.path
 ok('worker: /dl/ EXIGE sessão OU slug igual ao da versão OU gerente/admin', wk.indexOf('slugQ === essa.slug') >= 0 && wk.indexOf('sessaoDl') >= 0 && new RegExp('Área restrita: entre em /atualizacoes').test(wk));
 ok('worker: action remover-imagem (tira do tutorial e do R2)', wk.indexOf("'remover-imagem'") >= 0 && wk.indexOf('R2.delete(keyX)') >= 0);
 ok('worker: tutorial renderiza grid de imagens + zoom ao clicar (.zi + lightbox)', wk.indexOf('class="zi"') >= 0 && wk.indexOf('lbz') >= 0);
-ok('worker: versão do motor carimbada 5.26.8', wk.indexOf("WORKER_VERSION = '5.26.8'") >= 0);
+ok('worker: versão do motor carimbada 5.26.9', wk.indexOf("WORKER_VERSION = '5.26.9'") >= 0);
 
 console.log('== APP: sininho destinatário-aware + link secreto + abas/cartões ==');
 ok('patch: guard único (__v5260cn) e PURE exportado', patch.indexOf('__v5260cn') >= 0 && patch.indexOf('window.CNPJ_V5260_PURE') >= 0);

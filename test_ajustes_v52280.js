@@ -14,7 +14,12 @@ ok('o sistema reconhece o limite diário do banco grátis',S.ehLimiteDiario(reca
 ok('erro comum não é confundido com limite',S.ehLimiteDiario('Falha de rede')===false&&S.ehLimiteDiario('')===false);
 // v5.24.34 — SUPERSESSÃO: o recado do limite parou de falar "de hoje/grátis"
 // (era o mundo gratuito); no plano pago o limite é do PERÍODO (mensal).
-ok('o aviso é em português e diz que nada se perdeu',/Nada foi perdido/.test(S.recadoDoLimite())&&/limite de gravação do período/.test(S.recadoDoLimite()));
+// v7.0.16 (rodada 28) — o aviso passou a dizer DE ONDE vem a parada (o freio
+// preventivo do motor, não o teto do plano): era essa confusão que fazia parecer
+// que ele estava no plano grátis quando o freio disparava.
+ok('o aviso é em português e diz que nada se perdeu',/Nada foi perdido/.test(S.recadoDoLimite())&&/freio preventivo de gravações/.test(S.recadoDoLimite()));
+ok('e o aviso NÃO chama o dono de plano grátis (a conta dele é paga)',!/teto grátis|plano grátis/i.test(S.recadoDoLimite()));
+ok('o app reconhece o recado do freio do MÊS também (plano pago tem teto mensal)',S.ehLimiteDiario('D1_ERROR: monthly row write limit reached')===true);
 ok('o aviso diz a hora de Brasília',/21h, horário de Brasília/.test(S.recadoDoLimite()));
 const virada=S.viradaDoLimite();
 ok('a virada é depois de agora e dentro de 24h',virada>Date.now()&&virada-Date.now()<=24*3600000+200000);

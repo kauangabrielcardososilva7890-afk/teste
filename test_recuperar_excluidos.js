@@ -145,6 +145,6 @@ ok('PC com motor novo + motor de nuvem antigo volta sozinho para o ritmo normal'
    /if\(st===404\|\|st===400\)\{ canalInstantaneoParado=true; \}/.test(motor));
 ok('o canal só abre com a janela à vista (não gasta à toa)',
    /if\(typeof document!=='undefined'&&document\.hidden\)return;/.test(motor));
-ok('a nuvem carimba a versao nova do motor', /WORKER_VERSION = '5\.26\.8'/.test(worker));
+ok('a nuvem carimba a versao nova do motor', /WORKER_VERSION = '5\.26\.9'/.test(worker));
 
 console.log('\nRESULTADO: ' + passou + ' verificações — recuperação em massa segura e explicada!');

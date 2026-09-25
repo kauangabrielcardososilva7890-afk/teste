@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 226 | sha256: 7148d6690996bd01
+ * scripts: 226 | sha256: 51730a9ef2b9649a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -30235,15 +30235,19 @@ async function tick(reason){
     return false;
   }finally{if(cargaAberta)mostrarCargaNuvem(false);if(busy){busy=false;scheduleHeartbeat();}}
 }
-// LIMITE DIÁRIO DO BANCO GRÁTIS (v5.22.80)
-// O plano grátis da Cloudflare tem um teto de gravações por dia. Quando ele
-// estoura, TODA consulta volta com erro em inglês e parece que o sistema
-// quebrou. Não quebrou: nada se perdeu, o envio só fica esperando o teto virar,
-// o que acontece à meia-noite no horário de Londres (21h no horário de
-// Brasília). Aqui o sistema reconhece isso, avisa em português e para de bater
-// na porta à toa — cada tentativa inútil consome mais do limite de amanhã.
+// LIMITE DE GRAVAÇÃO DA NUVEM (v5.22.80; ajustado na v7.0.15, rodada 28)
+// A Cloudflare tem teto de gravações: no plano grátis é por dia; no PAGO (que é
+// o do dono) é por mês — e quem segura antes de estourar é o FREIO PREVENTIVO do
+// motor da nuvem, que devolve "daily row write limit" (dia) ou "monthly row write
+// limit" (mês). Quando isso aparece, TODA gravação volta com erro em inglês e
+// parece que o sistema quebrou. Não quebrou: nada se perdeu, o envio só fica
+// esperando o teto virar (meia-noite de Londres = 21h em Brasília). Aqui o
+// sistema reconhece, avisa em português e para de bater na porta à toa — cada
+// tentativa inútil consome limite à toa.
+// ACHADO DA RODADA 28: o freio do motor usava o número do plano GRÁTIS mesmo
+// numa conta PAGA; o app dormia até as 21h por causa de um teto que não era dele.
 function ehLimiteDiario(msg){
-  return /free tier daily|daily row (write|read) limit|exceeded .*limit/i.test(String(msg||''));
+  return /free tier daily|daily row (write|read) limit|monthly row write limit|exceeded .*limit/i.test(String(msg||''));
 }
 function viradaDoLimite(){
   const agora=new Date();
@@ -30255,7 +30259,9 @@ function recadoDoLimite(){
   const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
   // v5.24.34 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
   // do plano ($5 fixos, teto mensal gigantesco — praticamente inalcançável).
-  return 'A nuvem atingiu o limite de gravação do período (raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
+  // v7.0.15 — o recado diz DE ONDE vem a parada (freio preventivo do motor, não o
+  // teto do plano): foi essa confusão que fez parecer que ele estava no grátis.
+  return 'A nuvem aplicou o freio preventivo de gravações (para não estourar o limite do plano — raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
     +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
 }
 function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick('agendado'),Math.max(250,delay||800));}
@@ -30489,6 +30495,17 @@ async function apiStatus(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   const resposta=await call('/v1/status',{method:'GET'});
   const totais=(resposta&&resposta.totals)?resposta.totals:resposta;
+  // v7.0.16 — O FREIO PREVENTIVO VEM JUNTO (achado da rodada 28). O /health do
+  // motor da nuvem responde se o freio disparou hoje, o plano e o teto aplicado —
+  // leitura pública de 1 linha, sem token e sem volume de dados. É assim que o
+  // check-up consegue dizer "a nuvem está recusando gravação agora" em vez de o
+  // dono ver "os dados não aparecem" sem explicação.
+  if(totais&&typeof totais==='object'){
+    try{
+      const saude=await call('/health',{method:'GET'});
+      if(saude&&saude.freio)totais.freio=saude.freio;
+    }catch(e){/* sem o /health, o resto da contagem continua valendo */}
+  }
   return totais||{};
 }
 function estadoDetalhado(){
@@ -32437,6 +32454,14 @@ window.dcCheckupNuvemResumo=function(estado, nuvem){
   L.push('Último envio OK: '+(estado.lastOk?new Date(estado.lastOk).toLocaleString('pt-BR'):'nunca'));
   L.push('Último erro: '+(estado.lastError||'nenhum'));
   L.push('Leitura da nuvem até o número: '+(estado.cursor||0));
+  // v7.0.16 (rodada 28) — o freio preventivo do motor da nuvem entra no resumo:
+  // é a linha que diz se a nuvem está recusando gravação (o caso "os dados não
+  // aparecem") e qual teto está valendo — pago ou grátis.
+  if(nuvem&&nuvem.freio){
+    const f=nuvem.freio;
+    L.push('Freio preventivo da nuvem: '+(f.disparouHoje?('DISPAROU HOJE'+(f.motivo?(' (freio de '+f.motivo+')'):'')):'não disparou hoje')
+      +' · plano '+(f.plano||'?')+' · teto do dia: '+(f.tetoDia||'?')+(f.ultimoDisparoEm?(' · último: '+new Date(f.ultimoDisparoEm).toLocaleString('pt-BR')):''));
+  }
   if(estado.porListaLocal&&Object.keys(estado.porListaLocal).length) L.push('Listas deste PC → '+upLista(estado.porListaLocal).join(' | '));
   if(nuvem&&nuvem.byEntity){ const nb=Object.keys(nuvem.byEntity).map(function(k){ return k+': '+(Number(nuvem.byEntity[k]&&nuvem.byEntity[k].active)||0); }).sort(); L.push('Listas na nuvem → '+nb.join(' | ')); }
   else L.push('Listas na nuvem → (não consegui contar agora)');
@@ -32475,6 +32500,12 @@ window.dcCheckupNuvem=async function(){
         'Abra a janela da <b>Nuvem</b> e escolha: <b>“Enviar os dados deste PC para a nuvem”</b> (se este PC é o certo) ou <b>“Não enviar os dados atuais”</b> (se a nuvem é a certa).</p></div>'
       : '')+
     (estado.lastError?'<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px"><b>Último erro:</b> '+String(estado.lastError).replace(/[<>&]/g,'')+'</div>':'')+
+    (nuvem&&nuvem.freio
+      ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Freio preventivo da nuvem: <b>'
+        +(nuvem.freio.disparouHoje?('disparou hoje'+(nuvem.freio.motivo?(' (freio de '+String(nuvem.freio.motivo).replace(/[<>&]/g,'')+')'):'')):'não disparou hoje')
+        +'</b> · plano <b>'+String(nuvem.freio.plano||'?').replace(/[<>&]/g,'')+'</b> · teto do dia: '+String(nuvem.freio.tetoDia||'?')+'. '
+        +'Se o freio disparar, o que você digita fica guardado neste PC e sobe sozinho depois — nada é perdido.</p>'
+      : '')+
     (erroNuvem?'<p style="font-size:11.5px;color:#9a3412;margin:0 0 8px">Não consegui contar a nuvem agora ('+String(erroNuvem).replace(/[<>&]/g,'')+'). Os botões de conserto funcionam do mesmo jeito.</p>':'')+
     '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 4px">Lista por lista (aqui x nuvem)</h4>'+linhaLocal+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">'+
@@ -60644,7 +60675,7 @@ try{
       const limiteAte = Number(inf.limiteAte) || 0;
       if (limiteAte > Date.now()) {
         const hora = new Date(limiteAte).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        mostrar('A nuvem atingiu o <b>limite de hoje</b> — nada foi perdido. Ela volta a funcionar por volta das <b>' + hora + '</b>.',
+        mostrar('A nuvem aplicou o <b>freio preventivo de gravações</b> para não estourar o limite do plano — <b>nada foi perdido</b>. O envio volta sozinho por volta das <b>' + hora + '</b>.',
           [{ rotulo: 'Ver check-up', id: 'v7015-bt-limite', acao: irCheckup }], '#92400e');
         return;
       }

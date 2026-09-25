@@ -264,7 +264,7 @@ const tests=[
   // que a conferência de 15 em 15 segundos custa ~0,1 ms numa base grande (o `pending` do
   // info() virou sob demanda: era 223 ms de conta a cada chamada).
   "test_nuvem_explica.js",
-  // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
+  // v5.26.9 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"
   "test_worker_publico.js"

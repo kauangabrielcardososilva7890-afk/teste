@@ -1,4 +1,4 @@
-// test_worker_publico.js — v7.0.15 (motor da nuvem 5.26.8)
+// test_worker_publico.js — v7.0.16 (motor da nuvem 5.26.9)
 // Roda o MOTOR DA NUVEM DE VERDADE (cloudflare-worker/src/index.js) sobre um banco
 // SQLite em memória, aplicando as migrations reais do projeto. É o mesmo código
 // que o dono publica — só o banco é de mentira.
@@ -31,7 +31,7 @@ catch(e){
   process.exit(0);
 }
 
-console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.26.8) ==');
+console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.26.9) ==');
 
 // ── banco de mentira, igual ao D1: prepare/bind/first/all/run/batch/exec ────
 function abrirBanco(){
@@ -223,14 +223,41 @@ const conta=(banco,sql,...args)=>banco.db.prepare(sql).get(...args).n;
     ok('as gravações do caminho público entram no medidor do dia ('+(uso?uso.escritas:0)+')',!!uso&&Number(uso.escritas)>=3);
   }
   {
+    // v5.26.9 (rodada 28) — O FREIO FALA A LÍNGUA DO PLANO. A conta do dono é PAGA
+    // (Workers Paid US$5) e o freio preventivo ainda usava o número do GRÁTIS
+    // (95.000 linhas/dia): a nuvem parava no meio do dia e o que era digitado num PC
+    // não aparecia no outro. Aqui ficam as três provas — inclusive a CONTRA-PROVA de
+    // que 95.000 não pausa mais nada numa conta paga.
     const banco=abrirBanco();
     semearOrcamento(banco,'orc_5','otoken555555');
     banco.db.prepare("INSERT INTO uso_diario(dia,escritas,leituras) VALUES(?,95000,0)").run(dia());
-    const cheio=await chamar(worker,banco,'https://api.test/orcamento',{method:'POST',headers:{'content-type':'application/json'},
+    const naoCheio=await chamar(worker,banco,'https://api.test/orcamento',{method:'POST',headers:{'content-type':'application/json'},
       body:JSON.stringify({acao:'aprovar',c:'otoken555555'})});
-    ok('perto do teto do dia, a nuvem pausa o caminho público ('+cheio.status+')',
+    ok('CONTA PAGA não é mais barrada no número do plano grátis (95.000) — era o bug da rodada 28',
+      naoCheio.status===200);
+
+    const banco2=abrirBanco();
+    semearOrcamento(banco2,'orc_6','otoken666666');
+    banco2.db.prepare("INSERT INTO uso_diario(dia,escritas,leituras) VALUES(?,?,0)").run(dia(),1000001);
+    const cheio=await chamar(worker,banco2,'https://api.test/orcamento',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({acao:'aprovar',c:'otoken666666'})});
+    ok('no teto REAL do plano pago (1 milhão/dia), a nuvem pausa o caminho público ('+cheio.status+')',
       cheio.status===429&&cheio.corpo&&cheio.corpo.quota===true&&/daily row write limit/.test(cheio.corpo.error));
-    ok('e não grava nada (nenhuma venda criada)',conta(banco,"SELECT COUNT(*) n FROM records WHERE entity='vendas'")===0);
+    ok('e não grava nada (nenhuma venda criada)',conta(banco2,"SELECT COUNT(*) n FROM records WHERE entity='vendas'")===0);
+    const registrou=banco2.db.prepare("SELECT value v FROM system_meta WHERE key='freio_ultimo'").get();
+    ok('o disparo do freio fica REGISTRADO (é o que o /health mostra de fora)',
+      !!registrou&&JSON.parse(registrou.v).motivo==='dia');
+    // v5.26.9 — A CONFERÊNCIA DE FORA: o /health é público e passa a dizer se a
+    // nuvem está recusando gravação hoje. É assim que a manutenção identifica o
+    // problema sem depender de ninguém abrir o sistema (e sem expor dado nenhum).
+    const saida=await chamar(worker,banco2,'https://api.test/health',{method:'GET'});
+    const saud=(saida.corpo&&typeof saida.corpo==='object')?saida.corpo:JSON.parse(saida.corpo||'{}');
+    ok('o /health publica o freio preventivo (plano, teto do dia e se disparou hoje) — sem dado nenhum de negócio',
+      saida.status===200&&saud.freio&&saud.freio.plano==='pago'&&saud.freio.tetoDia===1000000&&saud.freio.disparouHoje===true&&saud.freio.motivo==='dia');
+    const zerado=await chamar(worker,abrirBanco(),'https://api.test/health',{method:'GET'});
+    const zeradoTxt=(zerado.corpo&&typeof zerado.corpo==='object')?JSON.stringify(zerado.corpo):String(zerado.corpo||'');
+    ok('e, ANTES de qualquer disparo, o /health diz que não disparou (sem susto falso)',
+      zeradoTxt.indexOf('"disparouHoje":false')>=0);
   }
 
   // ═══ 5) criação "sem cadastro": funciona, fica marcada e tem teto ════════

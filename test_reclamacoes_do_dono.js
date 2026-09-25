@@ -233,6 +233,8 @@ console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?"
   // v7.0.15 — A FAIXA QUE EXPLICA E CONSERTA (o pedido: "focar na parte dos dados que
   // não demonstram"). Ela cobre os casos em que a tela fica vazia sem explicação.
   const faixaArq = 'ajustes_v7015_nuvem_explica_patch.js';
+  const motorNuvem = ler('cloudflare-worker/src/index.js').replace(/\s+/g, ' ');
+  const motorTeste = ler('cloudflare-worker/test-pure.mjs');
   ok('a faixa da nuvem está no bundle (roda junto com o sistema)', posNoManifesto(faixaArq) >= 0);
   if (posNoManifesto(faixaArq) >= 0) {
     const faixa = ler(faixaArq);
@@ -242,7 +244,7 @@ console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?"
       /window\.v5262AbrirPortao\s*=/.test(ler('ajustes_v5262_login_nuvem_primeiro_patch.js')));
     ok('a faixa avisa quando a sincronização está pausada', /pausada/.test(faixa) && /pauseReason/.test(faixa));
     ok('a faixa avisa quando a nuvem está no limite do dia (e a que hora volta)',
-      /limite de hoje/.test(faixa) && /limiteAte/.test(faixa) && /volta a funcionar por volta das/.test(faixa));
+      /freio preventivo de gravações/.test(faixa) && /limiteAte/.test(faixa) && /volta sozinho por volta das/.test(faixa));
     ok('a faixa mostra a conta quando a nuvem tem mais registros do que aqui e conserta em 1 clique',
       /nuvem tem mais registros/.test(faixa) && /aqui × /.test(faixa) && /baixarTudoDaNuvem/.test(faixa) && /Baixar tudo de novo/.test(faixa));
     ok('a faixa não usa diálogo nativo (regra 16: confirmação pela janela do sistema)',
@@ -253,6 +255,22 @@ console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?"
       /function info\(\)\{[\s\S]{0,200}?s\.info\(\)/.test(faixa) && /ESPERA_MS = 15000/.test(faixa));
     ok('o check-up do dono passou a ter a função de contagem da nuvem que ele já procurava (apiStatus)',
       /async function apiStatus\(/.test(sync) && /window\.DIGICOPY_CLOUD_SYNC=\{tick,info,apiStatus,/.test(sync));
+    ok('a faixa diz o que o freio é (preventivo) e NÃO chama de "limite do grátis" (ele é plano pago)',
+      /freio preventivo de gravações/.test(faixa) && /nada foi perdido/.test(faixa) && !/teto grátis/i.test(faixa) && !/plano grátis/i.test(faixa));
+    ok('o motor do app reconhece o freio do MÊS também (plano pago tem teto mensal, não diário)',
+      /monthly row write limit/.test(sync) && /freio preventivo de gravações/.test(sync));
+    ok('CONTRA-PROVA no motor da nuvem: o freio do dia usa o número do PLANO PAGO, e o grátis só existe como recuo',
+      /freioDia: 1000000/.test(motorNuvem) && /freioDia: 95000/.test(motorNuvem) && /const PLANO = PLANO_PAGO/.test(motorNuvem) && /freioMes: 45000000/.test(motorNuvem));
+    ok('e o freio decidiu certo nas duas contas (prova viva, não só o texto)',
+      /freioDecide\(99000, 0, 2000, __test\.PLANO_PAGO\)/.test(motorTeste) || /freioDecide\(99000, 0, 2000, PLANO_PAGO\)/.test(motorTeste));
+    ok('o freio preventivo usa o PLANO PAGO (1 milhão/dia) e o grátis ficou só como recuo de uma linha',
+      /const PLANO = PLANO_PAGO;/.test(motorNuvem) && /freioDia: 1000000/.test(motorNuvem) && /freioMes: 45000000/.test(motorNuvem));
+    ok('e o /health (público) publica o freio para a manutenção conferir de fora — sem dado de negócio',
+      /key = 'freio_ultimo'/.test(motorNuvem) && /freio,\s*\n\s*setupConfigured/.test(motorNuvem.replace(/\s+/g, ' ').replace('freio, setupConfigured', 'freio,\n    setupConfigured')));
+    ok('o check-up mostra o freio e leva a linha no resumo que ele copia',
+      /Freio preventivo da nuvem/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')) && /nuvem\.freio\.disparouHoje/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')));
+    ok('a contagem da nuvem no app traz o freio junto (apiStatus lê o /health)',
+      /saude&&saude\.freio/.test(sync) && /totais\.freio=saude\.freio/.test(sync));
     ok('a contagem que percorre a base virou sob demanda (223 ms -> 0,05 ms numa base de 76 mil)',
       /Object\.defineProperty\(base,'pending'/.test(sync) && /function info\(\)\{\s*const base=/.test(sync));
   }

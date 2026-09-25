@@ -86,7 +86,7 @@ function abrirNavegador(nuvem, estadoSalvo) {
   w.localStorage.setItem('digicopy_cf_token_v1', 'token-de-teste');
   w.DIGICOPY_CLOUD = { token: () => 'token-de-teste', api: nuvem.api, deviceInfo: () => null };
   w.DIGICOPY_SO_NUVEM = true;
-  w.DIGICOPY_APP_VERSION = '7.0.15';
+  w.DIGICOPY_APP_VERSION = '7.0.16';
   w.getSession = () => null;
   w.db = { clientes: [], produtos: [], vendas: [], contasReceber: [], contasPagar: [], config: {}, _seq: {} };
   w.saveDB = function () { };            // o saveDB "de antes" (app.js) — o motor embrulha este

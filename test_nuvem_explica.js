@@ -32,10 +32,12 @@ function ok(nome, cond, extra) {
 }
 const MOTOR = fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8');
 const FAIXA = fs.readFileSync('ajustes_v7015_nuvem_explica_patch.js', 'utf8');
+const CHECKUP = fs.readFileSync('ajustes_v5227_nuvem_acompanhamento_patch.js', 'utf8');   // o check-up (resumo que ele copia)
 const TOKEN_KEY = 'digicopy_cf_token_v1';
 const STATE_KEY = 'digicopy_cf_sync_state_v1';
 
 // ── a nuvem fingida: diário + contagem por lista (igual ao /v1/status) ──────
+let freioDisparou = false;   // v7.0.16 — o freio preventivo do motor da nuvem (vem no /health)
 function nuvemFingida(opcoes) {
   const cenario = opcoes || {};
   let falhasRestantes = Number(cenario.falhasDeLeitura) || 0;
@@ -64,6 +66,7 @@ function nuvemFingida(opcoes) {
         return { results: (corpo.mutations || []).map((m, i) => ({ index: i, ok: true, version: 1 })) };
       }
       if (path.indexOf('/v1/status') === 0) return { ok: true, totals: contagem() };
+      if (path === '/health') return { ok: true, versao: '5.26.9', freio: { plano: 'pago', tetoDia: 1000000, disparouHoje: !!freioDisparou, ultimoDisparoEm: freioDisparou ? Date.now() : null, motivo: freioDisparou ? 'dia' : null } };
       if (path.indexOf('/v1/changes/watch') === 0) return { changes: [], nextCursor: cursor };
       return {};
     }
@@ -174,7 +177,7 @@ function abrir(cenario) {
     await n.w.DIGICOPY_CLOUD_SYNC.tick('teste');
     await n.conferir();
     ok('nuvem no limite do dia: a faixa avisa que nada se perdeu e a que horas ela volta',
-      n.temFaixa() && /limite de hoje/i.test(n.faixa()) && /volta a funcionar por volta das/.test(n.faixa()), n.faixa().slice(0, 140));
+      n.temFaixa() && /freio preventivo de gravações/i.test(n.faixa()) && /volta sozinho por volta das/.test(n.faixa()), n.faixa().slice(0, 140));
   }
 
   // ── 4) TUDO CERTO → sem faixa (nada de alarme falso) ─────────────────────
@@ -190,7 +193,32 @@ function abrir(cenario) {
       'aqui: ' + aqui + ' | faixa: ' + n.faixa().slice(0, 60));
   }
 
-  // ── 5) A CONFERÊNCIA NÃO PODE PESAR (base grande, como a do dono) ───────
+  // ── 5) O CHECK-UP RECEBE O FREIO JUNTO (rodada 28) ──────────────────────
+  //    A contagem da nuvem (apiStatus) passou a trazer o freio preventivo do
+  //    /health: é o que permite saber, de fora, se a nuvem está recusando
+  //    gravação — a manutenção não depende de ninguém abrir o sistema.
+  {
+    const nuvem = nuvemFingida();
+    const n = abrir({ nuvem: nuvem });
+    const semFreio = await n.w.DIGICOPY_CLOUD_SYNC.apiStatus();
+    ok('sem disparo, a contagem da nuvem vem com o freio em paz (plano pago, teto de 1 milhão/dia)',
+      !!semFreio && !!semFreio.freio && semFreio.freio.plano === 'pago' && semFreio.freio.disparouHoje === false && semFreio.freio.tetoDia === 1000000);
+
+    freioDisparou = true;
+    const comFreio = await n.w.DIGICOPY_CLOUD_SYNC.apiStatus();
+    ok('com o freio disparado, a contagem diz que disparou HOJE e o motivo',
+      comFreio.freio.disparouHoje === true && comFreio.freio.motivo === 'dia');
+
+    // o check-up entra só nesta janela (não mexe no resto do teste)
+    try { n.w.eval(CHECKUP); } catch (e) { /* se a tela não montar aqui, o assert cobra */ }
+    const resumo = (typeof n.w.dcCheckupNuvemResumo === 'function')
+      ? n.w.dcCheckupNuvemResumo(n.w.DIGICOPY_CLOUD_SYNC.estadoDetalhado(), comFreio) : '';
+    ok('e o resumo que ele copia leva essa linha (é a prova que chega para a manutenção)',
+      /Freio preventivo da nuvem: DISPAROU HOJE/.test(resumo) && /plano pago/.test(resumo));
+    freioDisparou = false;
+  }
+
+  // ── 6) A CONFERÊNCIA NÃO PODE PESAR (base grande, como a do dono) ───────
   //    A faixa confere a cada 15 s. O `info()` do motor tinha um campo (`pending`)
   //    que percorria a base inteira e calculava o hash de cada registro: 223 ms numa
   //    base de 76 mil registros — congelaria a tela de 15 em 15 segundos. Ele virou

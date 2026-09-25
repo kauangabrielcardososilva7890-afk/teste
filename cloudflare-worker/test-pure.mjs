@@ -20,6 +20,22 @@ assert.equal(await __test.sameSecret('abc', 'abd'), false);
 assert.equal(await __test.sameSecret('', ''), false);
 console.log('  ✔ comparação de segredo');
 
+// v5.26.9 — O FREIO PREVENTIVO FALA A LÍNGUA DO PLANO (achado da rodada 28):
+// o dono está no plano PAGO e o freio ainda usava o número do GRÁTIS (95.000/dia).
+// Numa conta paga isso parava a nuvem no meio do dia: o que era digitado num PC
+// não subia e não aparecia no outro ("os dados não demonstram").
+const { freioDecide, PLANO_PAGO, PLANO_GRATIS } = __test;
+assert.equal(freioDecide(1000, 1000, 20, PLANO_PAGO), '', 'conta paga: uso normal passa');
+assert.equal(freioDecide(99000, 0, 2000, PLANO_GRATIS), 'dia', 'conta grátis: 99.000 + 2.000 passa do teto de 95.000');
+assert.equal(freioDecide(99000, 0, 2000, PLANO_PAGO), '', 'CONTA PAGA não pode ser barrada no número do grátis');
+assert.equal(freioDecide(PLANO_PAGO.freioDia + 1, 0, 1, PLANO_PAGO), 'dia', 'conta paga ainda tem freio — no teto do plano (1 milhão/dia)');
+assert.equal(freioDecide(0, PLANO_PAGO.freioMes + 1, 1, PLANO_PAGO), 'mes', 'conta paga: o freio do MÊS (50 milhões) existe e funciona');
+assert.equal(freioDecide(0, PLANO_PAGO.freioMes + 1, 1, PLANO_GRATIS), '', 'plano grátis não tem freio de mês');
+assert.equal(freioDecide(-5, -5, -5, PLANO_PAGO), '', 'número inválido não vira susto');
+assert.equal(PLANO_PAGO.pago, true, 'o plano confirmado por ele é o pago');
+assert.equal(PLANO_GRATIS.pago, false, 'e o grátis continua definido, com os números dele');
+console.log('  ✔ freio preventivo coerente com o plano (pago não para no teto do grátis)');
+
 const tokens = new Set(Array.from({length: 100}, () => __test.randomToken('dcp_')));
 assert.equal(tokens.size, 100);
 assert.ok([...tokens].every(token => /^dcp_[A-Za-z0-9_-]{40,}$/.test(token)));
