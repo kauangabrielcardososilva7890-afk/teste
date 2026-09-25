@@ -6661,3 +6661,89 @@ Conexões."* Ele só sai quando: a nuvem **respondeu**, a base **inteira** já f
   não tem a sua conexão. Para ver o seu dado, use o seu `.exe` (ou o navegador onde você já conectou).
 - Se você abrir o **seu** sistema, a nuvem estiver conectada e a **sua** lista continuar vazia, me diga:
   aí é outra coisa, e o botão da nuvem já mostra "fila: N • em dia até HH:MM" para eu localizar o ponto.
+
+## Rodada 27 — 24/09/2026 — "FOCAR NA PARTE DOS DADOS QUE NÃO APARECEM": O SISTEMA AGORA EXPLICA (E CONSERTA) SOZINHO
+
+**Suas palavras:** *"bora focar somente na parte dos dados que não demonstram normalmente, eu já fiz o
+backup se precisar de deletar pra fazer do zero"*.
+
+### 1. O que eu encontrei (investigando, não adivinhando)
+
+A tela pode ficar vazia em **cinco** situações. **Quatro delas eram mudas** — você olhava e não tinha
+nenhuma pista:
+
+1. **Sem conexão com a nuvem** e o portão fora da tela — isso acontece de verdade: o link **"jeito
+   antigo"** do portão deixa a sessão inteira sem conexão e o portão **não volta** até fechar a aba.
+   Como a base é SÓ NUVEM, as listas ficam vazias e ninguém diz nada.
+2. **Sincronização pausada** (acontece depois de um reset da nuvem) — não baixa nada.
+3. **Nuvem no limite do dia** (o teto grátis; volta ~21h) — abre vazio.
+4. **A leitura da nuvem falhou no meio** (internet caiu) — base vazia ou pela metade.
+5. **Nuvem respondeu e está vazia** (conexão apontando para outra loja) — isso eu já tinha coberto na
+   rodada anterior, com aviso dizendo o CNPJ.
+
+**Também investiguei e NÃO é problema** (provado no código): o "PC que leu mais longe do que devia" — no
+SÓ NUVEM o sistema **relê o diário desde o começo a cada abertura**, então isso se corrige sozinho; e o
+diário da nuvem **não é apagado com o tempo** (só com o reset manual), então dado antigo continua
+alcançável.
+
+### 2. O que entrou: a faixa que explica e conserta
+
+Uma faixa discreta na parte de baixo da tela. Ela aparece **só quando há o que dizer** e resolve com
+**1 clique**:
+
+| O que ela vê | O que ela diz | O botão |
+|---|---|---|
+| Sem conexão | "Este computador **não está conectado à nuvem** — por isso as listas aparecem vazias." | **Conectar agora** (o portão volta na hora) |
+| Pausada | "A sincronização está **pausada** (motivo) — não está baixando os dados." | **Resolver agora** |
+| Limite do dia | "A nuvem atingiu o **limite de hoje** — nada foi perdido. Volta às **HH:MM**." | Ver check-up |
+| Erro que impede | "A última conversa com a nuvem falhou: \<erro\>" | Ver check-up |
+| **Nuvem com mais do que aqui** | "A **nuvem tem mais registros** do que este computador — clientes: 0 aqui × 1.919 na nuvem" | **Baixar tudo de novo** |
+| Tudo certo | *(nada — sem alarme)* | — |
+
+- Ela confere sozinha a cada 15 segundos e **não pesa**: medido na base de **76.319 registros**, custa
+  **0,1 ms**. (A primeira conferência de cada minuto, que conta a nuvem, fica em ~72 ms.)
+- **Nada é apagado:** o "Baixar tudo de novo" só relê o diário da nuvem desde o começo (o que já está
+  mais novo aqui não volta atrás) e a confirmação é a janela do sistema, como manda sua regra.
+- O **portão da conexão agora pode voltar** quando precisar (`v5262AbrirPortao`) — antes era impossível
+  depois do "jeito antigo".
+
+### 3. Bônus: um travamento escondido que eu achei medindo
+
+Para a faixa não pesar, medi a base inteira e achei um problema **que já existia**: o `info()` do motor
+recalculava a contagem de pendentes **percorrendo a base e calculando o hash de cada registro a cada
+chamada** — **223 ms** numa base de 76 mil. Ou seja: abrir a tela da Nuvem e o check-up pagavam essa
+conta, e a faixa pagaria de 15 em 15 segundos (tela congelando).
+
+**Consertei:** essa contagem agora só acontece **quando alguém pede o número** (sob demanda). Medido:
+**223 ms → 0,05 ms**. Quem usa o número (check-up, Backup, as telas) continua recebendo igual.
+
+### 4. Provas
+
+- `test_nuvem_explica.js` (**novo**, 13 verificações): sem conexão + portão reaberto · pausada · limite do
+  dia · **a leitura falhou → mostra a conta → clica em "Baixar tudo de novo" → O DADO APARECE** · tudo
+  certo = sem faixa · o `info()` leve.
+- `test_reclamacoes_do_dono.js`: **67 → 78 ✓** (11 travas novas).
+- Suíte inteira: **221 passaram, 0 falharam, 0 não rodaram** (8 testes travaram ao entrar o 226º script —
+  7 por posição no manifesto e 1 pelo mapa desatualizado — todos corrigidos com precisão e provados).
+- `Bundle OK: 226 scripts, sha256 7148d6690996bd01` · `Sync OK: v7.0.15 | 226 no bundle | 0 soltos` ·
+  celular `0 referências quebradas` · `MAPA_CADADAS` regerado (1.058 nomes / 2.020 escritas).
+- **Versão do app: 7.0.14 → 7.0.15** · **motor da nuvem 5.26.8** (não toquei) · nada de banco, nenhum
+  deploy.
+
+### 5. O que fazer quando aparecer vazio na sua máquina
+
+1. Olhe a **faixa de baixo da tela** — ela agora diz o motivo em português.
+2. Se for "sem conexão": clique em **Conectar agora** e entre com CNPJ + senha de conexão.
+3. Se for "a nuvem tem mais registros": clique em **Baixar tudo de novo** (não apaga nada).
+4. Se não aparecer faixa nenhuma e as listas continuarem vazias, me diga a hora e mande o resumo do
+   **check-up da nuvem** (botão Nuvem → check-up → "Copiar resumo"): ele traz lista por lista (aqui ×
+   nuvem) e eu consigo apontar o ponto exato.
+
+### 6. Limites honestos
+
+- **Não foi possível verificar diretamente** em qual das cinco situações você estava (a sua máquina e o
+  banco de produção não estão acessíveis daqui). O que está provado: as cinco existiam no código e as
+  quatro mudas agora avisam e oferecem o conserto.
+- A faixa **não** resolve nuvem genuinamente vazia (loja nova ou conexão de outra loja) — nesse caso ela
+  mostra a contagem e o aviso diz com qual empresa a conexão está falando.
+- Nada aqui mexeu em banco, servidor ou no `.exe`: é tudo no app. O motor da nuvem continua **5.26.8**.

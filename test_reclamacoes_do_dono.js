@@ -229,6 +229,33 @@ console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?"
   ok('o aviso é chamado no caminho de sincronização bem-sucedida', /indicator\(true,'Nuvem sincronizada/.test(sync) && (sync.match(/avisarSeBaseVazia\(\);/g) || []).length >= 2);
   ok('o aviso diz COM QUAL empresa a conexão está falando (CNPJ errado é a causa mais comum)',
     /function empresaDaConexao\(/.test(sync) && /d\.cnpj\|\|d\.empresaNome/.test(sync));
+
+  // v7.0.15 — A FAIXA QUE EXPLICA E CONSERTA (o pedido: "focar na parte dos dados que
+  // não demonstram"). Ela cobre os casos em que a tela fica vazia sem explicação.
+  const faixaArq = 'ajustes_v7015_nuvem_explica_patch.js';
+  ok('a faixa da nuvem está no bundle (roda junto com o sistema)', posNoManifesto(faixaArq) >= 0);
+  if (posNoManifesto(faixaArq) >= 0) {
+    const faixa = ler(faixaArq);
+    ok('a faixa avisa quando o computador não está conectado e o botão REABRE o portão',
+      /não está conectado à nuvem/.test(faixa) && /v5262AbrirPortao/.test(faixa));
+    ok('o portão da conexão pode ser reaberto por fora (era o caso do "jeito antigo", que deixava a sessão vazia e muda)',
+      /window\.v5262AbrirPortao\s*=/.test(ler('ajustes_v5262_login_nuvem_primeiro_patch.js')));
+    ok('a faixa avisa quando a sincronização está pausada', /pausada/.test(faixa) && /pauseReason/.test(faixa));
+    ok('a faixa avisa quando a nuvem está no limite do dia (e a que hora volta)',
+      /limite de hoje/.test(faixa) && /limiteAte/.test(faixa) && /volta a funcionar por volta das/.test(faixa));
+    ok('a faixa mostra a conta quando a nuvem tem mais registros do que aqui e conserta em 1 clique',
+      /nuvem tem mais registros/.test(faixa) && /aqui × /.test(faixa) && /baixarTudoDaNuvem/.test(faixa) && /Baixar tudo de novo/.test(faixa));
+    ok('a faixa não usa diálogo nativo (regra 16: confirmação pela janela do sistema)',
+      /confirmSistema/.test(faixa) && !/\bconfirm\s*\(/.test(tiraComentarios(faixa)) && !/\bprompt\s*\(/.test(tiraComentarios(faixa)) && !/\balert\s*\(/.test(tiraComentarios(faixa)));
+    ok('a faixa só aparece com o app aberto e nunca por cima do portão ou da tela de carga',
+      /function appAberto\(/.test(faixa) && /function ocupado\(/.test(faixa) && /v5262-portao/.test(faixa) && /digicopy-carga-nuvem/.test(faixa));
+    ok('a conferência de 15 em 15 segundos é LEVE (usa info(), que agora não conta a base)',
+      /function info\(\)\{[\s\S]{0,200}?s\.info\(\)/.test(faixa) && /ESPERA_MS = 15000/.test(faixa));
+    ok('o check-up do dono passou a ter a função de contagem da nuvem que ele já procurava (apiStatus)',
+      /async function apiStatus\(/.test(sync) && /window\.DIGICOPY_CLOUD_SYNC=\{tick,info,apiStatus,/.test(sync));
+    ok('a contagem que percorre a base virou sob demanda (223 ms -> 0,05 ms numa base de 76 mil)',
+      /Object\.defineProperty\(base,'pending'/.test(sync) && /function info\(\)\{\s*const base=/.test(sync));
+  }
 }
 
 console.log('-- a própria lista continua viva (linhas marcadas "aqui") --');

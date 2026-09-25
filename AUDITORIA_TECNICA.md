@@ -2869,3 +2869,86 @@ nenhum deploy.
   quem publica é o dono. O preview desta sessão é uma cópia local sem a conexão dele.
 - O aviso novo **não** substitui a tela de carga (que cobre a primeira importação): ele é o degrau
   seguinte, o do "já terminou de trazer e mesmo assim não tem nada".
+
+## §41 — Rodada 27 (24/09/2026): "focar somente na parte dos dados que não demonstram" — a nuvem explica sozinha
+
+**Pedido do dono:** *"bora focar somente na parte dos dados que não demonstram normalmente, eu já fiz o
+backup se precisar de deletar pra fazer do zero"*.
+
+### 41.1 A investigação: em quantas situações a tela pode ficar vazia (e quais eram mudas)
+
+| # | Situação | O que o sistema fazia | Gravidade |
+|---|---|---|---|
+| 1 | **Sem conexão da nuvem** e o portão **fora da tela** — é o caso do link "jeito antigo" (`sessionStorage` marca `FECHOU_KEY` e o portão não volta até fechar a aba) | listas vazias, **nenhum aviso** (SÓ NUVEM = base vem da nuvem) | **ALTA** — corrigido |
+| 2 | **Sincronização pausada** (reset da nuvem no meio / cota) | não baixa nada; aviso só dentro do check-up | **MÉDIA** — corrigido |
+| 3 | **Nuvem no limite do dia** (teto grátis; volta ~21h) | tela vazia na abertura, sem explicação | **MÉDIA** — corrigido |
+| 4 | **Leitura da nuvem falhou no meio** (internet caiu) | base vazia/parcial, só o título do botão mostrava o erro | **ALTA** — corrigido |
+| 5 | **Nuvem respondeu e está vazia** (conexão de outra loja / CNPJ errado) | coberto na rodada 26 (aviso com a empresa) | — já corrigido |
+
+**Investigado e NÃO é problema (provado no código):** no SÓ NUVEM o motor **relê o diário desde o
+começo a cada abertura** (`aplicarSoNuvem()` faz `cursor=0; versions={}`), então o "cursor adiantado" que
+existe na teoria se autocorrige; e o diário da nuvem **não é podado** (o único `DELETE FROM changes` é o
+reset manual da nuvem) — o dado antigo continua alcançável.
+
+### 41.2 O que entrou: `ajustes_v7015_nuvem_explica_patch.js` (226º do bundle)
+
+Uma **faixa** discreta na parte de baixo da tela, que só aparece quando há o que dizer — e conserta em
+1 clique. Ela confere a cada 15 s, **sem ninguém clicar**:
+
+| Quando | O que aparece | Botão |
+|---|---|---|
+| Sem conexão (SÓ NUVEM) | "Este computador **não está conectado à nuvem** — por isso as listas aparecem vazias." | **Conectar agora** (reabre o portão) |
+| Pausada | "A sincronização está **pausada** (motivo) — este computador não está baixando os dados." | **Resolver agora** |
+| Limite do dia | "A nuvem atingiu o **limite de hoje** — nada foi perdido. Volta por volta das **HH:MM**." | Ver check-up |
+| Erro que impede (401/403/cota/503) | "A última conversa com a nuvem falhou: \<erro\>" | Ver check-up |
+| **Nuvem com mais registros do que aqui** | "A **nuvem tem mais registros** do que este computador — clientes: 0 aqui × 1.919 na nuvem …" | **Baixar tudo de novo** |
+| Tudo certo | *(nada — sem alarme)* | — |
+
+Regras para não virar alarme chato: só com o **app aberto** (nunca por cima do portão, do login ou da
+tela de carga); o ✕ esconde por 10 minutos; a comparação "nuvem × aqui" exige conexão, **fila vazia** e
+nada segurado localmente; e a leitura da nuvem (`/v1/status`) é no máximo **1× por minuto**.
+
+**Peças de apoio:** `window.v5262AbrirPortao(force)` (o portão pode ser reaberto por fora — era
+impossível antes) e `apiStatus()` no motor (o check-up do dono **já procurava** essa função e caía no
+caminho alternativo, porque ela nunca existiu).
+
+### 41.3 ACHADO DE DESEMPENHO — ALTA · Eficiência (corrigido)
+
+Medindo a faixa numa base de **76.319 registros** (a do banco de prova, do tamanho da dele), a
+conferência de 15 em 15 segundos custava **~215 ms** — um congelamento de tela de 15 em 15 segundos.
+**Causa-raiz:** o `info()` do motor calculava `pending` com `pendingEstimate()`, que percorre a base
+inteira e calcula o **hash de cada registro**, em **toda** chamada. Medido: `info()` = **223 ms**.
+
+**Correção:** `pending` virou **sob demanda** (`Object.defineProperty(base,'pending',{get:pendingEstimate})`).
+Quem lê `.pending` continua recebendo o número certo (check-up, Backup, `banco_de_prova_nuvem.js`,
+testes); quem não lê **não paga nada**. Medido depois: `info()` = **0,05 ms** (≈4.400× mais rápido) e a
+conferência da faixa = **0,1 ms** (a primeira, que monta o retrato + consulta a nuvem, fica em ~72 ms).
+
+### 41.4 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| `test_nuvem_explica.js` (novo) | **13 ✓** (sem conexão + portão reaberto · pausada · limite do dia · leitura falhou → conta → **o dado aparece** · tudo certo = sem faixa · desempenho do `info()`) |
+| `test_reclamacoes_do_dono.js` | **67 → 78 ✓** (11 travas novas da faixa, do portão reaberto e do ganho de desempenho) |
+| `test_nuvem_nao_perde.js` | 15 ✓ (sem regressão) |
+| suíte inteira (`test_runner.js`) | **221 passaram, 0 falharam, 0 não rodaram** |
+| `build_bundle.js` / `--check` | `Bundle OK: 226 scripts, sha256 7148d6690996bd01` |
+| `sync_build.js` | `Sync OK: v7.0.15 \| 226 no bundle \| 0 soltos \| 13 entradas em build.files` |
+| `mobile/sync-www.js` | `www do celular 1.0 pronto: 4 arquivos + assets/vendor, 0 referências quebradas` |
+| `npm run mapa` | `MAPA_CAMADAS.md` regerado: 1.058 nomes, 2.020 escritas, 289 repetidos |
+
+**8 testes travaram** ao entrar o 226º script (7 por posição no manifesto, 1 pelo mapa desatualizado) —
+corrigidos com o ajuste **+1** só nas ocorrências `(man|manifest|m).length - N` (nunca em usos que não
+são do manifesto, como `r.timeline[...length - 2]`), e o mapa regerado. **Versão do app: 7.0.14 →
+7.0.15**; motor da nuvem segue **5.26.8**.
+
+### 41.5 Limites honestos
+
+- **Não foi possível verificar diretamente** em qual das cinco situações o dono estava (a máquina e o
+  banco de produção não estão acessíveis daqui). O que está provado: as cinco existiam no código e as
+  quatro mudas agora avisam e oferecem o conserto.
+- O **"Baixar tudo de novo"** não apaga nada: relê o diário desde o começo (o que já está mais novo aqui
+  não volta atrás) e não toca na nuvem. O que ele **não** resolve: nuvem genuinamente vazia (aí o aviso
+  da §40 diz com qual empresa a conexão está falando).
+- A faixa **não** substitui o check-up: ela é o aviso no meio do trabalho; o check-up continua sendo a
+  tela com a comparação lista por lista e o resumo para copiar.

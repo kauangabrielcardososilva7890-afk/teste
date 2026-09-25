@@ -258,6 +258,12 @@ const tests=[
   // "3 permissões" fora da tela, o erro.txt fora do rodapé, o SÓ NUVEM, o "dado que some" e o
   // prompt/confirm nativo que quebra dentro do .exe — regra 16).
   "test_reclamacoes_do_dono.js",
+  // v7.0.15 (rodada 27) — A NUVEM EXPLICA: quando o dado não aparece, o sistema tem de
+  // dizer POR QUÊ (sem conexão / pausada / limite do dia / erro grave / nuvem com mais
+  // registros do que aqui) e consertar em 1 clique ("Baixar tudo de novo"). Prova também
+  // que a conferência de 15 em 15 segundos custa ~0,1 ms numa base grande (o `pending` do
+  // info() virou sob demanda: era 223 ms de conta a cada chamada).
+  "test_nuvem_explica.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"

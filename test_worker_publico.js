@@ -1,4 +1,4 @@
-// test_worker_publico.js — v7.0.14 (motor da nuvem 5.26.8)
+// test_worker_publico.js — v7.0.15 (motor da nuvem 5.26.8)
 // Roda o MOTOR DA NUVEM DE VERDADE (cloudflare-worker/src/index.js) sobre um banco
 // SQLite em memória, aplicando as migrations reais do projeto. É o mesmo código
 // que o dono publica — só o banco é de mentira.

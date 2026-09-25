@@ -1727,15 +1727,40 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,paused:!!state.paused,
+function info(){
+  const base={authorized:authorized(),busy,paused:!!state.paused,
   // v7.0.12 — os campos novos são o que faltava para a fila deixar de ser invisível:
   // quantos estão por subir (outbox, de sempre), se a fila encheu, se ela coube no
   // navegador e até quando a nuvem está em dia.
   filaCheia, filaGravada, emDiaAte:Number(state.lastOk)||0, varreduraMs:durVarredura,
   // os limites, para ninguém precisar de "número mágico" na tela nem nos testes
-  tetoFila:MAX_OUTBOX, tetoAoFechar:TETO_FECHANDO,recuperando:!!state.recuperacaoCursor,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+  tetoFila:MAX_OUTBOX, tetoAoFechar:TETO_FECHANDO,
+  // v7.0.15 — o teto do dia (quando a nuvem está no limite) também aparece: é o que
+  // permite a faixa dizer "a nuvem está no limite de hoje, volta às HH:MM" em vez de
+  // deixar a tela vazia sem explicação.
+  limiteAte:Number(state.limiteAte)||0,
+  recuperando:!!state.recuperacaoCursor,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};
+  // v7.0.15 — O `pending` VIROU SOB DEMANDA (ganho de desempenho medido):
+  // ele é o ÚNICO campo que percorre a base inteira e calcula o hash de cada registro.
+  // Numa base de 76 mil registros isso custa ~223 ms (medido na bancada) por chamada —
+  // e o `info()` passou a ser chamado também pela faixa da nuvem, de 15 em 15 segundos.
+  // Como getter, quem lê `.pending` continua recebendo o número certo (check-up, Backup
+  // e testes), e quem não lê não paga nada. Nada muda de valor; só o momento da conta.
+  Object.defineProperty(base,'pending',{enumerable:true,get:pendingEstimate});
+  return base;
+}
 
 // Estado completo para o check-up (nada é inventado: o que não se sabe vem null)
+// v7.0.15 — CONTAR O QUE A NUVEM TEM (por lista). É a peça que faltava para o sistema
+// poder dizer, sozinho, "a nuvem tem mais registros do que este computador" — a pista
+// exata do "não está aparecendo nenhum dado". O check-up (ajustes_v5227) já chamava
+// `S.apiStatus()` e, como a função não existia, caía no caminho alternativo.
+async function apiStatus(){
+  const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
+  const resposta=await call('/v1/status',{method:'GET'});
+  const totais=(resposta&&resposta.totals)?resposta.totals:resposta;
+  return totais||{};
+}
 function estadoDetalhado(){
   const s=info();
   s.totalLocal=(()=>{let t=0;const M=definicoes();for(const e of Object.keys(M))for(const _ of entriesFor(e,M[e]))t++;return t;})();
@@ -2126,7 +2151,7 @@ function redesenharTelaAtual(){
   }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
+window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();

@@ -274,6 +274,17 @@
   }
 
   // ── vigilância leve: portão quando faltar nuvem; aviso quando aparecer login ─
+  // v7.0.15 — O PORTÃO PODE VOLTAR QUANDO PRECISAR.
+  // Achado da rodada 27: quem entrava pelo "jeito antigo" deixava a sessão inteira sem
+  // conexão (FECHOU_KEY no sessionStorage) e, como a base é SÓ NUVEM, as listas ficavam
+  // VAZIAS e sem nenhuma explicação. Agora a faixa "a nuvem explica" (ajustes_v7015)
+  // pode reabrir o portão na hora, apagando a marca daquela escolha.
+  window.v5262AbrirPortao = function(force){
+    try{ if(force) sessionStorage.removeItem(FECHOU_KEY); }catch(e){}
+    try{ montarPortao(); }catch(e){}
+    return !!document.getElementById('v5262-portao');
+  };
+
   function varrerDOM(){
     try{ montarPortao(); }catch(e){}
     try{ avisarNovoDia(); }catch(e){}
