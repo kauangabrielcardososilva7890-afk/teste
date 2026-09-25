@@ -84,19 +84,27 @@ ok('atalho npm run verify:files', pkg.scripts['verify:files'] === 'node verify_p
 // ── 9. Links de teste e download (obrigatórios a cada atualização) ──────────
 const REPO = pkg.digicopy.repo, BRANCH = pkg.digicopy.branch;
 ok('package.json guarda repo e branch publicados', !!REPO && !!BRANCH);
-ok('sync monta o link OFICIAL do site próprio (githack morreu quando o repo ficou privado)', /LINK_SITE/.test(sync) && /teste-60f\.pages\.dev/.test(sync) && !/LINK_GITHACK/.test(sync));
+ok('sync monta o link OFICIAL do site próprio (githack fora — dono confirmou, r36)', /LINK_SITE/.test(sync) && /teste-60f\.pages\.dev/.test(sync) && !/LINK_GITHACK/.test(sync));
 ok('sync monta o link do zip do GitHub', /LINK_ZIP/.test(sync) && /archive\/refs\/heads/.test(sync));
 ok('sync imprime os dois links', /imprimirLinks/.test(sync));
 ok('sync avisa se a branch do git divergir', /digicopy\.branch/.test(sync));
 
-// nenhum arquivo do bundle pode apontar para branch antiga do GitHack
-const branchErrada = manifest.filter(f => {
+// GitHack fora do bundle (dono confirmou, r36): nenhum arquivo pode trazer endereço do GitHack.
+// Nome puro em comentário/histórico pode. Exceção: os 3 patches que convertem link ANTIGO de
+// dado já salvo (v52240/v52249/v52254) — só têm o nome dentro de regex de conversão, nunca um link.
+const legadoOk = ['ajustes_v52240_orcamento_pages_patch.js', 'ajustes_v52249_relatorio_patch.js', 'ajustes_v52254_orcamentos_pages_patch.js'];
+const comLinkGithack = manifest.filter(f => {
   const c = fs.readFileSync(f, 'utf8');
-  if (c.indexOf('raw.githack.com') < 0) return false;
-  const re = new RegExp('raw\\.githack\\.com/' + REPO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/(?!' + BRANCH.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/)', 'g');
-  return re.test(c);
+  if (c.indexOf('githack.com') < 0) return false;
+  if (legadoOk.indexOf(f) >= 0) return c.indexOf('githack.com/' + REPO) >= 0;
+  return true;
 });
-ok('link do cliente aponta para a branch atual (' + BRANCH + ')', branchErrada.length === 0);
+if (comLinkGithack.length) console.error('   arquivos com githack: ' + comLinkGithack.join(', '));
+ok('githack fora do bundle (só conversão de dado velho, r36)', comLinkGithack.length === 0);
+// os textos de ajuda das páginas avulsas também não podem mandar para o GitHack
+const env = fs.readFileSync('envio_arquivos.html', 'utf8');
+const esc = fs.readFileSync('escola_login.html', 'utf8');
+ok('textos de ajuda sem GitHack (mesmo endereço do site)', env.toLowerCase().indexOf('githack') < 0 && esc.toLowerCase().indexOf('githack') < 0);
 
 // os dois links precisam estar documentados
 const rel = fs.readFileSync('RELATORIO_SESSAO.md', 'utf8');

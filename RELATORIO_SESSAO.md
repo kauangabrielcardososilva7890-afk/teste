@@ -7296,3 +7296,48 @@ https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/are
 Para o dono (passo a passo no chat): mergear o PR #31 + conferir o rodapé (**v7.0.22**
 agora). Motor: nada a fazer (5.28.0 no ar). Próximo: ideia E bloco 2 (primeira leva da
 migração dos 254, com teste antes/depois) + pergunta githack/Pages (pendente desde r34).
+
+## Rodada 36 — 25/09/2026 — "GITHACK NÃO USA MAIS" — REMOVIDO DO SISTEMA (LINK DO CLIENTE SÓ PAGES) — APP v7.0.23
+
+### 1. Pedido
+
+Dono confirmou que o GitHack não usa mais + perguntou o que falta (lista de pendências no fim).
+
+### 2. O que foi feito
+
+- Link do cliente: `PAGINA` padrão da v52238/v52249 trocado do GitHack para o Pages oficial
+(`https://digicopy-orcamentos.pages.dev/` — o mesmo que a v52254 já forçava; sem branch no
+meio, a classe de defeito "cliente abria página velha" morre junto).
+- `PAGINA_FALLBACK` (v52254): removido — nunca foi lido em lugar nenhum (grep provou).
+- `sync_build.js` §4b (carimbo da branch nos links GitHack): removido + a escrita dele no §5.
+- Banner de "endereço provisório" (`app.js`, ~33 linhas): removido — só disparava em
+`raw.githack.com`, que hoje mostra só um aviso de saída (conferido de fora) e não abre o app.
+- Textos visíveis: `envio_arquivos.html` (4) + `escola_login.html` (2) agora dizem "mesmo
+endereço do site" (nota raw/rawcdn removida).
+- FICOU DE PROPÓSITO (com comentário): os 3 regex que convertem link ANTIGO de dado já salvo
+(v52240/v52249/v52254) — tirar quebraria orçamento antigo; não dependem do GitHack no ar.
+- Histórico (RELATORIO_SESSAO, diário, auditoria, comentários antigos): intacto — teste exige.
+- Nota honesta: o repo está PÚBLICO hoje (a frase antiga "morreu quando ficou privado" foi
+atualizada onde era texto vivo; no histórico, ficou).
+
+### 3. Testes
+
+- Atualizados: v52238 (link Pages), v52249 (link Pages), v52263 §9 (virou proibição: nenhum
+arquivo do bundle com endereço githack, exceto os 3 conversores; + textos dos HTMLs sem
+GitHack), mensagens v52263/v52436.
+- Provas: suíte **238 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK ·
+`sync --check` OK (`v7.0.23 | 228 no bundle | 0 soltos`) · mapa 2024/289 (contagens iguais;
+regen só acertou 2 linhas defasadas da r35). Checklist de 24 respondido antes de programar.
+
+### 4. Pendências (resposta ao dono — nada urgente, motor 5.28.0 no ar)
+
+Para ele: mergear PR #31 (opcional) + conferir rodapé (v7.0.23) + (opcional) branch Production
+no painel Cloudflare. Fila comigo: ideia E blocos 2+ (migrar os 254 pontos) → ideia F (44
+esperas cegas + 35 vigias) → G+H+J+I. Pausados por ele: Android e Gerente.
+
+### 5. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31
+atualizado com a r36 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Próximo: ideia E bloco 2 (primeira leva da migração dos 254, com teste antes/depois).

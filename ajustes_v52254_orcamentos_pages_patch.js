@@ -8,7 +8,7 @@
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0d9c3-teste/orcamento_pagar.html';
+  // (r36: PAGINA_FALLBACK do GitHack removido — dono confirmou que não usa mais; nunca foi lido em lugar nenhum.)
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -46,7 +46,6 @@
   var ORCAMENTOS_PAGES_V52254_PURE = {
     VERSAO: VERSAO,
     PAGINA_PAGES: PAGINA_PAGES,
-    PAGINA_FALLBACK: PAGINA_FALLBACK,
     linkOrcamento: linkOrcamento
   };
 
@@ -96,6 +95,7 @@
         var link = linkOrcamento(o, cli, emp);
         html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
         html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+        // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
         html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
         return html;
       };

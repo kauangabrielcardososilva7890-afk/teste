@@ -58,8 +58,8 @@ const REPO = (pkg.digicopy && pkg.digicopy.repo) || 'kauangabrielcardososilva789
 const BRANCH = (pkg.digicopy && pkg.digicopy.branch) || '';
 if (!BRANCH) { console.error('package.json sem "digicopy.branch".'); process.exit(1); }
 
-// Link de teste OFICIAL = site próprio (Pages). GitHack MORREU quando o repo
-// ficou privado — não serve mais nem de plano B (não oferecer nunca).
+// Link de teste OFICIAL = site próprio (Pages). GitHack fora (dono confirmou
+// que não usa mais, r36) — não serve nem de plano B (não oferecer nunca).
 const LINK_SITE = 'https://teste-60f.pages.dev';
 const LINK_ZIP = `https://github.com/${REPO}/archive/refs/heads/${BRANCH}.zip`;
 
@@ -207,34 +207,8 @@ if (pkg.scripts.check !== checkEsperado) {
   pkg.scripts.check = checkEsperado;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 4b. Links do GitHack no código — sempre na branch publicada
-// ─────────────────────────────────────────────────────────────────────────────
-// O link do orçamento que vai para o CLIENTE estava fixo em branches antigas
-// (arena/01a04e20-teste, arena/01a010fa-teste). Resultado: o cliente abria uma
-// página velha, sem as correções. Agora a branch vem do package.json e é
-// carimbada em todos os arquivos do bundle.
-const reGithack = new RegExp(
-  'https://raw\\.githack\\.com/' + REPO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
-  '/(?:arena/[A-Za-z0-9._-]+|[0-9a-f]{7,40})/', 'g'
-);
-const alvoGithack = `https://raw.githack.com/${REPO}/${BRANCH}/`;
-const arquivosLink = [];
-const escritasLink = [];
-
-for (const arquivo of manifest) {
-  const conteudo = ler(arquivo);
-  if (conteudo.indexOf('raw.githack.com') < 0) continue;
-  const novo = conteudo.replace(reGithack, alvoGithack);
-  if (novo !== conteudo) {
-    arquivosLink.push(arquivo);
-    escritasLink.push([arquivo, novo]);
-  }
-}
-if (arquivosLink.length) {
-  alteracoes.push(`link GitHack → ${BRANCH} em: ${arquivosLink.join(', ')}`);
-}
-
+// 4b. (r36: REMOVIDO — era o carimbo da branch nos links do GitHack, fora por ordem do dono.)
+// O link do cliente agora é o Pages oficial, sem branch no meio: nada para carimbar.
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. Relatório / escrita
 // ─────────────────────────────────────────────────────────────────────────────
@@ -285,7 +259,6 @@ if (CHECK) {
 
 fs.writeFileSync('index.html', html);
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-escritasLink.forEach(([arquivo, conteudo]) => fs.writeFileSync(arquivo, conteudo));
 console.log(`Sync aplicado (v${versao}):`);
 alteracoes.forEach(a => console.log('   • ' + a));
 imprimirLinks();

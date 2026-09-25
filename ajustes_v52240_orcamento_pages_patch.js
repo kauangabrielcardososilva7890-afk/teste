@@ -47,6 +47,7 @@ if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento._
     var e=s && (db.empresas||[]).find(function(x){ return x.id===s.empresaId; });
     if(e) emp=Object.assign({}, emp, e);
     var link=linkDe(o, cli, emp);
+    // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
     html=html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
     html=html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
     html=html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');

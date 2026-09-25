@@ -28,7 +28,7 @@
       <b>CNPJ:</b> pode com pontuação ou só números. Os dois valem.<br>
       <b>Senha:</b> igual a do site da Caixa Escolar, do jeito que você digita lá.
     </div>
-    <p>Abra esta página no <b>mesmo endereço GitHack</b> em que o sistema já foi autorizado na Nuvem (raw.githack e rawcdn são diferentes).</p>
+    <p>Abra esta página no <b>mesmo endereço do site</b> em que o sistema já foi autorizado na Nuvem (tem que ser exatamente o mesmo endereço).</p>
     <label>CNPJ</label>
     <input id="user" placeholder="00.000.000/0001-00 ou só números" autocomplete="username">
     <label>Senha</label>
@@ -80,7 +80,7 @@
     if(usuario.length!==14){ show('err','CNPJ precisa ter 14 números. Pontos e barra são opcionais.'); return; }
     if(!senha){ show('err','Digite a senha.'); return; }
     if(!token()){
-      show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo GitHack, clique em Nuvem e autorize. Depois volte aqui.');
+      show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo endereço do site, clique em Nuvem e autorize. Depois volte aqui.');
       return;
     }
     const btn=document.getElementById('salvar');

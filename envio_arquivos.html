@@ -25,7 +25,7 @@
 <div class="wrap">
   <div class="card">
     <h1>Enviar arquivos para a nuvem</h1>
-    <p>Página só para subir o certificado A1 e os JSON de produtos. Abra no mesmo endereço GitHack em que o sistema já foi autorizado (raw.githack e rawcdn são diferentes).</p>
+    <p>Página só para subir o certificado A1 e os JSON de produtos. Abra no mesmo endereço do site em que o sistema já foi autorizado (tem que ser exatamente o mesmo endereço).</p>
     <div class="hint">A senha do A1 <b>não</b> é pedida aqui e <b>não</b> vai para a nuvem. Ela só entra na hora de assinar. A NF ainda não é enviada à SEFAZ.</div>
     <div id="msg" class="hint"></div>
   </div>
@@ -223,7 +223,7 @@
     var nome=String(file.name||'').toLowerCase();
     if(!/\.(pfx|p12)$/.test(nome)){ show('err','Use um arquivo .pfx (A1).'); return; }
     if(file.size>400*1024){ show('err','Arquivo grande demais.'); return; }
-    if(!token()){ show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo GitHack, clique em Nuvem e autorize. Depois volte aqui.'); return; }
+    if(!token()){ show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo endereço do site, clique em Nuvem e autorize. Depois volte aqui.'); return; }
     var btn=document.getElementById('btn-a1');
     btn.disabled=true; btn.textContent='Enviando...';
     try{
@@ -249,7 +249,7 @@
     var fc=document.getElementById('arq-cat').files[0];
     var fn=document.getElementById('arq-ncm').files[0];
     if(!fp && !fn){ show('err','Escolha o JSON de PRODUTOS ou o de NCM.'); return; }
-    if(!token()){ show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo GitHack, clique em Nuvem e autorize. Depois volte aqui.'); return; }
+    if(!token()){ show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo endereço do site, clique em Nuvem e autorize. Depois volte aqui.'); return; }
     var btn=document.getElementById('btn-prod');
     btn.disabled=true; btn.textContent='Lendo...';
     try{
@@ -373,7 +373,7 @@
   document.getElementById('btn-cli').onclick=async function(){
     var fx=document.getElementById('arq-cli').files[0];
     if(!fx){ show('err','Escolha o CLIENTES.json primeiro.'); return; }
-    if(!token()){ show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo GitHack, clique em Nuvem e autorize. Depois volte aqui.'); return; }
+    if(!token()){ show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo endereço do site, clique em Nuvem e autorize. Depois volte aqui.'); return; }
     var btn=document.getElementById('btn-cli');
     btn.disabled=true; btn.textContent='Lendo...';
     try{

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 228 | sha256: 6c46995d48a9eefa
+ * scripts: 228 | sha256: 383862f7a3cc63b3
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2691,39 +2691,6 @@ async function fbExportExtracted(){
 }
 
 
-// AVISO DE ENDEREÇO PROVISÓRIO (raw.githack.com ≠ rawcdn.githack.com = cofres separados!)
-// O localStorage é por domínio: dados salvos aqui NÃO aparecem no link oficial.
-window.addEventListener('DOMContentLoaded',function(){
-  try{
-    if(location.hostname!=='raw.githack.com') return;
-    if(document.getElementById('rawgh-banner')) return;
-    const bar=document.createElement('div');
-    bar.id='rawgh-banner';
-    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;max-width:660px;width:calc(100% - 28px);background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);padding:12px 14px;font-family:inherit;';
-    const urlOficial=location.href.replace('raw.githack.com','rawcdn.githack.com');
-    bar.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
-      +'<div style="font-size:22px;line-height:1">⚠️</div>'
-      +'<div style="flex:1">'
-      +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
-      +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
-      +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
-      +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
-      +'</div></div></div>';
-    document.body.appendChild(bar);
-    const btnCopy=document.getElementById('rawgh-copy');
-    if(btnCopy) btnCopy.onclick=function(){
-      try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){
-        // Auditoria: aqui era prompt nativo, que no .exe lança
-        // "prompt() is not supported" — o botão de copiar ficava mudo.
-        if(typeof window.mostrarTextoCopiar==='function') window.mostrarTextoCopiar('Copie o link oficial', urlOficial);
-        else if(typeof toast==='function') toast('Link oficial: '+urlOficial,'info');
-      }
-    };
-    const btnClose=document.getElementById('rawgh-close');
-    if(btnClose) btnClose.onclick=function(){ bar.remove(); };
-  }catch(e){ /* silencioso */ }
-});
 
 ;
 
@@ -26709,7 +26676,7 @@ try{
 // PATCH v5.19.0 — dica de impressão no navegador (Ctrl+P) + reforço no Electron
 // • No programa (.exe/Electron): o Ctrl+P já é interceptado no main.js e imprime
 //   LIMPO (sem URL nem contador de páginas).
-// • No navegador (GitHack): o Ctrl+P abre a janela de impressão do navegador,
+// • No navegador (site/Pages): o Ctrl+P abre a janela de impressão do navegador,
 //   que é controlada pelo navegador (o link e o "Página X de Y" só saem
 //   desmarcando "Cabeçalhos e rodapés"). Aqui mostramos um aviso lembrando isso.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -40639,7 +40606,8 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0d9c3-teste/orcamento_pagar.html';
+// GitHack fora (dono confirmou, r36): padrão agora é o Pages oficial (igual ao que a v5.22.54 já forçava).
+var PAGINA = 'https://digicopy-orcamentos.pages.dev/';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -42002,6 +41970,7 @@ if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento._
     var e=s && (db.empresas||[]).find(function(x){ return x.id===s.empresaId; });
     if(e) emp=Object.assign({}, emp, e);
     var link=linkDe(o, cli, emp);
+    // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
     html=html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
     html=html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
     html=html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
@@ -44356,7 +44325,8 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0d9c3-teste/orcamento_pagar.html';
+// GitHack fora (dono confirmou, r36): padrão agora é o Pages oficial (igual ao que a v5.22.54 já forçava).
+var PAGINA = 'https://digicopy-orcamentos.pages.dev/';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -44439,6 +44409,7 @@ function aplicarLinkOrcamento(){
       var link = linkOrcamento(o, cli, emp);
       html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
       html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+      // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
       html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
       html = html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
       return html;
@@ -44665,7 +44636,7 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
   window.navigateTo.__v52249ver = true;
 }
 
-console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
+console.log('[DIGICOPY] v5.22.49 relatório: orçamento no Pages + punch list no exe');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52249_relatorio_patch.js", e); }
@@ -45267,7 +45238,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0d9c3-teste/orcamento_pagar.html';
+  // (r36: PAGINA_FALLBACK do GitHack removido — dono confirmou que não usa mais; nunca foi lido em lugar nenhum.)
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -45305,7 +45276,6 @@ try{
   var ORCAMENTOS_PAGES_V52254_PURE = {
     VERSAO: VERSAO,
     PAGINA_PAGES: PAGINA_PAGES,
-    PAGINA_FALLBACK: PAGINA_FALLBACK,
     linkOrcamento: linkOrcamento
   };
 
@@ -45355,6 +45325,7 @@ try{
         var link = linkOrcamento(o, cli, emp);
         html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
         html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+        // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
         html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
         return html;
       };

@@ -2,7 +2,7 @@
 // PATCH v5.19.0 — dica de impressão no navegador (Ctrl+P) + reforço no Electron
 // • No programa (.exe/Electron): o Ctrl+P já é interceptado no main.js e imprime
 //   LIMPO (sem URL nem contador de páginas).
-// • No navegador (GitHack): o Ctrl+P abre a janela de impressão do navegador,
+// • No navegador (site/Pages): o Ctrl+P abre a janela de impressão do navegador,
 //   que é controlada pelo navegador (o link e o "Página X de Y" só saem
 //   desmarcando "Cabeçalhos e rodapés"). Aqui mostramos um aviso lembrando isso.
 // ═══════════════════════════════════════════════════════════════════════════

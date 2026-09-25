@@ -103,7 +103,7 @@ ok((patch.match(/__v52436lei/g) || []).length >= 4, 'guards __v52436lei nos 4 wr
 
   // ── 4. Link oficial (githack morto — ele cobrou) ──────────────────────────
   const sync = fs.readFileSync('sync_build.js', 'utf8');
-  ok(sync.includes('teste-60f.pages.dev') && !sync.includes('LINK_GITHACK'), 'sync_build imprime o SITE PRÓPRIO (githack fora — repo privado)');
+  ok(sync.includes('teste-60f.pages.dev') && !sync.includes('LINK_GITHACK'), 'sync_build imprime o SITE PRÓPRIO (githack fora — dono confirmou, r36)');
   ok(fs.readFileSync('RELATORIO_SESSAO.md', 'utf8').includes('teste-60f.pages.dev'), 'REL registra o link oficial do site próprio');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }

@@ -2439,36 +2439,3 @@ async function fbExportExtracted(){
 }
 
 
-// AVISO DE ENDEREÇO PROVISÓRIO (raw.githack.com ≠ rawcdn.githack.com = cofres separados!)
-// O localStorage é por domínio: dados salvos aqui NÃO aparecem no link oficial.
-window.addEventListener('DOMContentLoaded',function(){
-  try{
-    if(location.hostname!=='raw.githack.com') return;
-    if(document.getElementById('rawgh-banner')) return;
-    const bar=document.createElement('div');
-    bar.id='rawgh-banner';
-    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;max-width:660px;width:calc(100% - 28px);background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);padding:12px 14px;font-family:inherit;';
-    const urlOficial=location.href.replace('raw.githack.com','rawcdn.githack.com');
-    bar.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
-      +'<div style="font-size:22px;line-height:1">⚠️</div>'
-      +'<div style="flex:1">'
-      +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
-      +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
-      +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
-      +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
-      +'</div></div></div>';
-    document.body.appendChild(bar);
-    const btnCopy=document.getElementById('rawgh-copy');
-    if(btnCopy) btnCopy.onclick=function(){
-      try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){
-        // Auditoria: aqui era prompt nativo, que no .exe lança
-        // "prompt() is not supported" — o botão de copiar ficava mudo.
-        if(typeof window.mostrarTextoCopiar==='function') window.mostrarTextoCopiar('Copie o link oficial', urlOficial);
-        else if(typeof toast==='function') toast('Link oficial: '+urlOficial,'info');
-      }
-    };
-    const btnClose=document.getElementById('rawgh-close');
-    if(btnClose) btnClose.onclick=function(){ bar.remove(); };
-  }catch(e){ /* silencioso */ }
-});

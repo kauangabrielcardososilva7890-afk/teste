@@ -62,7 +62,7 @@
 | `renderOrcamentos` | 7 | ajustes_v52289_orcamento_carimbo_autocura_patch.js:87 (função, no carregamento) |
 | `renderOs` | 7 | automacoes_caixa_chat_auxiliares_patch.js:261 (função, no carregamento) |
 | `salvarChamadoAvulso` | 7 | ajustes_v51920_patch.js:125 (função, no carregamento) |
-| `saveDB` | 7 | ajustes_v7021_portao_escrita_patch.js:54 (função, no carregamento) |
+| `saveDB` | 7 | ajustes_v7021_portao_escrita_patch.js:55 (função, no carregamento) |
 | `vosConcluirFaturamento` | 7 | ajustes_v52245_venda_salvar_print_patch.js:85 (função, no carregamento) |
 | `__cliEditSnapshot` | 6 | (só troca em uso) |
 | `abrirCloudflareNuvem` | 6 | ajustes_v52296_backups_nuvem_patch.js:680 (função, no carregamento) |
@@ -71,7 +71,7 @@
 | `renderLeituras` | 6 | ajustes_v5250_leitura_overhaul_patch.js:323 (função, no carregamento) |
 | `renderUsuarios` | 6 | permissoes_override_menus_fiscais_patch.js:152 (alias, no carregamento) |
 | `salvarOrcamentoTela` | 6 | ajustes_v52260_orcamento_trava_venda_atalho_patch.js:684 (função, no carregamento) |
-| `saveDBAgora` | 6 | ajustes_v7021_portao_escrita_patch.js:63 (função, no carregamento) |
+| `saveDBAgora` | 6 | ajustes_v7021_portao_escrita_patch.js:64 (função, no carregamento) |
 | `vosSalvarVenda` | 6 | ajustes_v52245_venda_salvar_print_patch.js:58 (função, no carregamento) |
 | `__CHAMADO_AVULSO` | 5 | chamados_avulsos_aberto_patch.js:49 (valor, no carregamento) |
 | `__cliEditId` | 5 | (só troca em uso) |
@@ -98,7 +98,7 @@
 - sobrepõe: ajustes_v52246_nuvem_nao_autorizar_patch.js:33 — função, no carregamento
 - sobrepõe: ajustes_v52247_exe_atualiza_patch.js:20 — função, no carregamento
 - sobrepõe: ajustes_v52248_exe_cache_patch.js:15 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:310 — função, no carregamento
+- sobrepõe: ajustes_v52249_relatorio_patch.js:312 — função, no carregamento
 - sobrepõe: ajustes_v52250_exe_bundle_patch.js:35 — função, no carregamento
 - sobrepõe: ajustes_v52251_exe_resiliencia_patch.js:104 — função, no carregamento
 - sobrepõe: ajustes_v52252_resolucao_loop_patch.js:76 — função, no carregamento
@@ -151,9 +151,9 @@
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:43 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:46 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:53 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:124 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:127 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:134 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:126 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:129 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:136 — valor, em uso
 
 ### `modalContext` — 24 escritas
 
@@ -275,7 +275,7 @@
 - sobrepõe: ajustes_v52243_financeiro_filtros_patch.js:151 — função, no carregamento
 - sobrepõe: ajustes_v52244_financeiro_datas_patch.js:94 — função, no carregamento
 - **GANHA →** ajustes_v52245_financeiro_hist_datas_patch.js:155 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:266 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:268 — função, em uso
 
 ### `renderVendas` — 18 escritas
 
@@ -365,7 +365,7 @@
 - sobrepõe: ajustes_v5172_patch.js:357 — função, no carregamento
 - sobrepõe: ajustes_v5193_patch.js:70 — função, no carregamento
 - sobrepõe: ajustes_v52237_estoque_zero_volta_patch.js:161 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:209 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:210 — função, no carregamento
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:50 — função, no carregamento
 - **GANHA →** ajustes_v52295_venda_volta_patch.js:94 — função, no carregamento
 
@@ -516,7 +516,7 @@
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:29 — valor, em uso
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:70 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:50 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:131 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:133 — valor, em uso
 
 ### `DIGICOPY_APP_VERSION` — 9 escritas
 
@@ -587,12 +587,12 @@
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:28 — valor, em uso
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:69 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:49 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:130 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:132 — valor, em uso
 
 ### `abrirTelaOrcamento` — 8 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:395 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:114 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:115 — função, no carregamento
 - sobrepõe: ajustes_v52243_orcamentos_status_patch.js:86 — função, no carregamento
 - sobrepõe: ajustes_v52256_orcamento_venda_limpa_patch.js:307 — função, no carregamento
 - sobrepõe: ajustes_v52258_orcamento_os_revalidar_patch.js:463 — função, no carregamento
@@ -700,7 +700,7 @@
 - sobrepõe: vendas_os_patch.js:1166 — função, no carregamento
 - sobrepõe: ajustes_v52239_print_escolha_patch.js:206 — função, no carregamento
 - **GANHA →** ajustes_v52245_venda_salvar_print_patch.js:76 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:142 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:144 — função, em uso
 
 ### `pintarMenus` — 7 escritas
 
@@ -760,7 +760,7 @@
 - sobrepõe: cloudflare_data_sync_patch.js:2364 — função, no carregamento
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:431 — alias, em uso
-- **GANHA →** ajustes_v7021_portao_escrita_patch.js:54 — função, no carregamento
+- **GANHA →** ajustes_v7021_portao_escrita_patch.js:55 — função, no carregamento
 
 ### `vosConcluirFaturamento` — 7 escritas
 
@@ -770,7 +770,7 @@
 - sobrepõe: vendas_notinhas_fix_patch.js:1133 — função, no carregamento
 - sobrepõe: ajustes_v52243_financeiro_filtros_patch.js:134 — função, no carregamento
 - **GANHA →** ajustes_v52245_venda_salvar_print_patch.js:85 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:150 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:152 — função, em uso
 
 ### `__cliEditSnapshot` — 6 escritas
 
@@ -830,7 +830,7 @@
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:583 — função, no carregamento
 - sobrepõe: ajustes_v52237_orcamentos_aprovacao_patch.js:246 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:188 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:189 — função, no carregamento
 - sobrepõe: ajustes_v52244_orcamentos_autorizar_patch.js:112 — função, no carregamento
 - sobrepõe: ajustes_v52258_orcamento_os_revalidar_patch.js:655 — função, no carregamento
 - **GANHA →** ajustes_v52260_orcamento_trava_venda_atalho_patch.js:684 — função, no carregamento
@@ -842,7 +842,7 @@
 - sobrepõe: cloudflare_data_sync_patch.js:2379 — função, no carregamento
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:432 — alias, em uso
-- **GANHA →** ajustes_v7021_portao_escrita_patch.js:63 — função, no carregamento
+- **GANHA →** ajustes_v7021_portao_escrita_patch.js:64 — função, no carregamento
 
 ### `vosSalvarVenda` — 6 escritas
 
@@ -851,7 +851,7 @@
 - sobrepõe: ajustes_v52238_vendas_os_ajustes_patch.js:180 — função, no carregamento
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:44 — função, no carregamento
 - **GANHA →** ajustes_v52245_venda_salvar_print_patch.js:58 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:139 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:141 — função, em uso
 
 ### `__CHAMADO_AVULSO` — 5 escritas
 
@@ -895,11 +895,11 @@
 
 ### `__orcDirty` — 5 escritas
 
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:116 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:173 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:180 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:193 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:217 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:117 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:174 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:181 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:194 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:218 — valor, em uso
 
 ### `__vosItensAdicionadosTemp` — 5 escritas
 
@@ -939,15 +939,15 @@
 - sobrepõe: fluxos_operacionais_patch.js:1267 — função, no carregamento
 - sobrepõe: automacoes_financeiro_estoque_patch.js:269 — função, no carregamento
 - **GANHA →** ajustes_v52245_leitura_apagar_patch.js:26 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:172 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:174 — função, em uso
 
 ### `gerarHtmlOrcamento` — 5 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_aprovacao_patch.js:170 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:230 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:231 — função, no carregamento
 - sobrepõe: ajustes_v52240_orcamento_pages_patch.js:39 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:79 — função, em uso
-- **GANHA →** ajustes_v52254_orcamentos_pages_patch.js:85 — função, no carregamento
+- sobrepõe: ajustes_v52249_relatorio_patch.js:80 — função, em uso
+- **GANHA →** ajustes_v52254_orcamentos_pages_patch.js:84 — função, no carregamento
 
 ### `lcAddPeca` — 5 escritas
 
@@ -1070,7 +1070,7 @@
 - sobrepõe: ajustes_v52243_financeiro_filtros_patch.js:98 — valor, no carregamento
 - sobrepõe: ajustes_v52244_financeiro_datas_patch.js:16 — valor, no carregamento
 - **GANHA →** ajustes_v52245_financeiro_hist_datas_patch.js:61 — valor, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:221 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:223 — valor, em uso
 
 ### `__impPassoSerial` — 4 escritas
 
@@ -1118,8 +1118,8 @@
 
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:86 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:89 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:151 — valor, em uso
 - sobrepõe: ajustes_v52249_relatorio_patch.js:153 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:155 — valor, em uso
 
 ### `__vosPendenteReporEstoque` — 4 escritas
 
@@ -1215,7 +1215,7 @@
 ### `orcBuscarProd` — 4 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:493 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:131 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:132 — função, no carregamento
 - sobrepõe: ajustes_v52259_orcamento_filtros_item_patch.js:215 — alias, no carregamento
 - **GANHA →** ajustes_v52260_orcamento_trava_venda_atalho_patch.js:371 — alias, no carregamento
 
@@ -1421,7 +1421,7 @@
 
 - sobrepõe: notinha_patch.js:619 — função, no carregamento
 - **GANHA →** ajustes_v52245_financeiro_hist_datas_patch.js:165 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:275 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:277 — função, em uso
 
 ### `imprimirLeituraContrato` — 3 escritas
 
@@ -1462,7 +1462,7 @@
 ### `orcAddItem` — 3 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:537 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:178 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:179 — função, no carregamento
 - **GANHA →** ajustes_v52259_orcamento_filtros_item_patch.js:398 — função, no carregamento
 
 ### `orcBuscarCliente` — 3 escritas
@@ -2012,7 +2012,7 @@
 
 ### `orcSelRecarga` — 2 escritas
 
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:164 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:165 — função, no carregamento
 - **GANHA →** ajustes_v52260_orcamento_trava_venda_atalho_patch.js:373 — alias, no carregamento
 
 ### `parseDataLocal` — 2 escritas

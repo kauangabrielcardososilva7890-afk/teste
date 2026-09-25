@@ -5,7 +5,8 @@
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0d9c3-teste/orcamento_pagar.html';
+// GitHack fora (dono confirmou, r36): padrão agora é o Pages oficial (igual ao que a v5.22.54 já forçava).
+var PAGINA = 'https://digicopy-orcamentos.pages.dev/';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
