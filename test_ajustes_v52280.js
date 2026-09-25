@@ -14,7 +14,7 @@ ok('o sistema reconhece o limite diário do banco grátis',S.ehLimiteDiario(reca
 ok('erro comum não é confundido com limite',S.ehLimiteDiario('Falha de rede')===false&&S.ehLimiteDiario('')===false);
 // v5.24.34 — SUPERSESSÃO: o recado do limite parou de falar "de hoje/grátis"
 // (era o mundo gratuito); no plano pago o limite é do PERÍODO (mensal).
-// v7.0.16 (rodada 28) — o aviso passou a dizer DE ONDE vem a parada (o freio
+// v7.0.17 (rodada 28) — o aviso passou a dizer DE ONDE vem a parada (o freio
 // preventivo do motor, não o teto do plano): era essa confusão que fazia parecer
 // que ele estava no plano grátis quando o freio disparava.
 ok('o aviso é em português e diz que nada se perdeu',/Nada foi perdido/.test(S.recadoDoLimite())&&/freio preventivo de gravações/.test(S.recadoDoLimite()));

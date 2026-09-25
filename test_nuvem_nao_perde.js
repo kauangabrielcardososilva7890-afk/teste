@@ -69,7 +69,7 @@ function nuvemFingida() {
         });
         return { results: (corpo.mutations || []).map((m, i) => ({ index: i, ok: true, version: 1 })) };
       }
-      if (path.indexOf('/v1/status') === 0) return { ok: true, registros: diario.length };
+      if (path.indexOf('/v1/status') === 0) return { ok: true, registros: diario.length, totals: { records: diario.length, byEntity: {} } };
       if (path.indexOf('/v1/changes/watch') === 0) return { changes: [], nextCursor: cursor };
       return {};
     }
@@ -86,7 +86,7 @@ function abrirNavegador(nuvem, estadoSalvo) {
   w.localStorage.setItem('digicopy_cf_token_v1', 'token-de-teste');
   w.DIGICOPY_CLOUD = { token: () => 'token-de-teste', api: nuvem.api, deviceInfo: () => null };
   w.DIGICOPY_SO_NUVEM = true;
-  w.DIGICOPY_APP_VERSION = '7.0.16';
+  w.DIGICOPY_APP_VERSION = '7.0.17';
   w.getSession = () => null;
   w.db = { clientes: [], produtos: [], vendas: [], contasReceber: [], contasPagar: [], config: {}, _seq: {} };
   w.saveDB = function () { };            // o saveDB "de antes" (app.js) — o motor embrulha este
@@ -248,6 +248,49 @@ function abrirNavegador(nuvem, estadoSalvo) {
     const temDado = (n5.janela.db.clientes || []).some((c) => c && c.id === 'c-existente');
     ok('com dados na nuvem o aviso NÃO aparece e o dado está na tela (sem alarme falso)', !avisou5 && temDado,
       'avisou=' + avisou5 + ' na tela=' + temDado);
+  }
+
+  console.log('-- v7.0.17: LIBERAR A CÓPIA LOCAL EXIGE PROVA ITEM POR ITEM --');
+  {
+    // O CASO PERIGOSO: ele escolheu "não enviar o que já existe aqui" (a opção 2 da
+    // tela Nuvem) — esses registros vivem SÓ neste PC. A nuvem, cheia, tem MAIS
+    // registros do que este PC: a conta antiga (contagem) diria "a nuvem tem tudo"
+    // e apagaria a cópia local — levando embora os registros segurados.
+    const CHAVE_BASE = 'digicopy_erp_v42_demo_apresentacao_part__clientes';
+    const nuvemA = nuvemFingida();
+    nuvemA.semear('clientes', 'c-1', { id: 'c-1', nome: 'Da nuvem' });
+    nuvemA.semear('clientes', 'c-2', { id: 'c-2', nome: 'Da nuvem 2' });
+    nuvemA.semear('clientes', 'c-3', { id: 'c-3', nome: 'Da nuvem 3' });
+    const guardadoA = {};
+    guardadoA[CHAVE_BASE] = JSON.stringify([{ id: 'c-segurado', nome: 'Só neste PC' }]);
+    guardadoA[STATE_KEY] = JSON.stringify({
+      cursor: 0, versions: {}, hashes: {}, known: { 'clientes|c-1': true, 'clientes|c-2': true, 'clientes|c-3': true },
+      initialPull: true, lastOk: 1, paused: false, heldLocalOnly: ['clientes|c-segulado'.replace('segulado', 'segurado')], pauseReason: ''
+    });
+    const nA = abrirNavegador(nuvemA, guardadoA);
+    nA.janela.db.clientes = [{ id: 'c-segurado', nome: 'Só neste PC' }];
+    await nA.andar(80000);   // tempo suficiente para a conferência da nuvem vencer o freio de 1 min
+    const continuou = !!nA.janela.localStorage.getItem(CHAVE_BASE);
+    ok('registro segurado (só neste PC) BLOQUEIA a liberação: contagem da nuvem não é prova',
+      continuou, 'cópia local ' + (continuou ? 'preservada' : 'APAGADA'));
+    ok('e o registro continua na memória do sistema (não sumiu da tela)',
+      (nA.janela.db.clientes || []).some((c) => c && c.id === 'c-segurado'));
+  }
+  {
+    // O CAMINHO BOM continua funcionando: o registro sobe para a nuvem e, SÓ DEPOIS
+    // de confirmado (chave conhecida + hash igual), a cópia local é liberada.
+    const CHAVE_BASE = 'digicopy_erp_v42_demo_apresentacao_part__clientes';
+    const nuvemB = nuvemFingida();
+    nuvemB.semear('clientes', 'c-base', { id: 'c-base', nome: 'Já estava na nuvem' });
+    const guardadoB = {};
+    guardadoB[CHAVE_BASE] = JSON.stringify([{ id: 'c-novo-b', nome: 'Novo do balcão' }]);
+    const nB = abrirNavegador(nuvemB, guardadoB);
+    nB.janela.db.clientes = [{ id: 'c-novo-b', nome: 'Novo do balcão' }];
+    await nB.andar(80000);
+    const subiu = nuvemB.diario.some((c) => c.entity === 'clientes' && String(c.recordId) === 'c-novo-b');
+    const liberou = !nB.janela.localStorage.getItem(CHAVE_BASE);
+    ok('quando TUDO está confirmado na nuvem, a cópia local é liberada como sempre', subiu && liberou,
+      'subiu=' + subiu + ' liberou=' + liberou);
   }
 
   console.log('\nRESULTADO: ' + passou + ' verificações passaram — o que ele grava entra na fila na hora, sobrevive a fechar e reabrir, e a tela vazia nunca fica em silêncio.');

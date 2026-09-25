@@ -20,7 +20,7 @@ assert.equal(await __test.sameSecret('abc', 'abd'), false);
 assert.equal(await __test.sameSecret('', ''), false);
 console.log('  ✔ comparação de segredo');
 
-// v5.26.9 — O FREIO PREVENTIVO FALA A LÍNGUA DO PLANO (achado da rodada 28):
+// v5.27.0 — O FREIO PREVENTIVO FALA A LÍNGUA DO PLANO (achado da rodada 28):
 // o dono está no plano PAGO e o freio ainda usava o número do GRÁTIS (95.000/dia).
 // Numa conta paga isso parava a nuvem no meio do dia: o que era digitado num PC
 // não subia e não aparecia no outro ("os dados não demonstram").

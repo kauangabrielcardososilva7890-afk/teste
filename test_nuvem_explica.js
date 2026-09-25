@@ -37,10 +37,12 @@ const TOKEN_KEY = 'digicopy_cf_token_v1';
 const STATE_KEY = 'digicopy_cf_sync_state_v1';
 
 // ── a nuvem fingida: diário + contagem por lista (igual ao /v1/status) ──────
-let freioDisparou = false;   // v7.0.16 — o freio preventivo do motor da nuvem (vem no /health)
+let freioDisparou = false;   // v7.0.17 — o freio preventivo do motor da nuvem (vem no /health)
+const relatos = [];          // v7.0.17 — o que o app relatou para a manutenção (técnico, sem dado de negócio)
 function nuvemFingida(opcoes) {
   const cenario = opcoes || {};
   let falhasRestantes = Number(cenario.falhasDeLeitura) || 0;
+  let recusandoEscrita = !!cenario.recusaEscrita;   // v7.0.17 — nuvem recusando gravação (429 quota)
   const diario = [];
   let cursor = 0;
   const contagem = () => {
@@ -62,11 +64,21 @@ function nuvemFingida(opcoes) {
         return { changes: novas.map((c) => ({ entity: c.entity, recordId: c.recordId, data: c.data, version: c.version, operation: 'upsert' })), nextCursor: cursor, hasMore: false };
       }
       if (path === '/v1/changes' && opt.method === 'POST') {
+        if (recusandoEscrita) {
+          const e = new Error('Erro HTTP 429');
+          e.status = 429; e.quota = true; e.message = 'Erro HTTP 429';
+          throw e;
+        }
         const corpo = JSON.parse(opt.body || '{}');
         return { results: (corpo.mutations || []).map((m, i) => ({ index: i, ok: true, version: 1 })) };
       }
       if (path.indexOf('/v1/status') === 0) return { ok: true, totals: contagem() };
-      if (path === '/health') return { ok: true, versao: '5.26.9', freio: { plano: 'pago', tetoDia: 1000000, disparouHoje: !!freioDisparou, ultimoDisparoEm: freioDisparou ? Date.now() : null, motivo: freioDisparou ? 'dia' : null } };
+      if (path === '/v1/relato') {
+        const corpo = JSON.parse(opt.body || '{}');
+        relatos.push(corpo);
+        return { ok: true };
+      }
+      if (path === '/health') return { ok: true, versao: '5.27.0', freio: { plano: 'pago', tetoDia: 1000000, disparouHoje: !!freioDisparou, ultimoDisparoEm: freioDisparou ? Date.now() : null, motivo: freioDisparou ? 'dia' : null } };
       if (path.indexOf('/v1/changes/watch') === 0) return { changes: [], nextCursor: cursor };
       return {};
     }
@@ -178,6 +190,33 @@ function abrir(cenario) {
     await n.conferir();
     ok('nuvem no limite do dia: a faixa avisa que nada se perdeu e a que horas ela volta',
       n.temFaixa() && /freio preventivo de gravações/i.test(n.faixa()) && /volta sozinho por volta das/.test(n.faixa()), n.faixa().slice(0, 140));
+
+    // v7.0.17 — RELATO DE SAÚDE: o app conta para a nuvem que a gravação foi recusada.
+    // É este relato que a manutenção lê de fora (no /health), sem depender de ninguém
+    // abrir tela nenhuma. E ele não pode virar enxurrada: 1 por tipo a cada 10 minutos.
+    // A nuvem RECUSOU a gravação (429 quota:true) — o motor tem de contar isso.
+    const antes = relatos.length;
+    const nuvemRecusando = nuvemFingida({ recusaEscrita: true });
+    const nRec = abrir({ nuvem: nuvemRecusando });
+    await nRec.esperar(120);
+    nRec.w.db.clientes.push({ id: 'c-rec', nome: 'Cliente para subir' });
+    nRec.w.saveDB();                                  // entra na fila na hora
+    await nRec.w.DIGICOPY_CLOUD_SYNC.tick('teste');
+    await nRec.esperar(120);
+    const enviados = relatos.filter((r) => r.tipo === 'freio').length;
+    ok('o app RELATA para a nuvem que a gravação foi recusada (a manutenção vê de fora)',
+      enviados >= 1, 'relatos: ' + JSON.stringify(relatos.map((r) => r.tipo)));
+    ok('e o relato é técnico: tipo curto + mensagem limitada + versão (sem dado de negócio)',
+      relatos.every((r) => r.tipo && (r.codigo === undefined || (typeof r.codigo === 'string' && r.codigo.length <= 140))) &&
+      !/Cliente para subir/.test(JSON.stringify(relatos)));
+    // tenta de novo na hora: o freio de repetição (10 min por tipo) tem de segurar
+    nRec.w.db.clientes.push({ id: 'c-rec2', nome: 'Outro cliente' });
+    nRec.w.saveDB();
+    await nRec.w.DIGICOPY_CLOUD_SYNC.tick('teste');
+    await nRec.esperar(80);
+    const repetidos = relatos.filter((r) => r.tipo === 'freio').length;
+    ok('o mesmo relato não se repete a cada tentativa (no máximo 1 a cada 10 minutos)',
+      repetidos === enviados && relatos.length === antes + 1, 'antes=' + antes + ' depois=' + relatos.length);
   }
 
   // ── 4) TUDO CERTO → sem faixa (nada de alarme falso) ─────────────────────

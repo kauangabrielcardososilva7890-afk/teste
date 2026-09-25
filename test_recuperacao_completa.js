@@ -78,8 +78,8 @@ ok('continua aceitando o pedido antigo (só `before`) para não quebrar PC velho
 ok('devolve o par que fecha o cursor',
   /proximoEntity: ultimoReg \? ultimoReg\.entity : undefined/.test(worker) &&
   /proximoId: ultimoReg \? ultimoReg\.recordId : undefined/.test(worker));
-ok('motor carimbado 5.26.9 (a versão nova tem de ser publicada para valer)',
-  /WORKER_VERSION = '5\.26\.9'/.test(worker));
+ok('motor carimbado 5.27.0 (a versão nova tem de ser publicada para valer)',
+  /WORKER_VERSION = '5\.27\.0'/.test(worker));
 
 console.log('-- o PC que varre a lista --');
 ok('o PC manda o cursor composto quando o motor devolve o par',

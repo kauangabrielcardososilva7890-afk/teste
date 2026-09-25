@@ -33,7 +33,7 @@
 
 <header>
   <h1>Passo a passo — publicar o Worker e trocar a branch do site de teste</h1>
-  <p>Sistema Digicopy · branch desta sessão: <code>arena/01a0cf4a-teste</code> · app v7.0.16 · worker do repositório: API 0.4.9 / Worker 5.26.9 · 24/09/2026</p>
+  <p>Sistema Digicopy · branch desta sessão: <code>arena/01a0cf4a-teste</code> · app v7.0.17 · worker do repositório: API 0.4.9 / Worker 5.27.0 · 24/09/2026</p>
 </header>
 
 <div class="caixa">
@@ -51,7 +51,7 @@
 
 <p>A publicação automática do Worker costuma ficar apontada para uma branch <b>antiga</b>
 (<code>arena/01a00cfb-teste</code>, configuração de uma sessão anterior). O repositório hoje está em
-<b>API 0.4.9 / Worker 5.26.9</b>. O ajuste abaixo faz o push desta branch publicar sozinho.
+<b>API 0.4.9 / Worker 5.27.0</b>. O ajuste abaixo faz o push desta branch publicar sozinho.
 <b>Não consigo verificar daqui o que está no ar</b> — quem diz é o <code>/health</code>
 (passo "Conferir", logo abaixo).</p>
 
@@ -72,7 +72,7 @@
   <li>Vá na aba <b>Deployments</b> e clique em <b>Retry deployment</b> (ou aguarde: o push que já foi feito nesta branch dispara uma build nova em segundos).</li>
   <li><b>Conferir:</b> abra no navegador
     <br><code>https://digicopy-sync-api.digicopyonline.workers.dev/health</code>
-    <br>Tem que aparecer <code>"versao":"5.26.9"</code> (e <code>API 0.4.9</code>). Se aparecer 5.26.3, a build ainda não publicou — espere 1 minuto e dê Ctrl+F5.</li>
+    <br>Tem que aparecer <code>"versao":"5.27.0"</code> (e <code>API 0.4.9</code>). Se aparecer 5.26.3, a build ainda não publicou — espere 1 minuto e dê Ctrl+F5.</li>
 </ol>
 
 <div class="caixa aviso">
@@ -132,7 +132,7 @@
       (o repositório é estático puro — não tem passo de build).</li>
   <li>Vá em <b>Deployments</b> → <b>Retry deployment</b> (ou aguarde o push desta branch disparar um novo).</li>
   <li><b>Conferir:</b> abra <code>https://teste-60f.pages.dev</code>, dê <b>Ctrl+F5</b> e olhe o
-      <b>rodapé</b>: tem que mostrar <b>v7.0.16</b>.</li>
+      <b>rodapé</b>: tem que mostrar <b>v7.0.17</b>.</li>
 </ol>
 
 <div class="caixa">
@@ -144,12 +144,12 @@
 <h2>Parte 3 — Depois que você trocar</h2>
 <ul>
   <li>Me avise “troquei”: eu passo a tratar o push nesta branch como <b>publicação</b> (worker e site).</li>
-  <li>Se o <code>/health</code> mostrar 5.26.9 e o rodapé mostar v7.0.16, o cadeado está fechado: site e nuvem desta sessão no ar.</li>
+  <li>Se o <code>/health</code> mostrar 5.27.0 e o rodapé mostar v7.0.17, o cadeado está fechado: site e nuvem desta sessão no ar.</li>
   <li>Qualquer tela estranha: <b>Ctrl+F5</b> antes de tudo (o Pages serve versão em cache).</li>
 </ul>
 
 <footer>
-  Guia do responsável · Sistema Digicopy v7.0.16 · branch <code>arena/01a0cf4a-teste</code> ·
+  Guia do responsável · Sistema Digicopy v7.0.17 · branch <code>arena/01a0cf4a-teste</code> ·
   link de teste: <b>https://teste-60f.pages.dev</b> · saúde da nuvem:
   <b>https://digicopy-sync-api.digicopyonline.workers.dev/health</b><br>
   Nunca coloque token, senha, CSC ou certificado neste guia, no chat ou no repositório.

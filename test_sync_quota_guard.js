@@ -39,7 +39,7 @@ ok('reconhecer a pausa ainda agenda a volta na virada', /state\.limiteAte\s*=\s*
 console.log('== CONTAGEM DO DIA SÓ CONTA LOTE ACEITO (Worker) ==');
 {
   const iValida = worker.indexOf('INVALID_MUTATION_BATCH');
-  // v5.26.9 (rodada 28) — o freio deixou de ter número solto e passou a ler o
+  // v5.27.0 (rodada 28) — o freio deixou de ter número solto e passou a ler o
   // PLANO (`PLANO.freioDia`): era justamente o número solto do plano grátis que
   // barrava a conta PAGA. A âncora acompanha a fonte da verdade nova.
   const iFreio = worker.indexOf('PLANO.freioDia');

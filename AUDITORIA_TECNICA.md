@@ -3031,3 +3031,95 @@ foram re-ancorados `5.26.8 → 5.26.9`, além das 2 formas escapadas em regex qu
   Depois da publicação, o `/health` (de fora) e o check-up (na tela dele) fecham essa dúvida.
 - **O que depende dele:** publicar o motor (1 duplo clique no `atualizar_motor_nuvem.cmd`). Enquanto o
   motor 5.26.8 estiver no ar, o freio continua com o número do grátis.
+
+## §43 — Rodada 29 (24/09/2026): "será que foi o gerar exe só nuvem?" + o que faltava para eu achar o problema sozinho
+
+### 43.1 O caminho do `.exe` — conferido inteiro (e NÃO é um segundo sistema)
+
+**Pergunta do dono:** *"será se o que deu problema foi esse gerar exe só nuvem?"*
+
+**O que o `CRIAR_EXE_SO_NUVEM.cmd` faz de verdade** (lido arquivo por arquivo):
+
+| Arquivo | O que é | Guarda dado? |
+|---|---|---|
+| `CRIAR_EXE_SO_NUVEM.cmd` | chama os dois de baixo | não |
+| `nuvem/criar_exe_so_nuvem.ps1` | compila no próprio Windows (Add-Type, sem internet) um lançador de poucos KB | não |
+| `nuvem/abrir_digicopy.vbs` | mesmo caminho, sem gerar `.exe` | não |
+| `nuvem/DIGICOPY-NUVEM.exe` | **não é o sistema**: abre `https://teste-60f.pages.dev` no Edge/Chrome em `--app=` | não |
+
+**Conclusão (com prova):** o "exe só nuvem" é uma **janela para o site**. Ele não tem banco, não tem sistema dentro e não versiona nada — então ele não é a causa de dado sumir. O que ele muda é **onde vive a credencial**: o login da nuvem fica no perfil do navegador usado pelo atalho. Se esse perfil for limpo (ou o atalho abrir outro navegador), a tela do portão volta — e **nenhum dado se perde** (a base é da nuvem).
+
+**Conferido também:** o site publicado **é o mesmo código do repositório**. O cabeçalho do bundle no ar dizia `scripts: 226 | sha256 51730a9ef2b9649a`, exatamente o build da rodada 28 — ou seja, o site **publica sozinho a cada push** desta branch (é a automação dele). O que **não** publica sozinho é o **motor da nuvem** (não existe workflow do GitHub — conferido): esse continua dependendo dele.
+
+### 43.2 As cinco perguntas dele, respondidas com prova
+
+**1) "eu achei um problema, mas esse realmente é o problema?"**
+Para o freio da cota: **sim, provado no código e no comportamento** — os dois números do plano divergiam (§42) e agora existe a **contra-prova viva** (com 95.000 linhas no dia, a conta paga **não** é mais barrada; no teto real, 1.000.001, a nuvem pausa). Se **aquele** foi o sintoma que ele viu na máquina dele: **não é possível afirmar** — o banco e a máquina não estão acessíveis daqui. É exatamente essa dúvida que a §43.3 fecha.
+
+**2) "tem arquivo que resolveu isso?"**
+Conferido por varredura: o número do plano existia em **dois** lugares (`usoHoje()` — pago — e `freioDeCota()` — grátis) e em nenhum outro; nenhum arquivo tratava o freio do mês; nenhum tratava o 429 de cota fora do caminho do limite. Depois da correção existe **uma** fonte (`PLANO`) e os testes travam a coerência (`test_sync_quota_guard.js`, funções puras do motor).
+
+**3) "realmente fui no lugar certo?"**
+Sim, e o lugar certo foi provado: `GET /health` do motor publicado respondeu `"versao":"5.26.8"`, **o mesmo código deste repositório** — logo o que eu leio aqui é o que roda na nuvem dele. As correções desta rodada foram em `cloudflare-worker/src/index.js` (motor) e `cloudflare_data_sync_patch.js` (motor do app) — não em cima de arquivo de conserto.
+
+**4) "eu realmente achei tudo o problema que pode ser a fonte?"**
+**Não dá para jurar "tudo" — e ninguém honesto jura.** O que dá para dizer é o que foi feito: varri o caminho inteiro do dado outra vez e **achei mais dois defeitos de verdade** (§43.4 e §43.5), cada um com prova vermelha-antes/verde-depois. O caminho varrido: gravação → fila (`outbox`) → envio → diário da nuvem → leitura por cursor → aplicação na tela → liberação da cópia local. O que continua fora do meu alcance: a máquina e o banco dele.
+
+**5) "isso não irá piorar as coisas?"**
+Cada correção desta rodada tem uma trava que **só pode negar**, nunca apagar mais:
+- a prova item por item antes de liberar a cópia local **só impede** liberação (nunca libera a mais);
+- o relato de saúde é **fire-and-forget**, com teto de 1 por tipo a cada 10 minutos, dentro de `try/catch` — não atrasa nem quebra a sincronização;
+- o 429 de cota deixa de ser tratado como "nuvem ocupada" (menos insistência, menos cota queimada);
+- os bumps de versão foram re-ancorados por 30 arquivos e a suíte inteira roda verde (**221 ✓**).
+
+### 43.3 O QUE FALTAVA — e a solução entregue (o pedido: "vc tem que falar o que falta e a solução")
+
+**O que faltava para eu identificar o problema sem depender do dono:** **visibilidade do estado do app dele.** Sem isso, qualquer diagnóstico meu é leitura de código + dedução — foi assim que a rodada 28 achou o freio, mas ainda ficou sem saber se ele disparou na conta dele.
+
+**A solução (entregue nesta rodada):** o app passa a **contar** o que aconteceu, e a nuvem passa a **publicar** isso num lugar que eu leio de fora:
+
+| Peça | O que faz |
+|---|---|
+| `POST /v1/relato` (motor, autenticado) | recebe o relato do app: **tipo**, a mensagem do erro, a versão do app, a hora e um apelido de 8 dígitos do hash do aparelho |
+| `cloudflare_data_sync_patch.js` → `relatarSaude()` | dispara sozinho nos casos que antes ficavam mudos: **freio** (cota), **credencial** (401/403/revogado), **falha** (leitura/envio), **base_vazia**, **fila_presa** |
+| `GET /health` → campo `saude` | publica a contagem por tipo do dia e o último de cada tipo — **sem token** e **sem dado de negócio nenhum** |
+| Check-up (tela Nuvem) | mostra a mesma linha e leva no **"Copiar resumo"** |
+
+**O que NÃO vai no relato (conferido por teste):** nome de cliente, valor, telefone, documento — nada. Só texto técnico, limitado a 140 caracteres, com repetição barrada (60 s no motor, 10 min no app).
+
+**O que ainda depende dele:** **publicar o motor** (1 duplo clique em `atualizar_motor_nuvem.cmd`) — enquanto o 5.26.8 estiver no ar, nem o freio corrigido nem os relatos existem. Depois disso, o `/health` passa a responder `5.27.0` com `freio` e `saude`, e o próximo "dado que não aparece" chega até mim **sem ele fazer nada**.
+
+### 43.4 ACHADO — ALTO · Perda de dados (corrigido): a cópia local era liberada por CONTAGEM
+
+**Defeito provado:** a liberação da cópia local (SÓ NUVEM) usava `nuvemTemTudo()`, que compara **quantidades** (`registros na nuvem >= registros daqui`). Contagem não é identidade: com **3 registros segurados** (opção "não enviar o que já existe aqui", que vivem só naquele PC) e uma nuvem com **milhares** de registros, a conta fechava e a cópia local era **apagada — levando os registros segurados junto**.
+
+**Correção (fonte: `cloudflare_data_sync_patch.js`):** `tudoConfirmadoNaNuvem()` — prova **registro por registro** pelo livro-caixa que o motor já mantém (`state.known[k]` + `state.hashes[k] === hash(entry.data)`), com recusa imediata se há fila ou registro segurado. A prova é cara (percorre a base) e vale 1 minuto, invalidada a cada varredura/estado novo.
+
+**Prova vermelha-antes / verde-depois:** com a correção, `test_nuvem_nao_perde.js` = **18 ✓** (dois casos novos: segurado bloqueia; caminho bom continua liberando). **Sem** a correção, o mesmo teste fica **vermelho**: `✘ registro segurado (só neste PC) BLOQUEIA a liberação — cópia local APAGADA`.
+
+### 43.5 ACHADO — MÉDIO · Eficiência (corrigido): o 429 do freio era tratado como "nuvem ocupada"
+
+**Defeito provado:** `ehSobrecarga()` considera 429 sobrecarga — inclusive o **429 de cota** (`quota:true`) do freio preventivo. Efeito: em vez de seguir o caminho do limite (dormir até a virada), o app **insistia** com paciência e **queimava cota** em cada tentativa — o mesmo defeito que a auditoria da v6.1.11 corrigiu na porta da frente, reaberto por esta.
+
+**Correção:** marca `quota` (ou recado de limite reconhecível) sai na hora do caminho de sobrecarga. **Prova:** `test_nuvem_explica.js` = **19 ✓** — o caso "a nuvem recusou a gravação" agora termina em **relato `freio`** na primeira tentativa, e o relato não se repete (teto de 10 min).
+
+### 43.6 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| `test_worker_publico.js` (motor real, banco de prova) | **36 → 43 ✓** — relato autenticado, repetição barrada, `401` sem credencial, `/health` publicando `saude`, apelido de 8 dígitos, e **nenhum dado de negócio** no payload |
+| `test_worker_publico.js` (freio) | contra-prova: 95.000 no dia **não** barra a conta paga; 1.000.001 pausa, não grava e registra |
+| `test_nuvem_nao_perde.js` | **15 → 18 ✓** (liberação por prova item a item, com prova negativa) |
+| `test_nuvem_explica.js` | **16 → 19 ✓** (relato de freio + teto de repetição + `saude` no check-up) |
+| `test_ajustes_v6106.js` | trava nova da liberação por prova |
+| `test_reclamacoes_do_dono.js` | **86 → 89 ✓** |
+| suíte completa | **221 passaram, 0 falharam, 0 não rodaram** |
+| bundle / sync / celular | `226 scripts, sha256 0e1f39c6d050c982` · `Sync OK: v7.0.17 \| 226 \| 0 soltos` · celular `0 referências quebradas` |
+
+**Versões:** app **7.0.16 → 7.0.17** · motor da nuvem **5.26.9 → 5.27.0** (30 arquivos re-ancorados, incluindo as formas escapadas em regex). `motor_para_colar.js` + `.sha256` regerados por `node gerar_motor_nuvem.js` (dry-run: **nada publicado**).
+
+### 43.7 Limites honestos
+
+- **Não é possível verificar diretamente** se o freio disparou na conta dele, nem o estado do app na máquina dele (banco e máquina fora do alcance). A partir da publicação do motor, o `/health` (`freio`, `saude`) e o check-up respondem isso sem ele fazer nada.
+- A correção do freio **só vale depois da publicação** do motor; a do app vale no próximo carregamento (o site publica sozinho).
+- Nenhum dado foi apagado nesta rodada, nada de banco foi tocado e **eu não publiquei nada**.

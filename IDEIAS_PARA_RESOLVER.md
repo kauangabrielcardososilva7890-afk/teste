@@ -1,6 +1,6 @@
 # IDEIAS PARA RESOLVER O PROBLEMA DO SISTEMA ORIGINAL
 
-**Data:** 24/09/2026 · **Autor:** manutenção técnica (Arena) · **Versão do sistema:** 7.0.16 · **Motor:** 5.26.9
+**Data:** 24/09/2026 · **Autor:** manutenção técnica (Arena) · **Versão do sistema:** 7.0.17 · **Motor:** 5.27.0
 
 Este documento é o que o dono pediu: **ideias**, sem compromisso, para resolver o problema do sistema
 que já existe. Nada aqui foi feito ainda. Cada ideia diz: o que resolve, como seria, quanto custa, qual
@@ -200,7 +200,7 @@ fazer do jeito "normal", e o motivo:
 
 | Ideia comum no mercado | Por que **não** dá aqui | O que dá para fazer no lugar |
 |---|---|---|
-| Banco de dados de verdade (Postgres/MySQL) com servidor | troca de tecnologia e de motor; o motor de nuvem dele (5.26.9) é a fonte da verdade hoje | manter o motor e melhorar a fila/lápide (ideias E e I) |
+| Banco de dados de verdade (Postgres/MySQL) com servidor | troca de tecnologia e de motor; o motor de nuvem dele (5.27.0) é a fonte da verdade hoje | manter o motor e melhorar a fila/lápide (ideias E e I) |
 | Guardar cópia local do banco no PC/navegador | **contra a regra dele (v6.1.5/44 — "só nuvem")** | portão de gravação + fila com dono (E, I) |
 | Refazer o sistema do zero, ou em paralelo | foi o que ele mandou apagar agora; gera duas verdades | trocar peça por dentro, atrás de chave, com comparação (K) |
 | Mexer no app de celular / APK | **pausado por ordem dele**; só a parte mecânica do build vale | nada — mobile segue parado |

@@ -46,7 +46,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('central-nfe-mod
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6');
-ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.26.9'"), 'worker carimbado (re-ancorado v5.26.9)');
+ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.27.0'"), 'worker carimbado (re-ancorado v5.27.0)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (menu NF abre de verdade + certificado para limpo com data).');

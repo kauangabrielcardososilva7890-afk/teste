@@ -265,12 +265,23 @@ console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?"
       /freioDecide\(99000, 0, 2000, __test\.PLANO_PAGO\)/.test(motorTeste) || /freioDecide\(99000, 0, 2000, PLANO_PAGO\)/.test(motorTeste));
     ok('o freio preventivo usa o PLANO PAGO (1 milhão/dia) e o grátis ficou só como recuo de uma linha',
       /const PLANO = PLANO_PAGO;/.test(motorNuvem) && /freioDia: 1000000/.test(motorNuvem) && /freioMes: 45000000/.test(motorNuvem));
-    ok('e o /health (público) publica o freio para a manutenção conferir de fora — sem dado de negócio',
-      /key = 'freio_ultimo'/.test(motorNuvem) && /freio,\s*\n\s*setupConfigured/.test(motorNuvem.replace(/\s+/g, ' ').replace('freio, setupConfigured', 'freio,\n    setupConfigured')));
+    ok('o /health (público) publica o freio e os relatos de saúde para a manutenção conferir de fora — sem dado de negócio',
+      /key = 'freio_ultimo'/.test(motorNuvem) && /key = 'saude_relatos'/.test(motorNuvem) &&
+      /const RELATOS_MAX = 12;/.test(motorNuvem) && /\bfreio,/.test(motorNuvem) && /\bsaude,/.test(motorNuvem) &&
+      /url\.pathname === '\/v1\/relato'/.test(motorNuvem));
     ok('o check-up mostra o freio e leva a linha no resumo que ele copia',
       /Freio preventivo da nuvem/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')) && /nuvem\.freio\.disparouHoje/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')));
     ok('a contagem da nuvem no app traz o freio junto (apiStatus lê o /health)',
-      /saude&&saude\.freio/.test(sync) && /totais\.freio=saude\.freio/.test(sync));
+      /saida&&saida\.freio/.test(sync) && /totais\.freio=saida\.freio/.test(sync));
+    ok('e traz também os relatos de saúde (aparecem no check-up e no resumo que ele copia)',
+      /saida&&saida\.saude/.test(sync) && /totais\.saude=saida\.saude/.test(sync) &&
+      /Relatos de saúde/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')));
+    ok('o app relata sozinho: freio, credencial, falha, base vazia e fila presa',
+      /function relatarSaude\(tipo,codigo\)/.test(sync) && /relatarSaude\('freio'/.test(sync) &&
+      /relatarSaude\('credencial'/.test(sync) && /relatarSaude\('falha'/.test(sync) &&
+      /relatarSaude\('base_vazia'/.test(sync) && /relatarSaude\('fila_presa'/.test(sync));
+    ok('e o relato é limitado (1 por tipo a cada 10 min) e nunca atrapalha a sincronização',
+      /agora-antes<10\*60\*1000/.test(sync) && /relato NUNCA pode atrapalhar a sincronização/.test(sync));
     ok('a contagem que percorre a base virou sob demanda (223 ms -> 0,05 ms numa base de 76 mil)',
       /Object\.defineProperty\(base,'pending'/.test(sync) && /function info\(\)\{\s*const base=/.test(sync));
   }

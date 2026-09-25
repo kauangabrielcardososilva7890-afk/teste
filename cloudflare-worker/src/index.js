@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.9';
+const WORKER_VERSION = '5.27.0';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -238,6 +238,22 @@ async function handleHealth(env) {
       }
     } catch (_f) { /* sem registro = nunca disparou */ }
   }
+  // v5.27.0 — o que os APPS relataram (técnico, sem dado de negócio): é o que
+  // permite à manutenção saber de fora o que a máquina do dono está enfrentando.
+  let saude = { dia: hojeUTC(), contagem: {}, ultimo: {} };
+  if (env.DB) {
+    try {
+      const linhaSaude = await env.DB.prepare(
+        "SELECT value FROM system_meta WHERE key = 'saude_relatos' LIMIT 1"
+      ).first();
+      if (linhaSaude && linhaSaude.value) {
+        const reg = JSON.parse(linhaSaude.value);
+        saude = { dia: (reg.hoje && reg.hoje.dia) || hojeUTC(),
+                  contagem: (reg.hoje && reg.hoje.contagem) || {},
+                  ultimo: reg.ultimo || {} };
+      }
+    } catch (_s) { /* sem relatos ainda */ }
+  }
   return json({
     ok: true,
     service: 'digicopy-sync-api',
@@ -245,6 +261,7 @@ async function handleHealth(env) {
     database,
     schemaVersion,
     freio,
+    saude,
     setupConfigured: !!env.SETUP_SECRET,
     versao: WORKER_VERSION,
     ready: database === 'ok' && schemaVersion === '2' && !!env.SETUP_SECRET,
@@ -1327,6 +1344,56 @@ async function usoHoje(env){
   }catch(e){ return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: PLANO.tetoEscritas, tetoLeituras: PLANO.tetoLeituras }; }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// RELATO DE SAÚDE DO APP (v5.27.0 — rodada 29)
+// ═══════════════════════════════════════════════════════════════════════════
+// POR QUE EXISTE: a manutenção não vê a máquina do dono nem o banco. Quando o
+// dado fica sem aparecer, o que faltava era EXATAMENTE isto: um lugar onde o
+// próprio app conte o que aconteceu (freio da nuvem, leitura falhando, credencial
+// recusada, base vazia, fila presa) — em vez de alguém ter de abrir tela e copiar.
+// O que vai: tipo, a mensagem de erro, a versão do app, a hora e um apelido curto
+// do aparelho (primeiros 8 dígitos do hash do id — dá para saber QUAL PC sem
+// revelar nada). NADA de dado de negócio: nem cliente, nem valor, nem nome.
+// Custo: só quando algo dá errado, no máximo 1 do mesmo tipo por minuto, e a
+// resposta disso é o campo `saude` do /health (conferência de fora, sem token).
+const RELATOS_MAX = 12;
+async function handleRelato(request, env, ctx) {
+  const device = await authenticate(request, env);
+  const body = await readBody(request);
+  const tipo = String((body && body.tipo) || '').slice(0, 40);
+  const codigo = String((body && body.codigo) || '').slice(0, 140);
+  const versao = String((body && body.versao) || '').slice(0, 20);
+  if (!tipo) throw new ApiError(400, 'RELATO_SEM_TIPO', 'Informe o tipo do relato.');
+  const apelido = device && device.id ? (await sha256(String(device.id))).slice(0, 8) : '';
+  const agora = Date.now(), dia = hojeUTC();
+  let dados = { relatos: [], ultimo: {}, hoje: { dia: dia, contagem: {} } };
+  try {
+    const linha = await env.DB.prepare("SELECT value FROM system_meta WHERE key = 'saude_relatos' LIMIT 1").first();
+    if (linha && linha.value) {
+      const guardado = JSON.parse(linha.value);
+      dados = {
+        relatos: Array.isArray(guardado.relatos) ? guardado.relatos : [],
+        ultimo: (guardado.ultimo && typeof guardado.ultimo === 'object') ? guardado.ultimo : {},
+        hoje: (guardado.hoje && typeof guardado.hoje === 'object') ? guardado.hoje : { dia: dia, contagem: {} }
+      };
+    }
+  } catch (e) { /* primeira vez: começa vazio */ }
+  // freio de repetição: o mesmo tipo em menos de 60 s não gasta gravação
+  const antes = dados.ultimo[tipo];
+  if (antes && agora - Number(antes.em || 0) < 60000) return json({ ok: true, ignorado: true });
+  dados.ultimo[tipo] = { em: agora, codigo: codigo, disp: apelido };
+  if (!dados.hoje || dados.hoje.dia !== dia) dados.hoje = { dia: dia, contagem: {} };
+  dados.hoje.contagem = dados.hoje.contagem || {};
+  dados.hoje.contagem[tipo] = (Number(dados.hoje.contagem[tipo]) || 0) + 1;
+  dados.relatos = dados.relatos.slice(-(RELATOS_MAX - 1));
+  dados.relatos.push({ tipo: tipo, em: agora, codigo: codigo, versao: versao, disp: apelido });
+  await env.DB.prepare(`INSERT INTO system_meta(key, value, updated_at) VALUES ('saude_relatos', ?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`)
+    .bind(JSON.stringify(dados), agora).run();
+  somarUso(env, 1, 1, ctx);
+  return json({ ok: true });
+}
+
 async function handleStatus(request, env, ctx) {
   const device = await authenticate(request, env);
   let fresco = false;
@@ -1649,6 +1716,8 @@ async function route(request, env, ctx) {
   if (request.method === 'POST' && url.pathname === '/v1/invites') return handleCreateInvite(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/enroll') return handleEnroll(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env, ctx);
+  // v5.27.0 — relato de saúde do app (técnico, sem dado de negócio)
+  if (request.method === 'POST' && url.pathname === '/v1/relato') return handleRelato(request, env, ctx);
   if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env, ctx);
   // v7.0.4 — AVISO INSTANTÂNEO: segura a consulta e responde NO MESMO INSTANTE
   // em que houver novidade (long polling). Ver handleChangesWatch.

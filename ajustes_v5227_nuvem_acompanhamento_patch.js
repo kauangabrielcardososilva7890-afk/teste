@@ -178,6 +178,12 @@ window.dcCheckupNuvemResumo=function(estado, nuvem){
   // v7.0.16 (rodada 28) — o freio preventivo do motor da nuvem entra no resumo:
   // é a linha que diz se a nuvem está recusando gravação (o caso "os dados não
   // aparecem") e qual teto está valendo — pago ou grátis.
+  // v7.0.17 — os relatos de saúde (o que os apps contaram para a nuvem): é a prova
+  // que a manutenção lê de fora e que vai junto no "Copiar resumo".
+  if(nuvem&&nuvem.saude&&nuvem.saude.ultimo){
+    const tipos=Object.keys(nuvem.saude.ultimo);
+    L.push('Relatos de saúde (hoje): '+(tipos.length?tipos.map(function(t){const u=nuvem.saude.ultimo[t];return t+'='+((nuvem.saude.contagem&&nuvem.saude.contagem[t])||1)+' (último '+(u&&u.em?new Date(u.em).toLocaleTimeString('pt-BR'):'?')+')';}).join(' | '):'nenhum'));
+  }
   if(nuvem&&nuvem.freio){
     const f=nuvem.freio;
     L.push('Freio preventivo da nuvem: '+(f.disparouHoje?('DISPAROU HOJE'+(f.motivo?(' (freio de '+f.motivo+')'):'')):'não disparou hoje')
@@ -221,6 +227,11 @@ window.dcCheckupNuvem=async function(){
         'Abra a janela da <b>Nuvem</b> e escolha: <b>“Enviar os dados deste PC para a nuvem”</b> (se este PC é o certo) ou <b>“Não enviar os dados atuais”</b> (se a nuvem é a certa).</p></div>'
       : '')+
     (estado.lastError?'<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px"><b>Último erro:</b> '+String(estado.lastError).replace(/[<>&]/g,'')+'</div>':'')+
+    (nuvem&&nuvem.saude&&nuvem.saude.ultimo&&Object.keys(nuvem.saude.ultimo).length
+      ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Relatos de saúde de hoje: <b>'
+        +Object.keys(nuvem.saude.ultimo).map(function(t){return t+' ('+((nuvem.saude.contagem&&nuvem.saude.contagem[t])||1)+'x)';}).join(', ')
+        +'</b> — é o que a manutenção enxerga de fora, sem você precisar fazer nada.</p>'
+      : '')+
     (nuvem&&nuvem.freio
       ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Freio preventivo da nuvem: <b>'
         +(nuvem.freio.disparouHoje?('disparou hoje'+(nuvem.freio.motivo?(' (freio de '+String(nuvem.freio.motivo).replace(/[<>&]/g,'')+')'):'')):'não disparou hoje')

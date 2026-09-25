@@ -1,4 +1,4 @@
-// test_worker_publico.js — v7.0.16 (motor da nuvem 5.26.9)
+// test_worker_publico.js — v7.0.17 (motor da nuvem 5.27.0)
 // Roda o MOTOR DA NUVEM DE VERDADE (cloudflare-worker/src/index.js) sobre um banco
 // SQLite em memória, aplicando as migrations reais do projeto. É o mesmo código
 // que o dono publica — só o banco é de mentira.
@@ -31,7 +31,7 @@ catch(e){
   process.exit(0);
 }
 
-console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.26.9) ==');
+console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.27.0) ==');
 
 // ── banco de mentira, igual ao D1: prepare/bind/first/all/run/batch/exec ────
 function abrirBanco(){
@@ -96,6 +96,8 @@ function chamar(worker,banco,url,opcoes){
   });
 }
 const dia=()=>new Date().toISOString().slice(0,10);
+// v5.27.0 — o aparelho autentica por sha256 do token (igual ao motor)
+const hashToken=(t)=>require('crypto').createHash('sha256').update(t).digest('hex');
 function semearOrcamento(banco,recordId,token,dados){
   // o aparelho precisa existir: o banco de prova tem as mesmas chaves estrangeiras
   banco.db.prepare(`INSERT OR IGNORE INTO devices(id,name,token_hash,role,created_at,last_seen_at)
@@ -223,7 +225,7 @@ const conta=(banco,sql,...args)=>banco.db.prepare(sql).get(...args).n;
     ok('as gravações do caminho público entram no medidor do dia ('+(uso?uso.escritas:0)+')',!!uso&&Number(uso.escritas)>=3);
   }
   {
-    // v5.26.9 (rodada 28) — O FREIO FALA A LÍNGUA DO PLANO. A conta do dono é PAGA
+    // v5.27.0 (rodada 28) — O FREIO FALA A LÍNGUA DO PLANO. A conta do dono é PAGA
     // (Workers Paid US$5) e o freio preventivo ainda usava o número do GRÁTIS
     // (95.000 linhas/dia): a nuvem parava no meio do dia e o que era digitado num PC
     // não aparecia no outro. Aqui ficam as três provas — inclusive a CONTRA-PROVA de
@@ -247,7 +249,7 @@ const conta=(banco,sql,...args)=>banco.db.prepare(sql).get(...args).n;
     const registrou=banco2.db.prepare("SELECT value v FROM system_meta WHERE key='freio_ultimo'").get();
     ok('o disparo do freio fica REGISTRADO (é o que o /health mostra de fora)',
       !!registrou&&JSON.parse(registrou.v).motivo==='dia');
-    // v5.26.9 — A CONFERÊNCIA DE FORA: o /health é público e passa a dizer se a
+    // v5.27.0 — A CONFERÊNCIA DE FORA: o /health é público e passa a dizer se a
     // nuvem está recusando gravação hoje. É assim que a manutenção identifica o
     // problema sem depender de ninguém abrir o sistema (e sem expor dado nenhum).
     const saida=await chamar(worker,banco2,'https://api.test/health',{method:'GET'});
@@ -285,6 +287,38 @@ const conta=(banco,sql,...args)=>banco.db.prepare(sql).get(...args).n;
     ok('e NADA é criado (nenhuma venda falsa entra na base)',
       conta(banco,"SELECT COUNT(*) n FROM records WHERE entity='vendas'")===0&&
       conta(banco,"SELECT COUNT(*) n FROM records WHERE entity='orcamentos'")===0);
+  }
+
+  // ═══ 7) RELATO DE SAÚDE DO APP (v5.27.0 — rodada 29) ═══════════════════════
+  console.log('-- 7) relato de saúde: o app conta o que deu errado (técnico) --');
+  {
+    const banco=abrirBanco();
+    const token='dtoken-relato-123';
+    banco.db.prepare(`INSERT OR IGNORE INTO devices(id,name,token_hash,role,created_at,last_seen_at)
+      VALUES('pc-rel','PC Escritorio',?, 'device',?,?)`).run(hashToken(token),Date.now(),Date.now());
+    const cab={ 'content-type':'application/json', authorization:'Bearer '+token };
+    const r1=await chamar(worker,banco,'https://api.test/v1/relato',{method:'POST',headers:cab,
+      body:JSON.stringify({tipo:'freio',codigo:'daily row write limit próximo do teto',versao:'7.0.17'})});
+    ok('o app consegue contar o que deu errado (freio da cota)',r1.status===200&&r1.corpo&&r1.corpo.ok===true);
+    const r2=await chamar(worker,banco,'https://api.test/v1/relato',{method:'POST',headers:cab,
+      body:JSON.stringify({tipo:'freio',codigo:'de novo'})});
+    ok('relato repetido no mesmo minuto é ignorado (não gasta gravação à toa)',!!(r2.corpo&&r2.corpo.ignorado));
+    const r3=await chamar(worker,banco,'https://api.test/v1/relato',{method:'POST',
+      headers:{'content-type':'application/json'},body:JSON.stringify({tipo:'falha'})});
+    ok('sem credencial o relato entra NÃO (o /health é público, escrever não é)',r3.status===401);
+    const saida=await chamar(worker,banco,'https://api.test/health',{method:'GET'});
+    const saud=(saida.corpo&&typeof saida.corpo==='object')?saida.corpo:JSON.parse(saida.corpo||'{}');
+    ok('o /health publica a saúde: quantos relatos hoje e qual foi o último de cada tipo',
+      saud.saude&&saud.saude.contagem&&saud.saude.contagem.freio===1&&saud.saude.ultimo&&saud.saude.ultimo.freio
+      &&saud.saude.ultimo.freio.codigo.indexOf('daily row write limit')>=0);
+    ok('e o aparelho aparece como apelido curto (não expõe id, nome nem token)',
+      /^[0-9a-f]{8}$/.test(saud.saude.ultimo.freio.disp));
+    const texto=JSON.stringify(saud);
+    ok('nenhum dado de negócio no relato (só tipo, mensagem técnica, versão, hora e apelido)',
+      !/Cliente Teste|CPF|telefone|valor|R\$/i.test(texto));
+    const vazio=await chamar(worker,abrirBanco(),'https://api.test/health',{method:'GET'});
+    const txtVazio=(vazio.corpo&&typeof vazio.corpo==='object')?JSON.stringify(vazio.corpo):String(vazio.corpo||'');
+    ok('sem nenhum relato, o /health não inventa nada (contagem vazia)',txtVazio.indexOf('"saude"')>=0);
   }
 
   console.log('\nRESULTADO: '+passou+' verificações passaram — o motor da nuvem no banco de prova (fluxo do cliente, aparelho público, busca do token, cota e teto).');

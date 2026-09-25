@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 226 | sha256: 51730a9ef2b9649a
+ * scripts: 226 | sha256: bd50bd1865033995
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29179,6 +29179,38 @@ function soltarCopiaLocal(){
 // agora é no máximo uma vez por minuto — e quando não confere, o único efeito é
 // o PC continuar guardando a cópia, que é o lado seguro.
 let ultimaConferenciaNuvem=0;
+// v7.0.17 — LIBERAR A CÓPIA LOCAL EXIGE PROVA ITEM POR ITEM (rodada 29)
+// ACHADO: a liberação da cópia local (SÓ NUVEM) se apoiava em `nuvemTemTudo()`,
+// que compara só a CONTAGEM (registros na nuvem >= registros daqui). Contagem não
+// prova nada: 3 registros digitados aqui e ainda não subidos somem no meio de
+// 80.000 que já estão lá — a conta fecha e a cópia local é apagada. Aqui a prova
+// passa a ser por REGISTRO, usando o livro-caixa que o motor já mantém:
+//   `state.known[k]` (a nuvem já confirmou esta chave) +
+//   `state.hashes[k]` (e o conteúdo é EXATAMENTE o daqui).
+// Qualquer registro sem essa prova BLOQUEIA a liberação (nada é apagado), e o
+// próximo ciclo varre e envia o que faltava. Só pode negar; nunca apaga a mais.
+let ultimaProva=0, provaOk=false, provaGeracao=-1, provaVarredura=-1;
+function tudoConfirmadoNaNuvem(){
+  if(outbox.length)return false;
+  if((state.heldLocalOnly||[]).length)return false;   // tem coisa segurada de propósito: não libera
+  const agora=Date.now();
+  // A prova é cara (percorre a base): vale por 1 minuto — mas só enquanto NADA mudou.
+  // Qualquer alteração no motor (nova gravação, envio, troca de estado) remarca o
+  // estado e a prova é refeita na hora: cache velho nunca decide apagar dado.
+  if(agora-ultimaProva<60000&&provaGeracao===estadoGeracao&&provaVarredura===varreduraFeita)return provaOk;
+  provaGeracao=estadoGeracao;provaVarredura=varreduraFeita;
+  ultimaProva=agora;
+  try{
+    const MAPA=definicoes();
+    for(const entity of Object.keys(MAPA)){
+      for(const entry of entriesFor(entity,MAPA[entity])){
+        const k=key(entity,entry.id);
+        if(!state.known[k]||state.hashes[k]!==hash(entry.data)){provaOk=false;return false;}
+      }
+    }
+    provaOk=true;return true;
+  }catch(e){provaOk=false;return false;}
+}
 async function nuvemTemTudo(){
   try{
     const agora=Date.now();
@@ -29554,6 +29586,8 @@ function empresaDaConexao(){
   }catch(e){return '';}
 }
 function avisarSeBaseVazia(){
+  // v7.0.17 — a base vazia com a nuvem respondendo também entra no relato: é o
+  // caso em que ele olha a tela e não vê nada (loja nova ou conexão de outra loja).
   if(avisouBaseVazia)return;
   try{
     if(!authorized()||!state.lastOk)return;      // só depois de a nuvem responder
@@ -29561,6 +29595,7 @@ function avisarSeBaseVazia(){
     if(localBusinessCount()>0)return;            // tem dado na tela: nada a avisar
     avisouBaseVazia=true;
     const empresa=empresaDaConexao();
+    relatarSaude('base_vazia','conexao='+(empresa||'sem empresa identificada'));   // v7.0.17
     if(typeof window.toast==='function'){
       window.toast('Nuvem conectada'+(empresa?' ('+empresa+')':'')+
         ': nenhum registro nesta empresa. Se você esperava ver seus dados, esta conexão pode ser de outra loja — confira em Nuvem → Conexões.', 'info');
@@ -29714,6 +29749,14 @@ async function pullAll(opcoes){
 // abortava o envio inteiro e aparecia "Envio pendente" na cara da pessoa.
 const ESPERAS=[900,2500,6000,12000];
 function ehSobrecarga(erro){
+  // v7.0.17 — ACHADO DA RODADA 29: o 429 do FREIO DE COTA estava entrando aqui como
+  // se fosse "nuvem ocupada". Resultado: em vez de dormir até a virada (caminho do
+  // limite), o app insistia com paciência e ainda gastava tentativa e cota — o
+  // mesmo defeito que a auditoria da v6.1.11 corrigiu na porta da frente, reaberto
+  // por esta. Agora a marca de cota (ou o recado de limite) manda para o caminho do
+  // limite na hora; sobrecarga de verdade (429/5xx sem a marca) segue com paciência.
+  if(erro&&erro.quota)return false;
+  if(ehLimiteDiario(erro&&(erro.message||erro.error)))return false;
   const st=Number(erro&&erro.status)||0;
   if(st===429||st===500||st===502||st===503||st===504)return true;
   const txt=(erro&&erro.message||'').toLowerCase();
@@ -30182,7 +30225,7 @@ async function tick(reason){
     failures=0;lastError='';state.lastOk=Date.now();persist();
     // SÓ NUVEM: sincronizou tudo (nada pendente) → o que este PC guardou da base
     // vai embora. A tela continua com os dados na memória; a nuvem é a fonte.
-    if(modoSoNuvem()&&!outbox.length&&await nuvemTemTudo()){
+    if(modoSoNuvem()&&!outbox.length&&await nuvemTemTudo()&&tudoConfirmadoNaNuvem()){
       const soltas=soltarCopiaLocal();
       if(soltas)indicator(true,'Dados só na nuvem • cópia local liberada');
     }
@@ -30216,6 +30259,7 @@ async function tick(reason){
     // D1 que já funcionava.
     if(ehLimiteDiario(lastError)||!!(e&&e.quota)){
       lastError=recadoDoLimite();
+      relatarSaude('freio',state.pauseReason||lastError);   // v7.0.17 — a nuvem recusou gravação
       state.limiteAte=viradaDoLimite();persist();
       indicator(false,lastError);
       busy=false;
@@ -30229,6 +30273,13 @@ async function tick(reason){
       return false;
     }
     indicator(false,'Nuvem pendente: '+lastError);
+    // v7.0.17 — RELATO DE SAÚDE nos casos que antes ficavam só na tela dele:
+    // credencial recusada, leitura falhando e fila presa (digitou e não sobe).
+    if(/401|403|token|autoriz|revog|senha de conex/i.test(lastError))relatarSaude('credencial',lastError);
+    else relatarSaude('falha',lastError);
+    if(outbox.length&&cargaAberta===false&&Date.now()-(state.lastOk||0)>10*60*1000){
+      relatarSaude('fila_presa','fila '+outbox.length+' desde '+(state.lastOk?new Date(state.lastOk).toLocaleTimeString('pt-BR'):'nunca'));
+    }
     if(e&&e.status===401){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
@@ -30246,6 +30297,28 @@ async function tick(reason){
 // tentativa inútil consome limite à toa.
 // ACHADO DA RODADA 28: o freio do motor usava o número do plano GRÁTIS mesmo
 // numa conta PAGA; o app dormia até as 21h por causa de um teto que não era dele.
+// RELATO DE SAÚDE (v7.0.17) — O QUE FALTAVA PARA A MANUTENÇÃO ACHAR O PROBLEMA
+// SEM DEPENDER DO DONO. Quando algo dá errado (freio da nuvem, leitura falhando,
+// credencial recusada, base vazia, fila presa), o app manda um recado CURTO e
+// TÉCNICO para o motor da nuvem: tipo, mensagem, versão do app e a hora. NENHUM
+// dado de negócio vai junto (nem cliente, nem valor, nem nome). O motor guarda os
+// últimos relatos e os publica no /health (conferência de fora, sem token).
+// Custo: no máximo 1 relato do mesmo tipo a cada 10 minutos — e nada em dia bom.
+function relatarSaude(tipo,codigo){
+  try{
+    if(!authorized())return;
+    const t=String(tipo||'').slice(0,40);if(!t)return;
+    const chave='digicopy_saude_'+t, agora=Date.now();
+    let antes=0;try{antes=Number(localStorage.getItem(chave)||0)||0;}catch(e){}
+    if(agora-antes<10*60*1000)return;                 // já contei isso faz pouco
+    try{localStorage.setItem(chave,String(agora));}catch(e){}
+    const call=api();if(!call)return;
+    const corpo={tipo:t,codigo:String(codigo||'').slice(0,140),
+      versao:String((typeof window!=='undefined'&&window.DIGICOPY_APP_VERSION)||'')};
+    const p=call('/v1/relato',{method:'POST',body:JSON.stringify(corpo)});
+    if(p&&typeof p.catch==='function')p.catch(function(){});
+  }catch(e){/* relato NUNCA pode atrapalhar a sincronização */}
+}
 function ehLimiteDiario(msg){
   return /free tier daily|daily row (write|read) limit|monthly row write limit|exceeded .*limit/i.test(String(msg||''));
 }
@@ -30502,8 +30575,10 @@ async function apiStatus(){
   // dono ver "os dados não aparecem" sem explicação.
   if(totais&&typeof totais==='object'){
     try{
-      const saude=await call('/health',{method:'GET'});
-      if(saude&&saude.freio)totais.freio=saude.freio;
+      const saida=await call('/health',{method:'GET'});
+      if(saida&&saida.freio)totais.freio=saida.freio;
+      // v7.0.17 — e o que os PCs contaram para a nuvem (relatos de saúde)
+      if(saida&&saida.saude)totais.saude=saida.saude;
     }catch(e){/* sem o /health, o resto da contagem continua valendo */}
   }
   return totais||{};
@@ -30898,7 +30973,7 @@ function redesenharTelaAtual(){
   }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
+window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,tudoConfirmadoNaNuvem,relatarSaude,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -32457,6 +32532,12 @@ window.dcCheckupNuvemResumo=function(estado, nuvem){
   // v7.0.16 (rodada 28) — o freio preventivo do motor da nuvem entra no resumo:
   // é a linha que diz se a nuvem está recusando gravação (o caso "os dados não
   // aparecem") e qual teto está valendo — pago ou grátis.
+  // v7.0.17 — os relatos de saúde (o que os apps contaram para a nuvem): é a prova
+  // que a manutenção lê de fora e que vai junto no "Copiar resumo".
+  if(nuvem&&nuvem.saude&&nuvem.saude.ultimo){
+    const tipos=Object.keys(nuvem.saude.ultimo);
+    L.push('Relatos de saúde (hoje): '+(tipos.length?tipos.map(function(t){const u=nuvem.saude.ultimo[t];return t+'='+((nuvem.saude.contagem&&nuvem.saude.contagem[t])||1)+' (último '+(u&&u.em?new Date(u.em).toLocaleTimeString('pt-BR'):'?')+')';}).join(' | '):'nenhum'));
+  }
   if(nuvem&&nuvem.freio){
     const f=nuvem.freio;
     L.push('Freio preventivo da nuvem: '+(f.disparouHoje?('DISPAROU HOJE'+(f.motivo?(' (freio de '+f.motivo+')'):'')):'não disparou hoje')
@@ -32500,6 +32581,11 @@ window.dcCheckupNuvem=async function(){
         'Abra a janela da <b>Nuvem</b> e escolha: <b>“Enviar os dados deste PC para a nuvem”</b> (se este PC é o certo) ou <b>“Não enviar os dados atuais”</b> (se a nuvem é a certa).</p></div>'
       : '')+
     (estado.lastError?'<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px"><b>Último erro:</b> '+String(estado.lastError).replace(/[<>&]/g,'')+'</div>':'')+
+    (nuvem&&nuvem.saude&&nuvem.saude.ultimo&&Object.keys(nuvem.saude.ultimo).length
+      ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Relatos de saúde de hoje: <b>'
+        +Object.keys(nuvem.saude.ultimo).map(function(t){return t+' ('+((nuvem.saude.contagem&&nuvem.saude.contagem[t])||1)+'x)';}).join(', ')
+        +'</b> — é o que a manutenção enxerga de fora, sem você precisar fazer nada.</p>'
+      : '')+
     (nuvem&&nuvem.freio
       ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Freio preventivo da nuvem: <b>'
         +(nuvem.freio.disparouHoje?('disparou hoje'+(nuvem.freio.motivo?(' (freio de '+String(nuvem.freio.motivo).replace(/[<>&]/g,'')+')'):'')):'não disparou hoje')

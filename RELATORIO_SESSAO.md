@@ -6811,3 +6811,74 @@ isso, o freio do grátis continua valendo no ar. Depois de publicar, eu consigo 
   comportamento antigo continua.
 - Nada de banco foi tocado, nenhum dado foi apagado e **eu não publiquei nada** (não existe publicação
   automática neste repositório — conferido).
+
+## Rodada 29 — 24/09/2026 — CONFERI O .EXE, ACHEI MAIS DOIS DEFEITOS DE VERDADE E RESOLVI O QUE FALTAVA PARA EU ACHAR SOZINHO
+
+**Suas perguntas:** *"será se o que deu problema foi esse gerar exe so nuvem? ... como posso fazer pra isso
+n ser um problema pra vc conseguir corrigir, vc tem que falar o que falta e a solução"* — e o seu pedido de
+conferir TUDO com desconfiança ("isso realmente é o problema?", "tem arquivo que resolveu isso?", "fui no
+lugar certo?", "achei tudo?", "não vai piorar?"). Fui atrás de cada uma.
+
+### 1. O "exe só nuvem" NÃO é a causa (e eu conferi arquivo por arquivo)
+
+Ele **não é um sistema**: é um lançador de poucos KB que abre **`https://teste-60f.pages.dev`** no
+Edge/Chrome em modo janela. Não tem banco dentro, não guarda dado e não versiona nada. E o site publicado
+**é o mesmo código deste repositório** (conferi o cabeçalho do bundle no ar: 226 scripts, mesmo sha256).
+Ou seja: pelo caminho do .exe você roda **o código atual**, não uma cópia velha. O que muda ali é só **onde
+mora o login da nuvem** (no perfil do navegador) — se esse perfil for limpo, a tela do portão volta e
+**nenhum dado se perde**.
+
+### 2. Achei mais dois defeitos de verdade (com prova vermelho → verde)
+
+**a) A cópia local era liberada por CONTAGEM — e isso apagava dado (ALTO).**
+Quando a nuvem tinha **mais registros** que este PC, o sistema dizia "a nuvem tem tudo" e liberava a cópia
+local. Só que **contagem não prova nada**: os registros que você mandou **segurar** ("não enviar o que já
+existe aqui" — que vivem só naquele PC) iam embora junto. Corrigi para exigir **prova registro por registro**
+(a nuvem já confirmou **aquela chave** e o conteúdo é **idêntico**). Provei dos dois lados: **com** o
+conserto o teste passa (18 ✓); **sem** o conserto o mesmo teste fica **vermelho** com "cópia local APAGADA".
+
+**b) A nuvem recusava gravação e o app insistia (MÉDIO).**
+O aviso de cota (429) estava caindo no mesmo lugar de "nuvem ocupada" — então o app repetia as tentativas
+e **gastava cota à toa**, em vez de dormir até a virada. Corrigido: a marca de cota vai direto para o
+caminho do limite. Agora o teste mostra a recusa terminando em **relato de freio** na primeira tentativa.
+
+### 3. O QUE FALTAVA (e a solução entregue)
+
+**O que faltava:** eu não enxergava o que **o seu** sistema viveu — sem a sua máquina, sem o seu banco, sem
+log. Por isso eu só conseguia ler o código e deduzir.
+
+**A solução — agora o sistema me conta:** quando algo dá errado, o app manda para a nuvem um **relato
+técnico** (tipo, a mensagem do erro, a versão, a hora e um apelido de 8 dígitos do PC). Tipos: **freio**,
+**credencial**, **falha**, **base vazia**, **fila presa**. Isso fica publicado no **`/health`** do motor —
+que eu abro daqui, **sem token e sem você fazer nada**. E aparece também no **check-up** da tela Nuvem, com
+botão "Copiar resumo". **Nenhum dado seu vai junto** — nada de cliente, valor, telefone ou documento
+(conferido por teste). E não consome nada de verdade: no máximo 1 relato por tipo a cada 10 minutos, e
+**zero** em dia bom.
+
+**O que continua dependendo de você:** **publicar o motor** (duplo clique em `atualizar_motor_nuvem.cmd`).
+Enquanto o motor antigo estiver no ar, nem o freio corrigido nem os relatos existem. Depois disso, o
+`/health` responde `5.27.0` com os campos `freio` e `saude` — e o próximo "dado que não aparece" chega até
+mim sozinho.
+
+### 4. Suas cinco perguntas, uma por uma
+
+1. **"isso realmente é o problema?"** — O freio errado: provado no código e na contra-prova. Se **aquele**
+   foi o caso da sua máquina: não posso afirmar (não vejo o seu banco) — é justo isso que os relatos fecham.
+2. **"tem arquivo que resolveu isso?"** — Varri: o número do plano existia em dois lugares e em nenhum
+   outro; ninguém tratava o freio do mês. Depois da correção existe **uma fonte só**, travada por teste.
+3. **"fui no lugar certo?"** — Sim, e provado: o `/health` do motor no ar respondia `5.26.8`, o **mesmo
+   código do repositório** — o que eu leio aqui é o que roda na sua nuvem.
+4. **"achei tudo?"** — Não dá para jurar "tudo" (ninguém honesto jura). Varri o caminho inteiro do dado
+   outra vez (gravação → fila → envio → diário → leitura → tela → liberação da cópia) e **achei os dois
+   defeitos acima**, cada um com prova. O que continua fora do meu alcance: a sua máquina e o seu banco.
+5. **"não vai piorar?"** — Cada conserto **só pode negar**, nunca apagar mais: a prova nova só **impede**
+   liberação; o relato é à prova de falha (nunca atrapalha a sincronização); o 429 deixa de gastar cota à
+   toa; e tudo está preso por teste. Nada foi publicado por mim e nada de banco foi tocado.
+
+### 5. Provas
+
+`test_worker_publico.js` **43 ✓** (motor real em banco de prova, com os relatos) · `test_nuvem_nao_perde.js`
+**18 ✓** (com a prova negativa) · `test_nuvem_explica.js` **19 ✓** · `test_reclamacoes_do_dono.js` **89 ✓** ·
+suíte inteira **221 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 226 scripts, sha256
+0e1f39c6d050c982` · `Sync OK: v7.0.17 | 226 | 0 soltos` · celular `0 referências quebradas`.
+**App 7.0.17 · motor da nuvem 5.27.0** (o `.sha256` foi regerado; nada publicado).

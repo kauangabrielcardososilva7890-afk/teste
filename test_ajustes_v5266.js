@@ -89,7 +89,7 @@ ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasRece
 console.log('== CARIMBO 6.0.9 ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker 5.26.9 (re-ancorado)', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.9'") >= 0);
+ok('worker 5.27.0 (re-ancorado)', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.27.0'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 ok('guard ativo (anti dupla-instalação)', src.indexOf('__v5266pg') >= 0);
 

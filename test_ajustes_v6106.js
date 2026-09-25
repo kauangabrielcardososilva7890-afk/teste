@@ -92,8 +92,15 @@ ok('em SÓ NUVEM a base não é gravada no computador (saveDB não persiste)',
   /const r=soNuvem\?true:original\.apply\(this,arguments\)/.test(sync));
 ok('a cópia só é solta quando a nuvem confirma que tem TUDO o que este PC tem',
   /async function nuvemTemTudo\(\)\{/.test(sync) &&
-  /if\(modoSoNuvem\(\)&&!outbox\.length&&await nuvemTemTudo\(\)\)\{/.test(sync) &&
+  /if\(modoSoNuvem\(\)&&!outbox\.length&&await nuvemTemTudo\(\)&&tudoConfirmadoNaNuvem\(\)\)\{/.test(sync) &&
   /return naNuvem>=localBusinessCount\(\);/.test(sync));
+// v7.0.17 (rodada 29) — a contagem NÃO bastava: agora a liberação exige prova POR
+// REGISTRO (chave conhecida + hash igual). Provado em test_nuvem_perde.js: sem isso,
+// registros segurados (só neste PC) eram apagados junto com a cópia local.
+ok('a liberação da cópia local exige prova ITEM POR ITEM (não só a contagem)',
+  /function tudoConfirmadoNaNuvem\(\)\{/.test(sync) &&
+  /if\(!state\.known\[k\]\|\|state\.hashes\[k\]!==hash\(entry\.data\)\)\{provaOk=false;return false;\}/.test(sync) &&
+  /if\(\(state\.heldLocalOnly\|\|\[\]\)\.length\)return false;/.test(sync));
 ok('sem resposta da nuvem a cópia NÃO é solta (nada se perde)',
   /function nuvemTemTudo\(\)\{[\s\S]{0,400}?catch\(e\)\{ return false; \}/.test(sync));
 ok('a base é remontada lendo o diário da nuvem desde o começo',
@@ -160,7 +167,7 @@ ok('tem a PARTE I com o navegador embutido (novo de 22/09 nº5; só no programa 
 // que está no package.json (mvp.version), que é justamente o que este teste quer
 // garantir: relatório e guia falando da MESMA versão que o sistema publica.
 ok('o relatório é da versão publicada agora (v' + mvp.version + ')',
-  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.26.9') >= 0);
+  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.27.0') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 

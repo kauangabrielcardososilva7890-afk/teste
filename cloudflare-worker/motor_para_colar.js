@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.26.9   (igual ao src/index.js)
- * GERADO EM: 2026-09-25 17:35 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.27.0   (igual ao src/index.js)
+ * GERADO EM: 2026-09-25 17:53 UTC
  * sha256 do código (sem este cabeçalho):
- *   42b24e30ed8c87d1a7d45c4a90905be46b533ffa2c7ad1c262d1ca74b0cd1a21
+ *   723eed33098d1194c0f90491c00c1ddeb06e101b046daf655f680fda59155906
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,7 +35,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.26.9";
+var WORKER_VERSION = "5.27.0";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -254,6 +254,23 @@ async function handleHealth(env) {
     } catch (_f) {
     }
   }
+  let saude = { dia: hojeUTC(), contagem: {}, ultimo: {} };
+  if (env.DB) {
+    try {
+      const linhaSaude = await env.DB.prepare(
+        "SELECT value FROM system_meta WHERE key = 'saude_relatos' LIMIT 1"
+      ).first();
+      if (linhaSaude && linhaSaude.value) {
+        const reg = JSON.parse(linhaSaude.value);
+        saude = {
+          dia: reg.hoje && reg.hoje.dia || hojeUTC(),
+          contagem: reg.hoje && reg.hoje.contagem || {},
+          ultimo: reg.ultimo || {}
+        };
+      }
+    } catch (_s) {
+    }
+  }
   return json({
     ok: true,
     service: "digicopy-sync-api",
@@ -261,6 +278,7 @@ async function handleHealth(env) {
     database,
     schemaVersion,
     freio,
+    saude,
     setupConfigured: !!env.SETUP_SECRET,
     versao: WORKER_VERSION,
     ready: database === "ok" && schemaVersion === "2" && !!env.SETUP_SECRET,
@@ -1258,6 +1276,43 @@ async function usoHoje(env) {
   }
 }
 __name(usoHoje, "usoHoje");
+var RELATOS_MAX = 12;
+async function handleRelato(request, env, ctx) {
+  const device = await authenticate(request, env);
+  const body = await readBody(request);
+  const tipo = String(body && body.tipo || "").slice(0, 40);
+  const codigo = String(body && body.codigo || "").slice(0, 140);
+  const versao = String(body && body.versao || "").slice(0, 20);
+  if (!tipo) throw new ApiError(400, "RELATO_SEM_TIPO", "Informe o tipo do relato.");
+  const apelido = device && device.id ? (await sha256(String(device.id))).slice(0, 8) : "";
+  const agora = Date.now(), dia = hojeUTC();
+  let dados = { relatos: [], ultimo: {}, hoje: { dia, contagem: {} } };
+  try {
+    const linha = await env.DB.prepare("SELECT value FROM system_meta WHERE key = 'saude_relatos' LIMIT 1").first();
+    if (linha && linha.value) {
+      const guardado = JSON.parse(linha.value);
+      dados = {
+        relatos: Array.isArray(guardado.relatos) ? guardado.relatos : [],
+        ultimo: guardado.ultimo && typeof guardado.ultimo === "object" ? guardado.ultimo : {},
+        hoje: guardado.hoje && typeof guardado.hoje === "object" ? guardado.hoje : { dia, contagem: {} }
+      };
+    }
+  } catch (e) {
+  }
+  const antes = dados.ultimo[tipo];
+  if (antes && agora - Number(antes.em || 0) < 6e4) return json({ ok: true, ignorado: true });
+  dados.ultimo[tipo] = { em: agora, codigo, disp: apelido };
+  if (!dados.hoje || dados.hoje.dia !== dia) dados.hoje = { dia, contagem: {} };
+  dados.hoje.contagem = dados.hoje.contagem || {};
+  dados.hoje.contagem[tipo] = (Number(dados.hoje.contagem[tipo]) || 0) + 1;
+  dados.relatos = dados.relatos.slice(-(RELATOS_MAX - 1));
+  dados.relatos.push({ tipo, em: agora, codigo, versao, disp: apelido });
+  await env.DB.prepare(`INSERT INTO system_meta(key, value, updated_at) VALUES ('saude_relatos', ?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`).bind(JSON.stringify(dados), agora).run();
+  somarUso(env, 1, 1, ctx);
+  return json({ ok: true });
+}
+__name(handleRelato, "handleRelato");
 async function handleStatus(request, env, ctx) {
   const device = await authenticate(request, env);
   let fresco = false;
@@ -1556,6 +1611,7 @@ async function route(request, env, ctx) {
   if (request.method === "POST" && url.pathname === "/v1/invites") return handleCreateInvite(request, env);
   if (request.method === "POST" && url.pathname === "/v1/enroll") return handleEnroll(request, env);
   if (request.method === "POST" && url.pathname === "/v1/changes") return handlePush(request, env, ctx);
+  if (request.method === "POST" && url.pathname === "/v1/relato") return handleRelato(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/changes") return handleChanges(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/changes/watch") return handleChangesWatch(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/deleted") return handleDeleted(request, env);
