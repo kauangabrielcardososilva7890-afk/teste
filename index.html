@@ -2,14 +2,54 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Digicopy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a1e8a">
+<script>
+window.DIGICOPY_APP_VERSION = '7.0.17';
+
+// v6.0.3 — tranca do menu Backup: roda antes de qualquer bundle; por CAPTURA
+// no documento, impede que o clique em Backup baixe arquivo. Se a tela ainda
+// não estiver carregada, avisa para aguardar (nunca mais "clicou e baixou").
+document.addEventListener('click', function(ev){
+  try{
+    var b = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+    if(!b){
+      var c = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
+      if(c && /exportBackup\s*\(\s*\)/.test(c.getAttribute('onclick')||'')){
+        var rc = c.getBoundingClientRect ? c.getBoundingClientRect() : null;
+        if((rc && rc.top < 90 && rc.bottom > 0) || c.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav')) b = c;
+      }
+    }
+    if(!b){
+      var d = ev.target && ev.target.closest ? ev.target.closest('button,a,[role="button"]') : null;
+      if(d){
+        var rot = (((d.textContent||'').trim()) + ' ' + (d.getAttribute && d.getAttribute('title') || '')).toLowerCase();
+        if(d.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav') && /(^|\s)backup($|\s|c[oó]pia)/.test(rot)) b = d;
+      }
+    }
+    if(!b) return;
+    ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    if(typeof window.abrirTelaBackup === 'function'){ window.abrirTelaBackup(); }
+    else if(typeof window.toast === 'function'){ window.toast('Carregando a aba Backup... toque de novo em um instante.'); }
+  }catch(e){}
+}, true);
+try{if(localStorage.getItem('digicopy_ui_modo_escuro_dispositivo_v1')==='1')document.documentElement.classList.add('digi-escuro');}catch(e){}
+</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Digicopy">
+<title>Sistema Digicopy v7.0.17</title>
+<link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./logo_2.png">
 <link rel="stylesheet" href="./assets/vendor/tailwind.min.css?v=5.20.39">
 <link rel="stylesheet" href="./assets/vendor/phosphor/style.css?v=2.1.1">
-<script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
 <style>
 :root{--digi:#0a1e8a;--digi-dark:#08176e;--digi-light:#e8eaf8}
+/* v6.1.5 — ORDEM DO DONO (21/09/2026): "aparece um olho a mais na senha da nuvem".
+   O navegador (Edge/Chrome no Windows) desenha o PRÓPRIO olho de mostrar senha
+   em cima de todo campo type=password — ficavam dois olhos. Aqui o olho nativo
+   é escondido em todo o sistema; o único olho é o botão do sistema. */
+input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none!important}
+input[type=password]::-webkit-credentials-auto-fill-button{display:none!important}
 .bg-indigo-600{background:var(--digi) !important} .hover\:bg-indigo-700:hover{background:var(--digi-dark) !important}
 .text-indigo-600{color:var(--digi) !important} .text-indigo-700{color:var(--digi) !important}
 .bg-indigo-50{background:var(--digi-light) !important} .border-indigo-100{border-color:#c9ceef !important}
@@ -149,15 +189,15 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <div class="modern-topnav">
       <div class="module-row">
         <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button></div>
-        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
+        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="navigateTo('orcamentos')"><i class="ph ph-clipboard-text"></i>Orçamentos</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
         <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Locação</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
-        <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
+        <div class="module"><button onclick="navigateTo('central-nf')"><i class="ph ph-file-text"></i>Fiscal</button><div id="menu-nfe" class="module-menu"><button onclick="navigateTo('central-nf')"><i class="ph ph-receipt"></i>Nota Fiscal</button><button onclick="navigateTo('fiscal-perfil')"><i class="ph ph-percent"></i>Perfil Tributário</button><button onclick="navigateTo('fiscal-manifestacao')"><i class="ph ph-stamp"></i>Manifestação</button><button onclick="navigateTo('fiscal-ncm')"><i class="ph ph-barcode"></i>NCM</button><button onclick="navigateTo('fiscal-enviar-xml')"><i class="ph ph-file-zip"></i>Enviar XML</button><button onclick="navigateTo('config-fiscal')"><i class="ph ph-gear"></i>Configurações</button></div></div>
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div>
-        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button></div></div>
+        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button></div>
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
-        <div class="module"><button id="btn-backup-top" type="button" onclick="exportBackup()" title="Baixar uma cópia de segurança de todos os dados"><i class="ph ph-download-simple"></i>Backup</button></div>
+        <div class="module"><button id="btn-backup-top" type="button" onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()" title="Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC"><i class="ph ph-download-simple"></i>Backup</button></div>
         <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
       </div></div>
@@ -177,7 +217,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <section id="view-usuarios" class="view hidden space-y-4"></section>
       <section id="view-auditoria" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v7.0.17</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
@@ -188,6 +228,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./app.bundle.js?v=5.21.2"></script>
+<script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
+<script src="./app.bundle.js?v=7.0.17-c9ca417d8775"></script>
 </body>
 </html>

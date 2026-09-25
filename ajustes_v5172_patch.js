@@ -318,62 +318,6 @@ if(typeof _sav==='function' && !_sav.__v5172){
 }
 
 // ── 4.2 PDF inspirado, mais limpo ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId || temColor(p,(db.equipamentos||[]).find(e=>e.id===o.equipamentoId));
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataAt=fin&&o.dataAtendimento?dia(o.dataAtendimento).split('-').reverse().join('/'):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:14mm}
-    body{font-family:Inter,Arial,sans-serif;margin:0;color:#0f172a;font-size:12px;background:#fff}
-    .sheet{max-width:760px;margin:0 auto;padding:8px 4px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}
-    .head h1{margin:0;font-size:20px;color:#0a1e8a;letter-spacing:-.02em}
-    .muted{color:#64748b;font-size:11px}
-    .os{margin-left:auto;text-align:right}
-    .os b{font-size:18px;color:#0a1e8a}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .card h3{margin:0 0 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
-    .faixa{background:linear-gradient(90deg,#0a1e8a,#1d4ed8);color:#fff;border-radius:8px;text-align:center;font-weight:800;padding:7px;margin:14px 0 6px;letter-spacing:.08em;font-size:11px}
-    table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:10px;border:1px solid #e2e8f0}
-    th{background:#eef2ff;color:#0a1e8a;font-size:11px;text-align:left;padding:8px}
-    td{padding:9px 8px;border-top:1px solid #eef2f7;min-height:26px}
-    .line{border:1px dashed #cbd5e1;border-radius:10px;min-height:40px;padding:10px;background:#fff}
-    .foot{margin-top:16px;display:flex;justify-content:space-between;align-items:flex-end}
-    .data{border-bottom:1px solid #334155;min-width:110px;text-align:center;letter-spacing:1px;display:inline-block}
-    @media print{.no-print{display:none}}
-  </style></head><body><div class="sheet">
-  <div class="no-print" style="margin-bottom:10px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}" alt="logo"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div></div>
-    <div class="os"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><h3>Cliente</h3><div><b>${esc(cli.nome||'')}</b></div><div class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</div><div class="muted">${esc(cli.cidade||'')} ${esc(cli.estado||'')}</div></div>
-    <div class="card"><h3>Atendimento</h3><div>Técnico: <b>${esc(o.tecnico||'')}</b></div><div class="muted">${!o.contratoId?('Impressora: '+esc(o.modelo||'')+' • Serial '+esc(o.serie||'')):'Contrato'}</div></div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td>${cell(o.contadorAtual)}</td>${showColor?`<td>${cell(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div class="line">${cell(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}</td><td>${fin?esc(it.q):''}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="line">${cell(o.observacao||o.servicos)}</div>
-  <div class="foot"><div><b>Data do atendimento</b><br><span class="data">${dataAt}</span></div><div class="muted">DIGICOPY</div></div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // ── 4.5 / 7 sair SEM loop, volta para lista do contrato ──
 window.__lcAskLock=false;

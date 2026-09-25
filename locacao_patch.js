@@ -20,6 +20,23 @@
 // ── Utilidades locais (não colidem com o escopo do app) ──────────────────
 function jbStr(v){ return (v===undefined||v===null) ? '' : String(v).trim(); }
 function jbEhMigracao(r){ return r && (r.criadoPor==='migracao' || r.origem==='migracao'); }
+// v7.0.1 (23/09/2026) — QUEIXA DO DONO: "a impressora some do contrato do nada".
+// O QUE ACONTECIA: a limpeza de demonstração lá embaixo reconhecia o dado de
+// exemplo pelo NÚMERO (CT-ano-0001 / OS-ano-0001) — só que o PRÓPRIO SISTEMA
+// numera os contratos e chamados de verdade nesse mesmo formato
+// (app.js renderModalContrato: 'CT-'+ano+'-'+0001). Ou seja: todo contrato
+// criado na tela era tratado como demonstração e, cada vez que o dono importava
+// os dados do sistema antigo, o contrato sumia — e com ele o parque (as
+// impressoras que ele tinha acabado de colocar), as leituras e as faturas.
+// O QUE SEPARA o exemplo do dado de verdade é o AUTOR: o que a pessoa cria na
+// tela tem criadoPor (o id de quem estava logado); o que veio do seed não tem,
+// ou está marcado como 'sistema'. Daqui em diante o número sozinho não decide
+// mais nada — precisa também não ter dono humano.
+function jbSemDonoHumano(r){
+  if(!r) return false;
+  const dono=String(r.criadoPor||'');
+  return !dono || dono==='sistema' || dono==='demo';
+}
 function jbNum(v){ const n=parseFloat(String(v).replace('.','').replace(',','.')); return isNaN(n)?0:n; }
 // Se valor tiver vírgula decimal pt-BR ("1.234,56") corrige; senão parseFloat direto
 function jbToF(v){
@@ -368,7 +385,7 @@ function fbImportLocacaoFamilia(rawData){
   if(result.contratos>0 || result.parque>0 || result.chamados>0 || result.leituras>0){
     // Demo = não-migracao + sem codigoAntigo/legadoCodigo + padrões de numero do seed
     const demoCtrIds = db.contratos
-      .filter(c=>c.empresaId===empId && !jbEhMigracao(c) && !c.codigoAntigo && /^CT-\d{4}-\d{4}$/.test(c.numero||''))
+      .filter(c=>c.empresaId===empId && jbSemDonoHumano(c) && !jbEhMigracao(c) && !c.codigoAntigo && !c.legadoCodigo && /^CT-\d{4}-\d{4}$/.test(c.numero||''))
       .map(c=>c.id);
     if(demoCtrIds.length){
       const demoPrkIds = db.parque.filter(p=>demoCtrIds.includes(p.contratoId)).map(p=>p.id);
@@ -381,7 +398,7 @@ function fbImportLocacaoFamilia(rawData){
     }
     if(result.chamados>0){
       const antes = db.os.length;
-      db.os = db.os.filter(o=>!(o.empresaId===empId && !jbEhMigracao(o) && !o.legadoCodigo && /^OS-\d{4}-\d{4}$/.test(o.numero||'')));
+      db.os = db.os.filter(o=>!(o.empresaId===empId && jbSemDonoHumano(o) && !jbEhMigracao(o) && !o.legadoCodigo && /^OS-\d{4}-\d{4}$/.test(o.numero||'')));
       result.demosRemovidos += antes - db.os.length;
     }
   }

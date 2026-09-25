@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v7.0.17</title>
+<style>
+  :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#1e293b;background:#fff;line-height:1.55;font-size:14px;max-width:900px;margin:0 auto;padding:24px}
+  header{border:2px solid var(--azul);border-radius:14px;padding:16px 20px;margin-bottom:18px;background:linear-gradient(135deg,#eef2ff,#fff)}
+  header h1{font-size:20px;color:var(--azul)}
+  header p{font-size:12.5px;color:var(--cinza);margin-top:4px}
+  h2{font-size:16px;color:var(--azul);margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--borda);text-transform:uppercase;letter-spacing:.4px}
+  h3{font-size:13.5px;margin:14px 0 6px;color:#0f172a}
+  p{margin:6px 0;font-size:13.5px}
+  ul,ol{margin:6px 0 10px 22px;font-size:13.5px}
+  li{margin:4px 0}
+  .aviso{background:#fff7ed;border:1px solid #fdba74;color:var(--laranja);border-radius:10px;padding:10px 14px;font-size:13px;margin:10px 0}
+  .regra{background:#fef2f2;border:1px solid #fecaca;color:var(--vermelho);border-radius:10px;padding:10px 14px;font-size:13px;margin:10px 0}
+  .okverde{background:#f0fdf4;border:1px solid #bbf7d0;color:var(--verde);border-radius:10px;padding:10px 14px;font-size:13px;margin:10px 0}
+  .passo{border:1px solid var(--borda);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff}
+  .passo b.t{display:block;font-size:13.5px;margin-bottom:4px}
+  .passo .caminho{font-family:Consolas,monospace;background:var(--fundo);border:1px solid var(--borda);border-radius:7px;padding:2px 7px;font-size:12.5px;color:#0f172a}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px}
+  th{background:var(--fundo);border:1px solid var(--borda);padding:7px 9px;text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px}
+  td{border:1px solid var(--borda);padding:7px 9px;vertical-align:top}
+  .check{list-style:none;margin-left:0}
+  .check li{padding-left:26px;position:relative;margin:6px 0}
+  .check li::before{content:"☐";position:absolute;left:2px;top:0;font-size:16px;color:var(--azul)}
+  code{font-family:Consolas,monospace;background:var(--fundo);border:1px solid var(--borda);border-radius:5px;padding:1px 5px;font-size:12px}
+  footer{margin-top:28px;border-top:2px solid var(--borda);padding-top:10px;font-size:11.5px;color:var(--cinza)}
+  @media print{body{max-width:none;padding:8mm}.passo,.aviso,.regra,.okverde{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v7.0.17</h1>
+  <p>Sistema Digicopy · Teste dividido em Parte A (navegador, sem certificado) e Parte B (computador com o .exe + certificado A1).
+     Não precisa apressar. Se algo der errado, anote na hora no relatório — o jeito novo é o arquivo <b>RELATORIO_DE_TESTE_NF.html</b> (abre no navegador, tem 3 caixinhas por pergunta e no fim salva um .txt pronto para me mandar).</p>
+</header>
+
+<div class="regra"><b>Regra de ouro do teste:</b> tudo nasce em <b>HOMOLOGAÇÃO</b> (modo teste, sem valor fiscal). A tela mostra uma placa vermelha escrita <b>HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL</b> o tempo todo. Se em algum momento aparecer <b>PRODUÇÃO</b> sem ninguém ter habilitado de propósito, anote como ERRO GRAVE. Nada aqui emite nota de verdade: emitir exige clique, senha na hora e a palavra PRODUCAO digitada.</div>
+
+<h2>Antes de começar (2 minutos)</h2>
+<ol>
+  <li>Abra o sistema. Se aparecer tela de login, entre normalmente (o login é 1 vez por dia).</li>
+  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v7.0.17</code> e, do lado, um carimbo curto de letras/números (ex.: <code>1d27112d</code>).<br>
+      Se não estiver: recarregue com <code>F5</code>. Continuando errado, feche a aba, abra de novo e, se ainda assim não vier, <code>Ctrl+Shift+R</code> uma vez.</li>
+  <li>Abra o menu da <b>Nuvem</b> (botão no topo). Se aparecer um aviso de <b>"código da nuvem está ANTIGO"</b>, anote no relatório — não é erro seu, é um passo de publicação que o dono faz.</li>
+</ol>
+
+<h2>Parte A — Navegador (sem certificado, sem emitir nada)</h2>
+<p>Objetivo: provar que o menu fiscal funciona como MENU (não aba flutuante), que os popups são os do sistema (caixa própria com X), e que nada some no modo escuro.</p>
+
+<div class="passo"><b class="t">A1. A Central de Nota Fiscal é um menu de verdade</b>
+<ul class="check">
+  <li>No menu de cima, clique em <span class="caminho">NF-e/NFC-e</span> (ou <span class="caminho">Nota Fiscal</span>). Abre uma TELA inteira, não uma janelinha flutuante.</li>
+  <li>No topo da tela: a placa vermelha <b>HOMOLOGAÇÃO</b> com o contador <code>0 autorizadas</code>.</li>
+  <li>Três botões na primeira linha: <b>Habilitar PRODUÇÃO</b> · <b>Dados fiscais (CNPJ/IE/NCM)</b> · <b>Inutilizar faixa</b>.</li>
+  <li>Card <b>Certificado A1</b> e card <b>NFC-e — código CSC</b> lado a lado, com campos ID do CSC e CSC (senha) e botão Salvar CSC.</li>
+  <li>Seção <b>EMISSÕES DESTA EMPRESA</b> UMA vez só (nada de título duplicado).</li>
+  <li>Linha de operações (v6.0.6): <b>📡 Testar SEFAZ agora</b> e <b>🗂 Pacote do mês p/ contador (zip)</b>.</li>
+  <li>Card <b>Configuração fiscal</b>: NCM padrão / recarga / locação + descrição locação + <b>Texto do Simples</b> (nasce vazio). Salvar e ver o aviso verde.</li>
+</ul></div>
+
+<div class="passo"><b class="t">A2. Popups são do sistema (têm X, nunca janela feia do navegador)</b>
+<ul class="check">
+  <li>Clique em <b>Habilitar PRODUÇÃO</b>. Abre uma caixa do próprio sistema pedindo para escrever <code>PRODUCAO</code>. Tem <b>X</b> no canto e botão Cancelar.</li>
+  <li>Escreva qualquer outra coisa e confirme: tem que recusar com aviso. Escreva <code>PRODUCAO</code> de teste e confirme: a placa fica verde escrita <b>PRODUÇÃO — a nota gerada aqui VALE DE VERDADE</b>.</li>
+  <li>Clique em <b>Voltar p/ HOMOLOGAÇÃO</b>: caixa de confirmação do sistema, confirme, a placa volta a ficar vermelha.</li>
+</ul></div>
+
+<div class="passo"><b class="t">A3. Modo escuro da Central (foi refeito na v6.0.3)</b>
+<ul class="check">
+  <li>Ative o modo escuro do sistema e reabra a Central: fundo escuro uniforme, cards escuros, textos legíveis, botões com contraste. Nada de texto fantasma nem card branco pendurado.</li>
+  <li>Abra de novo o popup de Produção no escuro: caixa escura, campos legíveis.</li>
+</ul></div>
+
+<div class="passo"><b class="t">A4. Nuvem com papéis (novidade da v6.0.4)</b>
+<ul class="check">
+  <li>O botão <b>Nuvem</b> aparece no topo para qualquer usuário.</li>
+  <li>PC <b>comum</b> (entrou com a senha de conexão): a tela Nuvem abre, mas o bloco <b>📊 Uso da nuvem hoje</b> (gastos) <b>não aparece</b>; no fim existe <b>Desconectar ESTE computador</b> — e ele só tira este PC (confirmar e cancelar).</li>
+  <li>PC que entrou com <b>CNPJ + senha do gerente</b>: aparece Perfil <b>Administrador</b>, o bloco de uso, e a zona <b>Administração da nuvem</b> (aparelhos, excluídos, convites).</li>
+</ul></div>
+
+<div class="passo"><b class="t">A5. O caso dos "dados que sumiam" (cura da sessão, v6.0.4)</b>
+<ul class="check">
+  <li>Na tela Nuvem (PC administrador): <b>Administração da nuvem → Ver aparelhos e dados enviados → botão verde "Reparar sessão agora"</b>. Clique.</li>
+  <li>Tem que responder ou <i>"Sessão: já estava com empresa"</i> ou <i>"carimbada com emp_digicopy"</i>. Se responder outra coisa, anote a frase exata no relatório.</li>
+  <li>Depois abra Clientes/Produtos: as listas continuam cheias como sempre.</li>
+</ul></div>
+
+<div class="passo"><b class="t">A6. Tela Início: nada de "undefined" e itens clicáveis (novidade da v6.0.7, ainda vale)</b>
+<ul class="check">
+  <li>Abra a tela <b>Início</b>. Nos blocos <b>Chamados &amp; OS Recentes</b> e <b>Leituras Pendentes</b>: <b>NÃO pode aparecer</b> a palavra <i>undefined</i> em lugar nenhum (cliente apagado vira <i>"cliente removido"</i>; consumo sem lançamento vira <i>"consumo não informado"</i>).</li>
+  <li>Passe o mouse em cima de um chamado: aparece mãozinha e uma seta <b>→</b> com a dica <i>"Abrir a origem"</i>.</li>
+  <li>Clique num chamado: o sistema vai pra tela <b>Manutenção</b> e já abre a OS correspondente num modal. Feche o modal → você está na lista de chamados (a origem).</li>
+  <li>Clique numa leitura pendente: o sistema vai pra tela <b>Leituras</b> e abre aquela leitura. Se não houver leituras pendências, marque no relatório como "sem massa pra testar".</li>
+</ul></div>
+
+<div class="passo"><b class="t">A7. Permissões no editor do usuário + estorno abrindo a aba (v6.0.5, confirmação)</b>
+<ul class="check">
+  <li>Em <b>Usuários</b>, <b>NÃO existe mais coluna solta</b> de "Emitir NF" na tabela — a permissão mora DENTRO do cadastro: clique no ✏️ de um usuário → bloco <b>Permissões</b> com 3 caixas: <b>Emitir NF</b>, <b>Apagar registros</b>, <b>Estornar registros</b>.</li>
+  <li>Logado como funcionário comum (sem ser Admin/Dono): as 3 caixas aparecem <b>bloqueadas</b> (dá pra ver, não dá pra mexer).</li>
+  <li>Desmarque <b>Apagar registros</b> de um usuário teste e tente apagar algo com ele: o sistema barra e anota na <b>Auditoria</b>.</li>
+  <li>Estorne uma notinha (venda de teste): ela <b>abre na aba da venda já carregada</b> (mesmo número), e no Financeiro o título fica com a tarja <b>EXTORNADO</b> (não some, não entra nas somas).</li>
+</ul></div>
+
+<div class="passo"><b class="t">A12. A aba Fiscal NA BARRA DE CIMA de verdade + modo escuro sem bug (v6.1.3)</b>
+  <span class="d">A v6.1.1 acertava só o esqueleto: ao ligar, o sistema <b>redesenha a barra de módulos</b> e apagava o trabalho — era o seu "não está mudando nada" (só o rodapé mudava). A v6.1.3 se <b>reaplicar toda vez</b> que a barra for redesenhada. E o modo escuro não fica mais com telas claras bugadas por cima.</span>
+  <ul><li><b>Aba "Fiscal" na barra de cima</b> (era "NF-e/NFC-e"). Clique nela: o submenu <b>abre e FICA aberto</b>; clicou de novo, fecha. Os 6 itens: Nota Fiscal · Perfil Tributário · Manifestação · NCM · Enviar XML · Configurações.</li>
+  <li><b>Clica num item</b> (ex.: NCM) → navega para a tela e o submenu <b>fecha sozinho</b>. A tela abre limpa: <b>nada de faixa de botões</b> pendurada.</li>
+  <li><b>Recarregue a página e entre de novo:</b> a aba continua "Fiscal" com os 6 — a correção se reaplica sempre que o sistema remontar essa barra (é exatamente o que acontecia sem você ver, toda vez que ligava).</li>
+  <li><b>Modo escuro</b> (nas preferências do sistema): as telas fiscais ficam <b>escuras de verdade</b> — fundo azul-escuro, cartões escuros, textos claros legíveis, tabela com cabeçalho escuro. Voltar ao claro: tudo claro como antes, sem resquício escuro.</li></ul>
+  <p class="obs">Prova automática desta versão: teste de navegador sem cabeça rodou o app completo e conferiu <b>23/23 pontos</b>: aba renomeada na barra <b>mesmo depois de o sistema reconstruir a barra</b>, clique fixando/soltando, item navegando, faixa fora da tela, escuro aplicado nas telas fiscais e claro preservado. Nada foi importado nem apagado do seu cadastro.</p>
+</div>
+
+<div class="passo"><b class="t">A11. O menu fiscal do jeito certo: NADA na tela + aba Fiscal com o submenu dos 6 (v6.1.3)</b>
+  <ul><li><b>A faixa que aparecia no topo das telas SUMIU de vez.</b> Clica em "Nota Fiscal" e a tela abre limpa — nada pendurado em cima.</li>
+  <li><b>Na barra de módulos do topo, a aba agora se chama oficialmente FISCAL.</b> Clicou nela → o <b>submenu abre e fica parado</b> com os 6: Nota Fiscal · Perfil Tributário · Manifestação · NCM · Enviar XML · Configurações. Clica fora (ou num item) e ele fecha. Passar o mouse sem clicar também abre, como sempre foi.</li>
+  <li><b>Na barra lateral</b> (modo de menu lateral), o item "Fiscal" faz igual: clica e o painelzinho dos 6 fica aberto.</li>
+  <li><b>Importação de clientes:</b> cancelada — nada entra sozinho. O mapeador da página de envio já está lendo os campos do seu banco de verdade (os que você mostrou: COD_CLIENTE, NOME_RAZAOSOCIAL, CPF_CNPJ, RG_IE, endereço de cobrança separado, campos NFE*) — fica parado até o dia que VOCÊ clicar.</li></ul></div>
+
+<div class="passo"><b class="t">A10. Menu Fiscal OFICIAL sempre lá em cima + importação de CLIENTES.json (v6.1.0)</b>
+  <ul><li><b>Olhe o topo das telas fiscais:</b> a faixa agora se chama oficialmente <b>MENU FISCAL</b> (não é mais "NF-e/NFC-e") — e os <b>6 itens ficam sempre lá em cima</b>: Nota Fiscal · Manifestação · Enviar XML · Perfil Tributário · NCM · Configurações.</li>
+  <li><b>Teste o "não some":</b> abra Nota Fiscal &gt; Novo, troque de aba (Gerais → Itens → Transporte…), lance item e salve — a faixa com os 6 botões <b>continua no topo o tempo todo</b> (antes ela podia sumir por um instante quando a tela redesenhava por dentro). Se em algum momento sumir, me avise com o nome da tela e o clique que deu.</li>
+  <li><b>Beleza:</b> telas fiscais com fundo azulzinho suave, grade com linhas zebradas, cabeçalho que acompanha a rolagem, botões com leve levante no hover e campos com contorno azul ao focar.</li>
+  <li><b>Importação CLIENTES.json:</b> na página <b>Enviar arquivos</b> (a mesma do certificado/produtos) apareceu o card <b>Clientes</b>: escolha o CLIENTES.json do sistema antigo e clique <b>Enviar clientes</b>. Cliente com mesmo CNPJ/CPF ou código <b>não duplica</b> — só completa o que estiver vazio (endereço, IE, telefone…). DEL=S fica de fora. Pode mandar quantas vezes quiser. Se der "nenhum cliente com nome", me mande 3 linhas do arquivo que eu acerto os campos.</li></ul></div>
+
+<div class="passo"><b class="t">A9. As 6 telas fiscais COMPLETAS, iguais às fotos do sistema antigo (v6.0.14 — tudo de uma vez, do jeito que você mandou)</b>
+  <ul><li><b>Nota Fiscal:</b> listagem igual (filtros de ambiente/situação/modelo/período + combo "Hoje / Abertas", número da nota, canceladas, código/nome do cliente, chave, valor, código da venda) e o botão <b>Novo</b> abre o <b>editor VENDA-NF de 9 abas</b> (Gerais · Destinatário · Itens da Nota · Informações Adicionais · Transporte · Correções · Reforma Tributária · Referenciar · Log) — igual às suas fotos: pagamentos e duplicatas na Gerais, destinatário puxa do cadastro sem redigitar, itens com tributação em 4 sub-abas (18 fotos), cofrinhos IBS/CBS verdes, <b>Alterar para Todos</b>.</li>
+  <li><b>Pré-Visualizar:</b> DANFE completo com o selo vermelho deitado <b>"NF-E EM PRÉ-VISUALIZAÇÃO — SEM VALOR FISCAL"</b> (igual ao seu) + botão Imprimir.</li>
+  <li><b>Regras que protegem a loja:</b> nota <b>Autorizada não pode ser alterada nem excluída</b> (aparece o aviso explicando CC-e/cancelamento); excluir rascunho, gerar e manifestar pedem a permissão <b>Emitir NF</b> (Admin/Dono); <b>Clonar</b> cria uma nota Não Gerada igual.</li>
+  <li><b>Perfil Tributário:</b> grade igual + edição em 5 abas (ICMS/PIS/COFINS/IPI/Reforma) — já nasce com os <b>5 perfis da loja</b> (00001 VENDA DENTRO DO ESTADO · 00002 VENDA FORA DO ESTADO · 00003 DEV-REMESSA CONSERTO · 00005 RETORNO DE CONSERTO · 00004 TROCA DE MERCADORIA, com os CFOPs de verdade).</li>
+  <li><b>Manifestação do Destinatário:</b> 3 modos de busca (NSU específico até virar o marcador), filtros por tipo (Cadastradas Hoje…), grade de 15 colunas, botões Obter Notas / <b>Manifestar</b> (4 eventos: ciência, confirmação, desconhecimento, operação não realizada com justificativa) / Baixar XML.</li>
+  <li><b>NCM:</b> favoritos com atalhos pros padrões da loja (Padrão / Tinta / Locação) — mesmas chaves que o PDV usa.</li>
+  <li><b>Enviar XML virou "Preparar Arquivos Fiscais":</b> matriz do mês (Geradas / Canceladas / Corrigidas / <b>XML Não Encontrados</b>), aviso amarelo explicando que <b>a nuvem junta os XMLs de TODOS os PCs</b> (sem correr de máquina em máquina), "Não Suportado" pra NFC-e, mês escolhido por calendário, opção de incluir PDFs, e-mail do escritório + <b>Enviar para Escritório</b> com o nome do mês por extenso.</li>
+  <li><b>Configurações em 10 abas</b> (Geral · Impressão · NFCe · Tributação · Nuvem · Outras · Mensagens · FCP · Autorizações · Reforma) já com os presets lidos das fotos: série 1, DANFE retrato, frete 9, síncrono, CRT 1, FCP 2%, versão QR veqr200, CSC mascarado.</li>
+  <li><b>Honestidade (importante):</b> Gerar NF-e de verdade, manifestar e consultar a SEFAZ precisam do <b>PC emissor com o certificado (.exe)</b>. Sem ele, a nota fica salva como <b>Não Gerada</b> com aviso claro — <b>nada de sucesso falso</b>. Toda pergunta sai no popup do sistema (nunca aquele quadradinho sequinho do navegador).</li></ul></div>
+
+<div class="passo"><b class="t">A8. Menu fiscal IGUAL ao sistema antigo — o item "NF-e/NFC-e" mostra os 6 submenus no hover (v6.0.11). A tela branca morreu (v6.0.12). E o menu ficou BONITO (v6.0.13)</b>
+<ul class="check">
+  <li>Na <b>barra de módulos</b> (e também no <b>menu lateral</b>) procure o item <b>NF-e/NFC-e</b>. Não existe mais nenhum botão fiscal solto avulso.</li>
+  <li><b>Novidade da v6.0.13 (cara do sistema antigo):</b> dentro de QUALQUER tela fiscal aparece a <b>faixa NF-e/NFC-e</b> no topo — botões grandes com ícone e nome, em grupos (Documentos · Cadastros fiscais · Sistema), igual à aba do sistema antigo. O item da tela atual fica marcado. Confira se ficou com a cara que você quer.<br><br><b>Da v6.0.12 (correção que você apontou):</b> clicar em qualquer menu abre <b>de primeira</b> agora — antes a primeira abertura de certas telas (fiscais e Buscador Escola) caía numa tela branca. Se alguma tela abrir vazia, ela mostra aviso com botão de voltar em vez de branco — se vir isso, anote o nome da tela e me avise.</li>
+  <li><b>Passe o mouse por cima</b> de NF-e/NFC-e: abre o submenu com EXATAMENTE <b>6 itens, nesta ordem</b>: <b>Nota Fiscal</b> · <b>Perfil Tributário</b> · <b>Manifestação</b> · <b>NCM</b> · <b>Enviar XML</b> · <b>Configurações</b>. Tirar o mouse fecha (ele dá uma folguinha de fração de segundo).</li>
+  <li><b>Clicar</b> no item NF-e/NFC-e abre direto a <b>Central (Nota Fiscal)</b>.</li>
+  <li><b>Perfil Tributário</b>: preencha Regime (Simples Nacional), CNAE, IE/IM, CFOP dentro (5.102) e fora (6.102), CSOSN (102) e as alíquotas que a contabilidade passou → <b>Salvar perfil tributário</b>. Se digitar letra no CNAE ou CFOP começando com 4, o sistema <b>barra com mensagem</b> (teste e anote).</li>
+  <li><b>Manifestação</b>: cole uma chave de 44 números (pode inventar; se o dígito não conferir, o sistema já avisa ANTES de transmitir). Escolha <b>Ciência</b> ou <b>Confirmar operação</b> → botão verde. Sem o .exe/certificado, ele avisa honestamente que não assina (sem sucesso falso). <b>Não realizada</b> exige justificativa de 15+ letras — teste a cobrança. Certo: protocolo na lista.</li>
+  <li><b>NCM</b>: adicione um favorito (8 números + descrição, ex.: 84439923 — peças de impressora). Clique <b>→ padrão</b> nele: o card ao lado mostra o código como NCM padrão (é a MESMA chave da tela Configurações — uma verdade só).</li>
+  <li><b>Enviar XML</b>: salve o e-mail do contador → <b>Copiar</b> funciona? → <b>Gerar pacote (.zip)</b> pede o mês (MM/AAAA) e baixa o zip com os XMLs + eventos do mês.</li>
+  <li><b>Configurações</b>: no fim da tela tem o card <b>📡 Diagnóstico SEFAZ</b> (botão "Testar SEFAZ agora") + ponte pra Enviar XML.</li>
+  <li>Em todas as 4 telas novas: no topo tem a plaquinha vermelha <b>HOMOLOGAÇÃO</b> (ou verde PRODUÇÃO) — se não tiver, anote.</li>
+</ul></div>
+
+<h2>Parte B — Computador com o .exe + certificado A1 (homologação)</h2>
+<p>Objetivo: emitir notas em <b>modo teste</b> de verdade contra a SEFAZ-MG, usando o certificado A1 instalado no PC. A senha do certificado é pedida na hora de cada transmissão e <b>não fica salva</b>.</p>
+
+<div class="aviso"><b>Pré-requisitos:</b> sistema aberto pelo <b>.exe</b> (não pelo navegador) · certificado A1 importado uma vez na Central (botão da área do certificado) · dados fiscais preenchidos em <b>Dados fiscais (CNPJ/IE/NCM)</b> · placa vermelha de HOMOLOGAÇÃO no topo · produto de teste com NCM preenchido.</div>
+
+<div class="passo"><b class="t">B1. Emitir NF-e de teste (modelo 55)</b>
+<ul class="check">
+  <li>Antes de emitir a primeira: botão <b>📡 Testar SEFAZ agora</b> na Central — tem que vir <b>cStat 107 (serviço em operação)</b>. Se vier outro código, anote o código e a mensagem.</li>
+  <li>Faça uma venda (ou finalização) de valor baixo para um cliente de teste e mande emitir a NF-e.</li>
+  <li>O sistema constrói o XML, assina com o A1, transmite para a SEFAZ-MG de homologação e mostra o resultado na hora.</li>
+  <li>Sucesso: a nota aparece em <b>EMISSÕES DESTA EMPRESA</b> como autorizada (em homologação a chave ainda é de teste).</li>
+  <li>Abra o <b>DANFE (A4)</b>: confira cabeçalho, itens, totais e o selo <b>NOTA DE TESTE, SEM VALOR FISCAL</b> nas informações complementares.</li>
+  <li><b>Baixar XML</b>: salva o arquivo assinado (é o que iria para a contabilidade).</li>
+</ul></div>
+
+<div class="passo"><b class="t">B2. Cancelar e inutilizar (ainda em homologação)</b>
+<ul class="check">
+  <li>Na nota de teste, botão <b>Cancelar</b>: pede justificativa com no mínimo 15 letras; transmite o evento 110111 e marca a nota como cancelada.</li>
+  <li><b>Inutilizar faixa</b>: informe modelo 55, série 1, um número que pulou; confirme na caixa do sistema e confira a resposta da SEFAZ.</li>
+  <li><b>Carta de Correção (CC-e)</b> numa nota autorizada de teste: texto com 15+ letras (nunca mexe em valores/impostos nem em quem emite/recebe). Confirme o registrado e o contadorzinho <code>CC-e (1)</code> na linha da nota.</li>
+  <li><b>Pacote do mês p/ contador</b>: escolha o mês atual — baixa um <code>.zip</code> com os XMLs + indice.txt. Abra o zip e veja os arquivos dentro.</li>
+</ul></div>
+
+<div class="passo"><b class="t">B3. Proteções que têm que estar de pé</b>
+<ul class="check">
+  <li>Nada é emitido sozinho: sem clique não sai nota (não existe temporizador escondido — isso é provado por teste automático).</li>
+  <li>Duplicidade: tentar emitir a mesma venda duas vezes é bloqueado com aviso.</li>
+  <li>Tudo fica registrado em <b>Auditoria</b> (quem emitiu, cancelou, quando).</li>
+</ul></div>
+
+
+<h2>Parte C — Nuvem automática, contratos sem vínculo e rodapé (novo em 22/09)</h2>
+<p>Objetivo: provar que <b>conectar = sincronizar sozinho</b> (sem escolher nada, sem apertar botão), que o dado que existe em um PC chega no outro, e que o contrato com <b>"Cliente sem vínculo"</b> tem conserto na tela.</p>
+
+<div class="passo"><b class="t">C1. Conectar já sincroniza (a escolha acabou)</b>
+<ul class="check">
+  <li>Abra o menu da <b>Nuvem</b> e conecte com <b>CNPJ + senha</b> (pode ser a senha de conexão ou a do gerente).</li>
+  <li><b>Não pode aparecer</b> mais a pergunta "escolha o que fazer com os dados deste PC" nem popup cobrando resposta.</li>
+  <li>A tela da Nuvem tem que escrever: <b>"Sincronização automática ativa — conectou, sincroniza sozinho"</b>.</li>
+  <li>Feche a janela da Nuvem e continue usando normalmente — o envio segue sozinho (não precisa ficar olhando).</li>
+  <li>Se ainda existir o botão "Não enviar os dados atuais deste PC (opcional)", ele é só opcional: <b>não</b> precisa clicar.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C2. O dado de um PC aparecer no outro (o problema que voltava)</b>
+<ul class="check">
+  <li>Crie um registro de teste em <b>um</b> PC (uma venda ou um cliente com nome "TESTE NUVEM 22/09").</li>
+  <li>Espere até <b>2 minutos</b> e abra o sistema <b>no outro PC</b> (que também tem que estar conectado na nuvem).</li>
+  <li>O registro tem que aparecer lá. Se não aparecer: deixe os dois PCs abertos e mande print dos dois.</li>
+  <li>Confira que <b>nada sumiu</b> em nenhum dos PCs e que o registro <b>não duplicou</b> (não virou dois "TESTE NUVEM 22/09").</li>
+</ul></div>
+
+<div class="passo"><b class="t">C3. Check-up da nuvem (o botão que mostra o que está diferente)</b>
+<ul class="check">
+  <li>Na tela da <b>Nuvem</b>, clique em <b>🩺 Check-up da nuvem</b>.</li>
+  <li>Aparece uma comparação <b>lista por lista</b> (clientes, vendas, contratos, ordens…) com os números de cada lado e o que está diferente.</li>
+  <li>Tem o <b>resumo para copiar</b> — se o problema voltar, é esse texto que você me manda.</li>
+  <li>Os consertos: <b>Baixar tudo de novo</b>, <b>Enviar este PC inteiro</b> e <b>Sincronizar agora</b>. A tela avisa que <b>nada é apagado</b>.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C4. Contrato que mostrava "Cliente sem vínculo" (quem resolve é o SISTEMA)</b>
+<ul class="check">
+  <li>Abra <b>Contratos</b>. O que você tem que ver: <b>o nome do cliente</b> na linha — não mais "Cliente sem vínculo" à toa.</li>
+  <li>O sistema tenta sozinho, nesta ordem: <b>código antigo</b> do cliente → <b>CNPJ/CPF</b> → <b>nome igual</b> → <b>evidência</b> (quem já aparece no parque, nas leituras, nas OS ou nas vendas daquele contrato) → <b>nome parecido</b> (ex.: "Maria Jesus" acha "Maria de Jesus Comércio de Papéis"). Isso roda sozinho quando a tela de contratos abre — <b>você não escolhe nada</b>.</li>
+  <li>Se o cliente não existir em cadastro nenhum, ele <b>reconstrói o cadastro com o nome que veio do sistema antigo</b> (marcado para revisão) — o nome que estava lá é o nome que aparece.</li>
+  <li>Quando o nome guardado é genérico (ex.: só "Cliente"), ele <b>não inventa cadastro</b>: como honestidade, mostra <b>"Cliente não cadastrado (código X)"</b> em vez de mentir um nome.</li>
+  <li>Só nesse caso de sobra, e como <b>rede de segurança</b>, a linha traz o botão <b>🔗 Vincular cliente</b> (também dentro do contrato aberto e na janela de clientes repetidos). Se você não quiser clicar, não precisa: me diga qual contrato ficou sobrando que eu ajusto na origem.</li>
+  <li>O que o sistema ligou sozinho fica <b>marcado no contrato</b> e escrito na <b>Auditoria</b> com o motivo ("código antigo 12", "nome parecido 88%", "cadastro reconstruído").</li>
+  <li>Regra que continua valendo: <b>nada é mesclado</b> e <b>nada é apagado</b> — vínculo só diz qual cliente é o dono daquele contrato.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C5. Rodapé da versão (por que ele "parou" e o que mudou)</b>
+<ul class="check">
+  <li>No rodapé, no meio, tem que aparecer <b>v7.0.17</b> e ao lado um <b>carimbo</b> curto (ex.: <code>1d27112d</code>).</li>
+  <li>Passe o mouse em cima: o balãozinho explica que o carimbo é do arquivo que está rodando agora.</li>
+  <li>O carimbo muda a cada correção publicada (o número da versão só muda quando eu subo a versão).</li>
+  <li>Se o carimbo não for igual ao que eu te mandei no chat: <code>Ctrl+Shift+R</code> uma vez e confira de novo.</li>
+  <li>Do lado esquerdo o rodapé agora diz <b>onde o banco está de verdade</b>: "banco só neste PC" ou "banco neste PC + nuvem conectada" (antes ficava escrito "Banco na Nuvem" mesmo sem nuvem).</li>
+  <li>O rodapé mostra a versão e a sessão; o <b>erro.txt</b> saiu do rodapé a pedido do dono (23/09/2026) — quando der erro, o próprio aviso do sistema continua abrindo/baixando o arquivo.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C6. Atualizar o motor da nuvem (o passo real — só quando eu avisar)</b>
+<ul class="check">
+  <li>Baixe o <b>ZIP do sistema</b> pelo link que eu mando no chat.</li>
+  <li>Clique com o botão direito → <b>Extrair tudo</b> (tem que ficar o arquivo <b>atualizar_motor_nuvem.cmd</b> e a pasta <b>cloudflare-worker</b> na mesma pasta).</li>
+  <li><b>Dois cliques</b> em <b>atualizar_motor_nuvem.cmd</b>. Ele faz sozinho: mostra o que falta no banco → aplica as migrações (se perguntar <code>Proceed? (y/n)</code>, digite <code>y</code> e Enter) → publica → e no fim mostra a versão no ar.</li>
+  <li>No fim tem que aparecer <code>"versao":"5.27.0"</code> ou mais novo. A janela fica aberta: <b>tire uma foto e me mande</b>.</li>
+  <li>Se travar, não feche a janela — ela mostra o motivo. Foto e me manda.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C7. "O .git fica voltando pra trás" — como não perder mais nada</b>
+<ul class="check">
+  <li>Existe agora o <b>guardar_repo.cmd</b> (fica na <b>raiz do sistema</b>, ao lado do <code>GERAR_EXE.cmd</code>): <b>dois cliques</b> nele.</li>
+  <li>Ele mostra o que mudou, <b>salva</b> e <b>envia para o GitHub</b> — e no fim diz o nome do último commit guardado.</li>
+  <li>Se aparecer a mensagem de que a branch andou, ele mesmo escreve o conserto (<code>git fetch</code> + <code>git reset --soft FETCH_HEAD</code> + rodar de novo). <b>Nunca</b> baixar tudo de novo nem apagar a pasta.</li>
+  <li>Para só olhar (sem salvar nada): <code>node guardar_repo.js --check</code>.</li>
+  <li>Teste agora: rode o <code>guardar_repo.cmd</code>, tire foto da última linha e me mande.</li>
+</ul></div>
+
+<h2>Parte D — Novo em 22/09 (nº4): NF em aba, um olho só e dados só na nuvem</h2>
+
+<div class="passo"><b class="t">D1. Criar nota nova abre em ABA, com as 5 opções do sistema antigo</b>
+<ul class="check">
+  <li>Menu <b>Fiscal</b> → <b>Central de Nota Fiscal</b> → botão azul <b>Nova nota</b> (fica acima da lista).</li>
+  <li>Tem que abrir <b>dentro da tela</b> (aba), <b>sem janelinha por cima</b>, com os cinco caminhos:
+    <b>Gerar NF-e Avulsa</b> · <b>Gerar de NF-e Devolução para Cliente</b> · <b>Gerar de NF-e Devolução para Fornecedor</b> · <b>Gerar NFCe</b> · <b>Importar Declaração de Importação</b>.</li>
+  <li>Clique em <b>Gerar NFCe</b>: a nota tem que abrir já com <b>modelo 65</b> (cupom). Em <b>Devolução</b>, abre com <b>finalidade 4</b> e um lembrete para colar a chave da nota de origem (44 dígitos). Em <b>Importar Declaração de Importação</b>, abre com o texto da DI para você preencher.</li>
+  <li>Nada disso emite nota: é só o rascunho. A emissão continua exigindo o certificado e a senha do certificado.</li>
+</ul></div>
+
+<div class="passo"><b class="t">D2. Senha da nuvem com UM olho só</b>
+<ul class="check">
+  <li>Saia do sistema e abra de novo (ou clique em ☁ Nuvem → campo <b>SENHA DE CONEXÃO</b>).</li>
+  <li>No campo da senha tem que aparecer <b>um olho só</b> — o do sistema (ele mostra/esconde a senha). O olho que o próprio navegador desenhava <b>não aparece mais</b>.</li>
+</ul></div>
+
+<div class="passo"><b class="t">D3. “Só nuvem”: nada fica guardado no PC</b>
+<ul class="check">
+  <li>Olhe o <b>rodapé</b>: tem que estar escrito <b>“dados só na nuvem (este PC não guarda cópia)”</b> — é o modo que você pediu.</li>
+  <li>Teste de verdade: crie um cliente qualquer, espere o ☁ ficar verde, <b>feche o sistema inteiro</b> e abra de novo. O cliente tem que aparecer (ele vem da nuvem, não do PC).</li>
+  <li>Abra ☁ <b>Nuvem</b> → bloco <b>💾 Onde ficam os dados</b>: ele diz o modo atual, tem <b>Soltar agora a cópia deste PC</b> e o botão para voltar a guardar cópia (para abrir sem internet).</li>
+  <li>Se você desligar o “só nuvem”, o rodapé volta a dizer “banco neste PC + nuvem conectada”.</li>
+</ul></div>
+
+<h2>Se der erro: o que copiar</h2>
+<table>
+  <tr><th>Onde apareceu</th><th>O que copiar pro relatório</th></tr>
+  <tr><td>Caixa vermelha de erro na tela</td><td>O texto inteiro da caixa (pode copiar com o mouse)</td></tr>
+  <tr><td>Console do navegador (F12)</td><td>A linha vermelha começando com a data/hora e a versão</td></tr>
+  <tr><td>Resposta da SEFAZ</td><td>O código e a mensagem (ex.: "Rejeição 539: ...")</td></tr>
+  <tr><td>Sistema travou/tela branca</td><td>O que você clicou antes + foto da tela</td></tr>
+</table>
+
+<h2>Como entregar o resultado</h2>
+<ol>
+  <li>Abra o arquivo <b>RELATORIO_DE_TESTE_NF.html</b> (está junto com este guia) — no navegador, pelo site ou do próprio PC.</li>
+  <li>Em cada pergunta, marque <b>uma</b> caixa: <b>✅ OK</b>, <b>❌ Não resolveu</b> ou <b>➖ Não testei</b>. Se quiser explicar, escreva na caixinha de texto daquela pergunta; no fim tem uma caixa livre de observações.</li>
+  <li>Clique em <b>💾 Salvar relatório (.txt)</b> e mande o arquivo que baixar (ou clique em <b>📋 Copiar texto</b> e cole aqui na conversa).</li>
+  <li>Se preferir digitar à mão, escreva aqui na conversa mesmo — o <b>RELATORIO_DE_TESTE_NF.txt</b> foi apagado a seu pedido.</li>
+</ol>
+
+<div class="okverde"><b>Critério de aprovado:</b> Parte A inteira sem erro + B1 com nota autorizada em homologação + DANFE conferido com selo de teste + B2 com cancelamento registrado. Qualquer item que falhar vira correção na próxima versão com a sua anotação.</div>
+
+<footer>
+  Guia do testador · Sistema Digicopy <b>v7.0.17</b> (app) · worker da nuvem v5.27.0 · gerente v5.26.3 ·
+  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v7.0.17, este guia ainda não é o que você está testando.
+</footer>
+
+</body>
+</html>

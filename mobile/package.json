@@ -1,0 +1,20 @@
+{
+  "name": "digicopy-celular",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema Digicopy no celular — versão 1.0, independente do .exe",
+  "scripts": {
+    "sync": "node sync-www.js",
+    "open": "npx cap open android",
+    "copy": "npm run sync && npx cap copy android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}

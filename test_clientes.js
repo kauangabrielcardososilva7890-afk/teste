@@ -59,6 +59,8 @@ console.log('== filtraClientes — campo específico ==');
   eq('por nome com acento dobrado', CLI_PURE.filtraClientes(cls, 'colegio', 'nome').map(c=>c.id), ['2']);
   eq('por fantasia', CLI_PURE.filtraClientes(cls, 'premio', 'fantasia').map(c=>c.id), ['2']);
   eq('por código', CLI_PURE.filtraClientes(cls, '1607', 'codigo').length, 1);
+  eq('código 48 não pega 480', CLI_PURE.filtraClientes([{codigo:48},{codigo:480},{codigo:1480},{codigo:1048}], '48', 'codigo').map(c=>c.codigo), [48]);
+  eq('048 e 48 são o mesmo', CLI_PURE.filtraClientes([{codigo:'048'},{codigo:480}], '48', 'codigo').map(c=>String(c.codigo)), ['048']);
   eq('por CNPJ só números', CLI_PURE.filtraClientes(cls, '20415005', 'documento').map(c=>c.id), ['1']);
   eq('por telefone só números', CLI_PURE.filtraClientes(cls, '30825799', 'telefone').map(c=>c.id), ['1']);
   eq('por cidade sem acento', CLI_PURE.filtraClientes(cls, 'bocaiuva', 'cidade').map(c=>c.id), ['2']);

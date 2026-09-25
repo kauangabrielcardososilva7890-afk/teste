@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Importar arquivos do sistema antigo — Sistema Digicopy</title>
+<style>
+  :root{ --azul:#0a1e8a; --azul2:#e8eaf8; --borda:#c9ceef; --ok:#166534; --aviso:#b45309; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#f1f5f9; color:#0f172a; }
+  .topo{ background:#fff; border-bottom:1px solid #e2e8f0; padding:14px 18px; }
+  .topo h1{ margin:0; font-size:17px; color:var(--azul); }
+  .topo p{ margin:4px 0 0; font-size:12.5px; color:#475569; }
+  .wrap{ max-width:1000px; margin:16px auto; padding:0 14px 40px; }
+  .caixa{ background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 16px; margin-bottom:14px; }
+  .caixa h2{ margin:0 0 8px; font-size:14px; color:var(--azul); }
+  .dica{ font-size:12.5px; color:#475569; line-height:1.5; }
+  .solte{ margin-top:10px; border:2px dashed var(--borda); border-radius:14px; background:#f8fafc; padding:22px 14px; text-align:center; cursor:pointer; }
+  .solte.porcima{ background:var(--azul2); border-color:var(--azul); }
+  .solte b{ color:var(--azul); font-size:14px; }
+  .solte div{ font-size:12px; color:#64748b; margin-top:4px; }
+  .linha{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+  button{ height:34px; padding:0 14px; border-radius:10px; border:1px solid var(--borda); background:#fff; color:var(--azul); font-weight:700; font-size:12.5px; cursor:pointer; }
+  button.principal{ background:var(--azul); color:#fff; border-color:var(--azul); }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+  select{ height:34px; border-radius:10px; border:1px solid var(--borda); padding:0 8px; font-size:12.5px; color:var(--azul); background:#fff; }
+  ul.lista{ margin:10px 0 0; padding:0; list-style:none; font-size:12.5px; }
+  ul.lista li{ display:flex; gap:8px; align-items:flex-start; padding:4px 0; border-top:1px solid #f1f5f9; }
+  ul.lista li:first-child{ border-top:0; }
+  ul.lista .nome{ flex:1; word-break:break-all; }
+  .selo{ font-weight:700; white-space:nowrap; }
+  .selo.txt{ color:var(--ok); }
+  .selo.bin{ color:var(--aviso); }
+  textarea{ width:100%; min-height:260px; margin-top:10px; border:1px solid var(--borda); border-radius:12px; padding:10px; font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+  .recado{ font-size:12.5px; margin-top:8px; }
+  .recado.ok{ color:var(--ok); }
+  .recado.aviso{ color:var(--aviso); }
+  .rodape{ font-size:11.5px; color:#64748b; text-align:center; padding:8px 0 24px; }
+  code{ background:#f1f5f9; padding:1px 5px; border-radius:6px; }
+</style>
+</head>
+<body>
+<div class="topo">
+  <h1>Importar arquivos do sistema antigo</h1>
+  <p>Ferramenta de apoio · Sistema Digicopy v7.0.17 · 24/09/2026 (rev. 2 — arquivos grandes) · nada sai do seu computador: a leitura é feita aqui mesmo no navegador.</p>
+</div>
+
+<div class="wrap">
+  <div class="caixa">
+    <h2>1) Escolha os arquivos (pode ser a pasta inteira)</h2>
+    <p class="dica">
+      Arraste a pasta <b>Grids</b> (ou os arquivos do <b>NSNFe</b>) e solte na área abaixo. Também dá para clicar e escolher
+      os arquivos, ou usar <b>Escolher a pasta inteira</b>. Pode mandar vários de uma vez.
+      Arquivos <b>grandes</b> (ex.: <code>leiauteNFe_v4.00.xsd</code>, 337 KB) agora são aceitos: dele sai um <b>resumo</b> e, se você quiser o texto inteiro,
+      a ferramenta <b>divide em partes</b> para você colar uma por mensagem.
+      <b>Não mande</b> o <code>BANCO.FDB</code> nem as DLLs/exe: são binários enormes e não ajudam.
+    </p>
+    <div class="solte" id="solte">
+      <b>Arraste os arquivos aqui</b>
+      <div>ou clique para escolher</div>
+    </div>
+    <div class="linha">
+      <button class="principal" id="b-arquivos">Escolher arquivos</button>
+      <button id="b-pasta">Escolher a pasta inteira</button>
+      <button id="b-limpar" disabled>Limpar lista</button>
+    </div>
+    <input type="file" id="in-arquivos" multiple hidden>
+    <input type="file" id="in-pasta" webkitdirectory hidden>
+    <ul class="lista" id="lista"></ul>
+    <div class="recado" id="recado"></div>
+  </div>
+
+  <div class="caixa">
+    <h2>2) Copie o texto e cole na conversa</h2>
+    <p class="dica">Aperte <b>Copiar</b> e cole na conversa (Ctrl+V). Se o botão não funcionar, clique dentro da caixa do texto, aperte Ctrl+A e depois Ctrl+C.</p>
+    <div class="linha">
+      <button class="principal" id="b-copiar" disabled>Copiar tudo</button>
+      <select id="parte" hidden></select>
+      <button id="b-salvar" disabled>Salvar .txt no PC</button>
+    </div>
+    <textarea id="saida" spellcheck="false" placeholder="O texto dos arquivos aparece aqui depois que você escolher eles..."></textarea>
+    <div class="recado" id="recado2"></div>
+  </div>
+
+  <div class="rodape">Ferramenta sem login e sem nuvem · funciona no Edge, Chrome, Firefox e no celular.</div>
+</div>
+
+<script>
+/* IR_PURE_START */
+// Quanto de "lixo" existe num arquivo de texto? Serve para dizer se ele é binário.
+function irEhBinario(bytes){
+  if(!bytes || !bytes.length) return false;
+  const n = Math.min(bytes.length, 4096);
+  let ruins = 0, zeros = 0;
+  for(let i = 0; i < n; i++){
+    const b = bytes[i];
+    if(b === 0) zeros++;
+    if(b !== 9 && b !== 10 && b !== 13 && (b < 32 || b > 126)) ruins++;
+  }
+  if(zeros > 0) return true;
+  return (ruins / n) > 0.30;
+}
+
+// Texto do arquivo: tenta UTF-8; se falhar, lê como Windows-1252 (padrão dos
+// programas antigos no Brasil). Assim não sai "�" no lugar de acento.
+function irDecodificar(bytes){
+  const buf = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes || []);
+  try{
+    return { texto:new TextDecoder('utf-8', { fatal:true }).decode(buf), codificacao:'UTF-8' };
+  }catch(e){}
+  try{
+    return { texto:new TextDecoder('windows-1252').decode(buf), codificacao:'Windows-1252' };
+  }catch(e){}
+  let s = '';
+  for(let i = 0; i < buf.length; i++) s += String.fromCharCode(buf[i]);
+  return { texto:s, codificacao:'latin1' };
+}
+
+function irBase64(bytes){
+  const buf = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes || []);
+  let s = '';
+  for(let i = 0; i < buf.length; i++) s += String.fromCharCode(buf[i]);
+  try{ return btoa(s); }catch(e){ return ''; }
+}
+
+function irTamanho(n){
+  n = Number(n) || 0;
+  if(n < 1024) return n + ' B';
+  if(n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(2) + ' MB';
+}
+
+// Junta os nomes achados dentro do XML, sem repetir e em ordem de aparição.
+function irNomesUnicos(texto, re){
+  const vistos = {}, saida = [];
+  let m;
+  const r = new RegExp(re.source, 'g');
+  while((m = r.exec(texto))){
+    const nome = m[1];
+    if(!nome || vistos[nome]) continue;
+    vistos[nome] = 1; saida.push(nome);
+    if(saida.length >= 4000) break;
+  }
+  return saida;
+}
+
+// Resumo de um arquivo grande de esquema (.xsd): é o que eu preciso ver sem
+// carregar 337 KB na conversa — versão, namespaces e a lista de elementos/tipos.
+function irResumoXsd(texto){
+  const t = String(texto || '');
+  const acha = function(re){ const m = t.match(re); return m ? m[1] : ''; };
+  const alvo = acha(/targetNamespace="([^"]+)"/);
+  const versao = acha(/\bversion="([^"]+)"/);
+  const elementos = irNomesUnicos(t, /<xs:element[^>]*\bname="([^"]+)"/);
+  const tipos = irNomesUnicos(t, /<xs:(?:complex|simple)Type[^>]*\bname="([^"]+)"/);
+  const atributos = irNomesUnicos(t, /<xs:attribute[^>]*\bname="([^"]+)"/);
+  const L = [];
+  L.push('--- RESUMO DO ESQUEMA (arquivo grande: isto é o que basta para eu ler) ---');
+  L.push('Namespace......: ' + (alvo || '(sem targetNamespace)'));
+  L.push('Versao.........: ' + (versao || '(sem version)'));
+  L.push('Elementos (' + elementos.length + ')...: ' + elementos.join(', '));
+  L.push('Tipos (' + tipos.length + ')...: ' + tipos.join(', '));
+  L.push('Atributos (' + atributos.length + ')...: ' + atributos.join(', '));
+  L.push('--- FIM DO RESUMO ---');
+  return L.join('\n');
+}
+
+// Monta o texto final: um cabeçalho por arquivo + o conteúdo (ou o resumo).
+function irJuntar(itens){
+  const L = [];
+  (itens || []).forEach(function(it){
+    L.push('===== ARQUIVO: ' + it.nome + ' (' + irTamanho(it.bytes) + ') =====');
+    if(it.binario || it.status === 'binario'){
+      L.push('(arquivo BINARIO — vai em base64 para eu conseguir ler no meu lado)');
+      L.push(it.base64 || '');
+    } else if(it.resumo){
+      L.push(it.resumo);
+      L.push('(o texto inteiro deste arquivo ficou nas PARTES — só mande se eu pedir)');
+    } else {
+      L.push(it.texto || '');
+    }
+    L.push('');
+  });
+  return L.join('\n');
+}
+
+// Divide um texto em partes de tamanho máximo (sem cortar no meio de uma linha).
+function irPartes(texto, maximo){
+  const t = String(texto || '');
+  const limite = Number(maximo) || 40000;
+  if(!t) return [];
+  if(t.length <= limite) return [t];
+  // cada "pedaço" já vem com o seu \n (o último pode vir sem) — assim nada se perde
+  const linhas = t.match(/[^\n]*\n|[^\n]+/g) || [];
+  const partes = [];
+  let atual = '';
+  linhas.forEach(function(pedaco){
+    if(atual.length + pedaco.length > limite && atual){
+      partes.push(atual); atual = '';
+    }
+    if(pedaco.length > limite){
+      let resto = pedaco;
+      while(resto.length > limite){ partes.push(resto.slice(0, limite)); resto = resto.slice(limite); }
+      atual = resto; return;
+    }
+    atual += pedaco;
+  });
+  if(atual) partes.push(atual);
+  return partes;
+}
+if(typeof window !== 'undefined'){
+  window.IR_PURE = { irEhBinario:irEhBinario, irDecodificar:irDecodificar, irBase64:irBase64,
+                     irTamanho:irTamanho, irResumoXsd:irResumoXsd, irJuntar:irJuntar,
+                     irPartes:irPartes, irNomesUnicos:irNomesUnicos };
+}
+/* IR_PURE_END */
+
+(function(){
+'use strict';
+if(typeof document === 'undefined') return;
+
+// Tetos (PC fraco + mensagem que caiba na conversa)
+const MAX_ARQ = 900 * 1024;        // por arquivo: 900 KB (o leiauteNFe tem 337 KB)
+const MAX_TOTAL = 3 * 1024 * 1024; // no total: 3 MB de texto
+const MAX_B64 = 80 * 1024;         // binário: base64 até 80 KB por arquivo
+const RESUMO_ACIMA = 120 * 1024;   // acima disso: sai resumo + partes
+const TAM_PARTE = 40000;           // cada parte que ele cola: ~40 KB
+
+const $ = id => document.getElementById(id);
+let partes = [];
+let textoCompleto = '';
+
+function recado(txt, tipo){ const el = $('recado'); el.textContent = txt || ''; el.className = 'recado ' + (tipo || ''); }
+function recado2(txt, tipo){ const el = $('recado2'); el.textContent = txt || ''; el.className = 'recado ' + (tipo || ''); }
+
+function pintarLinha(item){
+  const rot = item.status === 'texto' ? ['txt', 'texto OK']
+            : item.status === 'binario' ? ['bin', 'binário (vai em base64)']
+            : ['bin', item.status === 'grande' ? 'grande demais (pulei)' : 'não deu para ler'];
+  const extra = item.resumo ? ' — mandei o resumo' : '';
+  const li = document.createElement('li');
+  li.innerHTML = '<span class="selo ' + rot[0] + '">' + rot[1] + '</span>' +
+                 '<span class="nome">' + item.nome + ' — ' + item.tamanho + extra + '</span>';
+  $('lista').appendChild(li);
+}
+
+function lerArquivo(file){
+  return new Promise(function(resolve){
+    const reader = new FileReader();
+    reader.onerror = function(){ resolve({ nome:file.name, status:'erro', tamanho:irTamanho(file.size), bytes:file.size }); };
+    reader.onload = function(){
+      const bytes = new Uint8Array(reader.result || []);
+      const item = { nome:file.name, bytes:file.size, tamanho:irTamanho(file.size) };
+      if(file.size > MAX_ARQ){ item.status = 'grande'; return resolve(item); }
+      if(irEhBinario(bytes)){
+        item.status = 'binario';
+        item.binario = true;
+        item.base64 = irBase64(bytes.slice(0, MAX_B64));
+        item.texto = '';
+      } else {
+        const d = irDecodificar(bytes);
+        item.status = 'texto';
+        item.texto = d.texto;
+        item.codificacao = d.codificacao;
+        // arquivo grande de esquema: além do texto, um resumo curto para colar
+        if(d.texto.length > RESUMO_ACIMA && /<xs:schema|<xsd:schema/i.test(d.texto)){
+          item.resumo = irResumoXsd(d.texto);
+        }
+      }
+      resolve(item);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function receber(files){
+  const lista = Array.prototype.slice.call(files || []);
+  if(!lista.length){ recado('Nenhum arquivo escolhido.', 'aviso'); return; }
+  recado('Lendo ' + lista.length + ' arquivo(s)...');
+  const itens = [];
+  for(let i = 0; i < lista.length; i++){
+    const it = await lerArquivo(lista[i]);
+    itens.push(it);
+    pintarLinha(it);
+  }
+  const bons = itens.filter(it => it.status === 'texto' || it.status === 'binario');
+  const grandes = itens.filter(it => it.status === 'grande').length;
+  const erros = itens.filter(it => it.status === 'erro').length;
+
+  // texto que ele cola: resumos dos grandes + conteúdo dos pequenos
+  const paraColar = [];
+  const paraDividir = [];
+  bons.forEach(function(it){
+    if(it.resumo){
+      paraColar.push('===== ARQUIVO: ' + it.nome + ' (' + it.tamanho + ') =====');
+      paraColar.push(it.resumo);
+      paraColar.push('');
+    }
+    paraDividir.push(it);
+  });
+  const pequenos = bons.filter(it => !it.resumo);
+  const curto = irJuntar(pequenos).replace(/\s+$/, '');
+  const cabeca = paraColar.join('\n').replace(/\s+$/, '');
+  textoCompleto = (curto && cabeca) ? (cabeca + '\n\n' + curto) : (cabeca || curto);
+
+  // partes (com o texto INTEIRO) para quando algo for grande demais para colar
+  const completo = irJuntar(bons);
+  partes = irPartes(completo, TAM_PARTE);
+
+  $('saida').value = textoCompleto.slice(0, MAX_TOTAL);
+  $('b-copiar').disabled = !$('saida').value;
+  $('b-salvar').disabled = !completo;
+  $('b-limpar').disabled = false;
+
+  const sel = $('parte');
+  if(partes.length > 1 && completo.length > TAM_PARTE){
+    sel.hidden = false;
+    sel.innerHTML = partes.map(function(_, i){
+      return '<option value="' + i + '">Parte ' + (i + 1) + ' de ' + partes.length + ' (texto inteiro)</option>';
+    }).join('');
+    sel.value = '0';
+    sel.onchange = function(){ $('saida').value = partes[Number(sel.value)] || ''; };
+    recado('Prontos: ' + bons.length + ' de ' + lista.length + ' arquivo(s).' +
+           (grandes ? ' Pulei ' + grandes + ' grande(s) demais.' : '') + (erros ? ' ' + erros + ' não deu para ler.' : '') +
+           ' O texto inteiro tem ' + irTamanho(completo.length) + ' — se não couber numa mensagem, escolha "Parte 1" na listinha ao lado.',
+           'ok');
+    recado2(textoCompleto.length ? 'Na caixa está o texto com os resumos dos grandes (' + irTamanho(textoCompleto.length) + '). Aperte "Copiar" e cole na conversa.' : '');
+  } else {
+    sel.hidden = true; sel.onchange = null;
+    recado('Prontos: ' + bons.length + ' de ' + lista.length + ' arquivo(s).' +
+           (grandes ? ' Pulei ' + grandes + ' grande(s) demais.' : '') + (erros ? ' ' + erros + ' não deu para ler.' : ''), 'ok');
+    recado2(textoCompleto.length ? 'Texto pronto (' + irTamanho(textoCompleto.length) + '). Aperte "Copiar" e cole na conversa.' : '');
+  }
+}
+
+function copiarTudo(){
+  const ta = $('saida');
+  if(!ta.value) return;
+  const pronto = function(){ recado2('Copiado! Agora é só colar na conversa (Ctrl+V).', 'ok'); };
+  const naMao = function(){
+    try{ ta.focus(); ta.select(); document.execCommand('copy'); pronto(); }
+    catch(e){ recado2('Não consegui copiar sozinho: clique dentro da caixa, aperte Ctrl+A e depois Ctrl+C.', 'aviso'); }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(pronto).catch(naMao);
+  } else naMao();
+}
+
+function salvarTxt(){
+  if(!textoCompleto && !partes.length) return;
+  try{
+    // o .txt leva TUDO (inclusive o texto inteiro dos grandes); o "Copiar" leva
+    // o resumo + os pequenos, que é o que cabe numa mensagem.
+    const conteudo = (partes && partes.length ? partes.join('') : '') || textoCompleto;
+    const blob = new Blob([conteudo], { type:'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'referencias-sistema-antigo.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    recado2('Arquivo .txt salvo na pasta Downloads.', 'ok');
+  }catch(e){ recado2('Não deu para salvar aqui — use o "Copiar" e cole na conversa.', 'aviso'); }
+}
+
+function limpar(){
+  $('lista').innerHTML = ''; $('saida').value = '';
+  $('b-copiar').disabled = true; $('b-salvar').disabled = true; $('b-limpar').disabled = true;
+  $('in-arquivos').value = ''; $('in-pasta').value = '';
+  const sel = $('parte'); sel.hidden = true; sel.innerHTML = ''; sel.onchange = null;
+  partes = []; textoCompleto = '';
+  recado(''); recado2('');
+}
+
+$('b-arquivos').onclick = function(){ $('in-arquivos').click(); };
+$('b-pasta').onclick = function(){ $('in-pasta').click(); };
+$('b-limpar').onclick = limpar;
+$('b-copiar').onclick = copiarTudo;
+$('b-salvar').onclick = salvarTxt;
+$('in-arquivos').onchange = function(ev){ receber(ev.target.files); };
+$('in-pasta').onchange = function(ev){ receber(ev.target.files); };
+$('solte').onclick = function(){ $('in-arquivos').click(); };
+['dragenter','dragover'].forEach(function(ev){
+  $('solte').addEventListener(ev, function(e){ e.preventDefault(); $('solte').classList.add('porcima'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  $('solte').addEventListener(ev, function(e){ e.preventDefault(); $('solte').classList.remove('porcima'); });
+});
+$('solte').addEventListener('drop', function(e){
+  const dt = e.dataTransfer;
+  if(!dt) return;
+  if(dt.files && dt.files.length) return receber(dt.files);
+  recado('Se você arrastou uma pasta, use o botão "Escolher a pasta inteira" — o navegador não entrega pasta pelo arrastar.', 'aviso');
+});
+window.addEventListener('dragover', function(e){ e.preventDefault(); });
+window.addEventListener('drop', function(e){ e.preventDefault(); });
+
+console.log('[DIGICOPY] importar.html rev.2 — leitura de referencias do sistema antigo (nada sai do PC)');
+})();
+</script>
+</body>
+</html>

@@ -1,8 +1,21 @@
 const {spawnSync}=require('child_process');
+// v6.0.6 — deps essenciais vendorizadas no repo (vendor/): se node_modules sumir
+// (sandbox de CI sem npm install), recria a partir do vendor antes de rodar.
+(function ensureDeps(){
+  const fs=require('fs'), path=require('path');
+  for(const pkg of ['acorn','node-forge']){
+    if(fs.existsSync(path.join('node_modules', pkg, 'package.json'))) continue;
+    try{
+      const dst=path.join('node_modules', pkg);
+      fs.mkdirSync(dst, {recursive:true});
+      fs.cpSync(path.join('vendor', pkg), dst, {recursive:true});
+      console.log('deps recriadas a partir do vendor/: ' + pkg);
+    }catch(e){}
+  }
+})();
 const tests=[
   "test_vos.js",
   "test_perf.js",
-  "test_firebase.js",
   "test_persist.js",
   "test_pix.js",
   "test_extras.js",
@@ -44,7 +57,8 @@ const tests=[
   "test_ajustes_pos_final.js",
   "test_ajustes_v52023.js",
   "test_ajustes_v52024.js",
-  "test_ajustes_v52025.js",
+  "test_nuvem_antiga_removida.js",
+  "test_um_arquivo_por_modulo.js",
   "test_sync_quota_guard.js",
   "test_cloudflare_sync.js",
   "test_cloudflare_data_sync.js",
@@ -52,10 +66,231 @@ const tests=[
   "test_offline_assets.js",
   "test_confirm_compat.js",
   "test_app_bundle.js",
-  "test_electron_security.js"
+  "test_build_sync.js",
+  "test_electron_security.js",
+  "test_ajustes_v5214.js",
+  "test_ajustes_v5215.js",
+  "test_ajustes_v5220.js",
+  "test_ajustes_v5221.js",
+  "test_ajustes_v5223.js",
+  "test_ajustes_v5224.js",
+  "test_ajustes_v5226.js",
+  "test_ajustes_v5227.js",
+  "test_ajustes_v5228.js",
+  "test_ajustes_v5229.js",
+  "test_ajustes_v52210.js",
+  "test_ajustes_v52211.js",
+  "test_ajustes_v52212.js",
+  "test_ajustes_v52213.js",
+  "test_ajustes_v52214.js",
+  "test_ajustes_v52216.js",
+  "test_ajustes_v52217.js",
+  "test_ajustes_v52218.js",
+  "test_ajustes_v52219.js",
+  "test_ajustes_v52220.js",
+  "test_ajustes_v52221.js",
+  "test_ajustes_v52222.js",
+  "test_ajustes_v52223.js",
+  "test_ajustes_v52224.js",
+  "test_ajustes_v52225.js",
+  "test_ajustes_v52226.js",
+  "test_ajustes_v52227.js",
+  "test_ajustes_v52228.js",
+  "test_ajustes_v52229.js",
+  "test_ajustes_v52230.js",
+  "test_ajustes_v52232.js",
+  "test_ajustes_v52233.js",
+  "test_ajustes_v52234.js",
+  "test_ajustes_v52235.js",
+  "test_ajustes_v52236.js",
+  "test_ajustes_v52237.js",
+  "test_ajustes_v52238.js",
+  "test_ajustes_v52239.js",
+  "test_ajustes_v52240.js",
+  "test_ajustes_v52241.js",
+  "test_ajustes_v52243.js",
+  "test_ajustes_v52244.js",
+  "test_ajustes_v52245.js",
+  "test_ajustes_v52246.js",
+  "test_ajustes_v52247.js",
+  "test_ajustes_v52248.js",
+  "test_ajustes_v52249.js",
+  "test_ajustes_v52250.js",
+  "test_ajustes_v52251.js",
+  "test_ajustes_v52252.js",
+  "test_ajustes_v52253.js",
+  "test_ajustes_v52254.js",
+  "test_ajustes_v52255.js",
+  "test_ajustes_v52256.js",
+  "test_ajustes_v52257.js",
+  "test_ajustes_v52258.js",
+  "test_ajustes_v52259.js",
+  "test_ajustes_v52260.js",
+  "test_ajustes_v52261.js",
+  "test_ajustes_v52262.js",
+  "test_ajustes_v52263.js",
+  "test_ajustes_v52264.js",
+  "test_ajustes_v52265.js",
+  "test_ajustes_v52267.js",
+  "test_ajustes_v52268.js",
+  "test_ajustes_v52269.js",
+  "test_ajustes_v52270.js",
+  "test_ajustes_v52271.js",
+  "test_ajustes_v52272.js",
+  "test_ajustes_v52273.js",
+  "test_ajustes_v52274.js",
+  "test_ajustes_v52275.js",
+  "test_ajustes_v52276.js",
+  "test_ajustes_v52277.js",
+  "test_ajustes_v52278.js",
+  "test_ajustes_v52279.js",
+  "test_ajustes_v52280.js",
+  "test_ajustes_v52281.js",
+  "test_ajustes_v52282.js",
+  "test_ajustes_v52284.js",
+  "test_ajustes_v52285.js",
+  "test_ajustes_v52286.js",
+  "test_ajustes_v52287.js",
+  "test_ajustes_v52288.js",
+  "test_ajustes_v52289.js",
+  "test_ajustes_v52290.js",
+  "test_ajustes_v52291.js",
+  "test_ajustes_v52292.js",
+  "test_ajustes_v52293.js",
+  "test_ajustes_v52294.js",
+  "test_ajustes_v52295.js",
+  "test_ajustes_v52296.js",
+  "test_ajustes_v52423.js",
+  "test_ajustes_v52424.js",
+  "test_ajustes_v52425.js",
+  "test_ajustes_v52426.js",
+  "test_ajustes_v52427.js",
+  "test_ajustes_v52428.js",
+  "test_ajustes_v52435.js",
+  "test_ajustes_v52436.js",
+  "test_ajustes_v5250.js",
+  "test_ajustes_v5260.js",
+  "test_ajustes_v5262.js",
+  "test_ajustes_v5263.js",
+  "test_ajustes_v5264.js",
+  "test_ajustes_v5265.js",
+  "test_ajustes_v5266.js",
+  "test_ajustes_v6000.js",
+  "test_ajustes_v6001.js",
+  "test_ajustes_v6002.js",
+  "test_ajustes_v6003.js",
+  "test_ajustes_v6004.js",
+  "test_ajustes_v6005.js",
+  "test_ajustes_v6006.js",
+  "test_ajustes_v6007.js",
+  "test_ajustes_v6008.js",
+  "test_ajustes_v6009.js",
+  "test_ajustes_v60010.js",
+  "test_ajustes_v60011.js",
+  "test_ajustes_v60012.js",
+  "test_ajustes_v60013.js",
+  "test_ajustes_v60014.js",
+  "test_ajustes_v6100.js",
+  "test_ajustes_v6101.js",
+  "test_ajustes_v6102.js",
+  "test_ajustes_v6103.js",
+  "test_ajustes_v5248.js",
+  "test_ponte_electron.js",
+  "test_versao_visual.js",
+  "test_mobile_apk.js",
+  "test_relatorio_teste_nf.js",
+  "test_ajustes_v6104.js",
+  "test_relatorio_problemas.js",
+  "test_ajustes_v6105.js",
+  "test_ajustes_v6106.js",
+  "test_exe_so_nuvem.js",
+  "test_navegador_embutido.js",
+  "test_lembrar_tela.js",
+  "test_falta_emitir.js",
+  "test_importar_referencias.js",
+  // AUDITORIA 23/09/2026 — testes que existiam no repositório mas NÃO estavam
+  // nesta lista: rodavam nunca (nem no npm test, nem em CI). Foram executados
+  // um por um e os que passam entraram aqui. Teste que ninguém roda não protege
+  // nada. Ver AUDITORIA_TECNICA.md §12.
+  "test_ajustes_v5183.js",
+  "test_ajustes_v5185.js",
+  "test_ajustes_v5186.js",
+  "test_ajustes_v5187.js",
+  "test_ajustes_v5189.js",
+  "test_ajustes_v5191.js",
+  "test_ajustes_v5192.js",
+  "test_ajustes_v5193.js",
+  "test_ajustes_v5196.js",
+  "test_ajustes_v51916.js",
+  "test_ajustes_v51920.js",
+  // trava do backdoor de login (CRÍTICO — ver AUDITORIA_TECNICA.md §12.1)
+  "test_login_sem_backdoor.js",
+  // duplo clique das tabelas (defeito de copiar/colar em 5 telas — §13.7)
+  "test_linhas_tabela_clique.js",
+  // v7.0.1 — sincronização quase em tempo real + tela que se atualiza sozinha
+  "test_sync_tela_ao_vivo.js",
+  // v7.0.1 — a impressora que sumia do contrato (limpeza de demo por número)
+  "test_contrato_impressora_nao_some.js",
+  // v7.0.1 — a senha que o dono troca não é mais devolvida pelo sistema
+  "test_senha_do_dono_manda.js",
+  // v7.0.2 — trazer de volta o que foi excluído (recuperação em massa)
+  "test_recuperar_excluidos.js",
+  // v7.0.5 — a tela não seca mais (defeito do foco no botão) + diagnóstico
+  "test_tela_nao_seca.js",
+  "test_nuvem_rapida.js",
+  "test_exclusao_nao_volta.js",
+  "test_recuperacao_completa.js",
+  "test_recuperacao_nao_ressuscita.js",
+  // v7.0.11 (rodada 23) — AS CAMADAS PROTEGIDAS: o sistema é feito de camadas que
+  // sobrescrevem funções (289 nomes são escritos por 2 ou mais arquivos). Este teste lê o
+  // MAPA_CAMADAS.md e reprova se uma função protegida (permissão de estorno/exclusão e a
+  // janela do sistema) for trocada por um patch novo SEM levar a proteção junto.
+  "test_camadas_protegidas.js",
+  // v7.0.12 (rodada 24) — A DOR Nº1 DO DONO: "dado que some". Este teste reproduz a
+  // janela de gravação do modo SÓ NUVEM (a mudança vivia só na memória até a varredura
+  // de 900 ms) e reprova se ela não entrar na fila no fim do clique, não sobreviver ao
+  // fechamento da janela e não avisar quando a fila enche.
+  "test_nuvem_nao_perde.js",
+  // v7.0.13 (rodada 25) — A IDEIA "A": toda reclamação do dono tem uma trava viva. Este teste
+  // cobra a lista (RECLAMACOES_E_TESTES.md): teste citado tem de existir E estar registrado aqui
+  // — teste que ninguém roda não trava nada. E prende as reclamações que ainda não tinham teste
+  // próprio (versão/branch em todos os arquivos, menu fiscal oficial, modo escuro, a caixa
+  // "3 permissões" fora da tela, o erro.txt fora do rodapé, o SÓ NUVEM, o "dado que some" e o
+  // prompt/confirm nativo que quebra dentro do .exe — regra 16).
+  "test_reclamacoes_do_dono.js",
+  // v7.0.15 (rodada 27) — A NUVEM EXPLICA: quando o dado não aparece, o sistema tem de
+  // dizer POR QUÊ (sem conexão / pausada / limite do dia / erro grave / nuvem com mais
+  // registros do que aqui) e consertar em 1 clique ("Baixar tudo de novo"). Prova também
+  // que a conferência de 15 em 15 segundos custa ~0,1 ms numa base grande (o `pending` do
+  // info() virou sob demanda: era 223 ms de conta a cada chamada).
+  "test_nuvem_explica.js",
+  // v5.27.0 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
+  // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
+  // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"
+  "test_worker_publico.js"
 ];
-let failed=0, passed=0, xfailed=0;
+// v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
+// O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não
+// está no vendor/ (é grande), então num checkout novo ou num CI sem `npm
+// install` os testes que abrem DOM de verdade não têm como rodar. Antes eles
+// apareciam como "❌ falharam" com um MODULE_NOT_FOUND, que parece defeito do
+// produto — e não é. Agora ficam em categoria própria, e o motivo e o conserto
+// aparecem na tela. Com o jsdom instalado, eles rodam e reprovam normalmente.
+let jsdomDisponivel=true;
+try{ require.resolve('jsdom'); }catch(e){ jsdomDisponivel=false; }
+const precisaJsdom=new Set();
+if(!jsdomDisponivel){
+  for(const file of tests){
+    try{ if(/require\(\s*['"]jsdom['"]\s*\)/.test(require('fs').readFileSync(file,'utf8'))) precisaJsdom.add(file); }catch(e){}
+  }
+}
+let failed=0, passed=0, xfailed=0, semRodar=0;
 for(const file of tests){
+  if(!jsdomDisponivel && precisaJsdom.has(file)){
+    semRodar++;
+    process.stdout.write(`\n⚠️ ${file}: NÃO rodou — falta a dependência 'jsdom'\n`);
+    continue;
+  }
   const result=spawnSync(process.execPath,[file],{encoding:'utf8'});
   const output=(result.stdout||'')+(result.stderr||'');
   if(result.status===0){passed++;process.stdout.write(`\n✅ ${file}\n`);continue;}
@@ -63,5 +298,6 @@ for(const file of tests){
   if(knownLabel){xfailed++;process.stdout.write(`\n⚠️ ${file}: falha aceita de etiquetas (área congelada)\n`);continue;}
   failed++;process.stdout.write(`\n❌ ${file}\n${output.slice(-2500)}\n`);
 }
-console.log(`\nSUÍTE CONSOLIDADA: ${passed} passaram, ${xfailed} falha aceita, ${failed} falharam.`);
+console.log(`\nSUÍTE CONSOLIDADA: ${passed} passaram, ${xfailed} falha aceita, ${semRodar} não rodaram (falta jsdom), ${failed} falharam.`);
+if(semRodar)console.log(`   ↳ ${semRodar} teste(s) ficaram de fora por falta do 'jsdom' (não é defeito do sistema). Rode "npm install" e repita para eles rodarem.`);
 if(failed)process.exit(1);

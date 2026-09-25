@@ -190,7 +190,7 @@ window.renderModalUsuario = function(id){
     <div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${esc(u ? u.nome : '')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     <div class="grid grid-cols-2 gap-3">
       <div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${esc(u ? u.login : '')}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${esc(u ? u.senha : '')}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário${isEdit ? '' : ' *'}</label><input id="u-senha" type="password" value="" placeholder="${isEdit ? 'deixe em branco para manter a senha atual' : 'senha do usuário'}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     </div>
     <div class="grid grid-cols-2 gap-3">
       ${perfilHtml}
@@ -207,11 +207,17 @@ window.saveUsuarioFinal = function(id){
   const privilegiado = temPermissaoTotal(s);
   const nome = txt(document.getElementById('u-nome') && document.getElementById('u-nome').value);
   const login = fold(document.getElementById('u-login') && document.getElementById('u-login').value);
-  const senha = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
+  const senhaDigitada = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
   const ativo = document.getElementById('u-ativo') ? document.getElementById('u-ativo').value === 'true' : true;
-  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
 
   let u = id ? (db.usuarios || []).find(x => x.id === id) : null;
+  // v7.0.2 (23/09/2026) — ORDEM DO DONO: "queria algo que não é possível ver a
+  // senha de nenhuma forma". O campo do modal não vem mais preenchido com a
+  // senha do usuário (ela ficava visível no código-fonte da página). Agora:
+  //   • criar usuário  → a senha é obrigatória;
+  //   • editar usuário → em branco = MANTÉM a senha atual (não apaga, não troca).
+  const senha = senhaDigitada || (u ? txt(u.senha) : '');
+  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
   if(u && !podeEditarUsuario(s, u.id)) return toastMsg('Você só pode editar o seu próprio usuário', 'error');
   if(!u && (db.usuarios || []).some(x => x.empresaId === s.empresaId && fold(x.login) === login)) return toastMsg('Login já existe', 'error');
 
@@ -234,7 +240,18 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  toastMsg('Usuário salvo', 'success');
+  // v5.24.34 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
+  // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
+  // por onde "salvei e o login não entra" escapava em silêncio.
+  var provaLogin = (db.usuarios || []).some(function(x){ return x && fold(x.login) === login && txt(x.senha) === senha && x.ativo; });
+  if(provaLogin){
+    toastMsg('Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.', 'success');
+  } else if(typeof window.lfbAlert === 'function'){
+    window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
+  } else {
+    toastMsg('O usuário NÃO ficou gravado — tenta salvar de novo.', 'error');
+  }
 };
 
 // Sobrescreve o saveUsuario antigo (app.js) — remove a exigência de senha CNPJ.

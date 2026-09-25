@@ -51,9 +51,17 @@ function ntfLista(){
 }
 // API pública: qualquer parte do sistema registra um aviso aqui.
 // O Pix automático (quando conectado ao banco) vai usar exatamente esta função.
+// v7.0.9 — DEVOLVE true/false (antes não devolvia nada)
+// Quem chama precisa saber se o recado foi REALMENTE guardado. O motor da nuvem
+// começa a rodar quando a tela abre — antes de qualquer login — e o sino é por
+// empresa: sem sessão não há onde guardar. Antes o aviso era descartado em
+// silêncio e o motor gravava a marca de "já avisei" de qualquer jeito, então o
+// dono NUNCA ficava sabendo. Devolvendo false, o motor guarda o recado e entrega
+// assim que houver sessão. (Continua sendo seguro para quem ignorar o retorno.)
 window.notificarEvento = function(tipo, texto, acao){
   const sess = (typeof getSession==='function') ? getSession() : null;
-  if(!sess) return;
+  if(!sess) return false;                       // sem sessão: NÃO foi guardado
+  if(typeof db==='undefined' || !db) return false;   // sem base: não há onde guardar
   const lista = ntfLista();
   lista.unshift({
     id: (typeof uid==='function' ? uid('ntf') : 'ntf_'+Date.now()),
@@ -62,8 +70,13 @@ window.notificarEvento = function(tipo, texto, acao){
     criadoPorNome: sess.usuarioNome
   });
   if(lista.length > 200) lista.length = 200; // guarda só os 200 mais recentes
-  if(typeof saveDB==='function') saveDB();
-  ntfAtualizarBadge(true);
+  // v7.0.9 — O REGISTRO JÁ FOI FEITO: o que vier depois é enfeite/bônus e NÃO pode
+  // fazer a função lançar erro. Antes, se salvar o banco falhasse (navegador sem
+  // espaço, por exemplo) ou o sino não estivesse montado, o erro subia para quem
+  // chamou — e o aviso já estava guardado, mas quem chamou achava que não.
+  try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+  try{ if(typeof ntfAtualizarBadge==='function') ntfAtualizarBadge(true); }catch(e){}
+  return true;                                  // guardado de verdade
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

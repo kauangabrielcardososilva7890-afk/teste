@@ -91,6 +91,7 @@ async function boot(){
       entityHashes={};await writeNow('migracao-localStorage');
       console.log('[DIGICOPY][IndexedDB] base atual migrada com sucesso');
     }
+    if(typeof seedData==='function')seedData(false);
     if(typeof getSession==='function'&&getSession()&&typeof showApp==='function')showApp();
     else if(typeof showLogin==='function')showLogin();
     return true;
@@ -102,6 +103,11 @@ async function writeRecoverySnapshot(name,data){
     await putSnapshot({key:'recovery_'+String(name||Date.now()),savedAt:Date.now(),reason:'recovery',data:copy});return true;
   }catch(e){lastError=e&&e.message?e.message:String(e);return false;}
 }
+// Ler de volta uma cópia de recuperação (usado pelo conserto da nuvem).
+async function readRecoverySnapshot(name){
+  try{const snap=await getSnapshot('recovery_'+String(name||''));return snap&&snap.data?snap.data:null;}
+  catch(e){lastError=e&&e.message?e.message:String(e);return null;}
+}
 async function clearLocalData(){
   clearing=true;if(writeTimer)clearTimeout(writeTimer);
   try{if(database){database.close();database=null;}}catch(e){}
@@ -110,7 +116,18 @@ async function clearLocalData(){
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
 }
-window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
+// v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
+// recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode
+// estar numa destas fotos).
+function getAllSnapshots(){
+  return open().then(x=>new Promise((resolve,reject)=>{
+    const tx=x.transaction(SNAPSHOTS,'readonly');
+    const r=tx.objectStore(SNAPSHOTS).getAll();
+    r.onsuccess=()=>resolve(r.result||[]);
+    r.onerror=()=>reject(r.error);
+  }));
+}
+window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,listSnapshots:getAllSnapshots,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
 window.DIGICOPY_DB_READY=boot();
 try{
   const original=window.saveDB;
