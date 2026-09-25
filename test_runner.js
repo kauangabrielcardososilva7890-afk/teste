@@ -316,7 +316,9 @@ const tests=[
   "test_ajustes_v5247.js",
   "test_ajustes_v5249.js",
   // r35 (ideia E, bloco 1): o portão existe e registra — antes/depois idênticos.
-  "test_portao_escrita.js"
+  "test_portao_escrita.js",
+  // r38 (ideia E, bloco 2): função única + 3 primeiros sites migrados (antes/depois).
+  "test_salvar_alteracao.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

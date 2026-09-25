@@ -7386,3 +7386,48 @@ a r37 (comentário). Links: site https://teste-60f.pages.dev e ZIP
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 DEPOIS do clique dele: conferir `/health` (saude zerada) e seguir ideia E bloco 2 (já em
 andamento na r38 desta mesma sessão).
+
+## Rodada 38 — 25/09/2026 — IDEIA E BLOCO 2: FUNÇÃO ÚNICA `salvarAlteracao` + 3 PRIMEIROS SITES MIGRADOS (ANTES/DEPOIS DE VERDADE) — APP v7.0.24
+
+### 1. Censo honesto (antes de prometer)
+
+224 chamadas reais (sem comentários; r35 contou 254 com outra régua): push 31, whole 35,
+splice 6, resto in-place/multi longe do save. A maioria NÃO cabe em upsert simples —
+por isso a função aceita `registro=null` (nível de lista: só anota e grava) e cada site
+migra em 1 linha com volta para o save direto. Locais multi-lista (ex.: vendas_os:892)
+ficaram para blocos futuros, registrados aqui.
+
+### 2. O que foi feito
+
+- NOVO `ajustes_v7022_salvar_alteracao_patch.js`: `salvarAlteracao(lista, registro,
+motivo)` — põe o registro se falta (nunca duplica, nunca inventa lista), anota o
+motivo no diário do portão, delega o save (retorno e erro idênticos). Guarda de
+recarga, barato (regra 12), definição única e estática (trava D + mapa enxergam).
+- Portão (v7021): slot de motivo (`anotarMotivo`, vale para a gravação seguinte, não
+vaza) + `motivo` nas entradas do diário. Pacote do mandar-erro: 3 colunas, intacto.
+- 3 sites migrados (1 linha cada, com fallback): v52224 aplicarUmaVez
+('produtos', 'letra de categoria padronizada'), v5196 excluirUsuario ('usuarios',
+'usuário excluído'), excluirTecnico ('tecnicos', 'técnico excluído').
+- NOVO `test_salvar_alteracao.js` (36 verificações): A contrato (10) + B ANTES (git
+HEAD) × DEPOIS de verdade nos 3 (db idêntico, saves 1=1, motivo no depois; v52224
+com e sem API de letra; relógio normalizado) + C estrutural (5). Registrado no runner.
+- Portão: +3 asserts de motivo (25/25). Manifest 229 (re-ancoragem +1: 80 âncoras em
+7 arquivos, tudo verde) + 4 mensagens honestas (portão→função única fecha a fila).
+- Ritual 7.0.24: mudar_versao + bundle + sync + mobile/www + 4 guias + mapa (2025, +1
+é a função única, como previsto).
+
+### 3. Provas
+
+Suíte **239 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK · `sync --check`
+OK (`v7.0.24 | 229 no bundle | 0 soltos`) · 2 falhas no caminho (corpo do `new Function`
+no teste; mock de confirm era promise — ambas no teste novo, não no app), consertadas.
+Checklist de 24 respondido antes de programar (ponto principal: sem try/catch no upsert
+DE PROPÓSITO — erro idêntico ao push direto; diário jamais quebra a gravação).
+
+### 4. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31
+atualizado com a r38 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono: zerar a nuvem (passo a passo da r37) + mergear PR #31 + rodapé v7.0.24.
+Próximo: ideia E bloco 3 (próxima leva de sites, mesmo padrão antes/depois).

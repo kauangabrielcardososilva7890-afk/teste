@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 228 | sha256: 383862f7a3cc63b3
+ * scripts: 229 | sha256: 07a4e399ac529d69
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -27050,7 +27050,7 @@ window.excluirUsuario = function(id){
     if(!ok) return;
     db.usuarios = (db.usuarios || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('usuario', 'excluir', id, 'Excluído usuário ' + u.login);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('usuarios',null,'usuário excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     if(typeof renderAuditoria === 'function') renderAuditoria();
     toastMsg('Usuário excluído', 'success');
@@ -27069,7 +27069,7 @@ window.excluirTecnico = function(id){
     if(!ok) return;
     db.tecnicos = (db.tecnicos || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('tecnico', 'excluir', id, 'Excluído técnico ' + t.nome);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('tecnicos',null,'técnico excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     toastMsg('Técnico excluído', 'success');
   });
@@ -37410,7 +37410,7 @@ function aplicarUmaVez(){
   if(jaFez()) return 0;
   var n = corrigirProdutosUmaVez(db.produtos);
   marcar(n);
-  if(typeof saveDB==='function') saveDB();
+  if(typeof salvarAlteracao==='function')salvarAlteracao('produtos',null,'letra de categoria padronizada');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2: migrou para a função única
   return n;
 }
 
@@ -60999,8 +60999,9 @@ try{
 // direto e, quando um dado some, não há registro de quem gravou, quando e por
 // qual tela. Este bloco NÃO muda nenhum comportamento: ele embrulha o saveDB e
 // o saveDBAgora (os vencedores, do patch da nuvem) e ANOTA cada gravação
-// (quando + tela + por onde) numa lista curta (50) na memória. A migração dos
-// 254 pontos para a função única vem nos próximos blocos, com teste antes/depois.
+// (quando + tela + por onde, e o motivo quando a gravação passa pela função
+// única) numa lista curta (50) na memória. A migração dos 254 pontos para a
+// função única vem nos próximos blocos, com teste antes/depois.
 // O botão "mandar o que quebrou" (v7020) lê este diário e manda junto no pacote.
 // Custo por gravação: 1 relógio + 1 olhar nas telas (microssegundos, sem timer,
 // sem rede, sem gravar nada em disco — regra 12: PC fraco).
@@ -61009,7 +61010,7 @@ try{
 (function(){
   if(typeof window==='undefined')return;
   if(window.DIGICOPY_PORTAO&&window.DIGICOPY_PORTAO.__portaoE)return; // já carregou: mantém o diário
-  var MAX=50, LOG=[], TOTAL=0;
+  var MAX=50, LOG=[], TOTAL=0, MOTIVO=''; // MOTIVO: r38 — a função única avisa o porquê antes de gravar; vale para a gravação seguinte
   // Mesma detecção de tela do "mandar o que quebrou" (v7020), copiada de
   // propósito: este patch carrega DEPOIS e não pode depender dele (e ele não
   // pode depender daqui — funciona sem o portão). Lógica testada lá e aqui.
@@ -61030,14 +61031,17 @@ try{
   function anotar(via){
     try{
       TOTAL++;
-      LOG.push({q:Date.now(),tela:tela(),via:via});
+      var ent={q:Date.now(),tela:tela(),via:via};
+      if(MOTIVO){ ent.motivo=MOTIVO; MOTIVO=''; }
+      LOG.push(ent);
       if(LOG.length>MAX)LOG.splice(0,LOG.length-MAX);
     }catch(e){/* o portão nunca quebra a gravação */}
   }
   window.DIGICOPY_PORTAO={
     __portaoE:true,
-    ultimas:function(n){ try{ return LOG.slice(-(Math.max(1,n||20))).map(function(r){ return {q:r.q,tela:r.tela,via:r.via}; }); }catch(e){ return []; } },
-    total:function(){ return TOTAL; }
+    ultimas:function(n){ try{ return LOG.slice(-(Math.max(1,n||20))).map(function(r){ return {q:r.q,tela:r.tela,via:r.via,motivo:r.motivo||''}; }); }catch(e){ return []; } },
+    total:function(){ return TOTAL; },
+    anotarMotivo:function(m){ try{ MOTIVO=String(m==null?'':m).slice(0,120); }catch(e){ MOTIVO=''; } },
   };
   // SUBSTITUICAO DE PROPOSITO: saveDB — embrulha (encadeia a anterior) para ANOTAR a gravação; delega tudo, muda nada.
   // (escrito aberto, sem volta por nome, DE PROPÓSITO: o mapa das camadas só enxerga
@@ -61065,15 +61069,78 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7021_portao_escrita_patch.js", e); }
 ;
 
+/* ===== ajustes_v7022_salvar_alteracao_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v7.0.24 — FUNÇÃO ÚNICA DE GRAVAÇÃO, BLOCO 2 (ideia E): os pontos migram.
+// Dor que ataca: "dado que some/volta" — o portão (bloco 1) já anota quando,
+// tela e via de TODA gravação; faltava o QUÊ e o PORQUÊ de cada ponto. Esta
+// função é o destino da migração: os 224 pontos trocam o `saveDB()` direto por
+// ela, em blocos, cada bloco com teste comparando o ANTES e o DEPOIS.
+//
+// Contrato (curto e garantido por teste):
+//   salvarAlteracao(lista, registro, motivo)
+//   - registro com id que NÃO está em db[lista] → entra (push); se já está lá
+//     (mutação in-place, o caso mais comum) → não duplica, segue adiante.
+//   - registro null → mudança de lista sem registro único (filtro, correção em
+//     massa): não mexe no db, só anota e grava.
+//   - motivo (até 120 letras) vai para o diário do portão junto da gravação.
+//   - NUNCA inventa forma no db (lista ausente/não-lista: só anota e grava).
+//   - o diário nunca quebra a gravação; o retorno é o do saveDB de sempre.
+// Padrão de migração (1 linha, com volta para o save direto):
+//   if(typeof salvarAlteracao==='function')salvarAlteracao('L',reg,'motivo');else if(typeof saveDB==='function')saveDB();
+// Bloco 2 (este): 3 sites — v52224 aplicarUmaVez + v5196 excluirUsuario/excluirTecnico.
+// Custo: 1 varredura por id quando há registro (bloco 2 só usa registro null:
+// custo zero além do save normal — regra 12: PC fraco).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if(typeof window==='undefined')return;
+  if(window.salvarAlteracao&&window.salvarAlteracao.__portaoE2)return; // já carregou
+  function salvarAlteracao(lista, registro, motivo){
+    var base=null;
+    if(typeof window!=='undefined'&&window&&window.db) base=window.db;
+    if(!base&&typeof db!=='undefined'&&db) base=db;
+    // Coloca o registro na lista SOMENTE se ele ainda não está lá. Sem
+    // try/catch DE PROPÓSITO: o comportamento de erro tem que ser idêntico ao
+    // do `push` direto que esta linha substitui (o teste antes/depois garante).
+    if(base&&lista&&registro&&registro.id!=null){
+      var arr=base[lista];
+      if(Array.isArray(arr)){
+        var tem=false;
+        for(var i=0;i<arr.length;i++){ if(arr[i]&&arr[i].id===registro.id){ tem=true; break; } }
+        if(!tem) arr.push(registro);
+      }
+    }
+    var mot='';
+    try{ mot=String(motivo==null?'':motivo).slice(0,120); }catch(e){ mot=''; }
+    var fnSave=null;
+    if(typeof window!=='undefined'&&window&&typeof window.saveDB==='function') fnSave=window.saveDB;
+    else if(typeof saveDB==='function') fnSave=saveDB;
+    if(fnSave&&mot){
+      try{
+        if(window.DIGICOPY_PORTAO&&typeof window.DIGICOPY_PORTAO.anotarMotivo==='function')
+          window.DIGICOPY_PORTAO.anotarMotivo(mot);
+      }catch(e){/* o diário nunca quebra a gravação */}
+    }
+    if(fnSave) return fnSave();
+    return undefined;
+  }
+  salvarAlteracao.__portaoE2=true;
+  window.salvarAlteracao=salvarAlteracao;
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7022_salvar_alteracao_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 228;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 229;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 228 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 229 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

@@ -49,7 +49,7 @@ function aplicarUmaVez(){
   if(jaFez()) return 0;
   var n = corrigirProdutosUmaVez(db.produtos);
   marcar(n);
-  if(typeof saveDB==='function') saveDB();
+  if(typeof salvarAlteracao==='function')salvarAlteracao('produtos',null,'letra de categoria padronizada');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2: migrou para a função única
   return n;
 }
 

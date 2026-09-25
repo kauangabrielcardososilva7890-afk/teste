@@ -110,6 +110,20 @@ ok('DEPOIS: o diário anotou as 2 gravações (via + tela + quando)',
   typeof recs[0].q === 'number' && typeof recs[1].q === 'number' && recs[1].q >= recs[0].q,
   JSON.stringify(recs));
 
+// ── motivo (r38: a função única avisa o porquê) ──
+{
+  const d = janelaMock(docMock());
+  avaliarPortao(d.window, docMock());
+  const P = d.window.DIGICOPY_PORTAO;
+  ok('o portão aceita motivo (anotarMotivo existe)', typeof P.anotarMotivo === 'function');
+  P.anotarMotivo('usuário excluído');
+  d.window.saveDB();
+  d.window.saveDB();
+  const rs = P.ultimas(10);
+  ok('o motivo vai parar na gravação seguinte', rs.length === 2 && rs[0].motivo === 'usuário excluído', JSON.stringify(rs));
+  ok('o motivo não vaza para a gravação de depois', rs[1].motivo === '', JSON.stringify(rs[1]));
+}
+
 // ── detecção de tela ──
 {
   const d = janelaMock(docMock({ visiveis: ['view-clientes'] }));
