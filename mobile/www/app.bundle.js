@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 229 | sha256: 07a4e399ac529d69
+ * scripts: 229 | sha256: a77bb9a7eaed0e56
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -40452,7 +40452,8 @@ window.ORCAMENTOS_APROVACAO_PURE = {
   linkPublico: linkPublico,
   mensagemWhats: mensagemWhats,
   AVISO_EPSON: AVISO_EPSON,
-  PAGES: PAGES
+  PAGES: PAGES,
+  deveAplicarResposta: deveAplicarRespostaOrcamento
 };
 
 window.aprovarOrcamentoInterno=function(id, origem){
@@ -40547,11 +40548,19 @@ function aplicarAprovacaoRemota(rec){
   }
 }
 
+// v7.0.25 — o GET responde 410 USED (ok:false) com status 'recusado' quando o
+// link morreu; aceitar pela decisão (não pelo ok) para encerrar o link morto.
+// Antes: o ok:false era ignorado e o poll de cada tick consultava para sempre.
+function deveAplicarRespostaOrcamento(j){
+  if(!j) return false;
+  return j.status==='aprovado' || j.status==='recusado';
+}
+
 function puxarAprovacoes(){
   if(!window.DIGICOPY_CLOUD || !window.DIGICOPY_CLOUD.api) return;
   (db.orcamentos||[]).filter(function(o){ return o && o.token && o.status==='aberto'; }).slice(0,20).forEach(function(o){
     fetch(API+'/orcamento?c='+encodeURIComponent(o.token)).then(function(r){ return r.json(); }).then(function(j){
-      if(j && j.ok && (j.status==='aprovado'||j.status==='recusado')) aplicarAprovacaoRemota(Object.assign({id:o.id,token:o.token}, j));
+      if(deveAplicarRespostaOrcamento(j)) aplicarAprovacaoRemota(Object.assign({id:o.id,token:o.token}, j));
     }).catch(function(){});
   });
 }

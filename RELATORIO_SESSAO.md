@@ -7474,3 +7474,73 @@ Sem código (caminhos já existem e são testados) — só registro. Commitado e
 na **`arena/01a0d9c3-teste`**, PR #31 comentado. Links: https://teste-60f.pages.dev e
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 App segue v7.0.24. Próximo:/bloco 3 da ideia E após o zeramento (ou quando pedir).
+
+## Rodada 40 — 25/09/2026 — "ESSE PRINT AJUDA?" — 410 DO ORÇAMENTO + CORS DO MEDIDOR (APP 7.0.25, CONTADOR v5.23.6)
+
+### 0. O print (o que ele mostra e o veredito)
+
+O dono mandou o console do navegador (rodando o Pages): base local restaurada OK;
+5× `GET /orcamento?c=orc_tok…` → **410 Gone**; `…/contador-uso…/v1/medir` respondendo
+200 mas **bloqueado por CORS** (sem `Access-Control-Allow-Origin`, origin
+`https://teste-60f.pages.dev`). Veredito: os dois erros são REAIS mas NÃO explicam
+o botão de zeramento sumido (isso é o portão de admin da r39, que continua valendo).
+Os dois foram corrigidos nesta rodada. "Ainda n foi" (wipe) segue pendente — falta
+ele dizer (em texto) onde travou: qual tela/aba e qual mensagem apareceu.
+
+### 1. Causa 1 — os 5× 410 (link morto consultado para sempre)
+
+410 = resposta DESENHADA do motor (`handleOrcamentoGet`, worker:1574-1595): orçamento
+achado mas excluído → corpo `{ok:false, error:'USED', status:'recusado'}`. Três loops
+no app consultam `/orcamento?c=` (v52237:235, v52244:79, v52255:193); v52244 e v52255
+encerram o link morto ao ver USED/recusado, mas o **v52237 exigia `j.ok`** — o USED
+(ok:false) era ignorado e o link morto era reconsultado **a cada tick da nuvem**
+(gancho no tick, v52237:267-275) + 4s após abrir. 5 erros = 5 orçamentos locais com
+token morto (nº exato = nº de tokens mortos no banco dele). Nota: no print o `?c=`
+parece `?o=`; nenhum `?o=` existe no repo e o 410 prova que o `c` chegou — leitura.
+Fix (1 condição + 1 função PURE): `deveAplicarRespostaOrcamento(j)` aceita pela
+DECISÃO (`aprovado`/`recusado`), não pelo `ok`. 404 (orçamento ainda não enviado)
+continua consultando de propósito; corpo do freio (sem `status`) nunca vira decisão.
+Efeito: cada link morto gera no máximo MAIS UM 410 e some do poll.
+
+### 2. Causa 2 — CORS do medidor (nº oficial nunca chegava)
+
+`cloudflare-contador/src/index.js` não devolvia NENHUM header CORS (worker de 94
+linhas, sem `Access-Control`); o app chama com `fetch` simples do Pages
+(`cloudflare_sync_patch.js:22`) → navegador bloqueia. Com o bloqueio, a tela Nuvem
+cai no nº estimado. Fix: headers espelhados do worker principal
+(`Allow-Origin: *` + preflight OPTIONS 204). `*`-troca-nada em segurança (CORS só
+rege navegador; resposta só tem totais agregados leituras/escritas, nenhum dado do
+dono) e evita quebrar origens legítimas futuras. **Pendente do dono: republicar o
+contador** (`cd cloudflare-contador && npx wrangler deploy` — o segredo CF_API_TOKEN
+continua guardado, não precisa refazer). Motor principal intocado (segue 5.28.0).
+
+### 3. Provas, versão e armadilhas desta rodada
+
+- Testes novos: 8 asserts no `test_ajustes_v52237.js` (USED/aprovado/recusado aplicam;
+  404/freio/vazio não; poll usa a decisão; worker carrega USED) + 2 no
+  `test_ajustes_v52296.js` (contador libera origin + responde OPTIONS). Suíte: **239
+  passaram, 0 falharam** (9 pulam sem jsdom — ambiente, pré-existente).
+- Versão: app **7.0.25** (`npm run versao` + carimbos + bundle rebuildado). Docs com
+  versão corrente atualizados (GUIA/PASSO/RELATORIO/importar); histórico (comentários
+  "nasceu na 7.0.24", teste v7022, descrições de posição) intocado de propósito.
+- Gate das 24 perguntas respondido antes de codar (nota completa no chat da rodada);
+  pontos-chave: reutiliza `aplicarAprovacaoRemota` (nada duplicado); alternativa
+  "tirar o poll do tick" rejeitada (mataria o "cliente aprovou → aparece sozinho");
+  "calar o console" rejeitado (esconderia sintoma + manteria desperdício).
+- Erros e achados (não repetir): (1) NUNCA dois `edit_file` paralelos no mesmo
+  arquivo — um some sem erro (a definição do PURE sumiu; reapliquei em sequência).
+  (2) `mobile/www/` é espelho de build OBRIGATÓRIO: 4 testes cravam a versão atual
+  nele ("celular 6.0.9") e o `test_mobile_apk.js` roda `mobile/sync-www.js` no meio
+  da suíte — congelar o mobile deixa a suíte não-determinística (falha antes do
+  sync, passa depois). Estacionamento do Android = sem features/nativo/teste novo;
+  o espelho www acompanha o build como nas r35–r38. (3) Ordem do fluxo de versão:
+  `versao` → `bundle` → `sync` (o sync recarimba o index com o hash novo; sem ele,
+  3 testes falham em `sync_build --check`).
+
+### 4. Nota de branch
+
+Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31 comentado. Links:
+https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App v7.0.25, motor 5.28.0, contador v5.23.6 (código pronto; produção só após o deploy
+dele). Próximo: resposta dele sobre onde o wipe travou + bloco 3 da ideia E.

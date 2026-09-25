@@ -132,6 +132,10 @@ ok(sync.indexOf('MEDIDOR_OFICIAL_URL') >= 0 && sync.indexOf('__dcUltPingMedidor'
 ok(sync.indexOf('const medidoAgora = await chamarMedidorOficial()') >= 0 && sync.indexOf('medido agora, na abertura desta tela') >= 0, 'tela mede ANTES de pedir o status e avisa "medido agora, na abertura desta tela"');
 ok(patch.indexOf('window.DC_chamarMedidorOficial') >= 0, 'menu Backup também dispara a medida ao abrir');
 
+// 18) v5.23.6 — contador responde CORS: sem Allow-Origin o navegador (Pages) bloqueia a leitura
+ok(contador.indexOf("'access-control-allow-origin': '*'") >= 0, 'contador libera leitura cross-origin (Pages)');
+ok(contador.indexOf("request.method === 'OPTIONS'") >= 0, 'contador responde preflight OPTIONS');
+
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 ok(man[man.length - 34] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 33] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 32] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 31] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 30] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 29] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 28] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 27] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 26] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 25] === 'painel_gerente_patch.js' && man[man.length - 24] === 'fiscal_guard_patch.js' && man[man.length - 23] === 'nf_transmissao_patch.js' && man[man.length - 22] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (17º a partir do fim (v7.0.20 soma o mandar-erro no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');

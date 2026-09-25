@@ -49,6 +49,16 @@ ok('link no Pages', /^https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html\?c=/.t
 ok('mensagem whats tem cliente e códigos', /Maria/.test(A.mensagemWhats({numero:'7'},{numero:'88'},{nome:'Maria'})) && /COD 7/.test(A.mensagemWhats({numero:'7'},{numero:'88'},{nome:'Maria'})));
 ok('impressão sem validade 60 e sem cobrir oferta', !/validade de 60/i.test(apr) && !/cobrimos qualquer oferta/i.test(apr));
 
+// v7.0.25 — o poll aceita a decisão mesmo com ok:false (410 USED encerra o link morto)
+ok('USED (410) encerra o link', A.deveAplicarResposta({ok:false,error:'USED',status:'recusado',vendaId:null,vendaNumero:'',message:'Este link não vale mais.'})===true);
+ok('aprovado ok aplica', A.deveAplicarResposta({ok:true,status:'aprovado'})===true);
+ok('recusado ok aplica', A.deveAplicarResposta({ok:true,status:'recusado'})===true);
+ok('404 NOT_FOUND continua consultando (pode ser orçamento ainda não enviado)', A.deveAplicarResposta({ok:false,error:'NOT_FOUND',status:'aberto',message:'Orçamento não encontrado.'})===false);
+ok('freio de cota não vira decisão', A.deveAplicarResposta({ok:false,quota:true,error:'pre-stop DIGICOPY: daily row write limit próximo do teto'})===false);
+ok('resposta vazia não aplica', A.deveAplicarResposta(null)===false && A.deveAplicarResposta({})===false);
+ok('poll usa a decisão (sem exigir ok)', /deveAplicarRespostaOrcamento\(j\)/.test(apr) && !/j && j\.ok && \(j\.status/.test(apr));
+ok('worker 410 USED carrega status recusado', /error: 'USED'/.test(worker));
+
 ok('página pública aprovar/recusar', /Autorizar orçamento/.test(pag) && /Recusar/.test(pag));
 ok('worker GET/POST /orcamento', /pathname === '\/orcamento'/.test(worker) && /handleOrcamentoPost/.test(worker));
 ok('nuvem tem orcamentos', /orcamentos:'array'/.test(fs.readFileSync('cloudflare_data_sync_patch.js','utf8')));
