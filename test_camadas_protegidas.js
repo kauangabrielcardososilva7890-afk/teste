@@ -34,8 +34,8 @@ const escritas = (nome) => (r.nomes.get(nome) || []).slice().sort((a, b) => a.po
 console.log('== CAMADAS PROTEGIDAS (nada muda no sistema: só confere) ==');
 ok('o mapa das camadas foi lido com o parser (acorn), sem chute por texto', r.semParser === false);
 ok('o mapa encontrou os nomes globais do sistema (mais de 900)', r.nomes.size > 900, String(r.nomes.size));
-ok('e a leitura bate com a realidade: quem ganha o `saveDB` é a sincronização da nuvem',
-  (() => { const d = escritas('saveDB').filter((x) => x.tempo === 'no carregamento'); return d.length && d[d.length - 1].arquivo === 'cloudflare_data_sync_patch.js'; })());
+ok('e a leitura bate com a realidade: quem ganha o `saveDB` é o portão de escrita (por cima da sincronização da nuvem)',
+  (() => { const d = escritas('saveDB').filter((x) => x.tempo === 'no carregamento'); return d.length >= 2 && d[d.length - 1].arquivo === 'ajustes_v7021_portao_escrita_patch.js' && d[d.length - 2].arquivo === 'cloudflare_data_sync_patch.js'; })());
 
 // ── 1) o gate de permissão (permissoes_estorno_venda_patch.js) ──────────────
 console.log('-- 1) quem apaga/estorna só com permissão: o embrulho continua valendo? --');

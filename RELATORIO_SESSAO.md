@@ -7252,3 +7252,47 @@ https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/are
 Para o dono (passo a passo no chat): mergear o PR #31 + conferir o rodapé (**v7.0.21** agora) +
 (opcional) trocar a Production branch no painel da Cloudflare. Motor: nada a fazer (5.28.0 no ar).
 Próximo: ideia E bloco 1 (portão de escrita, gradual, antes/depois) + pergunta githack/Pages.
+
+## Rodada 35 — 25/09/2026 — IDEIA E BLOCO 1: PORTÃO DE ESCRITA (ANOTA TODA GRAVAÇÃO) + MANDAR O QUE QUEBROU COM O DIÁRIO — APP v7.0.22
+
+### 1. Pedido (ideia E, §E do IDEIAS_PARA_RESOLVER.md)
+
+Função nova entra primeiro por baixo; pontos migram em blocos com teste antes/depois.
+Bloco 1 = portão que embrulha `saveDB`/`saveDBAgora` + diário `DIGICOPY_PORTAO` (teto 50,
+`{quando,tela,via}`) + seção nova no mandar-erro. Migração dos 254 pontos: blocos seguintes.
+Sem stub de `salvarAlteracao` (regra 10: quem chamar primeiro apresenta).
+
+### 2. O que foi feito
+
+- NOVO `ajustes_v7021_portao_escrita_patch.js`: embrulha os 2 vencedores (encadeia via
+`.apply`, delega tudo, muda nada); guarda anti-recarga (`__portaoE`); ESCRITO ABERTO
+(`window.saveDB=function`, duplicação consciente de 8 linhas) para o mapa das camadas
+enxergar — `window[nome]` esconderia o portão da trava D (blind spot achado e eliminado).
+- L (`ajustes_v7020_mandar_erro_patch.js`): seção "Mandar o que quebrou" guardada —
+zero linhas quando o portão não existe (provado por 2 asserts).
+- Manifest 228 (`bundle-manifest.json` ultimo=v7021); `scripts.check` + runner registrados.
+- NOVO `test_portao_escrita.js`: 22 verificações (mock ANTES×DEPOIS: mudez v5243 volta,
+cap 50, 2-eval não duplica, pacote L com/sem portão, visibilidade no mapa, barateza r12).
+- Re-ancoragem +1: 79 asserts em 6 arquivos (52295/52296/52435/52436/5266/6003) +
+`test_ajustes_v52293.js:19` (`m.length-34`→`-35`, sintaxe diferente, regex não pegou).
+- `test_camadas_protegidas.js:37`: vencedor do `saveDB` agora é o portão, COM ordem da
+corrente provada (portão por cima da nuvem); trava D verde de verdade (marcador+corrente).
+- Ritual 7.0.22: mudar_versao + bundle + sync + mobile/www + 4 guias (repetido após as
+correções, porque o bundle envelhece a cada edição).
+
+### 3. Provas
+
+Suíte **238 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK · `sync --check` OK
+(`v7.0.22 | 228 no bundle | 0 soltos`) · 4 falhas no caminho (duplo-eval, v52293, camadas,
+invisibilidade no mapa), todas consertadas e cobertas por assert novo. `auditar_mortos`:
+0 órfãos de produto (11 fora do bundle são ferramenta/dev, mesma lista de antes).
+Checklist de 24 respondido antes de programar.
+
+### 4. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31
+atualizado com a r35 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono (passo a passo no chat): mergear o PR #31 + conferir o rodapé (**v7.0.22**
+agora). Motor: nada a fazer (5.28.0 no ar). Próximo: ideia E bloco 2 (primeira leva da
+migração dos 254, com teste antes/depois) + pergunta githack/Pages (pendente desde r34).

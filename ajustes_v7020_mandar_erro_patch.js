@@ -47,6 +47,21 @@
       'app: v'+versao+' | tela: '+telaAtual()+' | quando: '+quando,
       erros.length?('erros (últimos '+erros.length+'):'):'(nenhum erro registrado — está estranho mas não quebrou nada)'];
     for(var i=0;i<erros.length;i++) linhas.push(redigir(erros[i]));
+    // v7.0.22 (ideia E, bloco 1): o diário do portão de escrita vai junto — quando um
+    // dado some, o pacote mostra as últimas gravações (quando | onde | por onde).
+    // Sem o portão (ou sem gravação ainda): zero linhas novas, pacote idêntico.
+    try{
+      if(window.DIGICOPY_PORTAO&&typeof window.DIGICOPY_PORTAO.ultimas==='function'){
+        var grs=window.DIGICOPY_PORTAO.ultimas(20)||[];
+        if(grs.length){
+          linhas.push('gravações (últimas '+grs.length+' — quando | onde | por onde):');
+          for(var j=0;j<grs.length;j++){
+            var h='?'; try{ h=new Date(grs[j].q).toLocaleTimeString('pt-BR'); }catch(e2){ h='?'; }
+            linhas.push('  '+h+' | '+(grs[j].tela||'?')+' | '+(grs[j].via||'?'));
+          }
+        }
+      }
+    }catch(e3){}
     return linhas.join('\n');
   }
   window.digicopyMandarErro=function(){
