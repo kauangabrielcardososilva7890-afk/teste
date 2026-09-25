@@ -7431,3 +7431,46 @@ atualizado com a r38 (comentário). Links: site https://teste-60f.pages.dev e ZI
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 Para o dono: zerar a nuvem (passo a passo da r37) + mergear PR #31 + rodapé v7.0.24.
 Próximo: ideia E bloco 3 (próxima leva de sites, mesmo padrão antes/depois).
+
+## Rodada 39 — 25/09/2026 — "NÃO APARECE O BOTÃO" (PRINT) — DIAGNÓSTICO: O PC NÃO É ADMIN (POR DESENHO) + CAMINHO VERIFICADO PARA VIRAR
+
+### 1. Diagnóstico (código lido)
+
+O botão "Zerar dados da nuvem" mora na seção "Administração da nuvem", que só
+renderiza se `device.role==='admin'` (`cloudflare_sync_patch.js:232`). O PC do print
+(PC C22409BA) entrou como aparelho comum → sem a seção, sem o botão. NÃO é defeito:
+é a trava de segurança (teste pinna: "PC comum só desconecta a si"). Há 31 aparelhos
+e o reset exige 1 ativo — os outros 30 (+ a inscrição velha do próprio PC) terão que
+ser bloqueados na lista.
+
+### 2. Caminhos verificados (todos existem no app e são testados)
+
+- A (zero risco): um dos PCs dele PODE já ser admin (o primeiro autorizado). Abrir a
+tela Nuvem em cada PC físico: o que mostra "Administração da nuvem" é o admin.
+- C (só app): desconectar ("Desconectar ESTE computador" — tira só a chave deste
+navegador, dados intactos) → aba "Entrar com CNPJ" → CNPJ + SENHA DO GERENTE → o PC
+renasce admin (motor `via='cnpj-gerente'`, pinado no teste v6004). Se conectar mas a
+Administração NÃO aparecer, a senha usada foi a de conexão (comum) — desconectar e ir
+para o R. Pré-requisito: senhas definidas e diferentes (cartaõ do admin).
+- R (recuperação): aba "Recuperar administrador" (mesma tela desconectada) + nome +
+segredo SETUP_SECRET da Cloudflare dele (Workers → digicopy-sync-api → Variables;
+segredo é só-escrita: se esqueceu, grava um novo e usa o novo; trocar não mexe nos
+aparelhos). Vira admin na hora (cooldown 10 min entre tentativas). O próprio app
+descreve essa sequência na dica ao lado do botão desconectar.
+- NÃO usar: aba "Ativar o computador principal" (/v1/setup nega com 31 aparelhos).
+
+### 3. Ordem segura do zeramento (avisos que importam)
+
+1. Backup: menu Backup (só aparece para usuário Admin — trocar de usuário se sumir) →
+"📸 Backup manual" (guarda na nuvem E baixa no PC). 2. Esperar o envio zerar (print:
+faltam 400) + abrir cada PC real e esperar pendentes=0. 3. Virar admin (A/C/R). 4. Na
+Administração: "Ver aparelhos e dados enviados" → BLOQUEAR todos menos a inscrição
+nova (a mais recente). 5. "Zerar dados da nuvem" → 2 confirmações → "Enviar os dados
+deste PC". 6. Demais PCs: entram na tela desconectada → CNPJ + senha de CONEXÃO.
+
+### 4. Nota de branch
+
+Sem código (caminhos já existem e são testados) — só registro. Commitado e empurrado
+na **`arena/01a0d9c3-teste`**, PR #31 comentado. Links: https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App segue v7.0.24. Próximo:/bloco 3 da ideia E após o zeramento (ou quando pedir).
