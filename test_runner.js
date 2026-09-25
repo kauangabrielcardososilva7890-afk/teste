@@ -285,7 +285,13 @@ const tests=[
   // identificar": 1 clique monta o pacote (versão + tela + últimos erros, SEM
   // segredo) e abre o popup de copiar. Mora no aviso de erro e no check-up
   // (NÃO é botão de rodapé, por ordem dele).
-  "test_mandar_erro.js"
+  "test_mandar_erro.js",
+  // r33 (ideia D): trava contra redefinição silenciosa — patch novo que
+  // redefine função antiga sem marcador e sem encadear NÃO passa.
+  "test_sem_sobrescrita.js",
+  // r33 (farol resgatado): ordem antiga do dono ("nunca deixa estourar essa
+  // nuvem") agora roda sozinha em toda suíte — ninguém entrega sem ela passar.
+  "checar_cota_nuvem.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

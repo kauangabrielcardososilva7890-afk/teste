@@ -7100,3 +7100,73 @@ https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/are
 Para o dono: mergear o PR #31 + publicar o motor (duplo clique em `atualizar_motor_nuvem.cmd`) +
 conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.20`). Próximo da fila ("tudo"): ideia F
 (esperas cegas) — blocos com teste comparando antes/depois.
+
+## Rodada 33 — 25/09/2026 — DOR Nº 1 "DADO QUE SOME/VOLTA": AUDITORIA B + TRAVA D + FAROL RESGATADO (SEM MUDAR O SISTEMA)
+
+### 1. Suas respostas (as 4 perguntas que eu fiz)
+
+1. **Dor que mais dói?** → dado que some/volta. (r30–r31 já consertaram 3 causas provadas; r33
+   prepara o terreno definitivo e a ideia E — portão único de escrita — começa na próxima rodada.)
+2. **Onde ele usa?** → nos dois (`.exe` no PC + site). (Nada muda no ritual: os dois saem do mesmo bundle.)
+3. **Autoriza B + D + E?** → "tudo". (B e D nesta rodada; E gradual com teste antes/depois, próxima.)
+4. **O gerente?** → pausar por enquanto, continuar DEPOIS. (`gerente-atualizacoes/` intocado até ele pedir.)
+
+### 2. O que foi feito (três entregas, zero risco para a loja)
+
+**D — trava contra redefinição silenciosa (o defeito mais caro).** Um patch novo redefine uma função
+antiga e ESQUECE de levar junto o que ela fazia — o defeito aparece depois, longe da causa. Agora:
+`camadas_baseline.json` (foto write-once das 635 redefinições velhas em 185 arquivos — código velho,
+perdoado) + `test_sem_sobrescrita.js` (4 ✓): redefinição NOVA só passa com marcador
+`SUBSTITUICAO DE PROPOSITO: <nome>` ou encadeando a anterior (old/anterior/prev + .apply/.call),
+conferido a ±40 linhas da definição, com o parser (acorn) — sem chute por texto. A foto nunca é
+regenerada: item obsoleto é inofensivo (nunca reprova) e arquivo renomeado = par novo = pede marcador.
+
+**B — auditoria arquivo por arquivo (com prova, sem apagar nada).** `auditar_mortos.js` classifica os
+492 `.js` da raiz: 227 no bundle, 226 registrados na suíte, 20 órfãos DORMENTES (alvos existem —
+mantidos), 19 ferramentas fora do bundle. Veredito honesto: **0 arquivos 100% mortos — nada apagado**
+(`banco_de_prova_nuvem.js` é ferramenta de bancada dormente, mantida; `bench_clique_nuvem.js` é
+ferramenta viva de mão; `_ref/` intocado, sem autorização). A ferramenta achou 3 furos nela mesma no
+caminho (require sem extensão, `src` com `?v=`, runner como citação) — todos corrigidos e provados.
+
+**Farol anti-estouro RESGATADO (achado da auditoria).** `checar_cota_nuvem.js` (ordem antiga dele:
+"nunca deixa estourar essa nuvem") estava VERMELHO e ninguém rodava: checava `LIMITE_ESCRITA_DIA =
+95000`, número do plano grátis que morreu na r28 (freio virou plano-dependente). Atualizado para o
+freio real (ponto único `PLANO = PLANO_PAGO` + freio de dia 1M + freio de mês 45M sob o teto de 50M +
+conta do dia típico contra 1M) e REGISTRADO na suíte — agora roda sozinho em toda entrega. Farol verde.
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Apagar `banco_de_prova_nuvem.js` (cabeçalho diz ferramenta de bancada; zero citação = dormente, não
+  morta — e a ideia E pode usá-la); apagar os 20 órfãos (todos os alvos ainda existem — só teste com
+  alvo sumido qualifica, como os 3 da r30); regenerar o baseline um dia (proibido: congela a foto);
+  trava por dif de texto em vez de parser (o acorn já estava no vendor); `_ref/` e celular (sem ordem).
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- A trava D confere a JANELA de ±40 linhas: o encadeamento é por arquivo (se o arquivo encadeia um
+  nome e redefine outro em silêncio na mesma janela, passa — o marcador por nome é o caminho
+  recomendado e está escrito no cabeçalho do teste).
+- O farol confere o TEXTO do worker (freio existe, números certos) — a execução do freio é coberta
+  pelo `test_worker_publico.js`, não pelo farol.
+- Ideia E (portão único de escrita) NÃO começou — é a próxima rodada, gradual, com teste antes/depois.
+- Sistema, bundle e motor: INTACTOS nesta rodada (app 7.0.20 + motor 5.28.0 seguem os da r31/r32).
+
+### 5. Provas
+
+`test_sem_sobrescrita.js` **4 ✓** — **falha sem a proteção** (prova do vermelho com fixture temporária:
+`__prova_d_red.js:2 redefine 'imprimirChamado' em silêncio`) e passa com o marcador (controle positivo).
+`checar_cota_nuvem.js` **farol verde** (estava vermelho antes do conserto). Suíte inteira **217 passaram,
+0 falharam, 9 não rodaram (falta jsdom no sandbox — não é defeito; na máquina com `npm install` eles
+rodam)** · `npm run check` OK (bundle íntegro, sem regen — nada do bundle mudou na r33) · `sync:check`
+OK · motor 5.28.0 regenerado de forma idêntica (só o carimbo de hora mudou). Checklist de 24 perguntas
+respondido antes de programar.
+
+### 6. Nota de branch (para o próximo chat)
+
+`package.json` ainda diz `branch: arena/01a0cf4a-teste` (teste prende). Trabalho commitado e empurrado
+na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto. PR #31 atualizado com a r33 (comentário).
+Links desta rodada: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono: mergear o PR #31 + publicar o motor (duplo clique em `atualizar_motor_nuvem.cmd`) +
+conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.20`). Próximo da fila ("tudo"): ideia E
+(portão único de escrita) — gradual, com teste antes/depois; ideia F segue depois.

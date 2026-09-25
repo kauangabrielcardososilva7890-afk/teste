@@ -25,8 +25,12 @@ const sync   = fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8');
 console.log('-- muralhas da cota (worker + app) --');
 ok((worker.match(/noop: true, version: currentVersion/g) || []).length === 2,
    'dedupe: registro idêntico e delete repetido viram "noop" (zero gravação)');
-ok(worker.indexOf('LIMITE_ESCRITA_DIA = 95000') >= 0,
-   'freio preventivo dentro do worker (para em 95 mil, antes do teto de 100 mil)');
+ok(worker.indexOf('const PLANO = PLANO_PAGO;') >= 0,
+   'plano pago ligado no ponto único (o freio segue o plano, sem número solto)');
+ok(/freioDia:\s*1000000/.test(worker) && worker.indexOf('freioDecide') >= 0,
+   'freio de DIA existe e decide antes do teto (1M/dia no pago)');
+ok(/freioMes:\s*45000000/.test(worker) && /tetoEscritas:\s*50000000/.test(worker),
+   'freio de MÊS 45M com folga de 10% sob o teto de 50M');
 ok(worker.indexOf('daily row write limit próximo') >= 0 && worker.indexOf('429') >= 0,
    'freio devolve pausa amigável que o app reconhece e respeita');
 ok(sync.indexOf('ehLimiteDiario') >= 0 && /daily row \(write\|read\) limit/.test(sync),
