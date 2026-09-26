@@ -7544,3 +7544,44 @@ https://teste-60f.pages.dev e
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 App v7.0.25, motor 5.28.0, contador v5.23.6 (código pronto; produção só após o deploy
 dele). Próximo: resposta dele sobre onde o wipe travou + bloco 3 da ideia E.
+
+## Rodada 41 — 26/09/2026 — "CONSIGO FAZER TUDO DE UMA VEZ?" — BLOQUEIO É OBRIGATÓRIO (MOTOR EXIGE)
+
+### 0. A pergunta e a resposta curta
+
+Ele perguntou se dá para pular o bloqueio dos aparelhos e zerar direto. Resposta:
+NÃO dá — e não é regra minha: o motor RECUSA o zeramento (erro 409
+`RESET_REQUIRES_SINGLE_DEVICE`, "Bloqueie os outros aparelhos antes de zerar a
+nuvem") a menos que reste EXATAMENTE 1 aparelho valendo (`handleResetCloud`,
+worker:1099-1111). Mas "de uma vez" = SIM no sentido de uma sentada só: bloquear →
+zerar → enviar, na mesma tela, em ~10 min. Ele ainda não confirmou que virou admin
+("ainda n foi" segue aberto — o bloqueio também é só-admin, mesma tela).
+
+### 1. O que o código prova (âncoras)
+
+- Zeramento exige: admin (`requireAdmin`) + confirmação `APAGAR NUVEM` + COUNT de
+  devices ativos (`revoked_at IS NULL AND excluido_em IS NULL`) === 1.
+- Antes de apagar, o motor guarda foto automática ("Backup seguranca/Backup antes de
+  zerar…"); se o backup falhar, NÃO zera (worker:1114-1118).
+- O zeramento apaga códigos de inscrição, changes, records e o resumo guardado, e
+  troca a `cloud_generation` (invalida a visão dos outros aparelhos); a tabela de
+  aparelhos continua (bloqueados seguem bloqueados) — worker:1119-1140.
+- Ninguém se tranca para fora: bloquear o próprio aparelho é recusado
+  (`CANNOT_REVOKE_SELF`, worker:1082) — instrução segura: "bloqueie todos que o
+  botão deixar; o seu ele não deixa".
+
+### 2. Nota de ambiente (Git)
+
+O sandbox acordou com a branch `arena/01a0d9c3-teste` apontando para a base e9bb5ec
+com a árvore suja — MESMO sintoma da r40. Recuperação igual: `fetch` → conferido que
+o conteúdo da árvore == 9ec5cc6 (os "11 arquivos deletados" no diff eram artefato de
+diff-vs-commit com índice antigo; `hash-object` idêntico) → `reset --hard FETCH_HEAD`.
+Sem perda. (E: não existe ref `origin/arena/01a0d9c3-teste` neste clone; push segue por
+refspec explícito, que funciona.)
+
+### 3. Nota de branch
+
+Sem código — só registro. Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31
+comentado. Links: https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App segue v7.0.25, motor 5.28.0. Próximo: confirmação dele de que virou admin.
