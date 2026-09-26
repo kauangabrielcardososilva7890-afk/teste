@@ -21,15 +21,16 @@ ok(sync.includes('📊 Uso da nuvem hoje'), 'painel: cabeçalho do medidor prese
 
 // A ficha quando (quase nunca) bater no limite:
 ok(!dsyn.includes('A nuvem grátis atingiu o limite de gravação de hoje'), 'ficha: "grátis / de hoje" FORA');
-ok(dsyn.includes('A nuvem atingiu o limite de gravação do período (raro no plano pago)'), 'ficha: diz "do período (raro no plano pago)"');
+ok(dsyn.includes('A nuvem aplicou o freio preventivo de gravações (para não estourar o limite do plano — raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '), 'ficha: diz "freio preventivo (raro no plano pago)"');
 ok(dsyn.includes('Nada foi perdido: o envio recomeça sozinho'), 'ficha: a promessa de segurança segue intacta');
 
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('por mês e gigantesco'), 'bundle: texto do plano pago presente');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('por mês e gigantesco'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: versão 5.24.34');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.34<'), 'index: rodapé v5.24.34');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.34"'), 'package.json 5.24.34');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: versão v' + pkg.version);
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(/"version": "\d+\.\d+\.\d+"/.test(fs.readFileSync('package.json', 'utf8')), 'package.json com versão válida (v' + pkg.version + ')');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 (informações da nuvem no idioma do plano pago).');
+console.log('\nTudo OK — v' + pkg.version + ' (informações da nuvem no idioma do plano pago).');

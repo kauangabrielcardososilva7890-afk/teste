@@ -6893,3 +6893,695 @@ suíte inteira **221 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 226 s
 - **Falta 1 passo:** publicar de novo (o motor **5.27.0**) para nascer o campo **`saude`** no `/health` —
   aí os relatos do app começam a chegar e eu passo a ver daqui o que a sua máquina enfrenta, sem você
   precisar fazer nada.
+
+## Rodada 30 — 25/09/2026 — "CADASTRA A IMPRESSORA E ELA SOME AO FECHAR E ABRIR" — ACHADO E CONSERTADO (COM PROVA)
+
+### 1. Suas respostas (as 4 perguntas que eu fiz)
+
+1. **Quando some?** → "quando fecha e abre o programa" (não some com ele aberto). Foi essa resposta que
+   apontou para o caminho certo: gravação → fila → fechamento → reabertura no modo SÓ NUVEM.
+2. **Limpeza de arquivos?** → só os 100% mortos e provados. Apaguei 3 testes mortos (ninguém referencia,
+   alvo não existe): `test_correcoes_relatorio.js`, `test_vendas_chamados_reparo.js`,
+   `test_ajustes_v5188.js`.
+3. **Nuvem?** → só corrigir o sumiço, sem função nova. Feito: nenhum recurso novo, só o conserto.
+4. **Motor da nuvem publicado?** → você não lembrava; eu conferi de fora: **5.27.0 já está no ar**, freio do
+   plano pago (`tetoDia 1.000.000`, `disparouHoje: false`) e campo `saude` nascido (vazio — coerente com um
+   defeito silencioso: nada era relatado). **Você não precisa publicar nada nesta rodada.**
+
+### 2. O defeito (provado vermelho → verde)
+
+O caminho, passo a passo: ele gravou e o programa fechou ANTES de subir (faltou luz, travou, fechou sem
+internet, ou a fila estava grande e a gravação não coube no envio de despedida de 55 KB). Ao reabrir no SÓ
+NUVEM, a base começa vazia, a fila pendente SOBE e a nuvem confirma — mas a confirmação (`result.ok` no
+`pushOutbox`) só atualizava o livro-caixa (`versions`/`known`/`hashes`) e consumia a fila, SEM colocar o
+registro na base. O eco da nuvem é pulado pelo guarda de versão (`applyRemote`: versão ≤ conhecida → pula) e
+o registro ficava **na nuvem, mas INVISÍVEL neste PC até a próxima reabertura** — o "sumiu ao fechar e abrir".
+Reproduzido: `banco=false nuvem=true fila=false`, zero avisos.
+O conserto (`cloudflare_data_sync_patch.js`, função nova `materializarConfirmado`): ao confirmar um upsert,
+se o registro NÃO está na base, ele entra com os dados que acabaram de subir — **nunca sobrescreve** o que
+está na tela (uma edição mais nova pode estar esperando a vez; ela sobe no próximo ciclo). Vale para os 4
+modos (lista, mapa, raiz, contador).
+Segundo defeito da mesma família: a recusa da nuvem (`result.error`) era descartada SEM NENHUM AVISO (só uma
+nota no navegador) — e no SÓ NUVEM sumia ao fechar e reabrir. Agora a recusa avisa na hora: **toast de erro +
+sino + relato de saúde `recusado`** (aparece no `/health` → `saude`, para eu ver daqui se acontecer).
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Colisão de id entre PCs (`uid()` tem 7 caracteres aleatórios); `heldLocalOnly` (nunca populado);
+  limpeza de demo (só roda na migração Firebird, com padrão de número seed); cascata v52023 (só no "Excluir
+  selecionados", com dois avisos); perfil temporário do `.exe` (o lançador usa o perfil normal — `localStorage`
+  persiste); `confirmSistema` ausente (existe em `popup_sistema_patch.js`); rejeição do motor real a gravação
+  normal (o 5.27.0 só recusa registro > 700 KB ou dado malformado — gravação normal sempre passa).
+- Caminhos conferidos e inocentes: `scanLocal` não gera exclusão para chave pendente; boot SÓ NUVEM não apaga
+  fila; keepalive entrega quando há internet.
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- **Edição** (não criação) fechada antes de subir, com despedida falha: ao reabrir, a base recebe a versão
+  velha (v1), o push confirma a nova (v2) e a tela pode ficar na velha até a próxima reabertura — e a
+  revarredura pode reenviar o conteúdo velho. Distinguir "velho" de "editado de novo" com o livro-caixa atual
+  é impossível sem adivinhar — e adivinhar quebraria a edição rápida (dois salvamentos seguidos). Documentado
+  para uma rodada futura com desenho próprio (conjunto de hashes confirmados por chave); NÃO inventado agora.
+- O `result.error` agora é BARULHENTO, mas o registro recusado continua subindo só se ele editar/salvar de
+  novo (os relatos `recusado` no `/health` avisam se isso um dia acontecer de verdade).
+
+### 5. Provas
+
+`test_impressora_nao_some_reabrir.js` **7 ✓** (controle + A PROVA `banco=true` + recusa barulhenta: toast,
+sino, saúde) — **falha sem o conserto** (`✘ E ESTÁ NA TELA (não some) [banco=false fila=false]`, verificado
+com o conserto escondido via `git stash`) e passa com ele · suíte inteira **222 passaram, 0 falharam, 0 não
+rodaram** (com `jsdom` instalado de verdade — antes os testes de motor pulavam sem rodar) · `Bundle OK: 226
+scripts, sha256 b639e066f343b848` · `Sync OK` · celular sincronizado (`mobile/www`).
+**App 7.0.18 · motor da nuvem 5.27.0** (motor sem mudança — nada para publicar na Cloudflare).
+Checklist de 24 perguntas respondido antes de programar (análise da tarefa; sem suposição sem prova).
+
+### 6. Nota de branch (para o próximo chat)
+
+O `package.json` desta árvore ainda diz `branch: arena/01a0cf4a-teste` porque `test_reclamacoes_do_dono.js`
+prende esse valor (regra "a branch do package.json é a da sessão"). O trabalho desta rodada está commitado e
+empurrado na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto — o `npm run guardar` empurraria para
+a branch do `package.json` (a anterior), então foi bypassado de propósito. Links desta rodada:
+site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+
+## Rodada 31 — 25/09/2026 — "O DADO NÃO APARECE NO OUTRO PC / DEMORA PARA APARECER TUDO" — TELAS AO VIVO + FOTO DA NUVEM (MOTOR 5.28.0)
+
+### 1. Suas respostas (as 3 perguntas que eu fiz)
+
+1. **Aviso ao fechar com a fila cheia?** → "n sei, n apareceu nd disso" = NÃO construí (ele nunca viu o
+   cenário; popup que ninguém pediu vira ruído).
+2. **Foto da nuvem na abertura?** → "quero algo instantaneo, não mais rápido" = CONSTRUÍ (motor 5.28.0 +
+   cliente 7.0.19). É o mais perto do instantâneo que existe sem guardar nada no PC.
+3. **Empresa nos dois PCs?** → a mesma (filtro de empresa descartado como causa do "não aparece").
+
+### 2. Os defeitos (provados vermelho → verde)
+
+Medição antes de mexer (bancada descartável, apagada depois): com os dois PCs abertos, o que A grava aparece
+no banco de B em **~1s** (canal de aviso + tique de 3s sãos); o boot relia o diário inteiro (**60 mil mudanças
+= 69 idas e voltas** + ~1s de CPU no harness — o tempo real é rede).
+Defeito 1: VENDAS e LEITURAS estavam fora das telas ao vivo ("telas de documento") — o dado CHEGAVA no banco do
+outro PC, mas a lista na tela continuava velha até trocar de tela e voltar. Os dois renders são só releitura da
+lista (o que se digita fica em modal/campo, protegido pela trava de sempre) — agora são ao vivo. CONFIG continua
+de fora de propósito: o render dela escreve `.value` nos campos e apagaria digitação não salva.
+Defeito 2: na remontagem com aviso ("Baixar tudo", primeira abertura), a tela azul SEGURAVA o programa até o fim
+do histórico. Agora o passe rápido libera na hora: o aviso afina (faixinha embaixo, sem bloquear) e a tela se
+atualiza; o resto compõe atrás.
+Defeito 3 (velocidade): a abertura relia a história inteira. Agora lê a FOTO (`GET /v1/snapshot`: vivos paginados
+pela chave primária + `snapshotSeq` lido ANTES) e segue no incremental dali em diante. Prova de corrida: o que é
+gravado DURANTE a foto tem seq maior e chega pelo incremental; o que a foto alcançou com versão nova faz o
+diário pular (trava de versão de sempre). Motor antigo (404) ou foto gigante (>500 mil vivos): o diário assume
+sozinho — sem dia de virada, nos dois sentidos.
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Empresa diferente nos PCs (ele confirmou: mesma); canal de aviso/tique quebrados (medido ~1s); cursor por
+  página (o laço avança pelo cursor de cada página — seguro); `devolverSumidos`/`varrerDemonstracao` (flags
+  one-shot de migração, não rodam por tique); páginas maiores no diário (precisaria de motor novo do mesmo jeito,
+  ganho menor, risco de resposta gigante no D1); foto salva no PC (ordem NADA-SALVO-NO-PC continua de pé);
+  popup de fechamento (ele nunca viu o cenário). SÓ-NUVEM no boot diário não mostra overlay (trickle silencioso
+  por tiques) — a foto ajuda esse caminho também, porque ele parte do cursor 0.
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- **"Instantâneo" = sem recontar história** — a foto ainda baixa o estado atual (base de 80 mil = dezenas de
+  páginas de 1000: segundos, não minutos). Rede lenta continua sendo rede lenta; o que sumiu foi o minuto parado.
+- Foto gigante (>500 mil registros vivos): o diário assume (correto, lento) — 10x além da realidade dele.
+- A velocidade nova só vale com os DOIS atualizados (app 7.0.19 + motor 5.28.0 no ar); com um dos dois velho,
+  funciona pelo caminho de sempre (lento, correto).
+- CONFIG continua sem auto-atualizar de propósito (apagaria o que ele digitou e ainda não salvou).
+
+### 5. Provas
+
+`test_dado_aparece_outro_pc.js` **27 ✓** (mapa 14 + progressiva 5 + regime 1 + foto 4 + fallback 404 em 3) —
+**falha sem o conserto** (`✘ tela "vendas" é ao vivo`, verificado com o conserto escondido via `git stash`) ·
+`test_worker_publico.js` **50 ✓** (+7 da foto: paginação por chave, `snapshotSeq` = MAX(seq), excluído fora, o
+que nasce durante a foto chega pelo incremental, união foto+incremental, 401 sem credencial — **falha contra o
+motor sem a rota**) · `test_sync_tela_ao_vivo.js` 44/44 (§3 atualizado: vendas/leituras ao vivo) · suíte inteira
+**223 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 226 scripts, sha256 baabe71acae990ec` · `Sync OK` ·
+celular sincronizado (`mobile/www`) · `motor_para_colar.js` regerado (5.28.0) + `.sha256`.
+**App 7.0.19 · motor da nuvem 5.28.0** (MOTOR COM MUDANÇA — precisa publicar: `atualizar_motor_nuvem.cmd`).
+
+### 6. Nota de branch (para o próximo chat)
+
+O `package.json` desta árvore ainda diz `branch: arena/01a0cf4a-teste` porque `test_reclamacoes_do_dono.js`
+prende esse valor (regra "a branch do package.json é a da sessão"). O trabalho desta rodada está commitado e
+empurrado na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto — o `npm run guardar` empurraria para
+a branch do `package.json` (a anterior), então foi bypassado de propósito. PR #31 (de `arena/01a0d9c3-teste`
+para `arena/01a0cf4a-teste`) atualizado com a r31. Links desta rodada:
+site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono valer a velocidade: mergear o PR #31 + publicar o motor (duplo clique em
+`atualizar_motor_nuvem.cmd`) + conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.19`).
+
+## Rodada 32 — 25/09/2026 — "ANALISA TUDO, SÃO VÁRIOS PROBLEMAS" — VARREDURA GERAL + MANDAR O QUE QUEBROU (IDEIA L)
+
+### 1. Suas respostas (as 2 perguntas que eu fiz)
+
+1. **Usa o app no celular?** → ainda não; PC primeiro, celular depois, quando o PC estiver pronto.
+   Decisão registrada: o Android (parado na v6.1.10) NÃO é atualizado nem apagado agora — fica para
+   quando ele pedir. Nenhum teste novo o vigia por enquanto (de propósito).
+2. **Por onde começo?** → "tudo". Ordem: L agora (este conserto — é o que revela o resto com prova);
+   F (esperas cegas) em seguida; a r31 chegar nas mãos dele depende dele (merge do PR + publicar motor).
+
+### 2. A análise (varredura geral — o que eu olhei e o que achei)
+
+Olhei: 4 cliques sem função (todos em telas fósseis que nunca abrem — só limpeza, sem efeito para ele);
+10 tipos de janela (todos abrem com conteúdo); ponte do `.exe` (todos os canais têm resposta, inclusive
+o gerente); alertas nativos (todos embrulhados no popup do sistema); 14 telas (13 ao vivo + config de
+propósito); vigias de fundo (só 1 redesenha, com guarda); impressão (cadeia intacta); pausa (só em perda
+de autorização, com erro alto, e destrava sozinha); conflitos e recusas (sino/toast avisam); saúde da
+nuvem (freio nunca disparou, zero relatos hoje); motor no ar ainda 5.27.0 (5.28.0 aguarda ele).
+Achados de verdade: (1) Android na v6.1.10 sem teste nem script (parado — decisão acima); (2) 650+
+`catch` vazios (amostra de 18: guardas inofensivos — risco estrutural, sem defeito pontual provado);
+(3) 44 "esperas cegas" + 35 vigias (ideia F — candidato nº 1 para defeito que vem e vai na loja).
+O conserto desta rodada (ideia L, `ajustes_v7020_mandar_erro_patch.js`): `digicopyMandarErro()` lê a
+mesma lista do erro.txt (últimos 15), junta versão + tela + hora, redige segredos (`senha/token/Bearer`
+e chaves viram `***`) e abre o popup de copiar do sistema. Botão no aviso de erro (v52239, com guarda:
+sem o patch, o aviso é o de sempre) e no check-up (v5227, `dc-ck-mandar`). Sem erro nenhum, o pacote
+diz isso e leva tela + versão (serve para o "está estranho").
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Botões mortos (4 nomes sem definição — todos em templates substituídos, nunca renderizam); janela
+  vazia (10/10 tipos tratados, 10/10 conteúdos existem); canal do `.exe` sem resposta (todos têm);
+  tela sem auto-atualizar (mapa completo na r31); redesenho em loop (1, com guarda); log sem teto
+  (500); impressão quebrada (embrulhos com guarda); pausa silenciosa (só com erro alto); conflito
+  mudo (sino avisa); `saveDB` que estoura (assíncrono — os `try` ao redor são inofensivos).
+- Envio automático do pacote para a nuvem (precisaria de motor novo + conversa de privacidade — o
+  copiar-e-colar resolve sem nada disso); botão no rodapé (ordem dele, travada em teste).
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- O pacote mostra os erros REGISTRADOS — falha engolida por `catch` vazio continua invisível (é o
+  que a ideia F + o uso do botão vão revelar aos poucos, com prova de cada caso).
+- Ele precisa COPIAR e COLAR no chat — nada chega sozinho (de propósito: sem motor novo, sem dado
+  saindo sem ele ver).
+- A tela detectada é a da frente na hora do clique ("não sei" se não der para saber) — melhor esforço,
+  nunca trava o pacote.
+
+### 5. Provas
+
+`test_mandar_erro.js` **21 ✓** (patch no bundle depois do popup/erro.txt + sem rodapé; pacote com
+versão/tela/últimos 15 no popup de verdade; `token=`/`senha=`/Bearer redigidos; sem-erro leva tela +
+versão; botão no aviso com e sem o patch; fio do check-up) — **falha sem o conserto** (`✘ o patch
+existe`) e pegou 2 defeitos meus no caminho (Bearer com espaço vazava; teste prendia a palavra no
+comentário). Suíte inteira **224 passaram, 0 falharam, 0 não rodaram** · `Bundle OK: 227 scripts,
+sha256 bb771d37a2eaa1b4` · `Sync OK` · celular `www` sincronizado · mapa de camadas regerado
+(`npm run mapa`) + 7 âncoras de cauda do manifesto reancoradas (+1, ritual documentado desde a v5.22.93).
+**App 7.0.20 · motor da nuvem 5.28.0** (motor sem mudança — segue valendo publicar o 5.28.0 da r31).
+Checklist de 24 perguntas respondido antes de programar.
+
+### 6. Nota de branch (para o próximo chat)
+
+`package.json` ainda diz `branch: arena/01a0cf4a-teste` (teste prende). Trabalho commitado e empurrado
+na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto. PR #31 atualizado com a r32 (comentário).
+Links desta rodada: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono: mergear o PR #31 + publicar o motor (duplo clique em `atualizar_motor_nuvem.cmd`) +
+conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.20`). Próximo da fila ("tudo"): ideia F
+(esperas cegas) — blocos com teste comparando antes/depois.
+
+## Rodada 33 — 25/09/2026 — DOR Nº 1 "DADO QUE SOME/VOLTA": AUDITORIA B + TRAVA D + FAROL RESGATADO (SEM MUDAR O SISTEMA)
+
+### 1. Suas respostas (as 4 perguntas que eu fiz)
+
+1. **Dor que mais dói?** → dado que some/volta. (r30–r31 já consertaram 3 causas provadas; r33
+   prepara o terreno definitivo e a ideia E — portão único de escrita — começa na próxima rodada.)
+2. **Onde ele usa?** → nos dois (`.exe` no PC + site). (Nada muda no ritual: os dois saem do mesmo bundle.)
+3. **Autoriza B + D + E?** → "tudo". (B e D nesta rodada; E gradual com teste antes/depois, próxima.)
+4. **O gerente?** → pausar por enquanto, continuar DEPOIS. (`gerente-atualizacoes/` intocado até ele pedir.)
+
+### 2. O que foi feito (três entregas, zero risco para a loja)
+
+**D — trava contra redefinição silenciosa (o defeito mais caro).** Um patch novo redefine uma função
+antiga e ESQUECE de levar junto o que ela fazia — o defeito aparece depois, longe da causa. Agora:
+`camadas_baseline.json` (foto write-once das 635 redefinições velhas em 185 arquivos — código velho,
+perdoado) + `test_sem_sobrescrita.js` (4 ✓): redefinição NOVA só passa com marcador
+`SUBSTITUICAO DE PROPOSITO: <nome>` ou encadeando a anterior (old/anterior/prev + .apply/.call),
+conferido a ±40 linhas da definição, com o parser (acorn) — sem chute por texto. A foto nunca é
+regenerada: item obsoleto é inofensivo (nunca reprova) e arquivo renomeado = par novo = pede marcador.
+
+**B — auditoria arquivo por arquivo (com prova, sem apagar nada).** `auditar_mortos.js` classifica os
+492 `.js` da raiz: 227 no bundle, 226 registrados na suíte, 20 órfãos DORMENTES (alvos existem —
+mantidos), 19 ferramentas fora do bundle. Veredito honesto: **0 arquivos 100% mortos — nada apagado**
+(`banco_de_prova_nuvem.js` é ferramenta de bancada dormente, mantida; `bench_clique_nuvem.js` é
+ferramenta viva de mão; `_ref/` intocado, sem autorização). A ferramenta achou 3 furos nela mesma no
+caminho (require sem extensão, `src` com `?v=`, runner como citação) — todos corrigidos e provados.
+
+**Farol anti-estouro RESGATADO (achado da auditoria).** `checar_cota_nuvem.js` (ordem antiga dele:
+"nunca deixa estourar essa nuvem") estava VERMELHO e ninguém rodava: checava `LIMITE_ESCRITA_DIA =
+95000`, número do plano grátis que morreu na r28 (freio virou plano-dependente). Atualizado para o
+freio real (ponto único `PLANO = PLANO_PAGO` + freio de dia 1M + freio de mês 45M sob o teto de 50M +
+conta do dia típico contra 1M) e REGISTRADO na suíte — agora roda sozinho em toda entrega. Farol verde.
+
+### 3. O que eu descartei (com prova, para não voltar)
+
+- Apagar `banco_de_prova_nuvem.js` (cabeçalho diz ferramenta de bancada; zero citação = dormente, não
+  morta — e a ideia E pode usá-la); apagar os 20 órfãos (todos os alvos ainda existem — só teste com
+  alvo sumido qualifica, como os 3 da r30); regenerar o baseline um dia (proibido: congela a foto);
+  trava por dif de texto em vez de parser (o acorn já estava no vendor); `_ref/` e celular (sem ordem).
+
+### 4. Honestidade: o que este conserto NÃO cobre (borda documentada, sem gambiarra)
+
+- A trava D confere a JANELA de ±40 linhas: o encadeamento é por arquivo (se o arquivo encadeia um
+  nome e redefine outro em silêncio na mesma janela, passa — o marcador por nome é o caminho
+  recomendado e está escrito no cabeçalho do teste).
+- O farol confere o TEXTO do worker (freio existe, números certos) — a execução do freio é coberta
+  pelo `test_worker_publico.js`, não pelo farol.
+- Ideia E (portão único de escrita) NÃO começou — é a próxima rodada, gradual, com teste antes/depois.
+- Sistema, bundle e motor: INTACTOS nesta rodada (app 7.0.20 + motor 5.28.0 seguem os da r31/r32).
+
+### 5. Provas
+
+`test_sem_sobrescrita.js` **4 ✓** — **falha sem a proteção** (prova do vermelho com fixture temporária:
+`__prova_d_red.js:2 redefine 'imprimirChamado' em silêncio`) e passa com o marcador (controle positivo).
+`checar_cota_nuvem.js` **farol verde** (estava vermelho antes do conserto). Suíte inteira **217 passaram,
+0 falharam, 9 não rodaram (falta jsdom no sandbox — não é defeito; na máquina com `npm install` eles
+rodam)** · `npm run check` OK (bundle íntegro, sem regen — nada do bundle mudou na r33) · `sync:check`
+OK · motor 5.28.0 regenerado de forma idêntica (só o carimbo de hora mudou). Checklist de 24 perguntas
+respondido antes de programar.
+
+### 6. Nota de branch (para o próximo chat)
+
+`package.json` ainda diz `branch: arena/01a0cf4a-teste` (teste prende). Trabalho commitado e empurrado
+na branch da sessão **`arena/01a0d9c3-teste`** com `git` direto. PR #31 atualizado com a r33 (comentário).
+Links desta rodada: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono: mergear o PR #31 + publicar o motor (duplo clique em `atualizar_motor_nuvem.cmd`) +
+conferir `/health` (`"versao":"5.28.0"`) e o rodapé (`v7.0.20`). Próximo da fila ("tudo"): ideia E
+(portão único de escrita) — gradual, com teste antes/depois; ideia F segue depois.
+
+## Rodada 34 — 25/09/2026 — MOTOR 5.28.0 PUBLICADO POR ELE + TAREFAS 1–2 DA AUDITORIA EXTERNA (20 ÓRFÃOS + BRANCH) — APP v7.0.21
+
+### 1. O pedido (prompt externo colado por ele + motor no ar)
+
+1. Ele publicou o motor com o `.cmd`: `/health` confirmado AQUI DE FORA em `versao 5.28.0`
+   (API 0.4.9, freio pago, campo `saude` nascido). Motor: pronto, sem republicar nesta rodada.
+2. Ele colou o diagnóstico externo (outra IA, zip da sessão) com prompt de 3 tarefas. Ordem feita:
+   tarefa 1 (20 órfãos) + tarefa 2 (branch) nesta rodada; tarefa 3 = ideia E (já autorizada no "tudo"
+   da r33) começa na próxima — os 20 arquivos + o bump deram a rodada cheia.
+
+### 2. O que foi feito
+
+**Tarefa 1 — 20 órfãos reparados e registrados (0 órfãos, nada apagado).** Rodei os 20 e cataloguei
+6 categorias de falha (NÃO era "só o bloco integridade" — ver §3 das divergências): (a) literais de
+versão do app (19 arquivos → checagem viva contra `pkg.version` em runtime; `pkg.version === literal`
+virou checagem de formato x.y.z); (b) carimbo do worker (12 arquivos → consistência src×motor colado,
+SEM comparar com `pkg.version` — numerações independentes, como o prompt exigiu); (c) manifest/header
+(v5240: posição virou `includes` + ordem relativa v5240<v5243; v5240+v5243: 196 virou nº lido do header
+do bundle); (d) freio/teto (v5245 `LIMITE_ESCRITA_DIA` → estrutural `freioDecide`+ponto único; números
+seguem só no farol; v52418 `tetoEscritas: 100000` → plano pago ativo); (e) cópias (v5243 Backup →
+mensagem atual do período; v52419 ficha → frase v7.0.15 do freio preventivo, verbo por verbo);
+(f) tamanho (v52413 ratchet 3,1 MB → teto de 6 MB). **v5184** (o único que quebrava de verdade):
+o patch v5184 virou fóssil (IIFE de 64 linhas que não exporta nada — ver §3); o teste agora avalia o
+definidor vivo (`ajustes_v5189_patch.js`, último no manifest) e prende os 9 asserts de layout lado a
+lado (cobertura única — irmãos v5186/87/89 só cobrem mesclagem de dados). Mensagens finais `v5.24.34`
+viraram runtime; carimbos históricos em comentário, intactos. Registro: +20 no runner.
+
+**Tarefa 2 — branch era resíduo SIM (prova), corrigida em 7 lugares + app v7.0.21.** Provas:
+`arena/01a0cf4a-teste` congelada na r29 (58 arquivos/2868 linhas atrás); mensagem da trava diz "é a da
+sessão"; `sync_build` avisava a divergência; `npm run links` imprimia ZIP velho. Trocas: `package.json`
+(campo), `test_reclamacoes_do_dono.js` (trava — mensagem continua válida), `PASSO_A_PASSO...` (6 pontos:
+título, carimbo, INSTRUÇÃO de trocar o Pages, preview-URL, rodapé), `BUILD_EXE.md` (2 ZIPs),
+`cloudflare-worker/README.md` (production branch — ver §4), 3 patches (githack → branch atual; v52254
+é `PAGINA_FALLBACK` nomeado; invariante do v52263 preservado). Consequência: bundle regerado
+(`npm run bundle` + `npm run sync` + `mobile/sync-www.js` mecânico) + bump ritual para **v7.0.21**
+(`mudar_versao` + 4 guias 7.0.20→7.0.21). Motor e worker: intocados.
+
+### 3. Onde a auditoria externa errou ou não viu (regra 1: com prova, antes de agir)
+
+- "Todos os 20 falham no MESMO bloco integridade": só 8 têm o bloco; v5184 quebrava no harness
+  (TypeError, alvo fóssil) e v52413/418/419/243/245 tinham falha de comportamento/cópia/tamanho junto.
+  O conserto cobriu as 6 categorias, não só versão.
+- Ela não viu o acoplamento: trocar o campo branch QUEBRA o `test_ajustes_v52263.js` (guarda que amarra
+  githack dos patches à branch) → a tarefa 2 exigiu os 3 patches + regen + bump (v7.0.21), não só o campo.
+- Githack × Pages (origem confirmada): v52240 pôs Pages por cima (`digicopy-orcament.pages.dev`),
+  v52249/v52254 mantêm githack (fallback nomeado no v52254). Repo privado = githack não serve nada na
+  prática; a troca de branch nele tem efeito zero em produção e preserva o invariante. REMOVER o githack
+  e inverter a guarda (proibir em vez de amarrar) é decisão de produto — pergunta dele na próxima rodada.
+- Acertos dela que confirmo: freio pago, snapshot/watch chamados de verdade, suite 217/0/9, bundle
+  `bb771d37`, 0 arquivos de produção mortos, risco estrutural SÓ NUVEM × queda de luz (escolha, não bug).
+
+### 4. Honestidade: o que este conserto NÃO cobre
+
+- Teto de 6 MB do bundle (v52413) é juízo meu (folga ~50% sobre 3,9 MB; pega duplicação acidental,
+  não trava feature) — número revisável, não medido.
+- `ajustes_v5184_patch.js` (fóssil morto com prova: IIFE sem export, só console.log) CONTINUA no bundle
+  — removê-lo é poda de produto (ideia B fase 2 / ideia E), fora da tarefa 1.
+- Production branch do Cloudflare (README) atualizada no papel; o painel dele ainda aponta a sessão
+  antiga — como ele publica pelo `.cmd` (funciona), não é urgente (passo opcional no §6).
+- Ideia E (portão de escrita) NÃO começou — próxima rodada. Fóssil `mobile/android` intocado (pausado).
+
+### 5. Provas
+
+20 órfãos verdes individualmente (8 F `Tudo certo v7.0.20!`→v7.0.21 após bump; 11 X `Tudo OK`;
+v5184 9/9) + suíte **237 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK · `sync:check` OK
+(`v7.0.21 | 227 no bundle | 0 soltos`, sem aviso de branch) · `npm run links` com ZIP da sessão ·
+`auditar_mortos`: 0 órfãos · D-trava verde (troca de string não cria global). 3 falhas no caminho
+(v6105/v6106/reclamacoes — guias presos na 7.0.20), consertadas antes de fechar. Checklist de 24
+respondido antes de programar (ponto principal: regra 4 não exigiu pergunta — invariantes testados
+decidiram; a pergunta githack/Pages vai na próxima).
+REGRA 45 (guardar_repo): não usado — fluxo da sessão (commit+push na branch + PR) cumpre o propósito
+(nada só no sandbox); `guardar_repo` empurra para fora da branch da sessão (tentado no passado, não serve aqui).
+
+### 6. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31 atualizado com a
+r34 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono (passo a passo no chat): mergear o PR #31 + conferir o rodapé (**v7.0.21** agora) +
+(opcional) trocar a Production branch no painel da Cloudflare. Motor: nada a fazer (5.28.0 no ar).
+Próximo: ideia E bloco 1 (portão de escrita, gradual, antes/depois) + pergunta githack/Pages.
+
+## Rodada 35 — 25/09/2026 — IDEIA E BLOCO 1: PORTÃO DE ESCRITA (ANOTA TODA GRAVAÇÃO) + MANDAR O QUE QUEBROU COM O DIÁRIO — APP v7.0.22
+
+### 1. Pedido (ideia E, §E do IDEIAS_PARA_RESOLVER.md)
+
+Função nova entra primeiro por baixo; pontos migram em blocos com teste antes/depois.
+Bloco 1 = portão que embrulha `saveDB`/`saveDBAgora` + diário `DIGICOPY_PORTAO` (teto 50,
+`{quando,tela,via}`) + seção nova no mandar-erro. Migração dos 254 pontos: blocos seguintes.
+Sem stub de `salvarAlteracao` (regra 10: quem chamar primeiro apresenta).
+
+### 2. O que foi feito
+
+- NOVO `ajustes_v7021_portao_escrita_patch.js`: embrulha os 2 vencedores (encadeia via
+`.apply`, delega tudo, muda nada); guarda anti-recarga (`__portaoE`); ESCRITO ABERTO
+(`window.saveDB=function`, duplicação consciente de 8 linhas) para o mapa das camadas
+enxergar — `window[nome]` esconderia o portão da trava D (blind spot achado e eliminado).
+- L (`ajustes_v7020_mandar_erro_patch.js`): seção "Mandar o que quebrou" guardada —
+zero linhas quando o portão não existe (provado por 2 asserts).
+- Manifest 228 (`bundle-manifest.json` ultimo=v7021); `scripts.check` + runner registrados.
+- NOVO `test_portao_escrita.js`: 22 verificações (mock ANTES×DEPOIS: mudez v5243 volta,
+cap 50, 2-eval não duplica, pacote L com/sem portão, visibilidade no mapa, barateza r12).
+- Re-ancoragem +1: 79 asserts em 6 arquivos (52295/52296/52435/52436/5266/6003) +
+`test_ajustes_v52293.js:19` (`m.length-34`→`-35`, sintaxe diferente, regex não pegou).
+- `test_camadas_protegidas.js:37`: vencedor do `saveDB` agora é o portão, COM ordem da
+corrente provada (portão por cima da nuvem); trava D verde de verdade (marcador+corrente).
+- Ritual 7.0.22: mudar_versao + bundle + sync + mobile/www + 4 guias (repetido após as
+correções, porque o bundle envelhece a cada edição).
+
+### 3. Provas
+
+Suíte **238 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK · `sync --check` OK
+(`v7.0.22 | 228 no bundle | 0 soltos`) · 4 falhas no caminho (duplo-eval, v52293, camadas,
+invisibilidade no mapa), todas consertadas e cobertas por assert novo. `auditar_mortos`:
+0 órfãos de produto (11 fora do bundle são ferramenta/dev, mesma lista de antes).
+Checklist de 24 respondido antes de programar.
+
+### 4. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31
+atualizado com a r35 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono (passo a passo no chat): mergear o PR #31 + conferir o rodapé (**v7.0.22**
+agora). Motor: nada a fazer (5.28.0 no ar). Próximo: ideia E bloco 2 (primeira leva da
+migração dos 254, com teste antes/depois) + pergunta githack/Pages (pendente desde r34).
+
+## Rodada 36 — 25/09/2026 — "GITHACK NÃO USA MAIS" — REMOVIDO DO SISTEMA (LINK DO CLIENTE SÓ PAGES) — APP v7.0.23
+
+### 1. Pedido
+
+Dono confirmou que o GitHack não usa mais + perguntou o que falta (lista de pendências no fim).
+
+### 2. O que foi feito
+
+- Link do cliente: `PAGINA` padrão da v52238/v52249 trocado do GitHack para o Pages oficial
+(`https://digicopy-orcamentos.pages.dev/` — o mesmo que a v52254 já forçava; sem branch no
+meio, a classe de defeito "cliente abria página velha" morre junto).
+- `PAGINA_FALLBACK` (v52254): removido — nunca foi lido em lugar nenhum (grep provou).
+- `sync_build.js` §4b (carimbo da branch nos links GitHack): removido + a escrita dele no §5.
+- Banner de "endereço provisório" (`app.js`, ~33 linhas): removido — só disparava em
+`raw.githack.com`, que hoje mostra só um aviso de saída (conferido de fora) e não abre o app.
+- Textos visíveis: `envio_arquivos.html` (4) + `escola_login.html` (2) agora dizem "mesmo
+endereço do site" (nota raw/rawcdn removida).
+- FICOU DE PROPÓSITO (com comentário): os 3 regex que convertem link ANTIGO de dado já salvo
+(v52240/v52249/v52254) — tirar quebraria orçamento antigo; não dependem do GitHack no ar.
+- Histórico (RELATORIO_SESSAO, diário, auditoria, comentários antigos): intacto — teste exige.
+- Nota honesta: o repo está PÚBLICO hoje (a frase antiga "morreu quando ficou privado" foi
+atualizada onde era texto vivo; no histórico, ficou).
+
+### 3. Testes
+
+- Atualizados: v52238 (link Pages), v52249 (link Pages), v52263 §9 (virou proibição: nenhum
+arquivo do bundle com endereço githack, exceto os 3 conversores; + textos dos HTMLs sem
+GitHack), mensagens v52263/v52436.
+- Provas: suíte **238 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK ·
+`sync --check` OK (`v7.0.23 | 228 no bundle | 0 soltos`) · mapa 2024/289 (contagens iguais;
+regen só acertou 2 linhas defasadas da r35). Checklist de 24 respondido antes de programar.
+
+### 4. Pendências (resposta ao dono — nada urgente, motor 5.28.0 no ar)
+
+Para ele: mergear PR #31 (opcional) + conferir rodapé (v7.0.23) + (opcional) branch Production
+no painel Cloudflare. Fila comigo: ideia E blocos 2+ (migrar os 254 pontos) → ideia F (44
+esperas cegas + 35 vigias) → G+H+J+I. Pausados por ele: Android e Gerente.
+
+### 5. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31
+atualizado com a r36 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Próximo: ideia E bloco 2 (primeira leva da migração dos 254, com teste antes/depois).
+
+## Rodada 37 — 25/09/2026 — "DELETA OS DADOS DA NUVEM" — CAMINHO PRONTO E CONFERIDO (O CLIQUE É DELE, SÓ O PC ADMIN TEM A CHAVE)
+
+### 1. Pedido
+
+Dono autorizou ("pode deletar") + mandou continuar. Limite honesto: o reset exige o token do
+aparelho admin (só existe no PC dele) — não há credencial no sandbox, nem deve haver. O que
+eu fiz: conferi o caminho inteiro no código, travei a segurança com teste novo e deixei o
+passo a passo de 1 minuto.
+
+### 2. O que foi conferido (código lido, não chute)
+
+- Motor `POST /v1/admin/reset-cloud` (`handleResetCloud`): exige confirmação `APAGAR NUVEM` +
+só 1 aparelho ativo; ANTES de apagar, guarda foto completa em "Backup seguranca/Backup antes
+de zerar a nuvem <data>.json" — se o backup falhar, NÃO apaga. Apaga: records, changes,
+enrollment_codes, resumo. Mantém: aparelhos, segurança, backups, sessões (sem risco de lockout).
+- App (`resetCloudOnly`): salva snapshot local `antes_zerar_nuvem` no IndexedDB, zera o estado,
+pausa e mostra a escolha ("Enviar os dados deste PC" republica por id, sem duplicar).
+- Botão `#dc-reset-cloud` na tela Nuvem (área admin): 2 confirmações; mesma tela lista e
+bloqueia os outros aparelhos (pré-requisito do reset).
+- ANTES (conferido de fora): `/health` → motor 5.28.0, D1 ok, freio pago sem disparo.
+
+### 3. Teste novo + provas
+
+- `test_ajustes_v52296.js`: assert "foto de segurança antes do apagar (ordem garantida no
+motor)" — VERDE. Suíte **238 passaram, 0 falharam, 9 jsdom-skip**. Sem bump (só teste+doc;
+app continua v7.0.23).
+
+### 4. Passo a passo para o dono (no PC administrador, com o sistema aberto)
+
+1. Abrir a tela **Nuvem** (menu, usuário admin).
+2. Na área **Administração**: listar aparelhos e **bloquear os outros** (só este fica ativo).
+3. Clicar **zerar/apagar a nuvem**, confirmar 2 vezes. A nuvem esvazia (foto de segurança
+guardada sozinha na pasta "Backup seguranca").
+4. Na escolha seguinte: **"Enviar os dados deste PC para a nuvem"** (sobe tudo de novo, sem
+duplicar) — ou "Não enviar", se quiser a nuvem vazia mesmo.
+5. Conferir: os números da Nuvem zeram (ou sobem de novo após o envio).
+
+### 5. Nota de branch (para o próximo chat)
+
+Commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31 atualizado com
+a r37 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+DEPOIS do clique dele: conferir `/health` (saude zerada) e seguir ideia E bloco 2 (já em
+andamento na r38 desta mesma sessão).
+
+## Rodada 38 — 25/09/2026 — IDEIA E BLOCO 2: FUNÇÃO ÚNICA `salvarAlteracao` + 3 PRIMEIROS SITES MIGRADOS (ANTES/DEPOIS DE VERDADE) — APP v7.0.24
+
+### 1. Censo honesto (antes de prometer)
+
+224 chamadas reais (sem comentários; r35 contou 254 com outra régua): push 31, whole 35,
+splice 6, resto in-place/multi longe do save. A maioria NÃO cabe em upsert simples —
+por isso a função aceita `registro=null` (nível de lista: só anota e grava) e cada site
+migra em 1 linha com volta para o save direto. Locais multi-lista (ex.: vendas_os:892)
+ficaram para blocos futuros, registrados aqui.
+
+### 2. O que foi feito
+
+- NOVO `ajustes_v7022_salvar_alteracao_patch.js`: `salvarAlteracao(lista, registro,
+motivo)` — põe o registro se falta (nunca duplica, nunca inventa lista), anota o
+motivo no diário do portão, delega o save (retorno e erro idênticos). Guarda de
+recarga, barato (regra 12), definição única e estática (trava D + mapa enxergam).
+- Portão (v7021): slot de motivo (`anotarMotivo`, vale para a gravação seguinte, não
+vaza) + `motivo` nas entradas do diário. Pacote do mandar-erro: 3 colunas, intacto.
+- 3 sites migrados (1 linha cada, com fallback): v52224 aplicarUmaVez
+('produtos', 'letra de categoria padronizada'), v5196 excluirUsuario ('usuarios',
+'usuário excluído'), excluirTecnico ('tecnicos', 'técnico excluído').
+- NOVO `test_salvar_alteracao.js` (36 verificações): A contrato (10) + B ANTES (git
+HEAD) × DEPOIS de verdade nos 3 (db idêntico, saves 1=1, motivo no depois; v52224
+com e sem API de letra; relógio normalizado) + C estrutural (5). Registrado no runner.
+- Portão: +3 asserts de motivo (25/25). Manifest 229 (re-ancoragem +1: 80 âncoras em
+7 arquivos, tudo verde) + 4 mensagens honestas (portão→função única fecha a fila).
+- Ritual 7.0.24: mudar_versao + bundle + sync + mobile/www + 4 guias + mapa (2025, +1
+é a função única, como previsto).
+
+### 3. Provas
+
+Suíte **239 passaram, 0 falharam, 9 jsdom-skip** · `npm run check` OK · `sync --check`
+OK (`v7.0.24 | 229 no bundle | 0 soltos`) · 2 falhas no caminho (corpo do `new Function`
+no teste; mock de confirm era promise — ambas no teste novo, não no app), consertadas.
+Checklist de 24 respondido antes de programar (ponto principal: sem try/catch no upsert
+DE PROPÓSITO — erro idêntico ao push direto; diário jamais quebra a gravação).
+
+### 4. Nota de branch (para o próximo chat)
+
+Trabalho commitado e empurrado na branch da sessão **`arena/01a0d9c3-teste`**. PR #31
+atualizado com a r38 (comentário). Links: site https://teste-60f.pages.dev e ZIP
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+Para o dono: zerar a nuvem (passo a passo da r37) + mergear PR #31 + rodapé v7.0.24.
+Próximo: ideia E bloco 3 (próxima leva de sites, mesmo padrão antes/depois).
+
+## Rodada 39 — 25/09/2026 — "NÃO APARECE O BOTÃO" (PRINT) — DIAGNÓSTICO: O PC NÃO É ADMIN (POR DESENHO) + CAMINHO VERIFICADO PARA VIRAR
+
+### 1. Diagnóstico (código lido)
+
+O botão "Zerar dados da nuvem" mora na seção "Administração da nuvem", que só
+renderiza se `device.role==='admin'` (`cloudflare_sync_patch.js:232`). O PC do print
+(PC C22409BA) entrou como aparelho comum → sem a seção, sem o botão. NÃO é defeito:
+é a trava de segurança (teste pinna: "PC comum só desconecta a si"). Há 31 aparelhos
+e o reset exige 1 ativo — os outros 30 (+ a inscrição velha do próprio PC) terão que
+ser bloqueados na lista.
+
+### 2. Caminhos verificados (todos existem no app e são testados)
+
+- A (zero risco): um dos PCs dele PODE já ser admin (o primeiro autorizado). Abrir a
+tela Nuvem em cada PC físico: o que mostra "Administração da nuvem" é o admin.
+- C (só app): desconectar ("Desconectar ESTE computador" — tira só a chave deste
+navegador, dados intactos) → aba "Entrar com CNPJ" → CNPJ + SENHA DO GERENTE → o PC
+renasce admin (motor `via='cnpj-gerente'`, pinado no teste v6004). Se conectar mas a
+Administração NÃO aparecer, a senha usada foi a de conexão (comum) — desconectar e ir
+para o R. Pré-requisito: senhas definidas e diferentes (cartaõ do admin).
+- R (recuperação): aba "Recuperar administrador" (mesma tela desconectada) + nome +
+segredo SETUP_SECRET da Cloudflare dele (Workers → digicopy-sync-api → Variables;
+segredo é só-escrita: se esqueceu, grava um novo e usa o novo; trocar não mexe nos
+aparelhos). Vira admin na hora (cooldown 10 min entre tentativas). O próprio app
+descreve essa sequência na dica ao lado do botão desconectar.
+- NÃO usar: aba "Ativar o computador principal" (/v1/setup nega com 31 aparelhos).
+
+### 3. Ordem segura do zeramento (avisos que importam)
+
+1. Backup: menu Backup (só aparece para usuário Admin — trocar de usuário se sumir) →
+"📸 Backup manual" (guarda na nuvem E baixa no PC). 2. Esperar o envio zerar (print:
+faltam 400) + abrir cada PC real e esperar pendentes=0. 3. Virar admin (A/C/R). 4. Na
+Administração: "Ver aparelhos e dados enviados" → BLOQUEAR todos menos a inscrição
+nova (a mais recente). 5. "Zerar dados da nuvem" → 2 confirmações → "Enviar os dados
+deste PC". 6. Demais PCs: entram na tela desconectada → CNPJ + senha de CONEXÃO.
+
+### 4. Nota de branch
+
+Sem código (caminhos já existem e são testados) — só registro. Commitado e empurrado
+na **`arena/01a0d9c3-teste`**, PR #31 comentado. Links: https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App segue v7.0.24. Próximo:/bloco 3 da ideia E após o zeramento (ou quando pedir).
+
+## Rodada 40 — 25/09/2026 — "ESSE PRINT AJUDA?" — 410 DO ORÇAMENTO + CORS DO MEDIDOR (APP 7.0.25, CONTADOR v5.23.6)
+
+### 0. O print (o que ele mostra e o veredito)
+
+O dono mandou o console do navegador (rodando o Pages): base local restaurada OK;
+5× `GET /orcamento?c=orc_tok…` → **410 Gone**; `…/contador-uso…/v1/medir` respondendo
+200 mas **bloqueado por CORS** (sem `Access-Control-Allow-Origin`, origin
+`https://teste-60f.pages.dev`). Veredito: os dois erros são REAIS mas NÃO explicam
+o botão de zeramento sumido (isso é o portão de admin da r39, que continua valendo).
+Os dois foram corrigidos nesta rodada. "Ainda n foi" (wipe) segue pendente — falta
+ele dizer (em texto) onde travou: qual tela/aba e qual mensagem apareceu.
+
+### 1. Causa 1 — os 5× 410 (link morto consultado para sempre)
+
+410 = resposta DESENHADA do motor (`handleOrcamentoGet`, worker:1574-1595): orçamento
+achado mas excluído → corpo `{ok:false, error:'USED', status:'recusado'}`. Três loops
+no app consultam `/orcamento?c=` (v52237:235, v52244:79, v52255:193); v52244 e v52255
+encerram o link morto ao ver USED/recusado, mas o **v52237 exigia `j.ok`** — o USED
+(ok:false) era ignorado e o link morto era reconsultado **a cada tick da nuvem**
+(gancho no tick, v52237:267-275) + 4s após abrir. 5 erros = 5 orçamentos locais com
+token morto (nº exato = nº de tokens mortos no banco dele). Nota: no print o `?c=`
+parece `?o=`; nenhum `?o=` existe no repo e o 410 prova que o `c` chegou — leitura.
+Fix (1 condição + 1 função PURE): `deveAplicarRespostaOrcamento(j)` aceita pela
+DECISÃO (`aprovado`/`recusado`), não pelo `ok`. 404 (orçamento ainda não enviado)
+continua consultando de propósito; corpo do freio (sem `status`) nunca vira decisão.
+Efeito: cada link morto gera no máximo MAIS UM 410 e some do poll.
+
+### 2. Causa 2 — CORS do medidor (nº oficial nunca chegava)
+
+`cloudflare-contador/src/index.js` não devolvia NENHUM header CORS (worker de 94
+linhas, sem `Access-Control`); o app chama com `fetch` simples do Pages
+(`cloudflare_sync_patch.js:22`) → navegador bloqueia. Com o bloqueio, a tela Nuvem
+cai no nº estimado. Fix: headers espelhados do worker principal
+(`Allow-Origin: *` + preflight OPTIONS 204). `*`-troca-nada em segurança (CORS só
+rege navegador; resposta só tem totais agregados leituras/escritas, nenhum dado do
+dono) e evita quebrar origens legítimas futuras. **Pendente do dono: republicar o
+contador** (`cd cloudflare-contador && npx wrangler deploy` — o segredo CF_API_TOKEN
+continua guardado, não precisa refazer). Motor principal intocado (segue 5.28.0).
+
+### 3. Provas, versão e armadilhas desta rodada
+
+- Testes novos: 8 asserts no `test_ajustes_v52237.js` (USED/aprovado/recusado aplicam;
+  404/freio/vazio não; poll usa a decisão; worker carrega USED) + 2 no
+  `test_ajustes_v52296.js` (contador libera origin + responde OPTIONS). Suíte: **239
+  passaram, 0 falharam** (9 pulam sem jsdom — ambiente, pré-existente).
+- Versão: app **7.0.25** (`npm run versao` + carimbos + bundle rebuildado). Docs com
+  versão corrente atualizados (GUIA/PASSO/RELATORIO/importar); histórico (comentários
+  "nasceu na 7.0.24", teste v7022, descrições de posição) intocado de propósito.
+- Gate das 24 perguntas respondido antes de codar (nota completa no chat da rodada);
+  pontos-chave: reutiliza `aplicarAprovacaoRemota` (nada duplicado); alternativa
+  "tirar o poll do tick" rejeitada (mataria o "cliente aprovou → aparece sozinho");
+  "calar o console" rejeitado (esconderia sintoma + manteria desperdício).
+- Erros e achados (não repetir): (1) NUNCA dois `edit_file` paralelos no mesmo
+  arquivo — um some sem erro (a definição do PURE sumiu; reapliquei em sequência).
+  (2) `mobile/www/` é espelho de build OBRIGATÓRIO: 4 testes cravam a versão atual
+  nele ("celular 6.0.9") e o `test_mobile_apk.js` roda `mobile/sync-www.js` no meio
+  da suíte — congelar o mobile deixa a suíte não-determinística (falha antes do
+  sync, passa depois). Estacionamento do Android = sem features/nativo/teste novo;
+  o espelho www acompanha o build como nas r35–r38. (3) Ordem do fluxo de versão:
+  `versao` → `bundle` → `sync` (o sync recarimba o index com o hash novo; sem ele,
+  3 testes falham em `sync_build --check`).
+
+### 4. Nota de branch
+
+Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31 comentado. Links:
+https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App v7.0.25, motor 5.28.0, contador v5.23.6 (código pronto; produção só após o deploy
+dele). Próximo: resposta dele sobre onde o wipe travou + bloco 3 da ideia E.
+
+## Rodada 41 — 26/09/2026 — "CONSIGO FAZER TUDO DE UMA VEZ?" — BLOQUEIO É OBRIGATÓRIO (MOTOR EXIGE)
+
+### 0. A pergunta e a resposta curta
+
+Ele perguntou se dá para pular o bloqueio dos aparelhos e zerar direto. Resposta:
+NÃO dá — e não é regra minha: o motor RECUSA o zeramento (erro 409
+`RESET_REQUIRES_SINGLE_DEVICE`, "Bloqueie os outros aparelhos antes de zerar a
+nuvem") a menos que reste EXATAMENTE 1 aparelho valendo (`handleResetCloud`,
+worker:1099-1111). Mas "de uma vez" = SIM no sentido de uma sentada só: bloquear →
+zerar → enviar, na mesma tela, em ~10 min. Ele ainda não confirmou que virou admin
+("ainda n foi" segue aberto — o bloqueio também é só-admin, mesma tela).
+
+### 1. O que o código prova (âncoras)
+
+- Zeramento exige: admin (`requireAdmin`) + confirmação `APAGAR NUVEM` + COUNT de
+  devices ativos (`revoked_at IS NULL AND excluido_em IS NULL`) === 1.
+- Antes de apagar, o motor guarda foto automática ("Backup seguranca/Backup antes de
+  zerar…"); se o backup falhar, NÃO zera (worker:1114-1118).
+- O zeramento apaga códigos de inscrição, changes, records e o resumo guardado, e
+  troca a `cloud_generation` (invalida a visão dos outros aparelhos); a tabela de
+  aparelhos continua (bloqueados seguem bloqueados) — worker:1119-1140.
+- Ninguém se tranca para fora: bloquear o próprio aparelho é recusado
+  (`CANNOT_REVOKE_SELF`, worker:1082) — instrução segura: "bloqueie todos que o
+  botão deixar; o seu ele não deixa".
+
+### 2. Nota de ambiente (Git)
+
+O sandbox acordou com a branch `arena/01a0d9c3-teste` apontando para a base e9bb5ec
+com a árvore suja — MESMO sintoma da r40. Recuperação igual: `fetch` → conferido que
+o conteúdo da árvore == 9ec5cc6 (os "11 arquivos deletados" no diff eram artefato de
+diff-vs-commit com índice antigo; `hash-object` idêntico) → `reset --hard FETCH_HEAD`.
+Sem perda. (E: não existe ref `origin/arena/01a0d9c3-teste` neste clone; push segue por
+refspec explícito, que funciona.)
+
+### 3. Nota de branch
+
+Sem código — só registro. Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31
+comentado. Links: https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App segue v7.0.25, motor 5.28.0. Próximo: confirmação dele de que virou admin.

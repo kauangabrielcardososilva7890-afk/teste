@@ -7,9 +7,9 @@
 > Escrita **no carregamento** acontece quando o arquivo carrega; escrita **em uso** está
 > dentro de uma função e só troca a global quando aquela função for chamada.
 
-- Arquivos no bundle: **226**
-- Nomes globais escritos: **1058**
-- Escritas totais (contando as repetições): **2020**
+- Arquivos no bundle: **229**
+- Nomes globais escritos: **1061**
+- Escritas totais (contando as repetições): **2025**
 - Nomes escritos em **2 ou mais** arquivos: **289**
 - Análise sem parser (acorn)? **não**
 
@@ -62,6 +62,7 @@
 | `renderOrcamentos` | 7 | ajustes_v52289_orcamento_carimbo_autocura_patch.js:87 (função, no carregamento) |
 | `renderOs` | 7 | automacoes_caixa_chat_auxiliares_patch.js:261 (função, no carregamento) |
 | `salvarChamadoAvulso` | 7 | ajustes_v51920_patch.js:125 (função, no carregamento) |
+| `saveDB` | 7 | ajustes_v7021_portao_escrita_patch.js:59 (função, no carregamento) |
 | `vosConcluirFaturamento` | 7 | ajustes_v52245_venda_salvar_print_patch.js:85 (função, no carregamento) |
 | `__cliEditSnapshot` | 6 | (só troca em uso) |
 | `abrirCloudflareNuvem` | 6 | ajustes_v52296_backups_nuvem_patch.js:680 (função, no carregamento) |
@@ -70,13 +71,12 @@
 | `renderLeituras` | 6 | ajustes_v5250_leitura_overhaul_patch.js:323 (função, no carregamento) |
 | `renderUsuarios` | 6 | permissoes_override_menus_fiscais_patch.js:152 (alias, no carregamento) |
 | `salvarOrcamentoTela` | 6 | ajustes_v52260_orcamento_trava_venda_atalho_patch.js:684 (função, no carregamento) |
-| `saveDB` | 6 | cloudflare_data_sync_patch.js:2167 (função, no carregamento) |
+| `saveDBAgora` | 6 | ajustes_v7021_portao_escrita_patch.js:68 (função, no carregamento) |
 | `vosSalvarVenda` | 6 | ajustes_v52245_venda_salvar_print_patch.js:58 (função, no carregamento) |
 | `__CHAMADO_AVULSO` | 5 | chamados_avulsos_aberto_patch.js:49 (valor, no carregamento) |
 | `__cliEditId` | 5 | (só troca em uso) |
 | `__cliFoiFiltrado` | 5 | (só troca em uso) |
 | `__digicopySincronizarVersao` | 5 | ajustes_v52258_orcamento_os_revalidar_patch.js:850 (alias, no carregamento) |
-| `__lcChamPersistida` | 5 | (só troca em uso) |
 
 ## A lista completa dos repetidos
 
@@ -98,7 +98,7 @@
 - sobrepõe: ajustes_v52246_nuvem_nao_autorizar_patch.js:33 — função, no carregamento
 - sobrepõe: ajustes_v52247_exe_atualiza_patch.js:20 — função, no carregamento
 - sobrepõe: ajustes_v52248_exe_cache_patch.js:15 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:310 — função, no carregamento
+- sobrepõe: ajustes_v52249_relatorio_patch.js:312 — função, no carregamento
 - sobrepõe: ajustes_v52250_exe_bundle_patch.js:35 — função, no carregamento
 - sobrepõe: ajustes_v52251_exe_resiliencia_patch.js:104 — função, no carregamento
 - sobrepõe: ajustes_v52252_resolucao_loop_patch.js:76 — função, no carregamento
@@ -151,9 +151,9 @@
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:43 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:46 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:53 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:124 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:127 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:134 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:126 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:129 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:136 — valor, em uso
 
 ### `modalContext` — 24 escritas
 
@@ -275,7 +275,7 @@
 - sobrepõe: ajustes_v52243_financeiro_filtros_patch.js:151 — função, no carregamento
 - sobrepõe: ajustes_v52244_financeiro_datas_patch.js:94 — função, no carregamento
 - **GANHA →** ajustes_v52245_financeiro_hist_datas_patch.js:155 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:266 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:268 — função, em uso
 
 ### `renderVendas` — 18 escritas
 
@@ -365,7 +365,7 @@
 - sobrepõe: ajustes_v5172_patch.js:357 — função, no carregamento
 - sobrepõe: ajustes_v5193_patch.js:70 — função, no carregamento
 - sobrepõe: ajustes_v52237_estoque_zero_volta_patch.js:161 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:209 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:210 — função, no carregamento
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:50 — função, no carregamento
 - **GANHA →** ajustes_v52295_venda_volta_patch.js:94 — função, no carregamento
 
@@ -516,7 +516,7 @@
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:29 — valor, em uso
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:70 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:50 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:131 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:133 — valor, em uso
 
 ### `DIGICOPY_APP_VERSION` — 9 escritas
 
@@ -587,12 +587,12 @@
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:28 — valor, em uso
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:69 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:49 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:130 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:132 — valor, em uso
 
 ### `abrirTelaOrcamento` — 8 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:395 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:114 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:115 — função, no carregamento
 - sobrepõe: ajustes_v52243_orcamentos_status_patch.js:86 — função, no carregamento
 - sobrepõe: ajustes_v52256_orcamento_venda_limpa_patch.js:307 — função, no carregamento
 - sobrepõe: ajustes_v52258_orcamento_os_revalidar_patch.js:463 — função, no carregamento
@@ -700,7 +700,7 @@
 - sobrepõe: vendas_os_patch.js:1166 — função, no carregamento
 - sobrepõe: ajustes_v52239_print_escolha_patch.js:206 — função, no carregamento
 - **GANHA →** ajustes_v52245_venda_salvar_print_patch.js:76 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:142 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:144 — função, em uso
 
 ### `pintarMenus` — 7 escritas
 
@@ -752,6 +752,16 @@
 - sobrepõe: ajustes_v5192_patch.js:83 — função, no carregamento
 - **GANHA →** ajustes_v51920_patch.js:125 — função, no carregamento
 
+### `saveDB` — 7 escritas
+
+- sobrepõe: app.js:175 — função de topo, no carregamento
+- sobrepõe: performance_patch.js:77 — função, no carregamento
+- sobrepõe: indexeddb_persistence_patch.js:134 — função, no carregamento
+- sobrepõe: cloudflare_data_sync_patch.js:2364 — função, no carregamento
+- sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
+- sobrepõe: ajustes_v5243_cliente_abas_patch.js:431 — alias, em uso
+- **GANHA →** ajustes_v7021_portao_escrita_patch.js:59 — função, no carregamento
+
 ### `vosConcluirFaturamento` — 7 escritas
 
 - sobrepõe: vendas_os_patch.js:844 — função, no carregamento
@@ -760,7 +770,7 @@
 - sobrepõe: vendas_notinhas_fix_patch.js:1133 — função, no carregamento
 - sobrepõe: ajustes_v52243_financeiro_filtros_patch.js:134 — função, no carregamento
 - **GANHA →** ajustes_v52245_venda_salvar_print_patch.js:85 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:150 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:152 — função, em uso
 
 ### `__cliEditSnapshot` — 6 escritas
 
@@ -774,8 +784,8 @@
 ### `abrirCloudflareNuvem` — 6 escritas
 
 - sobrepõe: cloudflare_sync_patch.js:425 — função, no carregamento
-- sobrepõe: ajustes_v5227_nuvem_acompanhamento_patch.js:286 — função, no carregamento
-- sobrepõe: ajustes_v5227_nuvem_acompanhamento_patch.js:367 — função, no carregamento
+- sobrepõe: ajustes_v5227_nuvem_acompanhamento_patch.js:316 — função, no carregamento
+- sobrepõe: ajustes_v5227_nuvem_acompanhamento_patch.js:397 — função, no carregamento
 - sobrepõe: ajustes_v52212_celular_nuvem_patch.js:102 — função, no carregamento
 - sobrepõe: ajustes_v52246_nuvem_nao_autorizar_patch.js:89 — função, no carregamento
 - **GANHA →** ajustes_v52296_backups_nuvem_patch.js:680 — função, no carregamento
@@ -820,19 +830,19 @@
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:583 — função, no carregamento
 - sobrepõe: ajustes_v52237_orcamentos_aprovacao_patch.js:246 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:188 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:189 — função, no carregamento
 - sobrepõe: ajustes_v52244_orcamentos_autorizar_patch.js:112 — função, no carregamento
 - sobrepõe: ajustes_v52258_orcamento_os_revalidar_patch.js:655 — função, no carregamento
 - **GANHA →** ajustes_v52260_orcamento_trava_venda_atalho_patch.js:684 — função, no carregamento
 
-### `saveDB` — 6 escritas
+### `saveDBAgora` — 6 escritas
 
-- sobrepõe: app.js:175 — função de topo, no carregamento
-- sobrepõe: performance_patch.js:77 — função, no carregamento
-- sobrepõe: indexeddb_persistence_patch.js:134 — função, no carregamento
-- **GANHA →** cloudflare_data_sync_patch.js:2167 — função, no carregamento
+- sobrepõe: performance_patch.js:84 — função, no carregamento
+- sobrepõe: indexeddb_persistence_patch.js:136 — função, no carregamento
+- sobrepõe: cloudflare_data_sync_patch.js:2379 — função, no carregamento
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
-- sobrepõe: ajustes_v5243_cliente_abas_patch.js:431 — alias, em uso
+- sobrepõe: ajustes_v5243_cliente_abas_patch.js:432 — alias, em uso
+- **GANHA →** ajustes_v7021_portao_escrita_patch.js:68 — função, no carregamento
 
 ### `vosSalvarVenda` — 6 escritas
 
@@ -841,7 +851,7 @@
 - sobrepõe: ajustes_v52238_vendas_os_ajustes_patch.js:180 — função, no carregamento
 - sobrepõe: ajustes_v52241_venda_salvar_fechar_patch.js:44 — função, no carregamento
 - **GANHA →** ajustes_v52245_venda_salvar_print_patch.js:58 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:139 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:141 — função, em uso
 
 ### `__CHAMADO_AVULSO` — 5 escritas
 
@@ -885,11 +895,11 @@
 
 ### `__orcDirty` — 5 escritas
 
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:116 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:173 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:180 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:193 — valor, em uso
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:217 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:117 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:174 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:181 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:194 — valor, em uso
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:218 — valor, em uso
 
 ### `__vosItensAdicionadosTemp` — 5 escritas
 
@@ -929,15 +939,15 @@
 - sobrepõe: fluxos_operacionais_patch.js:1267 — função, no carregamento
 - sobrepõe: automacoes_financeiro_estoque_patch.js:269 — função, no carregamento
 - **GANHA →** ajustes_v52245_leitura_apagar_patch.js:26 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:172 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:174 — função, em uso
 
 ### `gerarHtmlOrcamento` — 5 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_aprovacao_patch.js:170 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:230 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:231 — função, no carregamento
 - sobrepõe: ajustes_v52240_orcamento_pages_patch.js:39 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:79 — função, em uso
-- **GANHA →** ajustes_v52254_orcamentos_pages_patch.js:85 — função, no carregamento
+- sobrepõe: ajustes_v52249_relatorio_patch.js:80 — função, em uso
+- **GANHA →** ajustes_v52254_orcamentos_pages_patch.js:84 — função, no carregamento
 
 ### `lcAddPeca` — 5 escritas
 
@@ -1003,14 +1013,6 @@
 - sobrepõe: ajustes_v5193_patch.js:59 — função, no carregamento
 - **GANHA →** ajustes_v5243_cliente_abas_patch.js:517 — função, no carregamento
 
-### `saveDBAgora` — 5 escritas
-
-- sobrepõe: performance_patch.js:84 — função, no carregamento
-- sobrepõe: indexeddb_persistence_patch.js:136 — função, no carregamento
-- **GANHA →** cloudflare_data_sync_patch.js:2182 — função, no carregamento
-- sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
-- sobrepõe: ajustes_v5243_cliente_abas_patch.js:432 — alias, em uso
-
 ### `vendaSelecionadaId` — 5 escritas
 
 - sobrepõe: notinha_patch.js:70 — alias, em uso
@@ -1068,7 +1070,7 @@
 - sobrepõe: ajustes_v52243_financeiro_filtros_patch.js:98 — valor, no carregamento
 - sobrepõe: ajustes_v52244_financeiro_datas_patch.js:16 — valor, no carregamento
 - **GANHA →** ajustes_v52245_financeiro_hist_datas_patch.js:61 — valor, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:221 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:223 — valor, em uso
 
 ### `__impPassoSerial` — 4 escritas
 
@@ -1116,8 +1118,8 @@
 
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:86 — valor, em uso
 - sobrepõe: ajustes_v52245_venda_salvar_print_patch.js:89 — valor, em uso
-- sobrepõe: ajustes_v52249_relatorio_patch.js:151 — valor, em uso
 - sobrepõe: ajustes_v52249_relatorio_patch.js:153 — valor, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:155 — valor, em uso
 
 ### `__vosPendenteReporEstoque` — 4 escritas
 
@@ -1213,7 +1215,7 @@
 ### `orcBuscarProd` — 4 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:493 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:131 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:132 — função, no carregamento
 - sobrepõe: ajustes_v52259_orcamento_filtros_item_patch.js:215 — alias, no carregamento
 - **GANHA →** ajustes_v52260_orcamento_trava_venda_atalho_patch.js:371 — alias, no carregamento
 
@@ -1419,7 +1421,7 @@
 
 - sobrepõe: notinha_patch.js:619 — função, no carregamento
 - **GANHA →** ajustes_v52245_financeiro_hist_datas_patch.js:165 — função, no carregamento
-- sobrepõe: ajustes_v52249_relatorio_patch.js:275 — função, em uso
+- sobrepõe: ajustes_v52249_relatorio_patch.js:277 — função, em uso
 
 ### `imprimirLeituraContrato` — 3 escritas
 
@@ -1460,7 +1462,7 @@
 ### `orcAddItem` — 3 escritas
 
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:537 — função, no carregamento
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:178 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:179 — função, no carregamento
 - **GANHA →** ajustes_v52259_orcamento_filtros_item_patch.js:398 — função, no carregamento
 
 ### `orcBuscarCliente` — 3 escritas
@@ -2010,7 +2012,7 @@
 
 ### `orcSelRecarga` — 2 escritas
 
-- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:164 — função, no carregamento
+- sobrepõe: ajustes_v52238_orcamentos_ajustes_patch.js:165 — função, no carregamento
 - **GANHA →** ajustes_v52260_orcamento_trava_venda_atalho_patch.js:373 — alias, no carregamento
 
 ### `parseDataLocal` — 2 escritas
@@ -2200,7 +2202,7 @@
 
 ## Nomes escritos em um lugar só
 
-769 nomes: `A1_NUVEM_USO_PURE`, `AC602_PURE`, `AJUSTES_POS_FINAL_PURE`, `AJUSTES_RELATORIO_PAI_PURE`, `AJUSTES_V5183_PURE`, `AJUSTES_V5185_PURE`, `AJUSTES_V5186_PURE`, `AJUSTES_V5187_PURE`, `AJUSTES_V5189_PURE`, `AJUSTES_V51920_PURE`, `AJUSTES_V5196_PURE`, `AJUSTES_V52023_PURE`, `AJUSTES_V52024_PURE`, `AJUSTES_V52289_PURE`, `APP_VERSION`, `AUTOMACOES_CAIXA_CHAT_AUXILIARES_PURE`, `AUTOMACOES_COMPRAS_RECEBIMENTOS_CONTADORES_PURE`, `AUTOMACOES_CONTR_CAIXA_FISCAL_PURE`, `AUTOMACOES_FINAIS_LOCACAO_AUX_PURE`, `AUTOMACOES_FIN_ESTOQUE_PURE`, `AUTOMACOES_FISCAL_CARTUCHOS_PURE`, `AUTOMACOES_LOC_VISITAS_PURE`, `AUTOMACOES_ORC_CLIENTES_AUX_PURE`, `AUTOMACOES_PIX_CONTADORES_AUX_PURE`, `AUTOMACOES_PROCEDURES_OPERACIONAIS_PURE`, `AUTOMACOES_TRIGGERS_PURE`, `AUTOMACOES_VENDAS_COMPRAS_CADASTROS_PURE`, `AUTOMACOES_VENDAS_FISCAL_AUX_PURE`, `AVISOS_V52423_PURE`, `CADASTROS_NOMES_PURE`, `CARTUCHOS_ETIQUETAS_PURE`, `CAT_LETRA_PURE`, `CAT_LETRA_UMA_VEZ_PURE`, `CELULAR_NUVEM_PURE`, `CERT_A1_NUVEM_PURE`, `CERT_NUVEM_PURE`, `CHAMADOS_AVULSOS_PURE`, `CLIENTES_VISIVEIS_PURE`, `CLI_PURE`, `CNPJ_INTELIGENTE_PURE`, `CNPJ_V5260_PURE`, `CODIGO_CLIENTE_EXATO_PURE`, `CODIGO_SEM_SKU_PURE`, `CONFIG_AVISO_SALVOU_PURE`, `CONTRATOS_CURA_RELATORIO`, `CONTRATOS_FILTROS_PURE`, `CONTRATOS_FINAL_PURE`, `CONTRATOS_LEITURAS_CORRIGIDO_PURE`, `CONTRATOS_LEITURAS_DEFINITIVO_PURE`, `CONTRATOS_REFINO_PURE`, `CONTRATOS_SORT_V52243_PURE`, `CONTRATOS_VISITAS_PURE`, `CORRECOES_USO_DIARIO_PURE`, `DB_CHUNK_ITENS`, `DB_CHUNK_OBJ_MIN`, `DB_KEY`, `DB_MANIFEST_KEY`, `DB_PART_PREFIX`, `DC_chamarMedidorOficial`, `DESKTOP_OTIMIZACAO_PURE`, `DHC607_PURE`, `DIGICOPY_ABAS_FISCAIS`, `DIGICOPY_BACKUPS`, `DIGICOPY_CLOUD`, `DIGICOPY_CLOUD_PURE`, `DIGICOPY_CLOUD_SYNC`, `DIGICOPY_DB_READY`, `DIGICOPY_EH_CELULAR`, `DIGICOPY_EXCLUSAO_INTENCIONAL`, `DIGICOPY_EXCLUSOES_SEM_VIGIA`, `DIGICOPY_INDEXED_DB`, `DIGICOPY_MARCA_TELA_ATUAL`, `DIGICOPY_NUVEM_ACOMPANHAMENTO`, `DIGICOPY_PARA_VIGIA`, `DIGICOPY_RECUPERAR`, `DIGICOPY_SO_NUVEM`, `DIGI_TURBO`, `DIGI_TURBO_PURE`, `ESCURO_LOGIN_NUVEM_PURE`, `ETIQUETA_RECARGA_VENDA_PURE`, `EXE_ATUALIZA_V52247_PURE`, `EXE_BUNDLE_V52250_PURE`, `EXE_CACHE_V52248_PURE`, `EXE_COMPLETO_V52263_PURE`, `EXE_NUMERO_NOVO_V52264_PURE`, `EXE_RESILIENCIA_V52251_PURE`, `EXE_SCRIPT_ISOLADO_V52265_PURE`, `EXTRA_PURE`, `FE6108_PURE`, `FILTROS_BUSCA_PURE`, `FINALIZACAO_SISTEMA_PURE`, `FINANCEIRO_DATAS_V52244_PURE`, `FINANCEIRO_HIST_DATAS_V52245_PURE`, `FINANCEIRO_MENU_V52243_PURE`, `FINANCEIRO_RECEBER_PURE`, `FINANCEIRO_RECIBO_PURE`, `FINANCEIRO_V52243_PURE`, `FLUXOS_PURE`, `FMC606_PURE`, `IMPORT_DEL_PURE`, `IMPORT_PRODUTOS_PURE`, `IMPRESSORA_REMANEJAR_V52243_PURE`, `IMPRESSORA_REMANEJO_V52435_PURE`, `IMPRESSORA_SERIAL_OCULTAR_V52245_PURE`, `LEITURA_APAGAR_V52245_PURE`, `LEITURA_BUSCA_FLUXO_PURE`, `LEITURA_DETALHADA_DEPARTAMENTOS_PURE`, `LEITURA_IMPRESSAO_COMPACTA_PURE`, `LEITURA_OVERHAUL_V5250_PURE`, `LEITURA_UMA_ABERTA_V52436_PURE`, `LOC_PURE`, `LOGIN_DIRETO_LEGADO_PURE`, `LOGIN_TELA_BRANCA_V52253_PURE`, `LOGIN_V5262_PURE`, `LOGOPT_PURE`, `LOGO_IMPRESSAO_PURE`, `LT6108_PURE`, `LUPA_FILTRO_CLI_PURE`, `LZUTF16`, `MENUS_ARRASTAR_PURE`, `MENUS_ARRASTAR_SO_PURE`, `MENUS_ARRASTE_PURE`, `MENUS_ATALHOS_PURE`, `MENUS_DISPOSITIVO_PURE`, `MENUS_SUBMENUS_PURE`, `MENUS_TELA_PEQUENA_PURE`, `MENU_VERSAO_BOLETO_V52243_PURE`, `MFS608_PURE`, `MIGPRINT_PURE`, `MODO_ESCURO_PURE`, `NAV6107_PURE`, `NCM_IMPORT_PURE`, `NCM_ORIGEM_PURE`, `NCM_PRODUTO_EXISTENTE_PURE`, `NFE_ASSINATURA_UI`, `NFE_ATALHO_HISTORICO`, `NFE_CENTRAL_V52425`, `NFE_CENTRAL_V52426`, `NFE_CONFIG_PURE`, `NFE_EMISSAO_PURE`, `NFE_IE_IM_CNAE_PURE`, `NFE_LISTA_CHECKBOX`, `NFE_PERMISSAO_PURE`, `NFG_PURE`, `NFX_PURE`, `NOTIF_PURE`, `NUVEM_NAO_AUTORIZAR_V52246_PURE`, `ORCAMENTOS_APROVACAO_PURE`, `ORCAMENTOS_AUTORIZAR_V52244_PURE`, `ORCAMENTOS_PAGES_V52254_PURE`, `ORCAMENTOS_PURE`, `ORCAMENTOS_STATUS_V52243_PURE`, `ORCAMENTOS_V52238_PURE`, `ORCAMENTOS_V52240_PURE`, `ORCAMENTO_APROVACAO_V52255_PURE`, `ORCAMENTO_APROVACAO_V52256_PURE`, `ORCAMENTO_APROVACAO_V52257_PURE`, `ORCAMENTO_NAO_VOLTA_V52261_PURE`, `ORCAMENTO_UMA_VEZ_V52262_PURE`, `ORDENACAO_TITULO_PURE`, `P605_PURE`, `PARQUE_MONITOR_V52427`, `PENDING_CNPJ_KEY`, `PIX_LINK_PUBLICO_PURE`, `PIX_MANUAL_PURE`, `PIX_PAGAR_PUBLICO`, `PIX_PURE`, `PNC604_PURE`, `POM609_PURE`, `PONTE_ELECTRON_PURE`, `PRINT_SEM_RODAPE_PURE`, `RECARGAS_PURE`, `RELATORIO_V52249_PURE`, `RESOLUCAO_LOOP_V52252_PURE`, `RGATE_PURE`, `RODAPE_VERSAO_V52245_PURE`, `RTF_TEMPLATE_PURE`, `SESSION_KEY`, `SISTEMA_CLIENTES_LOJA_PURE`, `UI_PURE`, `V52237_ESTOQUE_ZERO_PURE`, `V52237_VENDAS_OS_PURE`, `V52238_VENDAS_PURE`, `V52239_ERRO_PURE`, `V52239_MENUS_PURE`, `V52239_PATRI_PURE`, `V52239_PRINT_PURE`, `V52241_VENDA_SALVAR_PURE`, `V52245_VENDA_PURE`, `V5240_RELATORIO_PURE`, `V5264_CH_DATA_PURE`, `VENDAS_FINANCEIRO_PENDENTE_PURE`, `VENDA_PRINT_PIX_PURE`, `VOTM_PURE`, `__CTR_FILTRO_V52237`, `__DIGICOPY_LOGO_ORIGINAL`, `__DIGICOPY_PONTES_ABERTAS`, `__DIGICOPY_PROMPT_NATIVO`, `__V52295_PURE`, `__avisouQuota`, `__cardPublicadorAgendado`, `__cfv`, `__checagemAtualizacaoFeita`, `__cliBuscaState`, `__cliDupGrupos`, `__cliIdxCache`, `__cliIdxGet`, `__cliSort`, `__clientesStatusFinal`, `__clitab`, `__clitabExtornarAgora`, `__ctrMexeuHoje`, `__dcUltPingMedidor`, `__esExc`, `__esExcPendingId`, `__esIni`, `__esReg`, `__esRes`, `__esTerm`, `__finBaixaIds`, `__finReciboTitulos`, `__finalizarSaveQ`, `__gravarParteCampo`, `__lastVoltarTs`, `__lcChamOrigem`, `__lcImpFiltro`, `__lcLancLeituraId`, `__lcLeiCtr`, `__lcListaContratoId`, `__limparPecasAntigas`, `__marcarImpAvulso`, `__migCat`, `__migCategorias`, `__modOrdem`, `__modUi`, `__navComErroVisivel`, `__navComMigrados`, `__nfeUltimoDoc`, `__orcResgates`, `__orcResumoUltimaBaixa`, `__orcUltimaLista`, `__origemFinanceiroVoltar`, `__p609ColunaMorta`, `__p8ScannerArmado`, `__perfPure`, `__pixUltimoPayload`, `__prodSortCol`, `__recargasSort`, `__saveDBSched`, `__saveQ`, `__saveTick`, `__sincronizarCamposChamado`, `__snapHash`, `__toastReal`, `__uiMenusRascunho`, `__uiSyncErro`, `__ultimaImportLocacao`, `__v52234salvoClick`, `__v52249_relatorio_loaded`, `__v52250_bundle_loaded`, `__v52251_resiliencia_loaded`, `__v52252_loop_fix_loaded`, `__v52253_login_guard_loaded`, `__v52254_pages_loaded`, `__v52263_exe_loaded`, `__v5242visMenus`, `__v5250LeiAtual`, `__v5250reimpEstorno`, `__v5260cn`, `__v5262ln`, `__v5264cd`, `__v5266pg`, `__v6000fg`, `__v60010sxv`, `__v60011sxvm`, `__v6001nfx`, `__v6002ac`, `__v6004pnc`, `__v6005pes`, `__v6006fmc`, `__v6007dhc`, `__v6008mfs`, `__v6009pom`, `__v6107nav`, `__v6108falta`, `__v6108lembra`, `__v612nes`, `__v7015nuvem`, `__vendasLegadasUsoDiario`, `__vosBT`, `__vosFatVendaId`, `__vosFormHtmlSalvo`, `__vosPure`, `__vosSaindoVenda`, `_jsonParaImportar`, `_nextCodigoCliente`, `_origOpenModal`, `_origRenderDashboard`, `_rawDataParaImportar`, `_ultimoCNPJData`, `_ultimoCepBuscado`, `abrirAbaProdutos`, `abrirAbaRecargas`, `abrirHubImpressora`, `abrirImpressaoLeitura`, `abrirLeituraDefinitiva`, `abrirLeituraDetalhada`, `abrirLeituraSelecionadaContrato`, `abrirModalEdicaoVendaRapida`, `abrirModalEmpilhado`, `abrirModalRecarga`, `abrirNotinhasAntigas`, `abrirOrcamento`, `abrirPerfilTributario`, `abrirTelaBackup`, `abrirVendaDeOrcamento`, `acForcarCura`, `addTecnico`, `adicionarPecaChamado`, `adicionarPecaRefino`, `agendarSnapshotLegado`, `alert`, `alterarClienteClassic`, `alterarQtdItem`, `alterarQtdPecaChamado`, `alterarQtdPecaRefino`, `alterarVendaSelecionada`, `alternarEstoqueInfinito`, `alternarEstoqueOperacional`, `alternarPodeEmitirNfe`, `aplicarBuscaChamadosOperacional`, `aplicarBuscaChamadosRefino`, `aplicarBuscaContratosOperacional`, `aplicarBuscaContratosRefino`, `aplicarBuscaLeituraRefino`, `aplicarBuscaListaLeituraOperacional`, `aplicarBuscaProdutosOperacional`, `aplicarBuscaRecargas`, `atualizarConfigCartuchosAntigos`, `atualizarImpressorasChamadoRefino`, `atualizarMedidorUI`, `atualizarMedidoresLeituraDefinitiva`, `avisoChamadoContrato`, `avisoEstoque`, `baixarCP`, `bkFecharTelaBackup`, `browseFdb`, `buscarCEPAutomatico`, `buscarCepContratoOperacional`, `buscarClienteContratoDefinitivo`, `buscarClienteContratoLeitura`, `buscarClienteContratoModal`, `buscarClientesFinal`, `buscarCnpjLoja`, `buscarContratoLeitura`, `buscarContratoLeituraDefinitiva`, `buscarEtiquetaFiltroVenda`, `buscarImpressorasChamadoAvulso`, `buscarNcmProduto`, `buscarVendasPorEtiqueta`, `caEditarImpressoraAvulso`, `calcChamadoAvulso`, `calcPreviewLeitura`, `carregarTiposMedidorLeitura`, `cartEtiquetasAtualizarFim`, `cfvEscolher`, `cfvFiltrar`, `chamadosSortOperacional`, `chamadosSortRefino`, `chartFinanceInst`, `chartFluxoInst`, `chartParqueInst`, `clearAllData`, `clearClienteVenda`, `clearSession`, `clienteDaVenda`, `clienteSelecionadoClassic`, `clientesDuplicadosAbrir`, `clientesDuplicadosContar`, `clientesDuplicadosUnir`, `clientesDuplicadosVincularContrato`, `clientesMostrarTodos`, `clitabAbrir`, `clitabAbrirClienteNaLista`, `clitabAbrirDireto`, `clitabAbrirLista`, `clitabAbrirRegistro`, `clitabExcluir`, `clitabExtornar`, `clitabRenderSoSelecionados`, `clitabSub`, `clitabToggleSel`, `confirm`, `confirmSistema`, `confirmarExcluirModulo`, `confirmarLancamentoLeituras`, `consultarCnpjInteligente`, `contratoCurarVinculos`, `contratoVincularCliente`, `contratosSortOperacional`, `converterOrcamentoMigradoEmVenda`, `copiarLinkOrcamentoModal`, `copiarSqlExportarTudo`, `criarLeituraDefinitiva`, `criarLeituraDetalhada`, `cvAddItem`, `cvItens`, `cvRemoveItem`, `cvRenderItens`, `cvSaveVenda`, `cvSearchCliente`, `cvSearchProduto`, `cvSelectCliente`, `cvSelectProduto`, `cvUpdateItemTotal`, `cvUpdateTotal`, `cvVendaSalva`, `dbFatiarEntidade`, `dbHashTexto`, `dbParteKey`, `dcCheckupNuvem`, `dcCheckupNuvemResumo`, `dcDiagnosticoInvisiveis`, `defaultData`, `deleteCR`, `deleteCliente`, `deleteUsuario`, `deleteVenda`, `destacarImpressoraLancamento`, `dhcAbrirOrigem`, `digicopyAbrirOuBaixarErroTxt`, `digicopyBaixarErroTxt`, `digicopyLogo`, `digicopyVerificarAtualizacaoAgora`, `editarEquipamentoChamado`, `editarImpressoraLancamento`, `editarLancamentoLeitura`, `editarNotinhaMigrada`, `ensureView`, `equipView`, `esAbrir`, `esClearLog`, `esExc`, `esExcConfirmar`, `esExcMotivo`, `esExcTog`, `esExcel`, `esLoginLocal`, `esMais`, `esRest`, `esSearch`, `esSync`, `esSyncTudo`, `escapeHtml`, `escolherImpressoraLancamento`, `escolherNcmProduto`, `estornarOrcamentosMarcados`, `estornarVendasSelecionadas`, `excluirChamadoV52422`, `excluirChamadosSelecionados`, `excluirClienteClassic`, `excluirClientesSelecionados`, `excluirContratoUnificado`, `excluirFinanceiroSelecionados`, `excluirProdutoUnificado`, `excluirRecarga`, `excluirTecnico`, `excluirUsuario`, `excluirVendaNeo`, `excluirVendaSelecionada`, `exportClientes`, `exportarBackupJSON`, `exportarModuloDinamico`, `faturarLeituraDefinitiva`, `faturarLeituraSelecionadaContrato`, `fbConnected`, `fbExportExtracted`, `fbExtractAll`, `fbExtractedData`, `fbImportLocacaoFamilia`, `fbListTables`, `fbMapNomeTabela`, `fbPreviewTable`, `fbSelectMigrationTables`, `fbSetStatus`, `fbTablesCache`, `fbTestConnection`, `fe6108Conferir`, `fecharModalChamadoAvulso`, `fetch`, `finAcaoImprimir`, `finAplicarFiltroV52421`, `finBuscarV52243`, `finEscolherCliente`, `finEscolherFormaBaixa`, `finImprimirRecibo`, `finModoV52245`, `finPreviewRepetir`, `finRemoverFiltroV52421`, `finSalvarNovoLancamento`, `finalizarChamadosSelecionados`, `findTable`, `fmtDate`, `fmtDateTime`, `fmtMoney`, `formatarLoginCNPJ`, `formatarNomeTabela`, `fxXmlCopiarEmail`, `garantirBotaoDadosMigrados`, `gerarFaturasPendentes`, `gerarRelatorio`, `getCurrentUser`, `getFbConfig`, `getFiltered`, `getPendingEmpresa`, `getSession`, `gravarSnapshotLegado`, `handleDatabaseUpload`, `handleGlobalSearch`, `handleMultipleUpload`, `handleRarUpload`, `handleTopSearchOperacional`, `impMedidorTrocar`, `impfTrocarMedidor`, `importBackup`, `importarJsonDBeaver`, `importarTudoDeUmaVez`, `imprimirChamadoAgoraV52422`, `imprimirEtiquetasCartucho`, `imprimirLeituraContratoExecutar`, `imprimirLeituraDefinitiva`, `imprimirLeituraDetalhada`, `imprimirRegistroMigrado`, `initTemplates`, `initials`, `lancarLeituraColetivaContrato`, `lcAddPecaManual`, `lcContadorAntigoChamado`, `lcCriarVendaDoChamado`, `lcEditarImpressoraChamado`, `lcEscolherImpressoraChamado`, `lcFiltroTodos`, `lcLimparClienteAvulso`, `lcMarcarImpressoraNaLista`, `lcPecaCalc`, `lcSelPeca`, `lerStatusImpressoraRede`, `lfbCornerToast`, `limparBuscaProdutosOperacional`, `limparTemplatesRTF`, `listUsuariosDemo`, `loadColetaForm`, `loadDB`, `logAction`, `lt6108Esquecer`, `mostrarTextoCopiar`, `mudarAbaChamado`, `mudarAbaChamadoOperacional`, `mudarAbaContrato`, `mudarAbaContratoOperacional`, `mudarAbaProd`, `mudarAbaProdutoOperacional`, `mudarMedidorImpressoraRefino`, `mudarModalidadePE`, `navegadorAbrir`, `navegadorAbrirSite`, `navegadorAdicionarSite`, `navegadorEditarSite`, `navegadorIrPara`, `navegadorRemoverSite`, `navegadorRestaurarPadrao`, `navegadorSites`, `neoAddItemVenda`, `neoRemoveItemVenda`, `neoRenderItensVenda`, `neoSearchClienteVenda`, `neoSelectClienteVenda`, `neoSelectProdutoVenda`, `neoSetFilter`, `neoToggleOSVenda`, `neoTogglePagamento`, `neoUpdateVendaTotal`, `neoVendaItens`, `nfAbrirDanfe`, `nfAuditarFiscal`, `nfBaixarXml`, `nfCancelarNota`, `nfCartaCorrecao`, `nfEmitirCompleta`, `nfInstalarCertificado`, `nfInutilizarFaixa`, `nfManifestarEvento`, `nfPacoteContador`, `nfProximoNumero`, `nfStatusServico`, `nfeEnviarCertNuvem`, `nfeLeituraSelecionada`, `nfeRemoverCertNuvem`, `nfgAlternarAmbiente`, `nfgRegistroNotas`, `nfxConfirmar`, `nfxPedirTexto`, `nfxRenderHistorico`, `normalizarNCMProdutoOperacional`, `normalizeDbShape`, `notificarEvento`, `novaLeituraCabecalho`, `novaLeituraDefinitiva`, `novaVendaComEtiqueta`, `novoChamadoAvulsoGuard`, `novoOrcamento`, `ntfAlternarPainel`, `ntfApagar`, `ntfAtualizarBadge`, `ntfFecharPainel`, `ntfMarcarLida`, `ntfMarcarTodasLidas`, `numeroVendaInt`, `onPagamentoChange`, `onStatusVendaChange`, `onTipoItemChange`, `onlyDigits`, `openContratoDetail`, `openModalClienteFromVenda`, `openModalCriarUsuarioPublic`, `openModalEditarTecnico`, `openModalNovoTecnico`, `openQuickReading`, `orcBuscar`, `orcBuscarSerial`, `orcCalcItem`, `orcDelItem`, `orcFiltroLista`, `orcRemoveItem`, `ordenarClientesFinal`, `ordenarModuloDinamico`, `osViewMode`, `pedirTextoSistema`, `permissoesAjuda`, `pixCopiarCodigo`, `pixLerCamposConfig`, `pixPreviewConfig`, `pixSalvarConfig`, `previewLancamentoContadorOperacional`, `previewLancamentoRefino`, `prodSort`, `produtosSortOperacional`, `prompt`, `proximoNumeroSimples`, `proximoNumeroVendaLimpo`, `puxarAprovacoesOrcamento`, `recargasSort`, `recusarOrcamentoInterno`, `registrarErroSistema`, `registrarNfeEmitida`, `removeTecnico`, `removerItemVenda`, `removerPecaChamado`, `removerPecaRefino`, `renderBanco`, `renderBuscadorEscola`, `renderCompras`, `renderFluxoChart`, `renderItensVenda`, `renderMigrados`, `renderModalContaPagar`, `renderModalContaReceber`, `renderModalEntrada`, `renderModalEquipamento`, `renderModalLeitura`, `renderOrcamentosView`, `renderPainelGerente`, `renderPecasChamado`, `renderRecargas`, `renderRelatorios`, `revalidarLinkOrcamento`, `salvarContratoCompleto`, `salvarContratoCompletoOperacional`, `salvarContratoDefinitivo`, `salvarContratoFullRefino`, `salvarContratoLeituraSimples`, `salvarContratoOperacional`, `salvarContratoRefino`, `salvarContratoRelatorio`, `salvarDadosLojaFinal`, `salvarEdicaoNotinhaMigrada`, `salvarItemLeitura`, `salvarItemLeituraDefinitiva`, `salvarLancamentoContadorOperacional`, `salvarLancamentoRefino`, `salvarProdutoModal`, `salvarProdutoOperacional`, `salvarRecarga`, `salvarTecnico`, `salvarTemplatesRTF`, `saveCP`, `saveCR`, `saveContrato`, `saveEntrada`, `saveEquipamento`, `saveLeitura`, `saveLeituraRapida`, `saveProduto`, `searchChamadosAvancada`, `searchClientesVenda`, `searchProdutosVenda`, `selecionarClienteContrato`, `selecionarClienteContratoDefinitivo`, `selecionarClienteContratoLeitura`, `selecionarContratoLeitura`, `selecionarContratoLeituraDefinitiva`, `selecionarEquipamentoChamado`, `selecionarVendaClassic`, `selectProdutoVenda`, `seqObter`, `setAbaOrcamento`, `setEquipView`, `setFinTab`, `setPageHeader`, `setPendingEmpresa`, `sincronizarVendasNoFinanceiro`, `statusPillFin`, `storageDecode`, `storageEncode`, `storageEncodeTexto`, `sugerirIcone`, `syncAutoChecar`, `syncAutoLigado`, `syncEnviarParaNuvem`, `toggleOsView`, `togglePass`, `toggleSidebar`, `uiAjustarHome`, `uid`, `unlockVendaFaturadaUI`, `updateVendaTotal`, `usuarioDaVenda`, `usuarioPodeEmitirNfe`, `v52023AtualizarBotaoExcluir`, `v52023MarcarTodos`, `v5262AbrirPortao`, `v7015ConferirNuvem`, `vendasUsoBuscar`, `vendasUsoLimpar`, `verProdutosBaixos`, `verTodosProdutos`, `voltarListaChamadoContrato`, `voltarModalOperacional`, `vosAbrirImpressaoESalvar`, `vosAtualizarBotaoItem`, `vosBuscaVendasDeb`, `vosCarregarVendaNaTela`, `vosEditarItem`, `vosExportarNotinhaWord`, `vosExportarVendasCSV`, `vosFaturarAtual`, `vosImprimirAtual`, `vosImprimirCarne`, `vosImprimirCarneDaTela`, `vosItemCalcTotal`, `vosNumeroVisivel`, `vosParcelasPreview`, `vosRefaturar`, `vosResumoVenda`, `vosSetAba`, `vosSortVendas`, `vosVendaClearCliente`, `vosVendaSelectRecarga`, `vosVoltarRecebimento`
+772 nomes: `A1_NUVEM_USO_PURE`, `AC602_PURE`, `AJUSTES_POS_FINAL_PURE`, `AJUSTES_RELATORIO_PAI_PURE`, `AJUSTES_V5183_PURE`, `AJUSTES_V5185_PURE`, `AJUSTES_V5186_PURE`, `AJUSTES_V5187_PURE`, `AJUSTES_V5189_PURE`, `AJUSTES_V51920_PURE`, `AJUSTES_V5196_PURE`, `AJUSTES_V52023_PURE`, `AJUSTES_V52024_PURE`, `AJUSTES_V52289_PURE`, `APP_VERSION`, `AUTOMACOES_CAIXA_CHAT_AUXILIARES_PURE`, `AUTOMACOES_COMPRAS_RECEBIMENTOS_CONTADORES_PURE`, `AUTOMACOES_CONTR_CAIXA_FISCAL_PURE`, `AUTOMACOES_FINAIS_LOCACAO_AUX_PURE`, `AUTOMACOES_FIN_ESTOQUE_PURE`, `AUTOMACOES_FISCAL_CARTUCHOS_PURE`, `AUTOMACOES_LOC_VISITAS_PURE`, `AUTOMACOES_ORC_CLIENTES_AUX_PURE`, `AUTOMACOES_PIX_CONTADORES_AUX_PURE`, `AUTOMACOES_PROCEDURES_OPERACIONAIS_PURE`, `AUTOMACOES_TRIGGERS_PURE`, `AUTOMACOES_VENDAS_COMPRAS_CADASTROS_PURE`, `AUTOMACOES_VENDAS_FISCAL_AUX_PURE`, `AVISOS_V52423_PURE`, `CADASTROS_NOMES_PURE`, `CARTUCHOS_ETIQUETAS_PURE`, `CAT_LETRA_PURE`, `CAT_LETRA_UMA_VEZ_PURE`, `CELULAR_NUVEM_PURE`, `CERT_A1_NUVEM_PURE`, `CERT_NUVEM_PURE`, `CHAMADOS_AVULSOS_PURE`, `CLIENTES_VISIVEIS_PURE`, `CLI_PURE`, `CNPJ_INTELIGENTE_PURE`, `CNPJ_V5260_PURE`, `CODIGO_CLIENTE_EXATO_PURE`, `CODIGO_SEM_SKU_PURE`, `CONFIG_AVISO_SALVOU_PURE`, `CONTRATOS_CURA_RELATORIO`, `CONTRATOS_FILTROS_PURE`, `CONTRATOS_FINAL_PURE`, `CONTRATOS_LEITURAS_CORRIGIDO_PURE`, `CONTRATOS_LEITURAS_DEFINITIVO_PURE`, `CONTRATOS_REFINO_PURE`, `CONTRATOS_SORT_V52243_PURE`, `CONTRATOS_VISITAS_PURE`, `CORRECOES_USO_DIARIO_PURE`, `DB_CHUNK_ITENS`, `DB_CHUNK_OBJ_MIN`, `DB_KEY`, `DB_MANIFEST_KEY`, `DB_PART_PREFIX`, `DC_chamarMedidorOficial`, `DESKTOP_OTIMIZACAO_PURE`, `DHC607_PURE`, `DIGICOPY_ABAS_FISCAIS`, `DIGICOPY_BACKUPS`, `DIGICOPY_CLOUD`, `DIGICOPY_CLOUD_PURE`, `DIGICOPY_CLOUD_SYNC`, `DIGICOPY_DB_READY`, `DIGICOPY_EH_CELULAR`, `DIGICOPY_EXCLUSAO_INTENCIONAL`, `DIGICOPY_EXCLUSOES_SEM_VIGIA`, `DIGICOPY_INDEXED_DB`, `DIGICOPY_MARCA_TELA_ATUAL`, `DIGICOPY_NUVEM_ACOMPANHAMENTO`, `DIGICOPY_PARA_VIGIA`, `DIGICOPY_PORTAO`, `DIGICOPY_RECUPERAR`, `DIGICOPY_SO_NUVEM`, `DIGI_TURBO`, `DIGI_TURBO_PURE`, `ESCURO_LOGIN_NUVEM_PURE`, `ETIQUETA_RECARGA_VENDA_PURE`, `EXE_ATUALIZA_V52247_PURE`, `EXE_BUNDLE_V52250_PURE`, `EXE_CACHE_V52248_PURE`, `EXE_COMPLETO_V52263_PURE`, `EXE_NUMERO_NOVO_V52264_PURE`, `EXE_RESILIENCIA_V52251_PURE`, `EXE_SCRIPT_ISOLADO_V52265_PURE`, `EXTRA_PURE`, `FE6108_PURE`, `FILTROS_BUSCA_PURE`, `FINALIZACAO_SISTEMA_PURE`, `FINANCEIRO_DATAS_V52244_PURE`, `FINANCEIRO_HIST_DATAS_V52245_PURE`, `FINANCEIRO_MENU_V52243_PURE`, `FINANCEIRO_RECEBER_PURE`, `FINANCEIRO_RECIBO_PURE`, `FINANCEIRO_V52243_PURE`, `FLUXOS_PURE`, `FMC606_PURE`, `IMPORT_DEL_PURE`, `IMPORT_PRODUTOS_PURE`, `IMPRESSORA_REMANEJAR_V52243_PURE`, `IMPRESSORA_REMANEJO_V52435_PURE`, `IMPRESSORA_SERIAL_OCULTAR_V52245_PURE`, `LEITURA_APAGAR_V52245_PURE`, `LEITURA_BUSCA_FLUXO_PURE`, `LEITURA_DETALHADA_DEPARTAMENTOS_PURE`, `LEITURA_IMPRESSAO_COMPACTA_PURE`, `LEITURA_OVERHAUL_V5250_PURE`, `LEITURA_UMA_ABERTA_V52436_PURE`, `LOC_PURE`, `LOGIN_DIRETO_LEGADO_PURE`, `LOGIN_TELA_BRANCA_V52253_PURE`, `LOGIN_V5262_PURE`, `LOGOPT_PURE`, `LOGO_IMPRESSAO_PURE`, `LT6108_PURE`, `LUPA_FILTRO_CLI_PURE`, `LZUTF16`, `MENUS_ARRASTAR_PURE`, `MENUS_ARRASTAR_SO_PURE`, `MENUS_ARRASTE_PURE`, `MENUS_ATALHOS_PURE`, `MENUS_DISPOSITIVO_PURE`, `MENUS_SUBMENUS_PURE`, `MENUS_TELA_PEQUENA_PURE`, `MENU_VERSAO_BOLETO_V52243_PURE`, `MFS608_PURE`, `MIGPRINT_PURE`, `MODO_ESCURO_PURE`, `NAV6107_PURE`, `NCM_IMPORT_PURE`, `NCM_ORIGEM_PURE`, `NCM_PRODUTO_EXISTENTE_PURE`, `NFE_ASSINATURA_UI`, `NFE_ATALHO_HISTORICO`, `NFE_CENTRAL_V52425`, `NFE_CENTRAL_V52426`, `NFE_CONFIG_PURE`, `NFE_EMISSAO_PURE`, `NFE_IE_IM_CNAE_PURE`, `NFE_LISTA_CHECKBOX`, `NFE_PERMISSAO_PURE`, `NFG_PURE`, `NFX_PURE`, `NOTIF_PURE`, `NUVEM_NAO_AUTORIZAR_V52246_PURE`, `ORCAMENTOS_APROVACAO_PURE`, `ORCAMENTOS_AUTORIZAR_V52244_PURE`, `ORCAMENTOS_PAGES_V52254_PURE`, `ORCAMENTOS_PURE`, `ORCAMENTOS_STATUS_V52243_PURE`, `ORCAMENTOS_V52238_PURE`, `ORCAMENTOS_V52240_PURE`, `ORCAMENTO_APROVACAO_V52255_PURE`, `ORCAMENTO_APROVACAO_V52256_PURE`, `ORCAMENTO_APROVACAO_V52257_PURE`, `ORCAMENTO_NAO_VOLTA_V52261_PURE`, `ORCAMENTO_UMA_VEZ_V52262_PURE`, `ORDENACAO_TITULO_PURE`, `P605_PURE`, `PARQUE_MONITOR_V52427`, `PENDING_CNPJ_KEY`, `PIX_LINK_PUBLICO_PURE`, `PIX_MANUAL_PURE`, `PIX_PAGAR_PUBLICO`, `PIX_PURE`, `PNC604_PURE`, `POM609_PURE`, `PONTE_ELECTRON_PURE`, `PRINT_SEM_RODAPE_PURE`, `RECARGAS_PURE`, `RELATORIO_V52249_PURE`, `RESOLUCAO_LOOP_V52252_PURE`, `RGATE_PURE`, `RODAPE_VERSAO_V52245_PURE`, `RTF_TEMPLATE_PURE`, `SESSION_KEY`, `SISTEMA_CLIENTES_LOJA_PURE`, `UI_PURE`, `V52237_ESTOQUE_ZERO_PURE`, `V52237_VENDAS_OS_PURE`, `V52238_VENDAS_PURE`, `V52239_ERRO_PURE`, `V52239_MENUS_PURE`, `V52239_PATRI_PURE`, `V52239_PRINT_PURE`, `V52241_VENDA_SALVAR_PURE`, `V52245_VENDA_PURE`, `V5240_RELATORIO_PURE`, `V5264_CH_DATA_PURE`, `VENDAS_FINANCEIRO_PENDENTE_PURE`, `VENDA_PRINT_PIX_PURE`, `VOTM_PURE`, `__CTR_FILTRO_V52237`, `__DIGICOPY_LOGO_ORIGINAL`, `__DIGICOPY_PONTES_ABERTAS`, `__DIGICOPY_PROMPT_NATIVO`, `__V52295_PURE`, `__avisouQuota`, `__cardPublicadorAgendado`, `__cfv`, `__checagemAtualizacaoFeita`, `__cliBuscaState`, `__cliDupGrupos`, `__cliIdxCache`, `__cliIdxGet`, `__cliSort`, `__clientesStatusFinal`, `__clitab`, `__clitabExtornarAgora`, `__ctrMexeuHoje`, `__dcUltPingMedidor`, `__esExc`, `__esExcPendingId`, `__esIni`, `__esReg`, `__esRes`, `__esTerm`, `__finBaixaIds`, `__finReciboTitulos`, `__finalizarSaveQ`, `__gravarParteCampo`, `__lastVoltarTs`, `__lcChamOrigem`, `__lcImpFiltro`, `__lcLancLeituraId`, `__lcLeiCtr`, `__lcListaContratoId`, `__limparPecasAntigas`, `__marcarImpAvulso`, `__migCat`, `__migCategorias`, `__modOrdem`, `__modUi`, `__navComErroVisivel`, `__navComMigrados`, `__nfeUltimoDoc`, `__orcResgates`, `__orcResumoUltimaBaixa`, `__orcUltimaLista`, `__origemFinanceiroVoltar`, `__p609ColunaMorta`, `__p8ScannerArmado`, `__perfPure`, `__pixUltimoPayload`, `__prodSortCol`, `__recargasSort`, `__saveDBSched`, `__saveQ`, `__saveTick`, `__sincronizarCamposChamado`, `__snapHash`, `__toastReal`, `__uiMenusRascunho`, `__uiSyncErro`, `__ultimaImportLocacao`, `__v52234salvoClick`, `__v52249_relatorio_loaded`, `__v52250_bundle_loaded`, `__v52251_resiliencia_loaded`, `__v52252_loop_fix_loaded`, `__v52253_login_guard_loaded`, `__v52254_pages_loaded`, `__v52263_exe_loaded`, `__v5242visMenus`, `__v5250LeiAtual`, `__v5250reimpEstorno`, `__v5260cn`, `__v5262ln`, `__v5264cd`, `__v5266pg`, `__v6000fg`, `__v60010sxv`, `__v60011sxvm`, `__v6001nfx`, `__v6002ac`, `__v6004pnc`, `__v6005pes`, `__v6006fmc`, `__v6007dhc`, `__v6008mfs`, `__v6009pom`, `__v6107nav`, `__v6108falta`, `__v6108lembra`, `__v612nes`, `__v7015nuvem`, `__vendasLegadasUsoDiario`, `__vosBT`, `__vosFatVendaId`, `__vosFormHtmlSalvo`, `__vosPure`, `__vosSaindoVenda`, `_jsonParaImportar`, `_nextCodigoCliente`, `_origOpenModal`, `_origRenderDashboard`, `_rawDataParaImportar`, `_ultimoCNPJData`, `_ultimoCepBuscado`, `abrirAbaProdutos`, `abrirAbaRecargas`, `abrirHubImpressora`, `abrirImpressaoLeitura`, `abrirLeituraDefinitiva`, `abrirLeituraDetalhada`, `abrirLeituraSelecionadaContrato`, `abrirModalEdicaoVendaRapida`, `abrirModalEmpilhado`, `abrirModalRecarga`, `abrirNotinhasAntigas`, `abrirOrcamento`, `abrirPerfilTributario`, `abrirTelaBackup`, `abrirVendaDeOrcamento`, `acForcarCura`, `addTecnico`, `adicionarPecaChamado`, `adicionarPecaRefino`, `agendarSnapshotLegado`, `alert`, `alterarClienteClassic`, `alterarQtdItem`, `alterarQtdPecaChamado`, `alterarQtdPecaRefino`, `alterarVendaSelecionada`, `alternarEstoqueInfinito`, `alternarEstoqueOperacional`, `alternarPodeEmitirNfe`, `aplicarBuscaChamadosOperacional`, `aplicarBuscaChamadosRefino`, `aplicarBuscaContratosOperacional`, `aplicarBuscaContratosRefino`, `aplicarBuscaLeituraRefino`, `aplicarBuscaListaLeituraOperacional`, `aplicarBuscaProdutosOperacional`, `aplicarBuscaRecargas`, `atualizarConfigCartuchosAntigos`, `atualizarImpressorasChamadoRefino`, `atualizarMedidorUI`, `atualizarMedidoresLeituraDefinitiva`, `avisoChamadoContrato`, `avisoEstoque`, `baixarCP`, `bkFecharTelaBackup`, `browseFdb`, `buscarCEPAutomatico`, `buscarCepContratoOperacional`, `buscarClienteContratoDefinitivo`, `buscarClienteContratoLeitura`, `buscarClienteContratoModal`, `buscarClientesFinal`, `buscarCnpjLoja`, `buscarContratoLeitura`, `buscarContratoLeituraDefinitiva`, `buscarEtiquetaFiltroVenda`, `buscarImpressorasChamadoAvulso`, `buscarNcmProduto`, `buscarVendasPorEtiqueta`, `caEditarImpressoraAvulso`, `calcChamadoAvulso`, `calcPreviewLeitura`, `carregarTiposMedidorLeitura`, `cartEtiquetasAtualizarFim`, `cfvEscolher`, `cfvFiltrar`, `chamadosSortOperacional`, `chamadosSortRefino`, `chartFinanceInst`, `chartFluxoInst`, `chartParqueInst`, `clearAllData`, `clearClienteVenda`, `clearSession`, `clienteDaVenda`, `clienteSelecionadoClassic`, `clientesDuplicadosAbrir`, `clientesDuplicadosContar`, `clientesDuplicadosUnir`, `clientesDuplicadosVincularContrato`, `clientesMostrarTodos`, `clitabAbrir`, `clitabAbrirClienteNaLista`, `clitabAbrirDireto`, `clitabAbrirLista`, `clitabAbrirRegistro`, `clitabExcluir`, `clitabExtornar`, `clitabRenderSoSelecionados`, `clitabSub`, `clitabToggleSel`, `confirm`, `confirmSistema`, `confirmarExcluirModulo`, `confirmarLancamentoLeituras`, `consultarCnpjInteligente`, `contratoCurarVinculos`, `contratoVincularCliente`, `contratosSortOperacional`, `converterOrcamentoMigradoEmVenda`, `copiarLinkOrcamentoModal`, `copiarSqlExportarTudo`, `criarLeituraDefinitiva`, `criarLeituraDetalhada`, `cvAddItem`, `cvItens`, `cvRemoveItem`, `cvRenderItens`, `cvSaveVenda`, `cvSearchCliente`, `cvSearchProduto`, `cvSelectCliente`, `cvSelectProduto`, `cvUpdateItemTotal`, `cvUpdateTotal`, `cvVendaSalva`, `dbFatiarEntidade`, `dbHashTexto`, `dbParteKey`, `dcCheckupNuvem`, `dcCheckupNuvemResumo`, `dcDiagnosticoInvisiveis`, `defaultData`, `deleteCR`, `deleteCliente`, `deleteUsuario`, `deleteVenda`, `destacarImpressoraLancamento`, `dhcAbrirOrigem`, `digicopyAbrirOuBaixarErroTxt`, `digicopyBaixarErroTxt`, `digicopyLogo`, `digicopyMandarErro`, `digicopyVerificarAtualizacaoAgora`, `editarEquipamentoChamado`, `editarImpressoraLancamento`, `editarLancamentoLeitura`, `editarNotinhaMigrada`, `ensureView`, `equipView`, `esAbrir`, `esClearLog`, `esExc`, `esExcConfirmar`, `esExcMotivo`, `esExcTog`, `esExcel`, `esLoginLocal`, `esMais`, `esRest`, `esSearch`, `esSync`, `esSyncTudo`, `escapeHtml`, `escolherImpressoraLancamento`, `escolherNcmProduto`, `estornarOrcamentosMarcados`, `estornarVendasSelecionadas`, `excluirChamadoV52422`, `excluirChamadosSelecionados`, `excluirClienteClassic`, `excluirClientesSelecionados`, `excluirContratoUnificado`, `excluirFinanceiroSelecionados`, `excluirProdutoUnificado`, `excluirRecarga`, `excluirTecnico`, `excluirUsuario`, `excluirVendaNeo`, `excluirVendaSelecionada`, `exportClientes`, `exportarBackupJSON`, `exportarModuloDinamico`, `faturarLeituraDefinitiva`, `faturarLeituraSelecionadaContrato`, `fbConnected`, `fbExportExtracted`, `fbExtractAll`, `fbExtractedData`, `fbImportLocacaoFamilia`, `fbListTables`, `fbMapNomeTabela`, `fbPreviewTable`, `fbSelectMigrationTables`, `fbSetStatus`, `fbTablesCache`, `fbTestConnection`, `fe6108Conferir`, `fecharModalChamadoAvulso`, `fetch`, `finAcaoImprimir`, `finAplicarFiltroV52421`, `finBuscarV52243`, `finEscolherCliente`, `finEscolherFormaBaixa`, `finImprimirRecibo`, `finModoV52245`, `finPreviewRepetir`, `finRemoverFiltroV52421`, `finSalvarNovoLancamento`, `finalizarChamadosSelecionados`, `findTable`, `fmtDate`, `fmtDateTime`, `fmtMoney`, `formatarLoginCNPJ`, `formatarNomeTabela`, `fxXmlCopiarEmail`, `garantirBotaoDadosMigrados`, `gerarFaturasPendentes`, `gerarRelatorio`, `getCurrentUser`, `getFbConfig`, `getFiltered`, `getPendingEmpresa`, `getSession`, `gravarSnapshotLegado`, `handleDatabaseUpload`, `handleGlobalSearch`, `handleMultipleUpload`, `handleRarUpload`, `handleTopSearchOperacional`, `impMedidorTrocar`, `impfTrocarMedidor`, `importBackup`, `importarJsonDBeaver`, `importarTudoDeUmaVez`, `imprimirChamadoAgoraV52422`, `imprimirEtiquetasCartucho`, `imprimirLeituraContratoExecutar`, `imprimirLeituraDefinitiva`, `imprimirLeituraDetalhada`, `imprimirRegistroMigrado`, `initTemplates`, `initials`, `lancarLeituraColetivaContrato`, `lcAddPecaManual`, `lcContadorAntigoChamado`, `lcCriarVendaDoChamado`, `lcEditarImpressoraChamado`, `lcEscolherImpressoraChamado`, `lcFiltroTodos`, `lcLimparClienteAvulso`, `lcMarcarImpressoraNaLista`, `lcPecaCalc`, `lcSelPeca`, `lerStatusImpressoraRede`, `lfbCornerToast`, `limparBuscaProdutosOperacional`, `limparTemplatesRTF`, `listUsuariosDemo`, `loadColetaForm`, `loadDB`, `logAction`, `lt6108Esquecer`, `mostrarTextoCopiar`, `mudarAbaChamado`, `mudarAbaChamadoOperacional`, `mudarAbaContrato`, `mudarAbaContratoOperacional`, `mudarAbaProd`, `mudarAbaProdutoOperacional`, `mudarMedidorImpressoraRefino`, `mudarModalidadePE`, `navegadorAbrir`, `navegadorAbrirSite`, `navegadorAdicionarSite`, `navegadorEditarSite`, `navegadorIrPara`, `navegadorRemoverSite`, `navegadorRestaurarPadrao`, `navegadorSites`, `neoAddItemVenda`, `neoRemoveItemVenda`, `neoRenderItensVenda`, `neoSearchClienteVenda`, `neoSelectClienteVenda`, `neoSelectProdutoVenda`, `neoSetFilter`, `neoToggleOSVenda`, `neoTogglePagamento`, `neoUpdateVendaTotal`, `neoVendaItens`, `nfAbrirDanfe`, `nfAuditarFiscal`, `nfBaixarXml`, `nfCancelarNota`, `nfCartaCorrecao`, `nfEmitirCompleta`, `nfInstalarCertificado`, `nfInutilizarFaixa`, `nfManifestarEvento`, `nfPacoteContador`, `nfProximoNumero`, `nfStatusServico`, `nfeEnviarCertNuvem`, `nfeLeituraSelecionada`, `nfeRemoverCertNuvem`, `nfgAlternarAmbiente`, `nfgRegistroNotas`, `nfxConfirmar`, `nfxPedirTexto`, `nfxRenderHistorico`, `normalizarNCMProdutoOperacional`, `normalizeDbShape`, `notificarEvento`, `novaLeituraCabecalho`, `novaLeituraDefinitiva`, `novaVendaComEtiqueta`, `novoChamadoAvulsoGuard`, `novoOrcamento`, `ntfAlternarPainel`, `ntfApagar`, `ntfAtualizarBadge`, `ntfFecharPainel`, `ntfMarcarLida`, `ntfMarcarTodasLidas`, `numeroVendaInt`, `onPagamentoChange`, `onStatusVendaChange`, `onTipoItemChange`, `onlyDigits`, `openContratoDetail`, `openModalClienteFromVenda`, `openModalCriarUsuarioPublic`, `openModalEditarTecnico`, `openModalNovoTecnico`, `openQuickReading`, `orcBuscar`, `orcBuscarSerial`, `orcCalcItem`, `orcDelItem`, `orcFiltroLista`, `orcRemoveItem`, `ordenarClientesFinal`, `ordenarModuloDinamico`, `osViewMode`, `pedirTextoSistema`, `permissoesAjuda`, `pixCopiarCodigo`, `pixLerCamposConfig`, `pixPreviewConfig`, `pixSalvarConfig`, `previewLancamentoContadorOperacional`, `previewLancamentoRefino`, `prodSort`, `produtosSortOperacional`, `prompt`, `proximoNumeroSimples`, `proximoNumeroVendaLimpo`, `puxarAprovacoesOrcamento`, `recargasSort`, `recusarOrcamentoInterno`, `registrarErroSistema`, `registrarNfeEmitida`, `removeTecnico`, `removerItemVenda`, `removerPecaChamado`, `removerPecaRefino`, `renderBanco`, `renderBuscadorEscola`, `renderCompras`, `renderFluxoChart`, `renderItensVenda`, `renderMigrados`, `renderModalContaPagar`, `renderModalContaReceber`, `renderModalEntrada`, `renderModalEquipamento`, `renderModalLeitura`, `renderOrcamentosView`, `renderPainelGerente`, `renderPecasChamado`, `renderRecargas`, `renderRelatorios`, `revalidarLinkOrcamento`, `salvarAlteracao`, `salvarContratoCompleto`, `salvarContratoCompletoOperacional`, `salvarContratoDefinitivo`, `salvarContratoFullRefino`, `salvarContratoLeituraSimples`, `salvarContratoOperacional`, `salvarContratoRefino`, `salvarContratoRelatorio`, `salvarDadosLojaFinal`, `salvarEdicaoNotinhaMigrada`, `salvarItemLeitura`, `salvarItemLeituraDefinitiva`, `salvarLancamentoContadorOperacional`, `salvarLancamentoRefino`, `salvarProdutoModal`, `salvarProdutoOperacional`, `salvarRecarga`, `salvarTecnico`, `salvarTemplatesRTF`, `saveCP`, `saveCR`, `saveContrato`, `saveEntrada`, `saveEquipamento`, `saveLeitura`, `saveLeituraRapida`, `saveProduto`, `searchChamadosAvancada`, `searchClientesVenda`, `searchProdutosVenda`, `selecionarClienteContrato`, `selecionarClienteContratoDefinitivo`, `selecionarClienteContratoLeitura`, `selecionarContratoLeitura`, `selecionarContratoLeituraDefinitiva`, `selecionarEquipamentoChamado`, `selecionarVendaClassic`, `selectProdutoVenda`, `seqObter`, `setAbaOrcamento`, `setEquipView`, `setFinTab`, `setPageHeader`, `setPendingEmpresa`, `sincronizarVendasNoFinanceiro`, `statusPillFin`, `storageDecode`, `storageEncode`, `storageEncodeTexto`, `sugerirIcone`, `syncAutoChecar`, `syncAutoLigado`, `syncEnviarParaNuvem`, `toggleOsView`, `togglePass`, `toggleSidebar`, `uiAjustarHome`, `uid`, `unlockVendaFaturadaUI`, `updateVendaTotal`, `usuarioDaVenda`, `usuarioPodeEmitirNfe`, `v52023AtualizarBotaoExcluir`, `v52023MarcarTodos`, `v5262AbrirPortao`, `v7015ConferirNuvem`, `vendasUsoBuscar`, `vendasUsoLimpar`, `verProdutosBaixos`, `verTodosProdutos`, `voltarListaChamadoContrato`, `voltarModalOperacional`, `vosAbrirImpressaoESalvar`, `vosAtualizarBotaoItem`, `vosBuscaVendasDeb`, `vosCarregarVendaNaTela`, `vosEditarItem`, `vosExportarNotinhaWord`, `vosExportarVendasCSV`, `vosFaturarAtual`, `vosImprimirAtual`, `vosImprimirCarne`, `vosImprimirCarneDaTela`, `vosItemCalcTotal`, `vosNumeroVisivel`, `vosParcelasPreview`, `vosRefaturar`, `vosResumoVenda`, `vosSetAba`, `vosSortVendas`, `vosVendaClearCliente`, `vosVendaSelectRecarga`, `vosVoltarRecebimento`
 
 ---
 

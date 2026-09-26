@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.27.0';
+const WORKER_VERSION = '5.28.0';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -759,6 +759,57 @@ async function handleChangesWatch(request, env, ctx) {
     return json({ ok: true, novidade: false, maxSeq });
   }
   return json({ ok: true, novidade: false, maxSeq });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FOTO DA NUVEM (v5.28.0 — rodada 31)
+// Pedido do dono: "eu quero é algo INSTANTÂNEO, não que seja mais rápido".
+// O problema: toda abertura no modo SÓ NUVEM relia o diário INTEIRO (tudo que já
+// foi gravado, desde o começo) — centenas de idas e voltas para uma base com meses
+// de uso. A foto entrega o ESTADO ATUAL (só o que está valendo agora), paginado pela
+// chave (entity, record_id) — sem repetir versão velha. É a mesma chave primária da
+// tabela, então cada página é uma consulta pelo índice (rápida em base grande).
+// Como o PC usa: lê a foto, marca o cursor no `snapshotSeq` e segue no diário
+// incremental dali em diante — o que for gravado DURANTE a foto chega pelo diário.
+// Por que não perde nada: o `snapshotSeq` (MAX(seq)) é lido ANTES das páginas; toda
+// gravação que a foto não alcançou tem seq MAIOR e vem no incremental. E o que a
+// foto alcançou com versão nova faz o diário pular (a trava de versão de sempre).
+// Excluídos NÃO vêm (na remontagem eles simplesmente não existem); a recuperação
+// continua pelo /v1/deleted de sempre. PC com app antigo ignora esta rota (ociosa).
+async function handleSnapshot(request, env, ctx) {
+  await authenticate(request, env);
+  const url = new URL(request.url);
+  somarUso(env, 0, 60, ctx); // uma folha da foto lida por baixo
+  const snap = await env.DB.prepare('SELECT MAX(seq) AS maxSeq FROM changes').first();
+  const snapshotSeq = Number(snap && snap.maxSeq) || 0;
+  const limit = Math.min(MAX_CHANGE_LIMIT,
+    Math.max(1, Number.parseInt(url.searchParams.get('limit') || '1000', 10) || 1000));
+  const depoisEntity = String(url.searchParams.get('afterEntity') || '');
+  const depoisId = String(url.searchParams.get('afterId') || '');
+  let query;
+  if (depoisEntity && depoisId) {
+    query = env.DB.prepare(
+      `SELECT entity, record_id, data_json, version FROM records WHERE deleted_at IS NULL
+         AND (entity > ? OR (entity = ? AND record_id > ?))
+       ORDER BY entity ASC, record_id ASC LIMIT ?`
+    ).bind(depoisEntity, depoisEntity, depoisId, limit + 1);
+  } else {
+    query = env.DB.prepare(
+      `SELECT entity, record_id, data_json, version FROM records WHERE deleted_at IS NULL
+       ORDER BY entity ASC, record_id ASC LIMIT ?`
+    ).bind(limit + 1);
+  }
+  const rows = (await query.all()).results || [];
+  const hasMore = rows.length > limit;
+  const selected = hasMore ? rows.slice(0, limit) : rows;
+  return json({
+    ok: true, snapshotSeq,
+    records: selected.map(row => ({
+      entity: row.entity, recordId: row.record_id,
+      data: parseDataJson(row.data_json), version: Number(row.version)
+    })),
+    hasMore
+  });
 }
 
 // v7.0.7 (motor) — PAGINAÇÃO QUE NÃO PULA MAIS REGISTRO (defeito provado)
@@ -1722,6 +1773,7 @@ async function route(request, env, ctx) {
   // v7.0.4 — AVISO INSTANTÂNEO: segura a consulta e responde NO MESMO INSTANTE
   // em que houver novidade (long polling). Ver handleChangesWatch.
   if (request.method === 'GET' && url.pathname === '/v1/changes/watch') return handleChangesWatch(request, env, ctx);
+  if (request.method === 'GET' && url.pathname === '/v1/snapshot') return handleSnapshot(request, env, ctx);   // v5.28.0 — foto (estado atual)
   if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);

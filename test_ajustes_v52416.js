@@ -50,10 +50,11 @@ ok(bundle.includes('montarLinhaErroTxt'), 'bundle: motor do erro.txt presente');
 ok(bundle.includes('aviso-erro-txt-abrir'), 'bundle: aviso de 2 botões presente');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('montarLinhaErroTxt'), 'bundle do CELULAR igual (download)');
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: versão 5.24.34');
-ok(idx.includes('>v5.24.34<'), 'index: rodapé 5.24.34');
-ok(idx.includes('app.bundle.js?v=5.24.34'), 'index: cache-bust 5.24.34');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.34"'), 'package.json 5.24.34');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok(idx.includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: versão v' + pkg.version);
+ok(idx.includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(idx.includes('app.bundle.js?v=' + pkg.version), 'index: cache-bust v' + pkg.version);
+ok(/"version": "\d+\.\d+\.\d+"/.test(fs.readFileSync('package.json', 'utf8')), 'package.json com versão válida (v' + pkg.version + ')');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 (erro.txt visível + aviso 2 botões + auditoria pra todos).');
+console.log('\nTudo OK — v' + pkg.version + ' (erro.txt visível + aviso 2 botões + auditoria pra todos).');

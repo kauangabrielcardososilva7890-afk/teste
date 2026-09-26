@@ -224,5 +224,8 @@
   "navegador_embutido_patch.js",
   "ajustes_v6108_lembrar_tela_patch.js",
   "ajustes_v6108_falta_emitir_patch.js",
-  "ajustes_v7015_nuvem_explica_patch.js"
+  "ajustes_v7015_nuvem_explica_patch.js",
+  "ajustes_v7020_mandar_erro_patch.js",
+  "ajustes_v7021_portao_escrita_patch.js",
+  "ajustes_v7022_salvar_alteracao_patch.js"
 ]

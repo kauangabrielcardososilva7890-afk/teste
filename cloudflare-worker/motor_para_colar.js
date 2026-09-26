@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.27.0   (igual ao src/index.js)
- * GERADO EM: 2026-09-25 17:53 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.0   (igual ao src/index.js)
+ * GERADO EM: 2026-09-25 18:56 UTC
  * sha256 do código (sem este cabeçalho):
- *   723eed33098d1194c0f90491c00c1ddeb06e101b046daf655f680fda59155906
+ *   49106475e81f52887448bd50fae8091827bf6ec83b6f8d4083d4a709b29c43ad
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,7 +35,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.27.0";
+var WORKER_VERSION = "5.28.0";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -725,6 +725,47 @@ async function handleChangesWatch(request, env, ctx) {
   return json({ ok: true, novidade: false, maxSeq });
 }
 __name(handleChangesWatch, "handleChangesWatch");
+async function handleSnapshot(request, env, ctx) {
+  await authenticate(request, env);
+  const url = new URL(request.url);
+  somarUso(env, 0, 60, ctx);
+  const snap = await env.DB.prepare("SELECT MAX(seq) AS maxSeq FROM changes").first();
+  const snapshotSeq = Number(snap && snap.maxSeq) || 0;
+  const limit = Math.min(
+    MAX_CHANGE_LIMIT,
+    Math.max(1, Number.parseInt(url.searchParams.get("limit") || "1000", 10) || 1e3)
+  );
+  const depoisEntity = String(url.searchParams.get("afterEntity") || "");
+  const depoisId = String(url.searchParams.get("afterId") || "");
+  let query;
+  if (depoisEntity && depoisId) {
+    query = env.DB.prepare(
+      `SELECT entity, record_id, data_json, version FROM records WHERE deleted_at IS NULL
+         AND (entity > ? OR (entity = ? AND record_id > ?))
+       ORDER BY entity ASC, record_id ASC LIMIT ?`
+    ).bind(depoisEntity, depoisEntity, depoisId, limit + 1);
+  } else {
+    query = env.DB.prepare(
+      `SELECT entity, record_id, data_json, version FROM records WHERE deleted_at IS NULL
+       ORDER BY entity ASC, record_id ASC LIMIT ?`
+    ).bind(limit + 1);
+  }
+  const rows = (await query.all()).results || [];
+  const hasMore = rows.length > limit;
+  const selected = hasMore ? rows.slice(0, limit) : rows;
+  return json({
+    ok: true,
+    snapshotSeq,
+    records: selected.map((row) => ({
+      entity: row.entity,
+      recordId: row.record_id,
+      data: parseDataJson(row.data_json),
+      version: Number(row.version)
+    })),
+    hasMore
+  });
+}
+__name(handleSnapshot, "handleSnapshot");
 async function handleDeleted(request, env) {
   await requireAdmin(request, env);
   const url = new URL(request.url);
@@ -1614,6 +1655,7 @@ async function route(request, env, ctx) {
   if (request.method === "POST" && url.pathname === "/v1/relato") return handleRelato(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/changes") return handleChanges(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/changes/watch") return handleChangesWatch(request, env, ctx);
+  if (request.method === "GET" && url.pathname === "/v1/snapshot") return handleSnapshot(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/v1/deleted") return handleDeleted(request, env);
   if (request.method === "POST" && url.pathname === "/v1/restore") return handleRestore(request, env);
   if (request.method === "GET" && url.pathname === "/v1/review/revoked-records") return handleRevokedDeviceRecords(request, env);

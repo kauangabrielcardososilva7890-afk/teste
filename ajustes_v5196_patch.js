@@ -81,7 +81,7 @@ window.excluirUsuario = function(id){
     if(!ok) return;
     db.usuarios = (db.usuarios || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('usuario', 'excluir', id, 'Excluído usuário ' + u.login);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('usuarios',null,'usuário excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     if(typeof renderAuditoria === 'function') renderAuditoria();
     toastMsg('Usuário excluído', 'success');
@@ -100,7 +100,7 @@ window.excluirTecnico = function(id){
     if(!ok) return;
     db.tecnicos = (db.tecnicos || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('tecnico', 'excluir', id, 'Excluído técnico ' + t.nome);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('tecnicos',null,'técnico excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     toastMsg('Técnico excluído', 'success');
   });

@@ -49,7 +49,8 @@ console.log('-- item 1.3: Backup manual 1, 2, 3... (worker) --');
 ok(worker.indexOf("return PASTA_MANUAL + '/Backup manual ' + seq + '.json';") >= 0, 'nome do manual = "Backup manual N.json"');
 ok(worker.indexOf('backup_seq_manual') >= 0 && worker.indexOf('ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1') >= 0, 'contador persistente na nuvem (system_meta) com incremento atômico');
 ok(worker.indexOf('chave = nomeBackupManual(await proximoSeqManual(env));') >= 0, 'backup manual usa o próximo número da nuvem');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.34'") >= 0, 'worker carimba v5.24.34');
+const vW = (worker.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
+ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').indexOf('Worker ' + vW) >= 0, 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
 
 // 11) v5.24.1: backups dependem do USUÁRIO (cargo Admin/Dono), não do aparelho
 console.log('-- v5.24.1: backup por usuário admin, qualquer PC --');
@@ -121,11 +122,12 @@ fontes.forEach(function(f){
   const src = fs.readFileSync(f, 'utf8');
   ok(mioloNoBundle(bundle, src) && mioloNoBundle(bundleMob, src), 'fonte ' + f + ' byte-idêntica nos 2 bundles');
 });
-ok(manifest[manifest.length - 4] === 'ajustes_v5240_relatorio_grande_patch.js' && manifest[manifest.length - 3] === 'ajustes_v5243_cliente_abas_patch.js' && manifest.length === 196, 'manifest tem 196 scripts, v5.24.0 penúltimo e v5.24.34 último');
-ok(bundle.indexOf('scripts: 196 | sha256:') >= 0, 'header do bundle com 196 scripts + sha256 novo');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.34') >= 0, 'index.html na v5.24.34');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0, 'mobile/www/index.html na v5.24.34');
-ok(pkg.version === '5.24.34', 'package.json v5.24.34');
+ok(manifest.includes('ajustes_v5240_relatorio_grande_patch.js') && manifest.indexOf('ajustes_v5240_relatorio_grande_patch.js') < manifest.indexOf('ajustes_v5243_cliente_abas_patch.js'), 'manifest tem o patch do relatório antes do patch das abas (ordem de carga)');
+const nScripts = Number((bundle.match(/\* scripts: (\d+) \| sha256:/) || [])[1] || 0);
+ok(nScripts === manifest.length && nScripts > 200, 'header do bundle bate com o manifest (' + nScripts + ' scripts)');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0 && indexHtml.indexOf('app.bundle.js?v=' + pkg.version) >= 0, 'index.html na v' + pkg.version);
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0, 'mobile/www/index.html na v' + pkg.version);
+ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json com versão válida (v' + pkg.version + ')');
 
 
 // 12) v5.24.2 — CORS da prova do usuário + menus Nuvem/Backup só para Admin
@@ -137,5 +139,5 @@ ok(patchBk.indexOf('__v5242') >= 0 && patchBk.indexOf('O menu Nuvem é só para 
 ok(patchBk.indexOf('Entre no sistema com um usuário de cargo Admin (ex.: Kauan)') >= 0 && patchBk.indexOf('ou Denivaldo (Dono)') < 0, 'cadeado do Backup não cita mais o Dono');
 seguroEmAmbos('aplicarVisibilidadeMenusNuvemBackup', 'visibilidade dos menus nos 2 bundles');
 
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.0'); process.exit(1); }
-console.log('\nTudo certo v5.24.0!');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v' + pkg.version); process.exit(1); }
+console.log('\nTudo certo v' + pkg.version + '!');

@@ -15,7 +15,7 @@ const P=load(src).RELATORIO_V52249_PURE;
 const link=P.linkOrcamento({token:'tok123',numero:'88',total:10},{nome:'Escola'},{whatsapp:'33999999999'});
 
 ok('versão 5.22.49', P.VERSAO==='5.22.49' && /^\d+\.\d+\.\d+/.test(pkg.version));
-ok('link do cliente é a página nova (GitHack)', link.indexOf('raw.githack.com')>=0 && link.indexOf('orcamento_pagar.html')>=0);
+ok('link do cliente é a página nova (Pages oficial)', link.indexOf('digicopy-orcamentos.pages.dev')>=0 && /[?&]d=/.test(link));
 ok('não usa o Pages velho', link.indexOf('digicopy-orcament.pages.dev')<0 && link.indexOf('digicopy-pix.pages.dev')<0);
 ok('leva token, dados e versão', /[?&]c=tok123/.test(link) && /[?&]d=/.test(link) && /[?&]v=5\.22\.49/.test(link));
 ok('página pede Tem certeza?', /Tem certeza\?/.test(pag));

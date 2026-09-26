@@ -5,7 +5,7 @@
 // Antes os 186 scripts eram colados num arquivo só, sem separação. Como é um
 // único arquivo, um erro de execução em QUALQUER um deles aborta o resto: os
 // scripts seguintes simplesmente nunca rodam. Era o que fazia "faltar muita
-// coisa" no .exe — o navegador (GitHack) e o Electron (file://) não têm as
+// coisa" no .exe — o navegador (site/Pages) e o Electron (file://) não têm as
 // mesmas permissões, então um patch que funciona no site pode falhar no .exe e
 // derrubar tudo que vem depois dele.
 //

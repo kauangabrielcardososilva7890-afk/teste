@@ -6,7 +6,8 @@
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
+// GitHack fora (dono confirmou, r36): padrão agora é o Pages oficial (igual ao que a v5.22.54 já forçava).
+var PAGINA = 'https://digicopy-orcamentos.pages.dev/';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -89,6 +90,7 @@ function aplicarLinkOrcamento(){
       var link = linkOrcamento(o, cli, emp);
       html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
       html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+      // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
       html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
       html = html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
       return html;
@@ -315,5 +317,5 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
   window.navigateTo.__v52249ver = true;
 }
 
-console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
+console.log('[DIGICOPY] v5.22.49 relatório: orçamento no Pages + punch list no exe');
 })();

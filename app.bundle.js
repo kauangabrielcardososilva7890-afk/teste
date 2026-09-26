@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 226 | sha256: bd50bd1865033995
+ * scripts: 229 | sha256: a77bb9a7eaed0e56
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2691,39 +2691,6 @@ async function fbExportExtracted(){
 }
 
 
-// AVISO DE ENDEREÇO PROVISÓRIO (raw.githack.com ≠ rawcdn.githack.com = cofres separados!)
-// O localStorage é por domínio: dados salvos aqui NÃO aparecem no link oficial.
-window.addEventListener('DOMContentLoaded',function(){
-  try{
-    if(location.hostname!=='raw.githack.com') return;
-    if(document.getElementById('rawgh-banner')) return;
-    const bar=document.createElement('div');
-    bar.id='rawgh-banner';
-    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;max-width:660px;width:calc(100% - 28px);background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);padding:12px 14px;font-family:inherit;';
-    const urlOficial=location.href.replace('raw.githack.com','rawcdn.githack.com');
-    bar.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
-      +'<div style="font-size:22px;line-height:1">⚠️</div>'
-      +'<div style="flex:1">'
-      +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
-      +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
-      +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
-      +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
-      +'</div></div></div>';
-    document.body.appendChild(bar);
-    const btnCopy=document.getElementById('rawgh-copy');
-    if(btnCopy) btnCopy.onclick=function(){
-      try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){
-        // Auditoria: aqui era prompt nativo, que no .exe lança
-        // "prompt() is not supported" — o botão de copiar ficava mudo.
-        if(typeof window.mostrarTextoCopiar==='function') window.mostrarTextoCopiar('Copie o link oficial', urlOficial);
-        else if(typeof toast==='function') toast('Link oficial: '+urlOficial,'info');
-      }
-    };
-    const btnClose=document.getElementById('rawgh-close');
-    if(btnClose) btnClose.onclick=function(){ bar.remove(); };
-  }catch(e){ /* silencioso */ }
-});
 
 ;
 
@@ -26709,7 +26676,7 @@ try{
 // PATCH v5.19.0 — dica de impressão no navegador (Ctrl+P) + reforço no Electron
 // • No programa (.exe/Electron): o Ctrl+P já é interceptado no main.js e imprime
 //   LIMPO (sem URL nem contador de páginas).
-// • No navegador (GitHack): o Ctrl+P abre a janela de impressão do navegador,
+// • No navegador (site/Pages): o Ctrl+P abre a janela de impressão do navegador,
 //   que é controlada pelo navegador (o link e o "Página X de Y" só saem
 //   desmarcando "Cabeçalhos e rodapés"). Aqui mostramos um aviso lembrando isso.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -27083,7 +27050,7 @@ window.excluirUsuario = function(id){
     if(!ok) return;
     db.usuarios = (db.usuarios || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('usuario', 'excluir', id, 'Excluído usuário ' + u.login);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('usuarios',null,'usuário excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     if(typeof renderAuditoria === 'function') renderAuditoria();
     toastMsg('Usuário excluído', 'success');
@@ -27102,7 +27069,7 @@ window.excluirTecnico = function(id){
     if(!ok) return;
     db.tecnicos = (db.tecnicos || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('tecnico', 'excluir', id, 'Excluído técnico ' + t.nome);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('tecnicos',null,'técnico excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     toastMsg('Técnico excluído', 'success');
   });
@@ -29669,6 +29636,41 @@ function pedirCarga(v){cargaPedida=!!v;}
 // mais nova primeiro só faz as antigas serem descartadas depois.
 // Só roda quando este PC vai remontar a base do zero (cursor 0 — é o caso do
 // modo SÓ NUVEM, em toda abertura) e só UMA vez por sessão.
+// v7.0.19 — FOTO DA NUVEM (anda junto com o motor 5.28.0; com motor antigo cai para
+// o caminho de sempre sozinho — sem dia de virada). Em vez de recontar o diário
+// inteiro (tudo desde o começo), lê o ESTADO ATUAL paginado pela chave e marca o
+// cursor no `snapshotSeq`: o que for gravado DURANTE a foto chega pelo incremental
+// logo depois (o laço do pullAll parte deste cursor). Tenta UMA vez por zeramento de
+// cursor (abertura, "baixar tudo"); se falhar, o diário assume (lento, correto).
+let fotoOkDesdeZero=false, fotoCursorVisto=-1;
+async function fotoRapidaBoot(call,mapa,comAviso){
+  const agora=Number(state.cursor)||0;
+  if(agora>0){fotoCursorVisto=agora;return false;}
+  if(fotoCursorVisto>0&&agora===0)fotoOkDesdeZero=false;   // zerou de novo ("baixar tudo"): pode tentar
+  fotoCursorVisto=agora;
+  if(fotoOkDesdeZero)return false;
+  fotoOkDesdeZero=true;   // tentou: valeu ou não, o diário segue (não insiste à toa)
+  let afterEntity='',afterId='',paginas=0,recebidos=0,aplicados=0,seq=0,completa=false;
+  try{
+    do{
+      const data=await comPaciencia(()=>call('/v1/snapshot?afterEntity='+encodeURIComponent(afterEntity)+'&afterId='+encodeURIComponent(afterId)+'&limit='+POR_PAGINA,{method:'GET'}));
+      if(!data||!Array.isArray(data.records))return false;
+      seq=Number(data.snapshotSeq)||seq;
+      recebidos+=data.records.length;
+      for(const rec of data.records){
+        if(rec&&applyRemote({entity:rec.entity,recordId:rec.recordId,data:rec.data,version:rec.version,operation:'upsert'},mapa))aplicados++;
+      }
+      const ultimo=data.records[data.records.length-1];
+      if(ultimo){afterEntity=String(ultimo.entity||'');afterId=String(ultimo.recordId||'');}
+      paginas++;
+      if(comAviso)mostrarCargaNuvem(true,recebidos.toLocaleString('pt-BR')+' registros (foto da nuvem)…');
+      if(!data.hasMore){completa=true;break;}
+    }while(paginas<500);
+  }catch(e){ return false; }   // 404 (motor antigo) ou rede: o diário assume
+  if(!completa)return false;   // foto gigante demais (500 mil vivos): o diário assume (correto)
+  if(seq>0){state.cursor=seq;marcarEstado();}
+  return aplicados>0;
+}
 const PASSE_RAPIDO=3000;      // últimas 3 mil mudanças (3 páginas)
 let passeRapidoFeito=false;
 async function passeRapidoInicial(call){
@@ -29721,7 +29723,13 @@ async function pullAll(opcoes){
   try{
   // v7.0.6 — antes de recontar a história inteira, mostra o estado de agora
   const mapa=definicoes();
-  if(await passeRapidoInicial(call))changed=true;
+  if(await fotoRapidaBoot(call,mapa,comAviso))changed=true;
+  else if(await passeRapidoInicial(call))changed=true;
+  // v7.0.19 — O PASSE RÁPIDO JÁ DEIXOU O ESTADO DE AGORA NA TELA: não segura mais o
+  // programa inteiro até o fim do histórico (num diário grande são minutos olhando a
+  // tela azul — o "demora sincronizar para aparecer tudo"). O aviso afina (faixinha
+  // embaixo, sem bloquear) e a tela se atualiza na hora; o resto compõe em silêncio.
+  if(comAviso&&changed){mostrarCargaNuvem(true,'dados recentes na tela — trazendo o histórico… (pode usar)',true);tentarRedesenhoPendente();}
   do{
     const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
@@ -30040,6 +30048,42 @@ function rememberConflict(item,result){
     localStorage.setItem(CONFLICT_KEY,JSON.stringify(list.slice(0,20)));
   }catch(e){}
 }
+// v7.0.18 — O QUE A NUVEM CONFIRMOU TEM DE ESTAR NA BASE (defeito provado)
+// O caso: ele gravou e o programa fechou antes de subir (faltou luz, travou,
+// fechou sem internet, ou a fila estava grande e a gravação não coube no envio
+// de despedida). Ao reabrir no modo SÓ NUVEM a base começa vazia, a fila pendente
+// SOBE e a nuvem confirma — mas a confirmação só atualizava o livro-caixa e
+// consumia a fila, sem colocar o registro na base. O eco da nuvem é pulado pelo
+// guarda de versão ("já conheço esta versão") e o registro ficava na nuvem, mas
+// INVISÍVEL neste PC até a próxima reabertura: o "sumiu ao fechar e abrir".
+// O conserto: ao confirmar um upsert, se o registro NÃO está na base, ele entra
+// com os dados que acabaram de subir. NUNCA sobrescreve o que está na tela: uma
+// edição mais nova pode estar esperando a vez — ela sobe no próximo ciclo.
+function materializarConfirmado(item){
+  try{
+    const mut=item&&item.mutation;
+    if(!mut||mut.operation!=='upsert'||!mut.data||typeof db==='undefined'||!db)return;
+    const mode=(definicoes()[mut.entity])||(mut.entity&&!NAO_SINCRONIZA.has(mut.entity)?'array':null);
+    if(!mode)return;
+    let mudou=false;
+    if(mode==='array'){
+      if(!Array.isArray(db[mut.entity]))db[mut.entity]=[];
+      if(posicaoNaLista(mut.entity,mut.recordId)<0){db[mut.entity].push(mut.data);mudou=true;}
+    }else if(mode==='map'){
+      if(!db[mut.entity]||typeof db[mut.entity]!=='object')db[mut.entity]={};
+      if(!Object.prototype.hasOwnProperty.call(db[mut.entity],mut.recordId)&&mut.data&&Object.prototype.hasOwnProperty.call(mut.data,'value')){db[mut.entity][mut.recordId]=mut.data.value;mudou=true;}
+    }else if(mode==='root'){
+      if(typeof db[mut.entity]==='undefined'){db[mut.entity]=mut.data;mudou=true;}
+    }else if(mode==='contador'){
+      if(mut.data&&typeof mut.data==='object'){
+        if(!db[mut.entity]||typeof db[mut.entity]!=='object')db[mut.entity]={};
+        const alvo=db[mut.entity];
+        for(const nome of Object.keys(mut.data)){const nv=Number(mut.data[nome])||0,aq=Number(alvo[nome])||0;if(nv>aq){alvo[nome]=nv;mudou=true;}}
+      }
+    }
+    if(mudou)marcarEstado();
+  }catch(e){/* materializar nunca pode atrapalhar a fila */ }
+}
 // Tamanho do lote em uso. Cai pela metade quando a nuvem reclama e volta a
 // crescer sozinho quando ela aceita — o PC nunca fica travado nem afoga o D1.
 let lote=PUSH_BATCH;
@@ -30071,6 +30115,7 @@ async function pushOutbox(){
     for(const result of (response.results||[])){
       const item=batch[result.index];if(!item)continue;
       if(result.ok){
+        if(item.mutation&&item.mutation.operation!=='delete')materializarConfirmado(item);   // v7.0.18: confirmado tem de aparecer
         state.versions[item.key]=Number(result.version)||state.versions[item.key]||0;
         if(item.mutation.operation==='delete'){delete state.known[item.key];delete state.hashes[item.key];limparMarcaDeExclusao(item.key);}
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
@@ -30094,6 +30139,18 @@ async function pushOutbox(){
         remove.add(item.mutation.mutationId);
       }else if(result.error){
         rememberConflict(item,result);limparMarcaDeExclusao(item.key);remove.add(item.mutation.mutationId);
+        // v7.0.18 — RECUSA DA NUVEM NUNCA MAIS EM SILÊNCIO (defeito provado: o item
+        // era descartado sem nenhum aviso e, no SÓ NUVEM, sumia ao fechar e reabrir).
+        // O registro continua na tela (está na base local); ele precisa saber que NÃO subiu.
+        try{
+          const codigoErro=(result.error&&(result.error.codigo||result.error.code))||'recusado';
+          const onde=(item.mutation&&item.mutation.entity)||'?';
+          relatarSaude('recusado',onde+' '+codigoErro);
+          if(typeof window!=='undefined'){
+            if(typeof window.toast==='function')window.toast('A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.','error');
+            if(typeof window.notificarEvento==='function')window.notificarEvento('info','A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.',{tipo:'sync'});
+          }
+        }catch(e){}
       }
     }
     outbox=outbox.filter(x=>!remove.has(x.mutation.mutationId));persist();
@@ -30623,7 +30680,7 @@ function estadoDetalhado(){
 // contagem; a lista do sistema só aparece quando TUDO chegou. Some sozinho no
 // fim (ou se der erro) — nunca prende ninguém.
 let cargaAberta=false, cargaItens=0;
-function mostrarCargaNuvem(mostrar,texto){
+function mostrarCargaNuvem(mostrar,texto,slim){
   if(typeof document==='undefined'||!document.body)return;
   const atual=document.getElementById('digicopy-carga-nuvem');
   if(!mostrar){ if(atual)atual.remove(); cargaAberta=false; return; }
@@ -30640,6 +30697,14 @@ function mostrarCargaNuvem(mostrar,texto){
   }
   const conta=document.getElementById('digicopy-carga-conta');
   if(conta)conta.textContent=texto||'';
+  // v7.0.19 — MODO FINO (não bloqueia): o passe rápido já deixou o estado de agora
+  // na tela — o aviso vira uma faixinha embaixo e a tela libera (cargaAberta=false),
+  // em vez de segurar o programa inteiro até o fim do histórico. A remoção continua
+  // pelo mesmo caminho (mostrarCargaNuvem(false)).
+  if(slim&&el){
+    el.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:rgba(10,30,138,.95);color:#fff;border-radius:12px;padding:8px 14px;font-size:12px;text-align:center;pointer-events:none';
+    cargaAberta=false;
+  }
 }
 // ═══════════════════════════════════════════════════════════════════════════
 // v7.0.4 (23/09/2026) — AVISO INSTANTÂNEO DA NUVEM + RECUPERAÇÃO AUTOMÁTICA
@@ -30899,11 +30964,18 @@ async function recuperarDasFotosLocais(){
   return voltaram;
 }
 
+// v7.0.19 — VENDAS E LEITURAS TAMBÉM SÃO AO VIVO (eram "telas de documento" e nunca
+// se atualizavam sozinhas: o dado chegava no banco do outro PC mas a lista na tela
+// continuava velha — o "não aparece no outro PC". Os dois renders são só releitura
+// da lista (o que se digita fica em modal/campo, que seguram o redesenho pela trava
+// de sempre). CONFIG continua de fora de propósito: o render dela escreve nos campos
+// do formulário e apagaria o que ele digitou e ainda não salvou.
 const TELAS_AO_VIVO={
   dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
   impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
   manutencao:'renderOs', financeiro:'renderFinanceiro', relatorios:'renderRelatorios',
-  usuarios:'renderUsuarios', auditoria:'renderAuditoria'
+  usuarios:'renderUsuarios', auditoria:'renderAuditoria',
+  vendas:'renderVendas', leituras:'renderLeituras'
 };
 const INTERVALO_REDESENHO=4000;
 let ultimoRedesenho=0;
@@ -32599,6 +32671,7 @@ window.dcCheckupNuvem=async function(){
       '<button type="button" id="dc-ck-baixar" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">⬇️ Baixar tudo da nuvem de novo</button>'+
       '<button type="button" id="dc-ck-enviar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0a1e8a;font-weight:800;font-size:12.5px;cursor:pointer">⬆️ Enviar este PC inteiro</button>'+
       '<button type="button" id="dc-ck-copiar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:800;font-size:12.5px;cursor:pointer">📋 Copiar resumo</button>'+
+      '<button type="button" id="dc-ck-mandar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #0f766e;background:#fff;color:#0f766e;font-weight:800;font-size:12.5px;cursor:pointer">📤 Mandar o que quebrou</button>'+
     '</div>'+
     '<p style="font-size:11.5px;color:#64748b;margin:9px 0 0">“Baixar tudo de novo” só faz este PC ler o diário da nuvem desde o começo — o que já está mais novo aqui não é mexido, e a nuvem não é alterada.</p>'+
     '<pre id="dc-ck-resumo" style="display:none"></pre>';
@@ -32624,6 +32697,10 @@ window.dcCheckupNuvem=async function(){
     if(!ok) return;
     try{ recadinho('Enviando...'); await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud(); recadinho('Enviado. Os outros PCs recebem no próximo ciclo.'); }
     catch(e){ recadinho('Erro: '+(e.message||e),true); }
+  };
+  document.getElementById('dc-ck-mandar').onclick=function(){
+    if(typeof window.digicopyMandarErro==='function'){ try{ window.digicopyMandarErro(); }catch(e){ recadinho('Erro: '+(e.message||e),true); } }
+    else recadinho('Atualize o sistema para mandar o erro (botão novo).',true);
   };
   document.getElementById('dc-ck-copiar').onclick=function(){
     const pre=document.getElementById('dc-ck-resumo');
@@ -37333,7 +37410,7 @@ function aplicarUmaVez(){
   if(jaFez()) return 0;
   var n = corrigirProdutosUmaVez(db.produtos);
   marcar(n);
-  if(typeof saveDB==='function') saveDB();
+  if(typeof salvarAlteracao==='function')salvarAlteracao('produtos',null,'letra de categoria padronizada');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2: migrou para a função única
   return n;
 }
 
@@ -40375,7 +40452,8 @@ window.ORCAMENTOS_APROVACAO_PURE = {
   linkPublico: linkPublico,
   mensagemWhats: mensagemWhats,
   AVISO_EPSON: AVISO_EPSON,
-  PAGES: PAGES
+  PAGES: PAGES,
+  deveAplicarResposta: deveAplicarRespostaOrcamento
 };
 
 window.aprovarOrcamentoInterno=function(id, origem){
@@ -40470,11 +40548,19 @@ function aplicarAprovacaoRemota(rec){
   }
 }
 
+// v7.0.25 — o GET responde 410 USED (ok:false) com status 'recusado' quando o
+// link morreu; aceitar pela decisão (não pelo ok) para encerrar o link morto.
+// Antes: o ok:false era ignorado e o poll de cada tick consultava para sempre.
+function deveAplicarRespostaOrcamento(j){
+  if(!j) return false;
+  return j.status==='aprovado' || j.status==='recusado';
+}
+
 function puxarAprovacoes(){
   if(!window.DIGICOPY_CLOUD || !window.DIGICOPY_CLOUD.api) return;
   (db.orcamentos||[]).filter(function(o){ return o && o.token && o.status==='aberto'; }).slice(0,20).forEach(function(o){
     fetch(API+'/orcamento?c='+encodeURIComponent(o.token)).then(function(r){ return r.json(); }).then(function(j){
-      if(j && j.ok && (j.status==='aprovado'||j.status==='recusado')) aplicarAprovacaoRemota(Object.assign({id:o.id,token:o.token}, j));
+      if(deveAplicarRespostaOrcamento(j)) aplicarAprovacaoRemota(Object.assign({id:o.id,token:o.token}, j));
     }).catch(function(){});
   });
 }
@@ -40529,7 +40615,8 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
+// GitHack fora (dono confirmou, r36): padrão agora é o Pages oficial (igual ao que a v5.22.54 já forçava).
+var PAGINA = 'https://digicopy-orcamentos.pages.dev/';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -41682,12 +41769,18 @@ function avisarErroNaTela(){
       +'<p style="font-size:13px;color:#475569;margin:0 0 14px;line-height:1.5">Foi criado/atualizado um arquivo <b>erro.txt</b> falando sobre o erro. Mande esse arquivo ao técnico do sistema.</p>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
       +'<button id="aviso-erro-txt-abrir" style="height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">'+(ehDesktop?'Abrir o erro.txt':'Baixar o erro.txt')+'</button>'
+      +(typeof window.digicopyMandarErro==='function'?'<button id="aviso-erro-txt-mandar" style="height:42px;padding:0 18px;border-radius:10px;background:#0f766e;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">\uD83D\uDCE4 Mandar o que quebrou</button>':'')
       +'<button id="aviso-erro-txt-ok" style="height:42px;padding:0 22px;border-radius:10px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:13px;font-weight:800;cursor:pointer">OK</button>'
       +'</div></div>';
     document.body.appendChild(div);
     document.getElementById('aviso-erro-txt-abrir').onclick=function(){
       abrirOuBaixarErroTxt();  // mesma ação do botão do rodapé (uma só fonte)
       var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
+    var bm=document.getElementById('aviso-erro-txt-mandar');
+    if(bm) bm.onclick=function(){
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+      try{ window.digicopyMandarErro(); }catch(e){}
     };
     document.getElementById('aviso-erro-txt-ok').onclick=function(){
       var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
@@ -41886,6 +41979,7 @@ if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento._
     var e=s && (db.empresas||[]).find(function(x){ return x.id===s.empresaId; });
     if(e) emp=Object.assign({}, emp, e);
     var link=linkDe(o, cli, emp);
+    // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
     html=html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
     html=html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
     html=html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
@@ -44240,7 +44334,8 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
+// GitHack fora (dono confirmou, r36): padrão agora é o Pages oficial (igual ao que a v5.22.54 já forçava).
+var PAGINA = 'https://digicopy-orcamentos.pages.dev/';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -44323,6 +44418,7 @@ function aplicarLinkOrcamento(){
       var link = linkOrcamento(o, cli, emp);
       html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
       html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+      // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
       html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
       html = html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
       return html;
@@ -44549,7 +44645,7 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
   window.navigateTo.__v52249ver = true;
 }
 
-console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
+console.log('[DIGICOPY] v5.22.49 relatório: orçamento no Pages + punch list no exe');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52249_relatorio_patch.js", e); }
@@ -45151,7 +45247,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
+  // (r36: PAGINA_FALLBACK do GitHack removido — dono confirmou que não usa mais; nunca foi lido em lugar nenhum.)
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -45189,7 +45285,6 @@ try{
   var ORCAMENTOS_PAGES_V52254_PURE = {
     VERSAO: VERSAO,
     PAGINA_PAGES: PAGINA_PAGES,
-    PAGINA_FALLBACK: PAGINA_FALLBACK,
     linkOrcamento: linkOrcamento
   };
 
@@ -45239,6 +45334,7 @@ try{
         var link = linkOrcamento(o, cli, emp);
         html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
         html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+        // Linha velha DE PROPÓSITO (r36): converte link antigo de dado já salvo — não depende do GitHack estar no ar.
         html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
         return html;
       };
@@ -60823,15 +60919,237 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7015_nuvem_explica_patch.js", e); }
 ;
 
+/* ===== ajustes_v7020_mandar_erro_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// MANDAR O QUE QUEBROU — v7.0.20 (rodada 32, ideia L)
+// A DOR (dele): "tem vários problemas, eu não consigo identificar".
+// 1 clique monta o pacote (versão + tela + últimos erros, SEM segredo) e abre
+// o popup de copiar do sistema — ele cola no chat e a manutenção recebe a prova.
+// NÃO é botão de rodapé (o do rodapé não volta, por ordem dele): mora no aviso
+// de erro (na hora que quebra) e no check-up da nuvem (quando está estranho mas
+// não quebrou nada). Não envia nada sozinho, não toca na nuvem, não pede senha.
+// Lê a mesma lista do erro.txt (v52239) — zero mudança no que já existe.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if(typeof window==='undefined')return;
+  var CHAVE_ERROS='digicopy_erros_txt';   // mesma chave do erro.txt (v52239)
+  var QTD_LINHAS=15;
+  // segredo nunca viaja: chave=valor vira chave=***
+  var RE_BEARER_SOOLTO=/\bBearer\s+[A-Za-z0-9\-._~+/=]{4,}/g;
+  var RE_CHAVE_VALOR=/(senha|password|passwd|token|authorization|bearer|api[_-]?key|secret|client[_-]?secret)(\s*[:=]\s*)([^\s&;"']+)/gi;
+  function redigir(s){
+    return String(s==null?'':s).replace(RE_BEARER_SOOLTO,'Bearer ***').replace(RE_CHAVE_VALOR,'$1$2***');
+  }
+  function telaAtual(){
+    try{
+      var raiz=document.getElementById('modal-root');
+      if(raiz&&!raiz.classList.contains('hidden')&&window.modalContext&&window.modalContext.type)
+        return 'janela: '+window.modalContext.type;
+      var lista=document.querySelectorAll('section.view, div.view');
+      for(var i=0;i<lista.length;i++){
+        if(!lista[i].classList.contains('hidden')&&lista[i].id) return String(lista[i].id).replace(/^view-/,'');
+      }
+      var at=document.querySelector('[data-nav].bg-blue-50, [data-nav].active');
+      if(at&&at.getAttribute('data-nav')) return String(at.getAttribute('data-nav'));
+    }catch(e){}
+    return 'não sei';
+  }
+  function ultimosErros(){
+    try{
+      var bruto=JSON.parse((typeof localStorage!=='undefined'?localStorage.getItem(CHAVE_ERROS):null)||'[]');
+      if(!Array.isArray(bruto))return [];
+      return bruto.slice(-QTD_LINHAS);
+    }catch(e){return [];}
+  }
+  function montarPacote(){
+    var versao=(typeof window.DIGICOPY_APP_VERSION==='string')?window.DIGICOPY_APP_VERSION:'?';
+    var quando=''; try{ quando=new Date().toLocaleString('pt-BR'); }catch(e){ quando=new Date().toISOString(); }
+    var erros=ultimosErros();
+    var linhas=['DIGICOPY — o que quebrou (para mandar à manutenção)',
+      'app: v'+versao+' | tela: '+telaAtual()+' | quando: '+quando,
+      erros.length?('erros (últimos '+erros.length+'):'):'(nenhum erro registrado — está estranho mas não quebrou nada)'];
+    for(var i=0;i<erros.length;i++) linhas.push(redigir(erros[i]));
+    // v7.0.22 (ideia E, bloco 1): o diário do portão de escrita vai junto — quando um
+    // dado some, o pacote mostra as últimas gravações (quando | onde | por onde).
+    // Sem o portão (ou sem gravação ainda): zero linhas novas, pacote idêntico.
+    try{
+      if(window.DIGICOPY_PORTAO&&typeof window.DIGICOPY_PORTAO.ultimas==='function'){
+        var grs=window.DIGICOPY_PORTAO.ultimas(20)||[];
+        if(grs.length){
+          linhas.push('gravações (últimas '+grs.length+' — quando | onde | por onde):');
+          for(var j=0;j<grs.length;j++){
+            var h='?'; try{ h=new Date(grs[j].q).toLocaleTimeString('pt-BR'); }catch(e2){ h='?'; }
+            linhas.push('  '+h+' | '+(grs[j].tela||'?')+' | '+(grs[j].via||'?'));
+          }
+        }
+      }
+    }catch(e3){}
+    return linhas.join('\n');
+  }
+  window.digicopyMandarErro=function(){
+    var pacote=montarPacote();
+    try{
+      if(typeof window.mostrarTextoCopiar==='function') return window.mostrarTextoCopiar('Mandar o que quebrou — cole no chat da manutenção', pacote);
+    }catch(e){}
+    try{ if(typeof window.toast==='function') window.toast('Não deu para abrir o pacote. Tente de novo.','error'); }catch(e2){}
+    return null;
+  };
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7020_mandar_erro_patch.js", e); }
+;
+
+/* ===== ajustes_v7021_portao_escrita_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v7.0.22 — PORTÃO DE ESCRITA, BLOCO 1 (ideia E): o portão existe e REGISTRA.
+// Dor que ataca: "dado que some/volta" — hoje 254 pontos em 109 arquivos gravam
+// direto e, quando um dado some, não há registro de quem gravou, quando e por
+// qual tela. Este bloco NÃO muda nenhum comportamento: ele embrulha o saveDB e
+// o saveDBAgora (os vencedores, do patch da nuvem) e ANOTA cada gravação
+// (quando + tela + por onde, e o motivo quando a gravação passa pela função
+// única) numa lista curta (50) na memória. A migração dos 254 pontos para a
+// função única vem nos próximos blocos, com teste antes/depois.
+// O botão "mandar o que quebrou" (v7020) lê este diário e manda junto no pacote.
+// Custo por gravação: 1 relógio + 1 olhar nas telas (microssegundos, sem timer,
+// sem rede, sem gravar nada em disco — regra 12: PC fraco).
+// (Os marcadores SUBSTITUICAO DE PROPOSITO moram junto de cada embrulho, abaixo.)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if(typeof window==='undefined')return;
+  if(window.DIGICOPY_PORTAO&&window.DIGICOPY_PORTAO.__portaoE)return; // já carregou: mantém o diário
+  var MAX=50, LOG=[], TOTAL=0, MOTIVO=''; // MOTIVO: r38 — a função única avisa o porquê antes de gravar; vale para a gravação seguinte
+  // Mesma detecção de tela do "mandar o que quebrou" (v7020), copiada de
+  // propósito: este patch carrega DEPOIS e não pode depender dele (e ele não
+  // pode depender daqui — funciona sem o portão). Lógica testada lá e aqui.
+  function tela(){
+    try{
+      var raiz=document.getElementById('modal-root');
+      if(raiz&&!raiz.classList.contains('hidden')&&window.modalContext&&window.modalContext.type)
+        return 'janela: '+window.modalContext.type;
+      var lista=document.querySelectorAll('section.view, div.view');
+      for(var i=0;i<lista.length;i++){
+        if(!lista[i].classList.contains('hidden')&&lista[i].id) return String(lista[i].id).replace(/^view-/,'');
+      }
+      var at=document.querySelector('[data-nav].bg-blue-50, [data-nav].active');
+      if(at&&at.getAttribute('data-nav')) return String(at.getAttribute('data-nav'));
+    }catch(e){}
+    return 'não sei';
+  }
+  function anotar(via){
+    try{
+      TOTAL++;
+      var ent={q:Date.now(),tela:tela(),via:via};
+      if(MOTIVO){ ent.motivo=MOTIVO; MOTIVO=''; }
+      LOG.push(ent);
+      if(LOG.length>MAX)LOG.splice(0,LOG.length-MAX);
+    }catch(e){/* o portão nunca quebra a gravação */}
+  }
+  window.DIGICOPY_PORTAO={
+    __portaoE:true,
+    ultimas:function(n){ try{ return LOG.slice(-(Math.max(1,n||20))).map(function(r){ return {q:r.q,tela:r.tela,via:r.via,motivo:r.motivo||''}; }); }catch(e){ return []; } },
+    total:function(){ return TOTAL; },
+    anotarMotivo:function(m){ try{ MOTIVO=String(m==null?'':m).slice(0,120); }catch(e){ MOTIVO=''; } },
+  };
+  // SUBSTITUICAO DE PROPOSITO: saveDB — embrulha (encadeia a anterior) para ANOTAR a gravação; delega tudo, muda nada.
+  // (escrito aberto, sem volta por nome, DE PROPÓSITO: o mapa das camadas só enxerga
+  // atribuição estática — `window[nome]` esconderia o portão da trava D. Duplicação
+  // consciente de 8 linhas para a trava continuar vendo quem ganha o saveDB.)
+  try{
+    var antesDB=window.saveDB;
+    if(typeof antesDB==='function'&&!antesDB.__portaoE){
+      var previoDB=antesDB;
+      window.saveDB=function(){ anotar('saveDB'); return previoDB.apply(this,arguments); };
+      window.saveDB.__portaoE=true;
+    }
+  }catch(e){}
+  // SUBSTITUICAO DE PROPOSITO: saveDBAgora — idem, via urgente.
+  try{
+    var antesAgora=window.saveDBAgora;
+    if(typeof antesAgora==='function'&&!antesAgora.__portaoE){
+      var previoAgora=antesAgora;
+      window.saveDBAgora=function(){ anotar('saveDBAgora'); return previoAgora.apply(this,arguments); };
+      window.saveDBAgora.__portaoE=true;
+    }
+  }catch(e){}
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7021_portao_escrita_patch.js", e); }
+;
+
+/* ===== ajustes_v7022_salvar_alteracao_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v7.0.24 — FUNÇÃO ÚNICA DE GRAVAÇÃO, BLOCO 2 (ideia E): os pontos migram.
+// Dor que ataca: "dado que some/volta" — o portão (bloco 1) já anota quando,
+// tela e via de TODA gravação; faltava o QUÊ e o PORQUÊ de cada ponto. Esta
+// função é o destino da migração: os 224 pontos trocam o `saveDB()` direto por
+// ela, em blocos, cada bloco com teste comparando o ANTES e o DEPOIS.
+//
+// Contrato (curto e garantido por teste):
+//   salvarAlteracao(lista, registro, motivo)
+//   - registro com id que NÃO está em db[lista] → entra (push); se já está lá
+//     (mutação in-place, o caso mais comum) → não duplica, segue adiante.
+//   - registro null → mudança de lista sem registro único (filtro, correção em
+//     massa): não mexe no db, só anota e grava.
+//   - motivo (até 120 letras) vai para o diário do portão junto da gravação.
+//   - NUNCA inventa forma no db (lista ausente/não-lista: só anota e grava).
+//   - o diário nunca quebra a gravação; o retorno é o do saveDB de sempre.
+// Padrão de migração (1 linha, com volta para o save direto):
+//   if(typeof salvarAlteracao==='function')salvarAlteracao('L',reg,'motivo');else if(typeof saveDB==='function')saveDB();
+// Bloco 2 (este): 3 sites — v52224 aplicarUmaVez + v5196 excluirUsuario/excluirTecnico.
+// Custo: 1 varredura por id quando há registro (bloco 2 só usa registro null:
+// custo zero além do save normal — regra 12: PC fraco).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if(typeof window==='undefined')return;
+  if(window.salvarAlteracao&&window.salvarAlteracao.__portaoE2)return; // já carregou
+  function salvarAlteracao(lista, registro, motivo){
+    var base=null;
+    if(typeof window!=='undefined'&&window&&window.db) base=window.db;
+    if(!base&&typeof db!=='undefined'&&db) base=db;
+    // Coloca o registro na lista SOMENTE se ele ainda não está lá. Sem
+    // try/catch DE PROPÓSITO: o comportamento de erro tem que ser idêntico ao
+    // do `push` direto que esta linha substitui (o teste antes/depois garante).
+    if(base&&lista&&registro&&registro.id!=null){
+      var arr=base[lista];
+      if(Array.isArray(arr)){
+        var tem=false;
+        for(var i=0;i<arr.length;i++){ if(arr[i]&&arr[i].id===registro.id){ tem=true; break; } }
+        if(!tem) arr.push(registro);
+      }
+    }
+    var mot='';
+    try{ mot=String(motivo==null?'':motivo).slice(0,120); }catch(e){ mot=''; }
+    var fnSave=null;
+    if(typeof window!=='undefined'&&window&&typeof window.saveDB==='function') fnSave=window.saveDB;
+    else if(typeof saveDB==='function') fnSave=saveDB;
+    if(fnSave&&mot){
+      try{
+        if(window.DIGICOPY_PORTAO&&typeof window.DIGICOPY_PORTAO.anotarMotivo==='function')
+          window.DIGICOPY_PORTAO.anotarMotivo(mot);
+      }catch(e){/* o diário nunca quebra a gravação */}
+    }
+    if(fnSave) return fnSave();
+    return undefined;
+  }
+  salvarAlteracao.__portaoE2=true;
+  window.salvarAlteracao=salvarAlteracao;
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7022_salvar_alteracao_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 226;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 229;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 226 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 229 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

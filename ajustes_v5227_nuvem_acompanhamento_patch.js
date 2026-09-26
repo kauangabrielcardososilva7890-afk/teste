@@ -245,6 +245,7 @@ window.dcCheckupNuvem=async function(){
       '<button type="button" id="dc-ck-baixar" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">⬇️ Baixar tudo da nuvem de novo</button>'+
       '<button type="button" id="dc-ck-enviar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0a1e8a;font-weight:800;font-size:12.5px;cursor:pointer">⬆️ Enviar este PC inteiro</button>'+
       '<button type="button" id="dc-ck-copiar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:800;font-size:12.5px;cursor:pointer">📋 Copiar resumo</button>'+
+      '<button type="button" id="dc-ck-mandar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #0f766e;background:#fff;color:#0f766e;font-weight:800;font-size:12.5px;cursor:pointer">📤 Mandar o que quebrou</button>'+
     '</div>'+
     '<p style="font-size:11.5px;color:#64748b;margin:9px 0 0">“Baixar tudo de novo” só faz este PC ler o diário da nuvem desde o começo — o que já está mais novo aqui não é mexido, e a nuvem não é alterada.</p>'+
     '<pre id="dc-ck-resumo" style="display:none"></pre>';
@@ -270,6 +271,10 @@ window.dcCheckupNuvem=async function(){
     if(!ok) return;
     try{ recadinho('Enviando...'); await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud(); recadinho('Enviado. Os outros PCs recebem no próximo ciclo.'); }
     catch(e){ recadinho('Erro: '+(e.message||e),true); }
+  };
+  document.getElementById('dc-ck-mandar').onclick=function(){
+    if(typeof window.digicopyMandarErro==='function'){ try{ window.digicopyMandarErro(); }catch(e){ recadinho('Erro: '+(e.message||e),true); } }
+    else recadinho('Atualize o sistema para mandar o erro (botão novo).',true);
   };
   document.getElementById('dc-ck-copiar').onclick=function(){
     const pre=document.getElementById('dc-ck-resumo');

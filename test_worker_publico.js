@@ -1,4 +1,4 @@
-// test_worker_publico.js — v7.0.17 (motor da nuvem 5.27.0)
+// test_worker_publico.js — v7.0.19 (motor da nuvem 5.28.0: + foto /v1/snapshot)
 // Roda o MOTOR DA NUVEM DE VERDADE (cloudflare-worker/src/index.js) sobre um banco
 // SQLite em memória, aplicando as migrations reais do projeto. É o mesmo código
 // que o dono publica — só o banco é de mentira.
@@ -31,7 +31,7 @@ catch(e){
   process.exit(0);
 }
 
-console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.27.0) ==');
+console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.28.0) ==');
 
 // ── banco de mentira, igual ao D1: prepare/bind/first/all/run/batch/exec ────
 function abrirBanco(){
@@ -319,6 +319,59 @@ const conta=(banco,sql,...args)=>banco.db.prepare(sql).get(...args).n;
     const vazio=await chamar(worker,abrirBanco(),'https://api.test/health',{method:'GET'});
     const txtVazio=(vazio.corpo&&typeof vazio.corpo==='object')?JSON.stringify(vazio.corpo):String(vazio.corpo||'');
     ok('sem nenhum relato, o /health não inventa nada (contagem vazia)',txtVazio.indexOf('"saude"')>=0);
+  }
+
+
+  // ═══ 8) FOTO DA NUVEM (v5.28.0 — rodada 31) ═════════════════════════════
+  console.log('-- 8) foto: o estado atual sem recontar a história --');
+  {
+    const banco=abrirBanco();
+    const token='dtoken-foto-123';
+    banco.db.prepare(`INSERT OR IGNORE INTO devices(id,name,token_hash,role,created_at,last_seen_at)
+      VALUES('pc-foto','PC Balcao',?, 'device',?,?)`).run(hashToken(token),Date.now(),Date.now());
+    const cab={ authorization:'Bearer '+token };
+    let mutN=0;
+    const M=(id,v,data,op)=>({ mutationId:'mut-foto-'+(mutN++), entity:'clientes', recordId:id,
+      operation:op||'upsert', baseVersion:v, data:data });
+    async function push(muts){
+      return chamar(worker,banco,'https://api.test/v1/changes',{ method:'POST',
+        headers:{ authorization:'Bearer '+token, 'content-type':'application/json' },
+        body:JSON.stringify({ mutations:muts }) });
+    }
+    // 3 criados + 2 edições + 1 exclusão = 6 no diário, 2 vivos
+    await push([M('c1',0,{id:'c1',nome:'Um'})]);
+    await push([M('c2',0,{id:'c2',nome:'Dois'})]);
+    await push([M('c3',0,{id:'c3',nome:'Três'})]);
+    await push([M('c1',1,{id:'c1',nome:'Um v2'})]);
+    await push([M('c1',2,{id:'c1',nome:'Um v3'})]);
+    await push([M('c3',1,null,'delete')]);
+    const foto1=await chamar(worker,banco,'https://api.test/v1/snapshot?limit=1',{headers:cab});
+    ok('a foto responde (200) com seq + registros + hasMore',
+      foto1.status===200&&foto1.corpo&&foto1.corpo.ok===true
+      &&typeof foto1.corpo.snapshotSeq==='number'&&Array.isArray(foto1.corpo.records)
+      &&foto1.corpo.hasMore===true);
+    ok('página 1 traz o primeiro vivo (c1) na versão ATUAL (v3, sem repetir história)',
+      foto1.corpo.records.length===1&&foto1.corpo.records[0].recordId==='c1'
+      &&foto1.corpo.records[0].version===3&&foto1.corpo.records[0].data.nome==='Um v3');
+    const seq=foto1.corpo.snapshotSeq;
+    ok('o snapshotSeq é o MAX(seq) do diário (6)',seq===6,'seq='+seq);
+    const foto2=await chamar(worker,banco,
+      'https://api.test/v1/snapshot?limit=1&afterEntity=clientes&afterId=c1',{headers:cab});
+    ok('página 2 traz c2 e acaba (o excluído c3 NÃO vem)',
+      foto2.corpo.records.length===1&&foto2.corpo.records[0].recordId==='c2'
+      &&foto2.corpo.records[0].version===1&&foto2.corpo.hasMore===false);
+    // gravado DEPOIS da foto: seq maior → chega pelo incremental
+    await push([M('c4',0,{id:'c4',nome:'Quatro'})]);
+    const inc=await chamar(worker,banco,'https://api.test/v1/changes?cursor='+seq,{headers:cab});
+    ok('o que foi gravado depois da foto chega pelo incremental (cursor=seq)',
+      inc.corpo.changes.length===1&&inc.corpo.changes[0].recordId==='c4');
+    const uniao={};
+    foto1.corpo.records.concat(foto2.corpo.records).forEach(r=>{uniao[r.recordId]=r.version;});
+    inc.corpo.changes.forEach(c=>{uniao[c.recordId]=c.version;});
+    ok('foto + incremental cobrem os 3 vivos na versão atual (e o excluído não volta)',
+      uniao.c1===3&&uniao.c2===1&&uniao.c4===1&&!('c3' in uniao),JSON.stringify(uniao));
+    const semCred=await chamar(worker,banco,'https://api.test/v1/snapshot',{});
+    ok('sem credencial a foto NÃO sai (401)',semCred.status===401);
   }
 
   console.log('\nRESULTADO: '+passou+' verificações passaram — o motor da nuvem no banco de prova (fluxo do cliente, aparelho público, busca do token, cota e teto).');

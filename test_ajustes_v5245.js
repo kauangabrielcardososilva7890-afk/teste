@@ -26,8 +26,9 @@ const pkg       = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const P = require('./ajustes_v5243_cliente_abas_patch.js');
 
 console.log('-- cota: farol anti-estouro --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.34'") >= 0, 'worker carimba v5.24.34');
-ok(worker.indexOf('LIMITE_ESCRITA_DIA = 95000') >= 0, 'freio preventivo: para de gravar antes do teto');
+const vW = (worker.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
+ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').indexOf('Worker ' + vW) >= 0, 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
+ok(worker.indexOf('freioDecide') >= 0 && worker.indexOf('const PLANO = PLANO_PAGO;') >= 0, 'freio preventivo: decide antes do teto e segue o plano pago (números, no farol)');
 ok(worker.indexOf('daily row write limit próximo') >= 0, 'pausa do freio usa a frase que o app reconhece');
 ok(fs.existsSync('checar_cota_nuvem.js'), 'farol checar_cota_nuvem.js existe (rodar antes de toda versão)');
 
@@ -69,9 +70,9 @@ ok(patch.indexOf("' excluído(s) de vez") >= 0, 'aviso da exclusão diz "de vez"
 console.log('-- integridade: bundles e versões --');
 ok(bundle.indexOf('__vosUltBusca[c.id]=c') >= 0 && bundleM.indexOf('__vosUltBusca[c.id]=c') >= 0, 'cura 4.1 presente nos 2 bundles');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.34') >= 0, 'index.html na v5.24.34');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0, 'mobile/www/index.html na v5.24.34');
-ok(pkg.version === '5.24.34', 'package.json v5.24.34');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0 && indexHtml.indexOf('app.bundle.js?v=' + pkg.version) >= 0, 'index.html na v' + pkg.version);
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0, 'mobile/www/index.html na v' + pkg.version);
+ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json com versão válida (v' + pkg.version + ')');
 
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.34'); process.exit(1); }
-console.log('\nTudo certo v5.24.34!');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v' + pkg.version); process.exit(1); }
+console.log('\nTudo certo v' + pkg.version + '!');

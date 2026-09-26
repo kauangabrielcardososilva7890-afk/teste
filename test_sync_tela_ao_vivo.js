@@ -86,7 +86,14 @@ ok('o aviso some no fim e também se der erro (ninguém fica preso)',
 console.log('\n== 3) QUEM FICA DE FORA (telas de documento) ==');
 const telas = S.telasAoVivo || {};
 ok('lista de telas ao vivo existe', Object.keys(telas).length >= 8);
-['vendas','leituras','config','orcamento','importar'].forEach(t => {
+// v7.0.19 — vendas e leituras VIRARAM ao vivo: os renders são só releitura da lista
+// (o que se digita fica em modal/campo, protegido pela trava) e ficar de fora deixava
+// a tela velha no outro PC ("não aparece"). Config continua de fora (o render escreve
+// nos campos e apagaria o não-salvo); orcamento/importar nem são telas com view.
+['vendas','leituras'].forEach(t => {
+  ok('tela de lista "' + t + '" virou ao vivo (v7.0.19)', !!telas[t]);
+});
+['config','orcamento','importar'].forEach(t => {
   ok('tela de documento "' + t + '" NÃO está na lista', !telas[t]);
 });
 ['clientes','produtos','contratos','parque','manutencao','financeiro','usuarios','dashboard'].forEach(t => {

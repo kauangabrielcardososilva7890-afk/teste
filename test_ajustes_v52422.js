@@ -50,11 +50,12 @@ ok(rtfp.includes('CLI_TELEFONE') && rtfp.includes('CLI_ENDCOMPLETO') && rtfp.inc
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('__ctrMexeuHoje') && bundle.includes('excluirChamadoV52422'), 'bundle: F1+F2 presentes');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('__ctrMexeuHoje'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: versão 5.24.34');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.34<'), 'index: rodapé v5.24.34');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.34"'), 'package.json 5.24.34');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: versão v' + pkg.version);
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(/"version": "\d+\.\d+\.\d+"/.test(fs.readFileSync('package.json', 'utf8')), 'package.json com versão válida (v' + pkg.version + ')');
 ok(main.includes('v5.24.34'), 'main.js com o comentário da versão');
 ok(prel.includes("'5.24.34'") || prel.includes("v5.24.34") || prel.includes('5.24.34'), 'preload carimbado');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 pacote 2A (F1 contratos-hoje, F2 chamados excluir+imprimir, P6 RTF no Word).');
+console.log('\nTudo OK — v' + pkg.version + ' pacote 2A (F1 contratos-hoje, F2 chamados excluir+imprimir, P6 RTF no Word).');

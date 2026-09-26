@@ -91,7 +91,7 @@ console.log('-- reclamação 2: a versão e a branch em TODOS os arquivos --');
   const versao = String(pkg.version || '');
   ok('package.json tem versão de verdade (x.y.z)', /^\d+\.\d+\.\d+$/.test(versao), versao);
   ok('a branch do package.json é a da sessão (o ZIP e os links apontam para o código certo)',
-    pkg.digicopy && pkg.digicopy.branch === 'arena/01a0cf4a-teste', String(pkg.digicopy && pkg.digicopy.branch));
+    pkg.digicopy && pkg.digicopy.branch === 'arena/01a0d9c3-teste', String(pkg.digicopy && pkg.digicopy.branch));
   const reVersao = new RegExp("DIGICOPY_APP_VERSION = '" + versao.replace(/\./g, '\\.') + "'");
   const outrasVersoes7 = (s) => (s.match(/\bv?7\.[0-9]+\.[0-9]+\b/g) || [])
     .map((v) => v.replace(/^v/, '')).filter((v) => v !== versao);

@@ -34,9 +34,10 @@ ok(worker.indexOf('CREATE TABLE IF NOT EXISTS backups (id TEXT PRIMARY KEY') >= 
 ok(!/CREATE TABLE IF NOT EXISTS \w+ \(\s*\n/.test(worker), 'nenhum CREATE TABLE multilinha');
 ok((worker.match(/noop: true, version: currentVersion/g) || []).length === 2, 'push NÃO regrava registro idêntico nem delete repetido (economia da cota)');
 ok(worker.indexOf("catch (eUso)") >= 0 && worker.indexOf("medidor pausado (cota)") >= 0, '/v1/status não cai mais quando o medidor não consegue gravar');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.34'") >= 0, 'worker carimba v5.24.34');
+const vW = (worker.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
+ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').indexOf('Worker ' + vW) >= 0, 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
 ok(syncPat.indexOf("api('/health'") >= 0 && syncPat.indexOf('status.workerVersao=h.versao') >= 0, 'aviso "código ANTIGO" só aparece se o /health de verdade falhar');
-ok(bkPat.indexOf('daily row write limit') >= 0 && bkPat.indexOf('LIMITE DIÁRIO') >= 0, 'Backup traduz a cota estourada para português amigável');
+ok(bkPat.indexOf('daily row write limit') >= 0 && bkPat.indexOf('atingiu o limite de gravações do período') >= 0, 'Backup traduz a cota estourada para português amigável');
 
 console.log('-- 2.1: "Nova venda" fora da TELA DE VENDAS também --');
 ok(appJs.indexOf('+ Nova venda / Orçamento</button>') < 0, 'botão "+ Nova venda / Orçamento" removido da tela de Vendas');
@@ -71,13 +72,14 @@ ok(patch.indexOf("getElementById('search-vendas')") >= 0 && patch.indexOf("getEl
 })();
 
 console.log('-- integridade: manifest, bundles e versões --');
-ok(manifest.length === 196 && manifest[manifest.length-1] === 'ajustes_v5243_cliente_abas_patch.js', 'manifest tem 196 scripts, último é o das abas');
-ok(bundle.indexOf('scripts: 196 | sha256:') >= 0, 'header do bundle com 196 scripts');
+ok(manifest.includes('ajustes_v5243_cliente_abas_patch.js'), 'manifest tem o patch das abas');
+const nScripts = Number((bundle.match(/\* scripts: (\d+) \| sha256:/) || [])[1] || 0);
+ok(nScripts === manifest.length && nScripts > 200, 'header do bundle bate com o manifest (' + nScripts + ' scripts)');
 ok(bundle.indexOf('clitab-btn-extornar') >= 0 && bundleM.indexOf('clitab-btn-extornar') >= 0, 'novo desenho presente nos 2 bundles');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.34') >= 0, 'index.html na v5.24.34');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0, 'mobile/www/index.html na v5.24.34');
-ok(pkg.version === '5.24.34', 'package.json v5.24.34');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0 && indexHtml.indexOf('app.bundle.js?v=' + pkg.version) >= 0, 'index.html na v' + pkg.version);
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0, 'mobile/www/index.html na v' + pkg.version);
+ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json com versão válida (v' + pkg.version + ')');
 
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.34'); process.exit(1); }
-console.log('\nTudo certo v5.24.34!');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v' + pkg.version); process.exit(1); }
+console.log('\nTudo certo v' + pkg.version + '!');

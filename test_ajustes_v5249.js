@@ -31,11 +31,12 @@ ok(reabertos === 2, 'pós-salvar e pós-revalidar reabrem pelo objeto (2 pontos)
 ok(orc43.indexOf("abrirOrcamento\\\\('([^']+)'\\\\)") >= 0 || orc43.indexOf("abrirOrcamento\\('([^']+)'\\)") >= 0, 'v52243 (badge de status) continua casando a 1ª aspa — etiqueta não quebra o leitor');
 
 console.log('-- integridade --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.34'") >= 0, 'worker carimba v5.24.34');
+const vW = (worker.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
+ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').indexOf('Worker ' + vW) >= 0, 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('o clique veio de:') >= 0 && bundle.indexOf('linha da lista de orcamentos') >= 0, 'etiquetas dentro do bundle');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.34') >= 0, 'index.html na v5.24.34');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0, 'mobile/www/index.html na v5.24.34');
-ok(pkg.version === '5.24.34', 'package.json v5.24.34');
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.34'); process.exit(1); }
-console.log('\nTudo certo v5.24.34!');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0 && indexHtml.indexOf('app.bundle.js?v=' + pkg.version) >= 0, 'index.html na v' + pkg.version);
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0, 'mobile/www/index.html na v' + pkg.version);
+ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json com versão válida (v' + pkg.version + ')');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v' + pkg.version); process.exit(1); }
+console.log('\nTudo certo v' + pkg.version + '!');

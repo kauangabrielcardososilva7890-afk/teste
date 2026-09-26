@@ -939,6 +939,41 @@ function pedirCarga(v){cargaPedida=!!v;}
 // mais nova primeiro só faz as antigas serem descartadas depois.
 // Só roda quando este PC vai remontar a base do zero (cursor 0 — é o caso do
 // modo SÓ NUVEM, em toda abertura) e só UMA vez por sessão.
+// v7.0.19 — FOTO DA NUVEM (anda junto com o motor 5.28.0; com motor antigo cai para
+// o caminho de sempre sozinho — sem dia de virada). Em vez de recontar o diário
+// inteiro (tudo desde o começo), lê o ESTADO ATUAL paginado pela chave e marca o
+// cursor no `snapshotSeq`: o que for gravado DURANTE a foto chega pelo incremental
+// logo depois (o laço do pullAll parte deste cursor). Tenta UMA vez por zeramento de
+// cursor (abertura, "baixar tudo"); se falhar, o diário assume (lento, correto).
+let fotoOkDesdeZero=false, fotoCursorVisto=-1;
+async function fotoRapidaBoot(call,mapa,comAviso){
+  const agora=Number(state.cursor)||0;
+  if(agora>0){fotoCursorVisto=agora;return false;}
+  if(fotoCursorVisto>0&&agora===0)fotoOkDesdeZero=false;   // zerou de novo ("baixar tudo"): pode tentar
+  fotoCursorVisto=agora;
+  if(fotoOkDesdeZero)return false;
+  fotoOkDesdeZero=true;   // tentou: valeu ou não, o diário segue (não insiste à toa)
+  let afterEntity='',afterId='',paginas=0,recebidos=0,aplicados=0,seq=0,completa=false;
+  try{
+    do{
+      const data=await comPaciencia(()=>call('/v1/snapshot?afterEntity='+encodeURIComponent(afterEntity)+'&afterId='+encodeURIComponent(afterId)+'&limit='+POR_PAGINA,{method:'GET'}));
+      if(!data||!Array.isArray(data.records))return false;
+      seq=Number(data.snapshotSeq)||seq;
+      recebidos+=data.records.length;
+      for(const rec of data.records){
+        if(rec&&applyRemote({entity:rec.entity,recordId:rec.recordId,data:rec.data,version:rec.version,operation:'upsert'},mapa))aplicados++;
+      }
+      const ultimo=data.records[data.records.length-1];
+      if(ultimo){afterEntity=String(ultimo.entity||'');afterId=String(ultimo.recordId||'');}
+      paginas++;
+      if(comAviso)mostrarCargaNuvem(true,recebidos.toLocaleString('pt-BR')+' registros (foto da nuvem)…');
+      if(!data.hasMore){completa=true;break;}
+    }while(paginas<500);
+  }catch(e){ return false; }   // 404 (motor antigo) ou rede: o diário assume
+  if(!completa)return false;   // foto gigante demais (500 mil vivos): o diário assume (correto)
+  if(seq>0){state.cursor=seq;marcarEstado();}
+  return aplicados>0;
+}
 const PASSE_RAPIDO=3000;      // últimas 3 mil mudanças (3 páginas)
 let passeRapidoFeito=false;
 async function passeRapidoInicial(call){
@@ -991,7 +1026,13 @@ async function pullAll(opcoes){
   try{
   // v7.0.6 — antes de recontar a história inteira, mostra o estado de agora
   const mapa=definicoes();
-  if(await passeRapidoInicial(call))changed=true;
+  if(await fotoRapidaBoot(call,mapa,comAviso))changed=true;
+  else if(await passeRapidoInicial(call))changed=true;
+  // v7.0.19 — O PASSE RÁPIDO JÁ DEIXOU O ESTADO DE AGORA NA TELA: não segura mais o
+  // programa inteiro até o fim do histórico (num diário grande são minutos olhando a
+  // tela azul — o "demora sincronizar para aparecer tudo"). O aviso afina (faixinha
+  // embaixo, sem bloquear) e a tela se atualiza na hora; o resto compõe em silêncio.
+  if(comAviso&&changed){mostrarCargaNuvem(true,'dados recentes na tela — trazendo o histórico… (pode usar)',true);tentarRedesenhoPendente();}
   do{
     const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
@@ -1310,6 +1351,42 @@ function rememberConflict(item,result){
     localStorage.setItem(CONFLICT_KEY,JSON.stringify(list.slice(0,20)));
   }catch(e){}
 }
+// v7.0.18 — O QUE A NUVEM CONFIRMOU TEM DE ESTAR NA BASE (defeito provado)
+// O caso: ele gravou e o programa fechou antes de subir (faltou luz, travou,
+// fechou sem internet, ou a fila estava grande e a gravação não coube no envio
+// de despedida). Ao reabrir no modo SÓ NUVEM a base começa vazia, a fila pendente
+// SOBE e a nuvem confirma — mas a confirmação só atualizava o livro-caixa e
+// consumia a fila, sem colocar o registro na base. O eco da nuvem é pulado pelo
+// guarda de versão ("já conheço esta versão") e o registro ficava na nuvem, mas
+// INVISÍVEL neste PC até a próxima reabertura: o "sumiu ao fechar e abrir".
+// O conserto: ao confirmar um upsert, se o registro NÃO está na base, ele entra
+// com os dados que acabaram de subir. NUNCA sobrescreve o que está na tela: uma
+// edição mais nova pode estar esperando a vez — ela sobe no próximo ciclo.
+function materializarConfirmado(item){
+  try{
+    const mut=item&&item.mutation;
+    if(!mut||mut.operation!=='upsert'||!mut.data||typeof db==='undefined'||!db)return;
+    const mode=(definicoes()[mut.entity])||(mut.entity&&!NAO_SINCRONIZA.has(mut.entity)?'array':null);
+    if(!mode)return;
+    let mudou=false;
+    if(mode==='array'){
+      if(!Array.isArray(db[mut.entity]))db[mut.entity]=[];
+      if(posicaoNaLista(mut.entity,mut.recordId)<0){db[mut.entity].push(mut.data);mudou=true;}
+    }else if(mode==='map'){
+      if(!db[mut.entity]||typeof db[mut.entity]!=='object')db[mut.entity]={};
+      if(!Object.prototype.hasOwnProperty.call(db[mut.entity],mut.recordId)&&mut.data&&Object.prototype.hasOwnProperty.call(mut.data,'value')){db[mut.entity][mut.recordId]=mut.data.value;mudou=true;}
+    }else if(mode==='root'){
+      if(typeof db[mut.entity]==='undefined'){db[mut.entity]=mut.data;mudou=true;}
+    }else if(mode==='contador'){
+      if(mut.data&&typeof mut.data==='object'){
+        if(!db[mut.entity]||typeof db[mut.entity]!=='object')db[mut.entity]={};
+        const alvo=db[mut.entity];
+        for(const nome of Object.keys(mut.data)){const nv=Number(mut.data[nome])||0,aq=Number(alvo[nome])||0;if(nv>aq){alvo[nome]=nv;mudou=true;}}
+      }
+    }
+    if(mudou)marcarEstado();
+  }catch(e){/* materializar nunca pode atrapalhar a fila */ }
+}
 // Tamanho do lote em uso. Cai pela metade quando a nuvem reclama e volta a
 // crescer sozinho quando ela aceita — o PC nunca fica travado nem afoga o D1.
 let lote=PUSH_BATCH;
@@ -1341,6 +1418,7 @@ async function pushOutbox(){
     for(const result of (response.results||[])){
       const item=batch[result.index];if(!item)continue;
       if(result.ok){
+        if(item.mutation&&item.mutation.operation!=='delete')materializarConfirmado(item);   // v7.0.18: confirmado tem de aparecer
         state.versions[item.key]=Number(result.version)||state.versions[item.key]||0;
         if(item.mutation.operation==='delete'){delete state.known[item.key];delete state.hashes[item.key];limparMarcaDeExclusao(item.key);}
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
@@ -1364,6 +1442,18 @@ async function pushOutbox(){
         remove.add(item.mutation.mutationId);
       }else if(result.error){
         rememberConflict(item,result);limparMarcaDeExclusao(item.key);remove.add(item.mutation.mutationId);
+        // v7.0.18 — RECUSA DA NUVEM NUNCA MAIS EM SILÊNCIO (defeito provado: o item
+        // era descartado sem nenhum aviso e, no SÓ NUVEM, sumia ao fechar e reabrir).
+        // O registro continua na tela (está na base local); ele precisa saber que NÃO subiu.
+        try{
+          const codigoErro=(result.error&&(result.error.codigo||result.error.code))||'recusado';
+          const onde=(item.mutation&&item.mutation.entity)||'?';
+          relatarSaude('recusado',onde+' '+codigoErro);
+          if(typeof window!=='undefined'){
+            if(typeof window.toast==='function')window.toast('A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.','error');
+            if(typeof window.notificarEvento==='function')window.notificarEvento('info','A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.',{tipo:'sync'});
+          }
+        }catch(e){}
       }
     }
     outbox=outbox.filter(x=>!remove.has(x.mutation.mutationId));persist();
@@ -1893,7 +1983,7 @@ function estadoDetalhado(){
 // contagem; a lista do sistema só aparece quando TUDO chegou. Some sozinho no
 // fim (ou se der erro) — nunca prende ninguém.
 let cargaAberta=false, cargaItens=0;
-function mostrarCargaNuvem(mostrar,texto){
+function mostrarCargaNuvem(mostrar,texto,slim){
   if(typeof document==='undefined'||!document.body)return;
   const atual=document.getElementById('digicopy-carga-nuvem');
   if(!mostrar){ if(atual)atual.remove(); cargaAberta=false; return; }
@@ -1910,6 +2000,14 @@ function mostrarCargaNuvem(mostrar,texto){
   }
   const conta=document.getElementById('digicopy-carga-conta');
   if(conta)conta.textContent=texto||'';
+  // v7.0.19 — MODO FINO (não bloqueia): o passe rápido já deixou o estado de agora
+  // na tela — o aviso vira uma faixinha embaixo e a tela libera (cargaAberta=false),
+  // em vez de segurar o programa inteiro até o fim do histórico. A remoção continua
+  // pelo mesmo caminho (mostrarCargaNuvem(false)).
+  if(slim&&el){
+    el.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:rgba(10,30,138,.95);color:#fff;border-radius:12px;padding:8px 14px;font-size:12px;text-align:center;pointer-events:none';
+    cargaAberta=false;
+  }
 }
 // ═══════════════════════════════════════════════════════════════════════════
 // v7.0.4 (23/09/2026) — AVISO INSTANTÂNEO DA NUVEM + RECUPERAÇÃO AUTOMÁTICA
@@ -2169,11 +2267,18 @@ async function recuperarDasFotosLocais(){
   return voltaram;
 }
 
+// v7.0.19 — VENDAS E LEITURAS TAMBÉM SÃO AO VIVO (eram "telas de documento" e nunca
+// se atualizavam sozinhas: o dado chegava no banco do outro PC mas a lista na tela
+// continuava velha — o "não aparece no outro PC". Os dois renders são só releitura
+// da lista (o que se digita fica em modal/campo, que seguram o redesenho pela trava
+// de sempre). CONFIG continua de fora de propósito: o render dela escreve nos campos
+// do formulário e apagaria o que ele digitou e ainda não salvou.
 const TELAS_AO_VIVO={
   dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
   impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
   manutencao:'renderOs', financeiro:'renderFinanceiro', relatorios:'renderRelatorios',
-  usuarios:'renderUsuarios', auditoria:'renderAuditoria'
+  usuarios:'renderUsuarios', auditoria:'renderAuditoria',
+  vendas:'renderVendas', leituras:'renderLeituras'
 };
 const INTERVALO_REDESENHO=4000;
 let ultimoRedesenho=0;

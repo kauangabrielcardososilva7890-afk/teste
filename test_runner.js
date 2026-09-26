@@ -267,7 +267,58 @@ const tests=[
   // v5.27.0 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"
-  "test_worker_publico.js"
+  "test_worker_publico.js",
+  // v7.0.18 (rodada 30) — "cadastra a impressora no contrato e ela some quando fecha
+  // e abre": a fila pendente subia depois de reabrir e a nuvem confirmava, mas a
+  // confirmação não colocava o registro na base (o eco é pulado pelo guarda de versão)
+  // — ficava na nuvem e invisível no PC até a próxima reabertura. E a recusa da nuvem
+  // (result.error) era descartada em silêncio. Este teste reprova se o confirmado não
+  // aparecer na tela e se a recusa não avisar (toast + sino + saúde).
+  "test_impressora_nao_some_reabrir.js",
+  // v7.0.19 (rodada 31) — "às vezes um dado criado não aparece em outro PC;
+  // demora sincronizar para aparecer tudo": VENDAS e LEITURAS nunca se atualizavam
+  // sozinhas (fora das telas ao vivo) + a carga segurava o programa até o fim do
+  // histórico + a abertura agora lê a FOTO da nuvem (/v1/snapshot, motor 5.28.0)
+  // em vez de recontar o diário (com motor antigo, o diário assume sozinho).
+  "test_dado_aparece_outro_pc.js",
+  // v7.0.20 (rodada 32, ideia L) — "tem vários problemas, eu não consigo
+  // identificar": 1 clique monta o pacote (versão + tela + últimos erros, SEM
+  // segredo) e abre o popup de copiar. Mora no aviso de erro e no check-up
+  // (NÃO é botão de rodapé, por ordem dele).
+  "test_mandar_erro.js",
+  // r33 (ideia D): trava contra redefinição silenciosa — patch novo que
+  // redefine função antiga sem marcador e sem encadear NÃO passa.
+  "test_sem_sobrescrita.js",
+  // r33 (farol resgatado): ordem antiga do dono ("nunca deixa estourar essa
+  // nuvem") agora roda sozinha em toda suíte — ninguém entrega sem ela passar.
+  "checar_cota_nuvem.js",
+  // r34 (tarefa 1 da auditoria externa): 20 órfãos reparados — asserts que
+  // travavam a v5.24.34/carimbo 196 viraram checagem contra a versão viva
+  // (runtime) e consistência worker/motor; comportamento, intacto.
+  "test_ajustes_v5184.js",
+  "test_ajustes_v5240.js",
+  "test_ajustes_v52410.js",
+  "test_ajustes_v52411.js",
+  "test_ajustes_v52412.js",
+  "test_ajustes_v52413.js",
+  "test_ajustes_v52414.js",
+  "test_ajustes_v52415.js",
+  "test_ajustes_v52416.js",
+  "test_ajustes_v52417.js",
+  "test_ajustes_v52418.js",
+  "test_ajustes_v52419.js",
+  "test_ajustes_v52420.js",
+  "test_ajustes_v52421.js",
+  "test_ajustes_v52422.js",
+  "test_ajustes_v5243.js",
+  "test_ajustes_v5245.js",
+  "test_ajustes_v5246.js",
+  "test_ajustes_v5247.js",
+  "test_ajustes_v5249.js",
+  // r35 (ideia E, bloco 1): o portão existe e registra — antes/depois idênticos.
+  "test_portao_escrita.js",
+  // r38 (ideia E, bloco 2): função única + 3 primeiros sites migrados (antes/depois).
+  "test_salvar_alteracao.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

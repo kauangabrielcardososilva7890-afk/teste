@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// DIGICOPY CONTADOR-USO (worker separado) — v5.23.5 (sem cronômetro: mede sob demanda)
+// DIGICOPY CONTADOR-USO (worker separado) — v5.23.6 (CORS liberado p/ o Pages ler; sem cronômetro: mede sob demanda)
 // Ideia do dono: um "index separado" que ele implanta UMA VEZ. Ele lê o
 // medidor OFICIAL da Cloudflare (com um token só de leitura guardado como
 // segredo DESTE worker) e grava o resultado no próprio D1 (tabela uso_real).
@@ -74,20 +74,30 @@ export default {
 
   // GET https://digicopy-contador-uso.<seu-sub>.workers.dev/v1/medir  → mede na hora
   async fetch(request, env) {
+    // v5.23.6 — CORS espelhado do worker principal: sem Allow-Origin o navegador
+    // bloqueia a leitura (o app roda no Pages, origem diferente). O corpo só tem
+    // totais agregados (leituras/escritas), nenhum dado do dono.
+    const CORS = {
+      'content-type': 'application/json; charset=utf-8',
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET, OPTIONS',
+      'access-control-max-age': '86400',
+    };
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url);
     if (url.pathname !== '/v1/medir') {
       return new Response(JSON.stringify({ ok: true, uso: 'chame GET /v1/medir para medir agora; o cron mede a cada 15 min.' }), {
-        headers: { 'content-type': 'application/json; charset=utf-8' },
+        headers: CORS,
       });
     }
     try {
       const uso = await rodarMedida(env);
       return new Response(JSON.stringify({ ok: true, uso }, null, 2), {
-        headers: { 'content-type': 'application/json; charset=utf-8' },
+        headers: CORS,
       });
     } catch (e) {
       return new Response(JSON.stringify({ ok: false, erro: String(e && e.message || e) }), {
-        status: 500, headers: { 'content-type': 'application/json; charset=utf-8' },
+        status: 500, headers: CORS,
       });
     }
   },

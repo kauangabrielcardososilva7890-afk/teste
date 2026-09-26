@@ -34,9 +34,10 @@ ok(/tetoEscritas: 50000000/.test(wk) && /tetoLeituras: 25000000000/.test(wk), 'w
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('bem raro no plano pago'), 'bundle: ficha nova dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('bem raro no plano pago'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index: versão 5.24.34');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.34<'), 'index: rodapé v5.24.34');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.34"'), 'package.json 5.24.34');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + pkg.version + "'"), 'index: versão v' + pkg.version);
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + pkg.version + '<'), 'index: rodapé v' + pkg.version);
+ok(/"version": "\d+\.\d+\.\d+"/.test(fs.readFileSync('package.json', 'utf8')), 'package.json com versão válida (v' + pkg.version + ')');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.34 (estrutura no idioma pago + ponto de recuo de 1 mês).');
+console.log('\nTudo OK — v' + pkg.version + ' (estrutura no idioma pago + ponto de recuo de 1 mês).');

@@ -121,7 +121,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.27.0'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.26.1 = site profissional (visual+rodapé novo); v5.26.0 = motor do CNPJ+gerente)');
+ok(worker.indexOf("const WORKER_VERSION = '5.28.0'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.28.0 = foto da nuvem (abertura instantânea); v5.26.1 = site profissional (visual+rodapé novo))');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
@@ -132,9 +132,13 @@ ok(sync.indexOf('MEDIDOR_OFICIAL_URL') >= 0 && sync.indexOf('__dcUltPingMedidor'
 ok(sync.indexOf('const medidoAgora = await chamarMedidorOficial()') >= 0 && sync.indexOf('medido agora, na abertura desta tela') >= 0, 'tela mede ANTES de pedir o status e avisa "medido agora, na abertura desta tela"');
 ok(patch.indexOf('window.DC_chamarMedidorOficial') >= 0, 'menu Backup também dispara a medida ao abrir');
 
+// 18) v5.23.6 — contador responde CORS: sem Allow-Origin o navegador (Pages) bloqueia a leitura
+ok(contador.indexOf("'access-control-allow-origin': '*'") >= 0, 'contador libera leitura cross-origin (Pages)');
+ok(contador.indexOf("request.method === 'OPTIONS'") >= 0, 'contador responde preflight OPTIONS');
+
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 31] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 30] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 29] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 28] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 27] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 26] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 25] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 24] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 23] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 22] === 'painel_gerente_patch.js' && man[man.length - 21] === 'fiscal_guard_patch.js' && man[man.length - 20] === 'nf_transmissao_patch.js' && man[man.length - 19] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (16º a partir do fim; v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
+ok(man[man.length - 34] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 33] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 32] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 31] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 30] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 29] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 28] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 27] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 26] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 25] === 'painel_gerente_patch.js' && man[man.length - 24] === 'fiscal_guard_patch.js' && man[man.length - 23] === 'nf_transmissao_patch.js' && man[man.length - 22] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (17º a partir do fim (v7.0.20 soma o mandar-erro no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
@@ -163,6 +167,14 @@ ok(patch.indexOf('function escDiag(') >= 0 && patch.indexOf('escDiag(d.motivo)')
    patch.indexOf('escDiag(d.erro.slice(0,160))') >= 0 &&
    patch.indexOf('+ escDiag((e && e.message) || e)') >= 0,
    'diagnóstico: texto da nuvem entra escapado no HTML (sem injeção)');
+
+// r37 (pedido do dono: zerar a nuvem) — o motor guarda a foto de segurança
+// ANTES de apagar: se o backup falhar, o reset não acontece.
+const iniReset = worker.indexOf('async function handleResetCloud');
+const blocoReset = worker.slice(iniReset, worker.indexOf('async function ', iniReset + 10));
+ok(iniReset >= 0 && blocoReset.indexOf('Backup antes de zerar a nuvem') >= 0 &&
+   blocoReset.indexOf('Backup antes de zerar a nuvem') < blocoReset.indexOf('DELETE FROM records'),
+   'zerar a nuvem: foto de segurança antes do apagar (ordem garantida no motor)');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
 console.log('\nTudo certo v5.23.8!');
