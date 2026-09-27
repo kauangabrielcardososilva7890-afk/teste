@@ -1,7 +1,7 @@
 # REFERÊNCIA — FISCAL DO SISTEMA ANTIGO (fotos do dono, 21/09/2026)
 
 > **Para que serve:** as fotos que o dono mandou mostram o fiscal do sistema antigo
-> (SisPrinter / DIGICOPY) e são a referência para o nosso fiscal ficar igual no que
+> (sistema antigo / DIGICOPY) e são a referência para o nosso fiscal ficar igual no que
 > ele pediu. Cada item abaixo diz **o que a foto mostra** e **o que já temos / o que falta**.
 >
 > **Onde estão as fotos:** na pasta `uploads/` do ambiente (`/home/user/uploads/`), com os
@@ -37,13 +37,13 @@ no mesmo lugar onde o sistema antigo tinha essa faixa.
 
 | Foto | O que mostra |
 |---|---|
-| `SUBMENU NOTA FISCAL.png`, `FILTRO SUBMENU NOTA FISCAL.png`, `Captura de tela 2026-09-19 015418.png` | **Lista** da NFe: título "Nota Fiscal Eletrônica", botões **Novo / Alterar / Excluir / Clonar**, filtro de período com calendário, "Hoje/Abertas", grade (Data, Modelo, Tipo, Email, Num. Nota, Natureza Op., Cliente, Valor, **Situação** = "Não Gerada"), rodapé `Banco Servidor Google · Usuário KAUAN · 28 Código SisPrinter: 1421 · DIGICOPY · 08.385.589/0001-03` |
+| `SUBMENU NOTA FISCAL.png`, `FILTRO SUBMENU NOTA FISCAL.png`, `Captura de tela 2026-09-19 015418.png` | **Lista** da NFe: título "Nota Fiscal Eletrônica", botões **Novo / Alterar / Excluir / Clonar**, filtro de período com calendário, "Hoje/Abertas", grade (Data, Modelo, Tipo, Email, Num. Nota, Natureza Op., Cliente, Valor, **Situação** = "Não Gerada"), rodapé `Banco Servidor Google · Usuário KAUAN · 28 Código sistema antigo: 1421 · DIGICOPY · 08.385.589/0001-03` |
 | `VENDA NF.png`, `venda não faturada NF - gerais.png`, `pre-visualização nota fiscal.png`, `Captura de tela 2026-09-15 202821.png`, `203838.png`, `224855.png` | **A tela da NFe** aberta para edição, com as abas: **Gerais · Destinatário · Itens da Nota · Informações Adicionais · Transporte · Correções · Reforma Tributária · Referenciar · Links Úteis · Log**, e sub-abas (Itens \| Tributação; Tributação \| Importação \| Outros \| Reforma Tributária; CSOSN ICMS \| Icms ST \| Fcp \| Efetivo \| Outros; XML Resposta \| Log \| NFe \| Retorno Completo WS \| Dados \| RetornoConsulta NFe 2.01; Respostas), rodapé **Gerar Nfe / Pré Visualizar** |
 | `geral - dados principais - filtro natureza.png` / `tipo.png` / `finalidade.png` | Listas dos campos: **Natureza** (VENDA, COMPRA, TRANSFERENCIA, DEVOLUCAO, COMPLEMENTAR, IMPORTACAO, CONSIGNACAO, REMESSA, REMESSA PARA CONSERTO, REMESSA EM GARANTIA, REMESSA DE BEM PARA LOCACAO, DEMONSTRACAO, SIMPLES REMESSA, LOCACAO DE EQUIPAMENTOS, RETORNO PARA CONSERTO, LOCACAO DE BENS MOVEIS…); **Tipo**: `1 - Saída` (e 0 - Entrada); **Finalidade**: `1 - Normal`, 2 - Complementar, 3 - Ajuste, 4 - Devolução/Retorno, 5 - Nota de Crédito, 6 - Nota de Débito |
 | `geral - pagamentos - filtro parte 1/2.png` | Formas de pagamento: 01-Dinheiro, 02-Cheque, 03/04/05-Cartões, 10-Vale Alimentação, 11-Vale Refeição, 12-Vale Presente, 13-Vale Combustível, 14-Duplicata Mercantil, 15-Boleto, 16-Depósito, 17-PIX Dinâmico, 18-Transferência, 19-Programa de Fidelidade, 90-Sem Pagamento, 99-Outro, 20-PIX Estático, 21-Crédito em loja, etc. |
 | `geral - duplicatas(o filtro vencimento escolho uma data, abre um calendario).png` | Aba **Duplicatas** (valor + vencimento com calendário) |
 | `opção quando eu clico no numero da chave de acesso.png` | Menu da chave: **Copiar Chave de Acesso**, Consultar NF Sefaz Nacional/Estadual, Acessar Diretório XML |
-| `NOTA FISCAL IMPRESSA.png`, `NOTA FISCAL IMPRESSA PRE-VISUALIZAÇÃO.png`, `Captura de tela 2026-09-15 203838/224855.png` | **DANFE** (SisPrinter): "NF-E EM PRÉ-VISUALIZAÇÃO — SEM VALOR FISCAL"; Dados Adicionais com **Valor Aproximado dos Tributos (Fonte IBPT)** e **"NF-e Vinculado a(s) venda(s)…"** |
+| `NOTA FISCAL IMPRESSA.png`, `NOTA FISCAL IMPRESSA PRE-VISUALIZAÇÃO.png`, `Captura de tela 2026-09-15 203838/224855.png` | **DANFE** (sistema antigo): "NF-E EM PRÉ-VISUALIZAÇÃO — SEM VALOR FISCAL"; Dados Adicionais com **Valor Aproximado dos Tributos (Fonte IBPT)** e **"NF-e Vinculado a(s) venda(s)…"** |
 
 **Nosso sistema hoje:** a venda/notinha e a Central de NF existem; a **tela da NFe com as 10 abas** e o
 fluxo "Novo → tela em aba" do sistema antigo **ainda não** existem no nosso formato.

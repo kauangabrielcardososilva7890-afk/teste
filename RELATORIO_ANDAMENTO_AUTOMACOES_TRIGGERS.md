@@ -2268,12 +2268,12 @@ Ação no ERP novo:
 - Criado `db.emailsOffMigrados`.
 - E-mails offline ficam somente como histórico, sem disparo automático.
 
-### 8U.3 Configurações de cliente/sisprinter e contas avulsas
+### 8U.3 Configurações de cliente (tabela importada) e contas avulsas
 
 Recebido:
 
 - `CONFIG_CLIENTES_BI0`
-- `CONFIG_SISPRINTER_BI0`
+- `CONFIG_*_BI0` (tabela de configuração importada)
 - `CONTAS_RECEBER_AVULSA_BI0`
 
 O que faz no banco anterior:
@@ -2289,13 +2289,13 @@ O que faz no banco anterior:
   - NF-e;
   - backup;
   - geolocalização.
-- Busca valor configurado em `CONFIG_SISPRINTER` quando existir.
+- Busca valor configurado em `CONFIG_*` (tabela importada) quando existir.
 - Ignora registros importados de banco MySQL.
 
 Ação no ERP novo:
 
 - Criado `db.configClientesMigradas`.
-- Criado `db.configSisprinterMigradas`.
+- Criado `db.config*Migradas` (coleção das configurações importadas).
 - Criado `db.contasReceberAvulsasMigradas`.
 - Os custos ficam apenas históricos/consultáveis e **não geram cobrança automática** no ERP novo.
 - Registros com observação `Importado Banco Mysql` são ignorados como no banco antigo.

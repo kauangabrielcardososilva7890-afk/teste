@@ -613,7 +613,7 @@ instalador completo (`GERAR_EXE.cmd`) — os dois são ele quem roda.
 
 **Pedido dele (22/09, depois da rodada nº4):** *"esse da nuvem é possível fazer
 um .exe só pra isso? só pra conectar na nuvem no sistema"* — olhando a pasta do
-sistema antigo (SisPrinter + `BANCO.FDB` + `Firebird_3_0_7` + DLLs + `Atualizador.exe`).
+sistema antigo (`BANCO.FDB` + `Firebird_3_0_7` + DLLs + `Atualizador.exe`).
 
 **Resposta técnica (por que aqui é mais simples):** no sistema antigo o `.exe`
 tinha 100 MB porque levava o programa **e o banco Firebird** dentro do PC. Aqui o
@@ -3582,7 +3582,7 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Tela 'Consulta Notas Destinadas' (botão Obter Notas):** 3 formas de pesquisa — (a) a partir do último registro consultado (retoma do NSU salvo — o marcador de página), (b) últimos 3 meses (primeira carga), (c) a partir de um NSU específico. Botão 'Consultar Destinadas'.
 - **Tela principal (grade):** Tipo de Filtro — Cadastradas Hoje / Nome do Emitente / Chave / Valor (+caixa de texto p/ digitar o valor do filtro); Status NF — Todas/Autorizadas/Canceladas/Denegadas; Modelo NF — Todas/NF-e/NFC-e; Status Manifestação — Todos/Operação Confirmada/Ciência da Operação/Operação Desconhecida/Operação Não Realizada; período (17/06/2026–15/09/2026 nas fotos dele); 'Não se Aplica'. Colunas: Sel, Código, NSU, Nome/Razão Social, IE, CNPJ, Chave da Nota, Tipo de Valor, Valor, Série, Número DFe, Dh. Emissão, Status Nota, Status Manifestação, Protocolo Nota.
 - **Ações da grade:** Obter Notas / Manifestar / Baixar XML. Botão Manifestar abre 4 eventos legais: Ciência da Operação / Desconheço esta Operação / Operação Não Foi Realizada / Operação Realizada com Sucesso.
-- **Rodapé dele:** Banco 'Servidor Google', Usuário RECEPCAO, Código SisPrinter 1421, empresa DIGICOPY CNPJ 08.385.589/0001-03 (contexto dele em produção).
+- **Rodapé dele:** Banco 'Servidor Google', Usuário RECEPCAO, Código 1421 (sistema antigo), empresa DIGICOPY CNPJ 08.385.589/0001-03 (contexto dele em produção).
 - **No nosso desenho:** mesmos 4 eventos (em português-gente), busca automática agendada, NSU-marcador por empresa, grade com mesmos filtros, Baixar XML → pasta nfe_xmls/AAAA-MM e pacote pro escritório.
 - **NCM:** ele lembrou bem — era do 1° pacote (submenu lista); se quiser fotos da tela NCM aberta com filtros, manda quando abrir.
 
@@ -7585,3 +7585,100 @@ Sem código — só registro. Commitado e empurrado na **`arena/01a0d9c3-teste`*
 comentado. Links: https://teste-60f.pages.dev e
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 App segue v7.0.25, motor 5.28.0. Próximo: confirmação dele de que virou admin.
+
+## Rodada 42 — 26/09/2026 — TRIAGEM GERAL: ROTEIRO DOS 5 SISTEMAS + PURGA DO NOME LEGADO + VEREDITOS A–F (SEM CÓDIGO AINDA)
+
+### 0. O roteiro do dono (registrado — vale a partir de agora)
+
+O sistema é um ERP comercial futuro; o login na nuvem com CNPJ+senha existe por causa
+da versão comercial. São 5 frentes, nesta ordem: (1) LOJA PC — a atual, primeira a
+ficar pronta; (2) COMERCIAL PC — .exe separado, outro config, funções
+removidas/diferentes/novas (ex.: bloquear login de cliente) — NÃO começado, só depois
+do 1 e do 3; (3) LOJA ANDROID — pausado até o 1 estabilizar (segue estacionado);
+(4) COMERCIAL ANDROID — mesmas regras do 2; (5) GERENTE — .exe de controle (pagamentos
+do comercial, publicar atualizações com notas, habilitar/recolher versões, cancelar
+login por inadimplência) — só quando os 4 estiverem prontos (segue estacionado).
+Site `teste-60f.pages.dev` = APENAS teste temporário; quando pronto ele usa o .exe e
+APAGA o link. Consequência: o .exe (build:win) é o alvo real — nada pode quebrá-lo.
+
+### 1. Purga do nome do sistema antigo (ORDEM PERMANENTE do dono)
+
+Ordem: NUNCA registrar o nome do sistema antigo em nenhum arquivo, commit, comentário
+ou resposta; apagar menções existentes. Execução: varredura case-insensitive achou 8
+arquivos. Limpos: `FISCAL_ANTIGO_REFERENCIA.md` (2 trechos → "sistema antigo", conteúdo
+fiscal preservado), `RELATORIO_ANDAMENTO_AUTOMACOES_TRIGGERS.md` (4 trechos →
+"tabela importada"/`CONFIG_*`), `RELATORIO_SESSAO.md` (2 trechos). MANTIDOS de
+propósito (4 pontos FUNCIONAIS + teste + 3 bundles que os espelham): o código de
+migração em `automacoes_finais_locacao_auxiliares_patch.js` lê a tabela importada
+`CONFIG_*` e a coleção `db.config*Migradas` — é de lá que sai o PREÇO de e-mail/contas
+avulsas (`configSisValor`, chamado nas linhas 172/181, a partir do sync da linha 373;
+`rows()` lê `db.modulosDinamicos`, dados VIVOS dele). Apagar cegamente = quebrar
+faturamento. Decisão com o dono na pergunta 3 (manter escondido vs renomear com
+migração de dados). Nota: histórico antigo do Git mantém o nome nos commits passados
+(normal; não aparece no programa). Arquitetura futura: o módulo de migração (com nomes
+de tabelas legadas) embarca SÓ no .exe da loja nº 1, NUNCA no comercial nº 2.
+
+### 2. Triagem dos bugs (só veredito com prova; o resto vai na pergunta/clique dele)
+
+- B (impressora do contrato não salva): mapeado 6 definições de
+  `salvarImpressoraContrato` + 3 de `abrirModalEquipamentoContrato` + 4 wrappers;
+  ordem do bundle diz que o par vencedor é modal do fluxo:90 + save do fluxo:94 com
+  cadeia v5176→v52243→v52245→v52243→v52435, todos com `oldSal.apply` (passagem
+  verificada) e `salvar()` próprio chamando `saveDB`. Falha NÃO isolável só lendo —
+  precisa do "📤 Mandar o que quebrou" clicado após reproduzir (se lançar exceção,
+  vem no pacote). Pedido a ele com passo a passo.
+- C ("Contrato sem cliente no cadastro"): cadeia de vínculo verificada (10
+  estratégias: clienteId, raw, código, nome único, documento, parecido, evidência,
+  criação) e NÃO-destrutiva (nunca apaga clienteId; reconciliar só soma).
+  Persistência do rótulo = contratos sem nenhuma chave aproveitável OU divergência
+  nos helpers (suspeito nº 1: `clientePorCodigo` exige `empresaId` estrito).
+  Precisa de sonda NOS DADOS dele (mandar-erro não ajuda — não há exceção).
+- D/A (entre PCs + demora): fatos — heartbeat 15s, outbox com trava de espaço, freio
+  429 tratado; print dele mostrava outbox com 400 pendentes (metade push suspeita).
+  INSTANTÂNEO = impossível (polling, sem canal push — veredito honesto). Spec dele
+  registrada: NÃO quer ao-vivo automático; quer aparecer ao ABRIR/atualizar o menu.
+  Recomendação: pull-na-abertura em todas as telas + botão atualizar visível (o
+  congelamento 5–8s no login é factível mas pode não resolver se a trava for no
+  push). Pergunta 1.
+- E (fiscal): grep de "tentativa/descobrir" achou quase nada real (log de tentativas
+  de emissão = legítimo; "Testar SEFAZ" = legítimo). Inventário verdadeiro (despejar
+  TODOS os rótulos dos 5 arquivos fiscais e classificar) = próxima rodada, com lista
+  para ele aprovar antes de remover. Os 52 prints serão pedidos de volta quando a
+  correção de comportamento fiscal começar (não estão nesta sessão).
+- F (desconhecidos): método sem achismo — (1) cada conserto precisa de reprodução +
+  âncora no código + teste; (2) rede = teste dele + botão mandar-erro; (3) auditorias
+  por tela na ordem de prioridade dele (pergunta 2).
+
+### 3. Regras de trabalho fundidas (dele + votadas)
+
+Perguntar antes de qualquer FUNÇÃO nova (portão ativo); passo a passo para ações dele
+(ativo); 24 perguntas (já seguia, segue); limpeza só 100%-morta-provada (já votado,
+confirmado agora); correções na RAIZ a partir da próxima (ver §4).
+
+### 4. Patch-vs-raiz: minha resposta honesta (pergunta dele)
+
+Os `ajustes_v*.js` fizeram sentido como trilha por rodada, mas hoje são 200+ arquivos
+e o bug B é o exemplo perfeito do custo: 6 salvadores sombreando o mesmo nome. A
+partir da próxima correção: conserto NO ARQUIVO DONO (raiz), sem arquivo novo por
+conserto, e remoção dos duplicados sombreados quando 100% mortos (escopo já votado).
+Patches antigos ficam até prova de morte (sem refatoração em massa — risco). Adoto
+salvo veto dele (pergunta 4).
+
+### 5. Nota de branch
+
+Sem código — triagem + purga de docs. Commitado e empurrado na
+**`arena/01a0d9c3-teste`**, PR #31 comentado. Links:
+https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App segue v7.0.25, motor 5.28.0. Próximo: respostas dele (4 perguntas) + inventário
+fiscal + conserto B/C/D na ordem votada.
+
+### Nota r42b — resgate do commit (sem perda)
+
+O sandbox voltou a acordar com a branch no commit-base (3ª vez: r40, r41, r42) e o
+primeiro commit da r42 (4de3bc0) saiu pendurado na base em vez da r41 — push rejeitado.
+Resgate: conferido que o conteúdo da árvore == r41 + edições r42 (diff da SESSÃO mostra
+só as 2 linhas purgadas + este acréscimo) → `reset --hard FETCH_HEAD` → transplante
+dos 3 docs → recommitado. Conteúdo idêntico; 4de3bc0 abandonado. REGRA PERMANENTE:
+todo turno começa com `fetch` + conferência + `reset --hard FETCH_HEAD` ANTES de
+qualquer edição.
