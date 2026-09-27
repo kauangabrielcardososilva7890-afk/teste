@@ -1525,6 +1525,14 @@ async function tickSohLeitura(reason){
     return false;
   }finally{busy=false;scheduleHeartbeat();}
 }
+// v7.0.26 — PUXAR AO ABRIR (voto do dono): toda troca de tela busca o novo da
+// nuvem (só leitura: nunca envia, nunca duplica). Com carência de 2,5 s (pular
+// de tela em tela não vira rajada) e sem furar um ciclo em andamento.
+async function puxarAoAbrirTela(){
+  if(busy) return false;
+  if(Date.now()-lastTick<2500) return 'recente';
+  return tickSohLeitura('abrir-tela');
+}
 async function tick(reason){
   // v7.0.5 — antes de qualquer decisão, aproveita a brecha para aplicar um
   // redesenho que ficou pendente (roda a cada 3 s).
@@ -2348,7 +2356,7 @@ function redesenharTelaAtual(){
   }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,tudoConfirmadoNaNuvem,relatarSaude,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
+window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,tudoConfirmadoNaNuvem,relatarSaude,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente,puxarAoAbrirTela};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();

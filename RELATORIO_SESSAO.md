@@ -7682,3 +7682,48 @@ só as 2 linhas purgadas + este acréscimo) → `reset --hard FETCH_HEAD` → tr
 dos 3 docs → recommitado. Conteúdo idêntico; 4de3bc0 abandonado. REGRA PERMANENTE:
 todo turno começa com `fetch` + conferência + `reset --hard FETCH_HEAD` ANTES de
 qualquer edição.
+
+## Rodada 43 — 26/09/2026 — VOTOS APLICADOS + PUXAR-AO-ABRIR (APP 7.0.26)
+
+### 0. Votos do dono (caixa respondida, não pulada)
+
+sync=pull-abertura (abrir-atualiza; sem congelar login), prioridade=entre-PCs,
+nome-legado=pediu explicação melhor (reperguntado abaixo), raiz=sim + pergunta se
+consolida os patches antigos num só (explicado o risco + reperguntado). Regras
+fundidas na r42 valendo.
+
+### 1. O conserto (raiz, primeira correção no novo modelo)
+
+Prova da falta: nenhum dos 5 `navigateTo` e nenhum `renderX` chamava a nuvem —
+abrir/reabrir tela NUNCA buscava nada (só login, heartbeat 3s e botão manual).
+Fix em 2 arquivos donos: `cloudflare_data_sync_patch.js` ganhou
+`puxarAoAbrirTela()` (só leitura via `tickSohLeitura('abrir-tela')`; não fura ciclo
+`busy`; carência 2,5 s anti-rajada; exposta no `DIGICOPY_CLOUD_SYNC`) e `app.js`
+(`navigateTo` raiz) dispara sem esperar (`try/catch` — nunca quebra a navegação).
+7 asserts novos no `test_sync_tela_ao_vivo.js` (§5). Suíte 239/0. App 7.0.26.
+
+### 2. Honestidade sobre o D ("não mostra de jeito maneira")
+
+O heartbeat visível JÁ puxa a cada 3 s — então o abrir-atualiza cobre o momento de
+abrir, mas se o dado não chega NEM com o tempo, a trava está no outro lado (o PC1
+não está conseguindo ENVIAR — outbox/freio — ou cursor/geração). Passos de 2 min
+para ele mandar os números (pendentes por PC + /health freio) e eu mirar o lado
+certo. Achado lateral (NÃO mexido): existe `canalInstantaneo` parado no sync —
+possível canal tempo-real desligado; candidato a otimização futura, com pergunta
+antes (é comportamento novo).
+
+### 3. Nota de branch
+
+Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31 comentado. Links:
+https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App v7.0.26, motor 5.28.0. Próximo: números do stall-side dele → conserto do lado
+travado + bug B (impressora) com o mandar-erro dele + respostas das 2 reperguntas.
+
+### Nota r43b — resgate (4ª amnésia do sandbox, sem perda)
+
+Branch acordou na base de novo; commit 17e1277 saiu pendurado nela (push rejeitado).
+Resgate igual ao r42b: `reset --hard FETCH_HEAD` (6a02578) + transplante da árvore do
+17e1277 (`checkout 17e1277 -- .`) → exatos 13 arquivos da r43, conteúdo conferido
+(entrada r43, `puxarAoAbrirTela`, v7.0.26) → recommitado. 17e1277 abandonado. REGRA
+REAFIRMADA: todo turno começa com fetch+reset ANTES de qualquer edição — sem exceção.

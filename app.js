@@ -581,6 +581,8 @@ function navigateTo(view){
   }
   window.scrollTo({top:0,behavior:'smooth'});
   if(window.innerWidth<1024) toggleSidebar(true);
+  // v7.0.26 — abrir a tela busca o novo na nuvem (só leitura, sem travar a troca de tela)
+  try{ var snc=window.DIGICOPY_CLOUD_SYNC; if(snc&&typeof snc.puxarAoAbrirTela==='function') snc.puxarAoAbrirTela(); }catch(e){}
 }
 function toggleSidebar(forceClose=false){
   const sb=document.getElementById('sidebar'); const ov=document.getElementById('overlay');

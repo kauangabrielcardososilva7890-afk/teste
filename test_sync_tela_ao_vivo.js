@@ -107,4 +107,14 @@ ok('o retorno do pullAll é considerado', /const mudouNaTela=await pullAll\(\)/.
 ok('o redesenho é chamado no fim do ciclo, sob a decisão e sem se perder',
    /if\(mudouNaTela\)\{redesenhoPendente=true;tentarRedesenhoPendente\(\);\}/.test(code));
 
+console.log('\n== 5) PUXAR AO ABRIR (v7.0.26, voto do dono) ==');
+ok('leitura exposta para a navegação', typeof S.puxarAoAbrirTela === 'function');
+ok('não fura ciclo em andamento', /async function puxarAoAbrirTela\(\)\{\s*if\(busy\) return false;/.test(code));
+ok('carência anti-rajada ao pular de tela', /Date\.now\(\)-lastTick<2500/.test(code));
+ok('delega para a leitura silenciosa', /return tickSohLeitura\('abrir-tela'\);/.test(code));
+ok('devolve promessa (a troca de tela não espera)', typeof S.puxarAoAbrirTela().then === 'function');
+const appjs = fs.readFileSync('app.js', 'utf8');
+ok('navigateTo da raiz busca o novo ao abrir', /snc\.puxarAoAbrirTela\(\)/.test(appjs));
+ok('a busca nunca quebra a navegação (try/catch)', /try\{[^}]{0,220}puxarAoAbrirTela\(\)/.test(appjs));
+
 console.log('\nRESULTADO: ' + passou + ' verificações — sincronização quase em tempo real e tela que se atualiza sem atrapalhar!');
