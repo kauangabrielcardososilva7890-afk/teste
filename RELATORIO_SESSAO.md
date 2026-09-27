@@ -7826,3 +7826,58 @@ Só registro. Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31 coment
 Links: https://teste-60f.pages.dev e
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 App segue v7.0.27, motor 5.28.0. Próximo: confirmação dele → edições.
+
+## Rodada 46 — 27/09/2026 — CORTE APLICADO (navegador + faixa de botões + mesma-serial + v7.1.0)
+
+### 0. Confirmação do dono (valendo)
+
+`5 = sim` = R1+R2+R3 aprovados como reportados; `1 = nenhum abre` (CONFIRMA a
+teoria do attach-sem-src, REFUTA https-funciona); versão pula para **v7.1.0**
+(ordem dele). Q2–Q4 ele não entendeu → re-explicar de forma à prova de tolo;
+padrões seguros aplicados onde ele não respondeu (Trazer dentro do admin,
+Zerar mantido), reversíveis sob pedido.
+
+### 1. R1 navegador (main.js) — causa raiz
+
+Webview nascia SEM `src` → `params.src=''` reprovava em TODA checagem de
+esquema → `will-attach-webview` bloqueava TODOS os sites, não só http.
+Correção: attach sempre permitido (5 travas de isolamento intactas:
+sem preload, sem node, contextIsolation, sandbox, webSecurity);
+filtro mudou para a NAVEGAÇÃO (`will-navigate` dentro de `did-attach`):
+só http/https entram; file:/javascript: nunca. Pendente: print do ERRO
+dele (só chegou o da Nuvem) para fechar o diagnóstico.
+
+### 2. R2 faixa de botões — 8 remoções + Trazer confirmado no admin
+
+Saiu: Só-nuvem ligar/desligar + Limpar cópia (modo único, motor sempre
+ligado); Sincronizar-agora; Não-autorizar (v52246, motor intacto);
+Por-que-não-aparecem (botão + função); Reparar-sessão (botão; cura auto
+continua); CHECK-UP inteiro (abrir + 5 consertos + resumo); RALADOR de
+backups (botão + função). Fica: Desconectar, Ver aparelhos, Ver excluídos,
+Zerar, Acompanhar, Diagnóstico/Conferir-agora, escolha da reinstalação,
+backup manual, .zip, mandar-erro (v7020). Trazer-de-volta JÁ estava dentro
+do bloco admin (ancorado no Ver-excluídos, só-admin) — confirmado + travado
+em teste, sem mexer. Colateral forçado: avisos v7015 agora abrem a Nuvem
+(botão "Abrir a Nuvem" ×5) em vez do check-up morto.
+
+### 3. R3 mesma-serial-mesmo-contrato + 3.2 (v52435)
+
+Novo `parqueAtivoMesmoContrato` (PURE + teste): cadastro novo com serial
+que JÁ está ativo NESTE contrato bloqueia com aviso ("já está NESTE
+contrato — nada a salvar"); edição liberada (sai pelo caminho parqueId).
+3.2: sem janela de confirmação, avisa em vez de travar calado (1 linha).
+
+### 4. Provas
+
+Suíte: **249 passaram, 0 falharam** (jsdom instalado com --ignore-scripts;
+4 falhas intermediárias consertadas: texto Reparar no bundle via comentário
+da cura, 2 asserts do modelo antigo de attach, mapa de camadas regerado,
+teste do aviso de carga adaptado ao modo único). Bundle PC + celular
+regenerados e limpos (0 refs aos 9 IDs/faixas removidas). Docs (guia +
+relatório + passo-a-passo + importar) sem menção aos botões mortos, v7.1.0.
+
+### 5. Próximo (fila de pé)
+
+Push stall (PC dele 5,2 dias sem sincronizar, 34775 pendências) = próximo
+alvo; impressora-que-some precisa das respostas Q4 (contrato novo ou
+migrado? some na hora ou depois?). Instrumentação de erro segue FORA.

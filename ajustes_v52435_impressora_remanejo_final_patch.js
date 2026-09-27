@@ -33,6 +33,13 @@ function parqueAtivoOutroCliente(dbRef, eq, clienteId){
     return p && p.status==='ativo' && p.clienteId && p.clienteId!==clienteId;
   })||null;
 }
+// v7.1.0 (r46, R3) — mesma serial no MESMO contrato: já está aqui, nada a salvar.
+function parqueAtivoMesmoContrato(dbRef, eq, contratoId){
+  if(!eq) return null;
+  return parquesDoEquip(dbRef, eq.id).find(function(p){
+    return p && p.status==='ativo' && p.contratoId===contratoId;
+  })||null;
+}
 function snapshotFrozen(eq, p){
   return {
     modelo: (eq&&eq.modelo)||'',
@@ -50,6 +57,7 @@ function msgRemanejar(nomeCliente, contador){
 window.IMPRESSORA_REMANEJO_V52435_PURE = {
   acharEquipPorSerial: acharEquipPorSerial,
   parqueAtivoOutroCliente: parqueAtivoOutroCliente,
+  parqueAtivoMesmoContrato: parqueAtivoMesmoContrato,
   snapshotFrozen: snapshotFrozen,
   msgRemanejar: msgRemanejar
 };
@@ -171,6 +179,9 @@ if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpresso
     if(!serie) return oldSal.apply(this, arguments);
     var eqOld=acharEquipPorSerial(db, serie, sessao().empresaId);
     if(!eqOld) return oldSal.apply(this, arguments);
+    // v7.1.0 (r46, R3) — mesma serial no MESMO contrato: bloqueia (só vale para
+    // cadastro novo; a edição sai mais acima, pelo caminho do parqueId).
+    if(parqueAtivoMesmoContrato(db, eqOld, c.id)){ aviso('Essa impressora (serial '+serie+') já está NESTE contrato — nada a salvar.'); return; }
     var outro=parqueAtivoOutroCliente(db, eqOld, c.clienteId);
     var executar=function(){
       if(outro){
@@ -208,7 +219,7 @@ if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpresso
         window.confirmSistema(msgRemanejar(nomeCli(outro.clienteId), cont),'Remanejar impressora').then(function(ok){ if(ok) executar(); });
         return;
       }
-      return;
+      return aviso('Não consegui abrir a pergunta de remanejar (a janela do sistema não carregou). Recarregue (F5) e tente de novo.');
     }
     return executar();
   };

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 229 | sha256: ad6fbbc9045dd643
+ * scripts: 229 | sha256: 398b36edff3a715a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28512,24 +28512,13 @@ async function renderConnected(body){
   const linhaVersaoNuvem = status.workerVersao
     ? '<div style="font-size:10px;color:#94a3b8;margin-top:10px">🔧 Código da nuvem: <b>v'+esc(status.workerVersao)+'</b></div>'
     : '<div style="margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:11px;font-weight:800">⚠️ O código da nuvem está ANTIGO (não responde a versão). Repita o <b>npx wrangler deploy</b> na pasta <b>cloudflare-worker/</b>.</div>';
-  // v6.1.5 — MODO SÓ NUVEM (ordem do dono): o PC não guarda cópia dos dados.
-  const sn=(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.infoSoNuvem)?window.DIGICOPY_CLOUD_SYNC.infoSoNuvem():{ligado:false,chavesDaBaseNoNavegador:0};
+  // v7.1.0 — SÓ NUVEM virou o único modo (ordem do dono): sem interruptor, sem botão.
   const blocoSoNuvem =
     '<div style="border-top:1px solid #e2e8f0;margin-top:14px;padding-top:12px">'+
       '<h3 style="margin:0 0 6px;font-size:13px;color:#0a1e8a">💾 Onde ficam os dados</h3>'+
-      (sn.ligado
-        ? '<div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:10px 12px;font-size:12px">'+
-            '<b>SÓ NUVEM (ligado)</b> — tudo o que você cria vai para a nuvem e <b>este computador não guarda cópia da base</b>.'+
-            (sn.chavesDaBaseNoNavegador? ' Ainda sobraram <b>'+sn.chavesDaBaseNoNavegador+'</b> pedaço(s) guardados de versão antiga — o botão abaixo limpa.' : ' Nada da base está guardado neste navegador agora.')+
-          '</div>'
-        : '<div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:10px;padding:10px 12px;font-size:12px">'+
-            '<b>Cópia local ligada</b> — este PC guarda uma cópia da base para abrir sem internet. '+
-          '</div>')+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+
-        button(sn.ligado?'Guardar cópia neste PC (abrir sem internet)':'Voltar a NÃO guardar nada neste PC','dc-sonuvem-toggle',false)+
-        button('Soltar agora a cópia deste PC','dc-sonuvem-limpar',false)+
+      '<div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:10px 12px;font-size:12px">'+
+        '<b>SÓ NUVEM</b> — tudo o que você cria vai para a nuvem, sempre. Este computador não guarda cópia da base.'+
       '</div>'+
-      '<small style="color:#94a3b8;font-size:10.5px;display:block;margin-top:6px">No modo SÓ NUVEM a base é remontada lendo a nuvem a cada abertura. Fica no PC só o necessário para não pedir senha de novo e para não perder o que ainda não subiu.</small>'+
     '</div>';
   function garantirCssUso(){
     if(document.getElementById('dc-uso-css')) return;
@@ -28585,9 +28574,7 @@ async function renderConnected(body){
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
     (isAdmin?usoBloco:'')+linhaVersaoNuvem+blocoSoNuvem+
-    detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
-      ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
-      :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
+    detalhe+(escolher?'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)+'</div>':'')+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Se a senha do gerente nunca foi definida, primeiro use a aba <b>Recuperar administrador</b> desta tela com o segredo configurado localmente na Cloudflare; depois, no cartão de senhas, crie uma senha do gerente. Só então reconecte com CNPJ + essa senha para transformar este PC em administrador.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
   if(escolher){
@@ -28607,12 +28594,7 @@ async function renderConnected(body){
       catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Não consegui aplicar');}
       await renderConnected(body);
     };
-  } else body.querySelector('#dc-sync-now').onclick=async()=>{
-    const btn=body.querySelector('#dc-sync-now');
-    setBusy(btn,true,'Sincronizando...');
-    try{if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('manual');await renderConnected(body);}
-    catch(e){setBusy(btn,false);}
-  };
+  }
   if(isAdmin){
     const adminResult=body.querySelector('#dc-admin-result');
     body.querySelector('#dc-list-devices').onclick=async()=>{
@@ -28639,28 +28621,7 @@ async function renderConnected(body){
         });
       }catch(e){adminResult.innerHTML=message(e.message,'error');}
     };
-    const btSn=body.querySelector('#dc-sonuvem-toggle');
-    if(btSn)btSn.onclick=async()=>{
-      try{
-        const S=window.DIGICOPY_CLOUD_SYNC, agora=S.modoSoNuvem();
-        if(!agora){
-          const ok1=await window.confirmSistema('Ligar a cópia neste PC? Assim o sistema abre sem internet aqui, e este computador passa a guardar os dados.','Guardar cópia neste PC');
-          if(!ok1)return;
-        }
-        S.definirSoNuvem(!agora);
-        if(typeof window.lfbAlert==='function')window.lfbAlert(agora?'Pronto: este PC não guarda mais cópia da base — só a nuvem.':'Pronto: este PC volta a guardar uma cópia da base.','Onde ficam os dados');
-        await renderConnected(body);
-      }catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não deu para mudar'); }
-    };
-    const btLimpar=body.querySelector('#dc-sonuvem-limpar');
-    if(btLimpar)btLimpar.onclick=async()=>{
-      try{
-        const S=window.DIGICOPY_CLOUD_SYNC;
-        const n=S.soltarCopiaLocal();
-        if(typeof window.lfbAlert==='function')window.lfbAlert(n?'Apaguei '+n+' pedaço(s) da base que estavam guardados neste navegador. Os dados continuam na nuvem — feche e abra o sistema para ver que ele remonta tudo de lá.':'Não havia nada guardado neste navegador.','Cópia deste PC');
-        await renderConnected(body);
-      }catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não deu para limpar'); }
-    };
+    // v7.1.0 — botões Guardar/Soltar cópia removidos (SÓ NUVEM é o único modo).
     body.querySelector('#dc-reset-cloud').onclick=async()=>{
       const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Bloqueie os outros aparelhos antes. Continuar?','Zerar nuvem');
       if(!ok1)return;
@@ -29126,12 +29087,13 @@ normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
 // memória do programa; ao abrir o sistema, a base é remontada LENDO O DIÁRIO DA
 // NUVEM desde o começo. No PC fica guardado só o necessário para não pedir a
 // senha de novo e para não perder nada que ainda não subiu (token + fila de
-// envio). Quem quiser abrir sem internet desliga isto no painel da Nuvem.
+// envio).
+// v7.1.0 — virou o ÚNICO modo (ordem do dono): sem interruptor, sempre ligado.
 // ═══════════════════════════════════════════════════════════════════════════
 const SO_NUVEM_KEY='digicopy_cf_so_nuvem_v1';
 const BASE_CHAVES=['digicopy_erp_v42_demo_apresentacao','digicopy_erp_backup_pre_sync','digicopy_erp_v20','digicopy_erp_v10'];
 const BASE_IDB='digicopy_erp_storage_v1';
-function modoSoNuvem(){ try{ const v=localStorage.getItem(SO_NUVEM_KEY); return v===null?true:v==='1'; }catch(e){ return true; } }
+function modoSoNuvem(){ return true; }
 function aplicarSoNuvem(){
   const ligado=modoSoNuvem();
   try{ window.DIGICOPY_SO_NUVEM=ligado; }catch(e){}
@@ -29143,11 +29105,11 @@ function aplicarSoNuvem(){
   return ligado;
 }
 function definirSoNuvem(ligado){
-  try{ localStorage.setItem(SO_NUVEM_KEY, ligado?'1':'0'); }catch(e){}
+  // v7.1.0 — sem efeito (modo único, sempre ligado). Mantida a assinatura para
+  // não quebrar chamadas antigas; a limpeza automática continua por conta própria.
+  try{ localStorage.setItem(SO_NUVEM_KEY,'1'); }catch(e){}
   aplicarSoNuvem();
-  if(ligado){ try{ soltarCopiaLocal(); }catch(e){} }
-  else persistAgora();
-  return modoSoNuvem();
+  return true;
 }
 // Apaga o que ESTE computador guardou da base (navegador). Não toca no token da
 // nuvem, nem na fila de envio, nem em nada da nuvem.
@@ -32578,278 +32540,12 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
-  // v5.24.34 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
-  // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
-  // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
-  // porque as listas só mostram a empresa logada. Duas empresas no banco =
-  // dois mundos invisíveis entre si (a suspeita número 1 deste caso).
-  const dx=document.createElement('button');
-  dx.id='dc-diag-invisiveis';
-  dx.textContent='Por que dados não aparecem?';
-  dx.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;margin-left:6px';
-  list.parentNode.insertBefore(dx,btn.nextSibling);
-  dx.onclick=window.dcDiagnosticoInvisiveis;
-  // v6.0.4 — REPARAR SESSÃO AGORA: o diagnóstico acima SÓ LÊ; este botão é o
-  // irmão que AGE (pedido dele: a sessão dele ficou "(nenhuma?!)" mesmo com 1
-  // empresa no banco). Usa o motor da cura (window.acForcarCura) e conta o
-  // resultado. Seguro: só carimba quando existe EXATAMENTE 1 empresa no banco.
-  const rp=document.createElement('button');
-  rp.id='dc-reparar-sessao';
-  rp.textContent='Reparar sessão agora';
-  rp.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#f0fdf4;color:#15803d;border:1px solid #86efac;margin-left:6px';
-  if(rp.style) rp.style.marginLeft='6px';
-  list.parentNode.insertBefore(rp,dx.nextSibling);
-  rp.onclick=async function(){
-    if(typeof window.acForcarCura!=='function'){
-      const f='A cura v6.0.4 ainda não carregou nesta tela. Recarregue o sistema (F5) e tente de novo.';
-      if(typeof window.lfbAlert==='function')window.lfbAlert(f,'Reparar sessão'); else alert(f);
-      return;
-    }
-    let r=null;
-    try{ r=await window.acForcarCura(); }catch(e){ r={ok:false,motivo:(e&&e.message)||'erro inesperado'}; }
-    const msg=(r&&r.ok)
-      ? ('✅ Reparo feito.\n\n• Sessão: '+(r.sessaoMudou?('carimbada com '+r.empresaId):'já estava com empresa')+'\n• Registros órfãos carimbados: '+Number(r.orfaos||0)+'\n\nRecarregue as telas — os dados voltam a aparecer.')
-      : ('Nada reparado automaticamente: '+((r&&r.motivo)||'motivo desconhecido')+'\n\nSe o banco tiver 2 empresas ou mais, o sistema NÃO chuta — saia e entre escolhendo a empresa certa.');
-    if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Reparar sessão'); else alert(msg);
-  };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// v6.1.4 — CHECK-UP DA NUVEM (pedido dele: "quero resolver, isso sempre volta")
-//
-// O problema que ele relatou (nota criada num PC e não aparece no outro) tem
-// três causas possíveis, e este check-up MOSTRA qual é — sem chute:
-//   1. a sincronização está PAUSADA esperando a escolha ("enviar os dados deste
-//      PC" ou "não enviar"). Enquanto ninguém escolhe, o PC não baixa NADA;
-//   2. o computador está conectado, mas o diário da nuvem está sendo lido a
-//      partir de um ponto adiantado (cursor) → dá para "Baixar tudo de novo";
-//   3. tem coisa pendente para subir (fila) ou erro recente aparecendo no ícone.
-// Ele vê o estado em português, compara LISTA POR LISTA (aqui x nuvem) e conserta
-// com um clique. O resumo é copiável — é o "me manda o texto" que eu preciso.
-// ═══════════════════════════════════════════════════════════════════════════
-function upLista(mapa){
-  if(!mapa) return [];
-  return Object.keys(mapa).map(function(k){ return k+': '+mapa[k]; }).sort();
-}
-window.dcCheckupNuvemResumo=function(estado, nuvem){
-  const L=[];
-  L.push('CHECK-UP DA NUVEM — '+new Date().toLocaleString('pt-BR'));
-  L.push('Versão do sistema: '+((typeof window!=='undefined'&&window.DIGICOPY_APP_VERSION)||'?'));
-  if(!estado){ L.push('Motor de sincronização não carregado.'); return L.join('\n'); }
-  L.push('Conectado...: '+(estado.authorized?'SIM':'NÃO'));
-  L.push('Pausado.....: '+(estado.paused?'SIM — motivo: '+(estado.pauseReason||'sem motivo informado'):'não'));
-  L.push('Pendentes neste PC (fila de envio): '+(estado.outbox||0));
-  L.push('Registros deste PC: '+(estado.totalLocal||0));
-  L.push('Último envio OK: '+(estado.lastOk?new Date(estado.lastOk).toLocaleString('pt-BR'):'nunca'));
-  L.push('Último erro: '+(estado.lastError||'nenhum'));
-  L.push('Leitura da nuvem até o número: '+(estado.cursor||0));
-  // v7.0.16 (rodada 28) — o freio preventivo do motor da nuvem entra no resumo:
-  // é a linha que diz se a nuvem está recusando gravação (o caso "os dados não
-  // aparecem") e qual teto está valendo — pago ou grátis.
-  // v7.0.17 — os relatos de saúde (o que os apps contaram para a nuvem): é a prova
-  // que a manutenção lê de fora e que vai junto no "Copiar resumo".
-  if(nuvem&&nuvem.saude&&nuvem.saude.ultimo){
-    const tipos=Object.keys(nuvem.saude.ultimo);
-    L.push('Relatos de saúde (hoje): '+(tipos.length?tipos.map(function(t){const u=nuvem.saude.ultimo[t];return t+'='+((nuvem.saude.contagem&&nuvem.saude.contagem[t])||1)+' (último '+(u&&u.em?new Date(u.em).toLocaleTimeString('pt-BR'):'?')+')';}).join(' | '):'nenhum'));
-  }
-  if(nuvem&&nuvem.freio){
-    const f=nuvem.freio;
-    L.push('Freio preventivo da nuvem: '+(f.disparouHoje?('DISPAROU HOJE'+(f.motivo?(' (freio de '+f.motivo+')'):'')):'não disparou hoje')
-      +' · plano '+(f.plano||'?')+' · teto do dia: '+(f.tetoDia||'?')+(f.ultimoDisparoEm?(' · último: '+new Date(f.ultimoDisparoEm).toLocaleString('pt-BR')):''));
-  }
-  if(estado.porListaLocal&&Object.keys(estado.porListaLocal).length) L.push('Listas deste PC → '+upLista(estado.porListaLocal).join(' | '));
-  if(nuvem&&nuvem.byEntity){ const nb=Object.keys(nuvem.byEntity).map(function(k){ return k+': '+(Number(nuvem.byEntity[k]&&nuvem.byEntity[k].active)||0); }).sort(); L.push('Listas na nuvem → '+nb.join(' | ')); }
-  else L.push('Listas na nuvem → (não consegui contar agora)');
-  return L.join('\n');
-};
-
-window.dcCheckupNuvem=async function(){
-  const S=window.DIGICOPY_CLOUD_SYNC;
-  if(!S||typeof S.estadoDetalhado!=='function'){ if(typeof window.lfbAlert==='function') window.lfbAlert('O motor da nuvem ainda não carregou. Espere alguns segundos e tente de novo.','Check-up da nuvem'); return; }
-  const estado=S.estadoDetalhado();
-  let nuvem=null, erroNuvem='';
-  try{
-    if(typeof S.apiStatus==='function') nuvem=await S.apiStatus();
-    else if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api) nuvem=(await window.DIGICOPY_CLOUD.api('/v1/status',{method:'GET'})).totals||null;
-  }catch(e){ erroNuvem=(e&&e.message)||String(e); }
-  const resumo=window.dcCheckupNuvemResumo(estado,nuvem);
-  const linhaLocal=estado.porListaLocal&&Object.keys(estado.porListaLocal).length
-    ? '<div style="max-height:230px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px">'+Object.keys(estado.porListaLocal).sort().map(function(k){
-        const naNuvem=(nuvem&&nuvem.byEntity&&nuvem.byEntity[k])?(Number(nuvem.byEntity[k].active)||0):null;
-        const dif=(naNuvem!==null&&naNuvem!==estado.porListaLocal[k]);
-        return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px"><span>'+k+'</span><b>Aqui: '+estado.porListaLocal[k]+(naNuvem!==null?(' · Nuvem: '+naNuvem):'')+(dif?' <span style="color:#b45309">(diferente)</span>':'')+'</b></div>';
-      }).join('')+'</div>'
-    : '<p style="font-size:12px;color:#64748b;margin:4px 0 0">Nada gravado neste PC ainda.</p>';
-  const corpo=''+
-    '<p style="font-size:12.5px;color:#334155;margin:0 0 10px">Este check-up <b>só olha</b>. Ele mostra onde cada dado está e conserta a sincronização se ela estiver parada. '+
-    'Nada é apagado em lugar nenhum.</p>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px">'+
-      '<div style="padding:9px 11px;background:#f8fafc;border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">CONECTADO</small><br><b>'+(estado.authorized?'SIM':'NÃO')+'</b></div>'+
-      '<div style="padding:9px 11px;background:'+(estado.paused?'#fff7ed':'#f8fafc')+';border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">SINCRONIZAÇÃO</small><br><b>'+(estado.paused?'PAUSADA':'ligada')+'</b></div>'+
-      '<div style="padding:9px 11px;background:#f8fafc;border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">POR SUBIR</small><br><b>'+(estado.outbox||0)+'</b></div>'+
-      '<div style="padding:9px 11px;background:#f8fafc;border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">AQUI / NUVEM</small><br><b>'+(estado.totalLocal||0)+' / '+(nuvem&&nuvem.records!=null?nuvem.records:'—')+'</b></div>'+
-    '</div>'+
-    (estado.paused
-      ? '<div style="border:1px solid #fdba74;background:#fff7ed;border-radius:10px;padding:10px 12px;margin-bottom:10px"><b style="color:#9a3412;font-size:13px">⚠ A sincronização está PAUSADA esperando a sua escolha</b>'+
-        '<p style="font-size:12px;color:#7c2d12;margin:5px 0 0">Enquanto ela está pausada, este computador <b>não baixa nada</b> da nuvem — é por isso que o que foi criado no outro PC não aparece aqui. '+
-        'Abra a janela da <b>Nuvem</b> e escolha: <b>“Enviar os dados deste PC para a nuvem”</b> (se este PC é o certo) ou <b>“Não enviar os dados atuais”</b> (se a nuvem é a certa).</p></div>'
-      : '')+
-    (estado.lastError?'<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px"><b>Último erro:</b> '+String(estado.lastError).replace(/[<>&]/g,'')+'</div>':'')+
-    (nuvem&&nuvem.saude&&nuvem.saude.ultimo&&Object.keys(nuvem.saude.ultimo).length
-      ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Relatos de saúde de hoje: <b>'
-        +Object.keys(nuvem.saude.ultimo).map(function(t){return t+' ('+((nuvem.saude.contagem&&nuvem.saude.contagem[t])||1)+'x)';}).join(', ')
-        +'</b> — é o que a manutenção enxerga de fora, sem você precisar fazer nada.</p>'
-      : '')+
-    (nuvem&&nuvem.freio
-      ? '<p style="font-size:11.5px;color:#334155;margin:0 0 8px">Freio preventivo da nuvem: <b>'
-        +(nuvem.freio.disparouHoje?('disparou hoje'+(nuvem.freio.motivo?(' (freio de '+String(nuvem.freio.motivo).replace(/[<>&]/g,'')+')'):'')):'não disparou hoje')
-        +'</b> · plano <b>'+String(nuvem.freio.plano||'?').replace(/[<>&]/g,'')+'</b> · teto do dia: '+String(nuvem.freio.tetoDia||'?')+'. '
-        +'Se o freio disparar, o que você digita fica guardado neste PC e sobe sozinho depois — nada é perdido.</p>'
-      : '')+
-    (erroNuvem?'<p style="font-size:11.5px;color:#9a3412;margin:0 0 8px">Não consegui contar a nuvem agora ('+String(erroNuvem).replace(/[<>&]/g,'')+'). Os botões de conserto funcionam do mesmo jeito.</p>':'')+
-    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 4px">Lista por lista (aqui x nuvem)</h4>'+linhaLocal+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">'+
-      '<button type="button" id="dc-ck-sync" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:#0a1e8a;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">🔄 Sincronizar agora</button>'+
-      '<button type="button" id="dc-ck-baixar" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">⬇️ Baixar tudo da nuvem de novo</button>'+
-      '<button type="button" id="dc-ck-enviar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0a1e8a;font-weight:800;font-size:12.5px;cursor:pointer">⬆️ Enviar este PC inteiro</button>'+
-      '<button type="button" id="dc-ck-copiar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:800;font-size:12.5px;cursor:pointer">📋 Copiar resumo</button>'+
-      '<button type="button" id="dc-ck-mandar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #0f766e;background:#fff;color:#0f766e;font-weight:800;font-size:12.5px;cursor:pointer">📤 Mandar o que quebrou</button>'+
-    '</div>'+
-    '<p style="font-size:11.5px;color:#64748b;margin:9px 0 0">“Baixar tudo de novo” só faz este PC ler o diário da nuvem desde o começo — o que já está mais novo aqui não é mexido, e a nuvem não é alterada.</p>'+
-    '<pre id="dc-ck-resumo" style="display:none"></pre>';
-  if(!modalSistemaCheckup('Check-up da nuvem', corpo)){ if(typeof window.lfbAlert==='function') window.lfbAlert(resumo,'Check-up da nuvem'); return; }
-  function recadinho(t,erro){ const el=document.getElementById('dc-ck-aviso'); if(el){ el.textContent=t; el.style.color=erro?'#b91c1c':'#15803d'; } }
-  document.getElementById('dc-ck-sync').onclick=async function(){
-    try{ recadinho('Sincronizando...'); await window.DIGICOPY_CLOUD_SYNC.tick('check-up'); recadinho('Sincronizado.'); }
-    catch(e){ recadinho('Erro: '+(e.message||e),true); }
-  };
-  document.getElementById('dc-ck-baixar').onclick=async function(){
-    try{
-      recadinho('Baixando tudo de novo...');
-      const r=await window.DIGICOPY_CLOUD_SYNC.baixarTudoDaNuvem();
-      if(r&&r.pausado){ recadinho('A sincronização está PAUSADA — escolha na janela da Nuvem antes de baixar.',true); return; }
-      recadinho('Pronto: reli a nuvem desde o começo (número '+(r&&r.antes||0)+' → '+(r&&r.durante||0)+').');
-      if(typeof renderClientes==='function'){ try{ renderClientes(); }catch(e){} }
-      if(typeof renderVendas==='function'){ try{ renderVendas(); }catch(e){} }
-    }catch(e){ recadinho('Erro: '+(e.message||e),true); }
-  };
-  document.getElementById('dc-ck-enviar').onclick=async function(){
-    let ok=true;
-    if(typeof window.confirmSistema==='function') ok=await window.confirmSistema('Enviar todo o conteúdo deste computador para a nuvem? Nada é apagado: o que já existe é atualizado e o que falta é criado.','Enviar este PC inteiro');
-    if(!ok) return;
-    try{ recadinho('Enviando...'); await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud(); recadinho('Enviado. Os outros PCs recebem no próximo ciclo.'); }
-    catch(e){ recadinho('Erro: '+(e.message||e),true); }
-  };
-  document.getElementById('dc-ck-mandar').onclick=function(){
-    if(typeof window.digicopyMandarErro==='function'){ try{ window.digicopyMandarErro(); }catch(e){ recadinho('Erro: '+(e.message||e),true); } }
-    else recadinho('Atualize o sistema para mandar o erro (botão novo).',true);
-  };
-  document.getElementById('dc-ck-copiar').onclick=function(){
-    const pre=document.getElementById('dc-ck-resumo');
-    pre.style.display='block'; pre.textContent=resumo;
-    const pronto=function(){ recadinho('Resumo copiado! Cole no chat.'); };
-    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(resumo).then(pronto).catch(pronto); } else pronto();
-  };
-};
-function modalSistemaCheckup(titulo, corpoHtml){
-  const root=document.getElementById('modal-root'), box=document.getElementById('modal-box'),
-        t=document.getElementById('modal-title'), b=document.getElementById('modal-body'), f=document.getElementById('modal-footer');
-  if(!root||!b) return false;
-  if(box) box.className='w-full max-w-[820px] rounded-[18px] bg-white shadow-2xl overflow-hidden max-h-[92vh] flex flex-col';
-  if(t) t.textContent=titulo;
-  b.innerHTML=corpoHtml+'<div id="dc-ck-aviso" style="font-size:12px;font-weight:800;margin-top:10px"></div>';
-  if(f) f.innerHTML='<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button>';
-  root.classList.remove('hidden');
-  return true;
-}
-// Botão na janela da Nuvem: "🩺 Check-up da nuvem"
-function injetarBotaoCheckup(){
-  try{
-    const modal=document.getElementById('digicopy-cloud-modal'); if(!modal) return;
-    const body=modal.querySelector('#dc-body'); if(!body) return;
-    if(body.querySelector('#dc-abrir-checkup')) return;
-    if(!body.querySelector('#dc-sync-now')&&!body.querySelector('#dc-enviar-locais')) return;
-    const box=document.createElement('div');
-    box.style.cssText='border-top:1px solid #e2e8f0;margin-top:14px;padding-top:12px';
-    box.innerHTML='<h3 style="font-size:14px;font-weight:900;margin:0 0 4px">🩺 Check-up da nuvem</h3>'+
-      '<p style="font-size:12px;color:#64748b;margin:0 0 8px">Um dado criado no outro PC não aparece aqui? O check-up mostra se a sincronização está pausada, quantos registros têm em cada lado (lista por lista) e conserta com um clique.</p>'+
-      '<button id="dc-abrir-checkup" type="button" style="height:40px;padding:0 16px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">🩺 Abrir check-up da nuvem</button>';
-    const forget=body.querySelector('#dc-forget');
-    if(forget&&forget.parentNode) forget.parentNode.insertBefore(box,forget); else body.appendChild(box);
-    const b=document.getElementById('dc-abrir-checkup'); if(b) b.onclick=function(){ window.dcCheckupNuvem(); };
-  }catch(e){}
-}
-if(typeof window.abrirCloudflareNuvem==='function'&&!window.abrirCloudflareNuvem.__v6104ck){
-  const oldC=window.abrirCloudflareNuvem;
-  window.abrirCloudflareNuvem=async function(){
-    const r=await oldC.apply(this,arguments);
-    try{ setTimeout(injetarBotaoCheckup,100); setTimeout(injetarBotaoCheckup,500); setTimeout(injetarBotaoCheckup,1200); }catch(e){}
-    return r;
-  };
-  window.abrirCloudflareNuvem.__v6104ck=true;
-}
-
-window.dcDiagnosticoInvisiveis=function(){
-  // v6.1.4 — A CAUSA DO "(nenhuma?!)" EM TODO COMPUTADOR (relatório dele,
-  // 21/09/2026): este arquivo usava `sess()` — e `sess()` NÃO EXISTE aqui
-  // dentro. No bundle cada módulo é isolado; `typeof sess==='function'` dava
-  // falso SEMPRE, então o diagnóstico escrevia "Empresa da minha sessão:
-  // (nenhuma?!)" mesmo com a sessão certinha (prova: o botão «Reparar sessão
-  // agora», que usa getSession() direto, respondeu "já estava com empresa").
-  // Alarme falso puro — e ele ainda levou o susto para os outros PCs.
-  const getS=(typeof getSession==='function')?getSession():(typeof sess==='function'?sess():null);
-  const alvoSess=getS;
-  const empAtual=(alvoSess&&(alvoSess.empresaId||alvoSess.empresa||alvoSess.empresa_id))||'';
-  const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
-  const linhas=[];
-  let totalInvis=0;
-  let totalOrfaos=0; const orfaosPor={};
-  const idsEstranhos={};
-  for(const e of ENTS){
-    const arr=(window.db&&Array.isArray(window.db[e])) ? window.db[e] : [];
-    let inv=0;
-    let orfaos=0; // v6.0.2 — registros SEM carimbo de empresa (causa real dos "dados sumidos")
-    for(const x of arr){
-      const eid=x&&x.empresaId;
-      if(eid && empAtual && eid!==empAtual){ inv++; idsEstranhos[eid]=true; totalInvis++; }
-      if(eid===undefined||eid===null||eid==='') orfaos++;
-    }
-    if(orfaos) { totalOrfaos+=orfaos; orfaosPor[e]=orfaos; }
-    if(arr.length) linhas.push(e+': '+arr.length+' gravados'+(inv?' • '+inv+' INVISÍVEIS (outra empresa)':'')+(orfaos?' • '+orfaos+' SEM CARIMBO (órfãos)':(!inv?' • todos visíveis':'')));
-  }
-  const empresas=(window.db&&Array.isArray(window.db.empresas))?window.db.empresas:[];
-  const outros=Object.keys(idsEstranhos);
-  const versao=(typeof window!=='undefined'&&window.DIGICOPY_APP_VERSION)||'(não li)';
-  const quem=alvoSess?((alvoSess.usuarioNome||alvoSess.login||'?')+' ('+(alvoSess.perfil||'?')+')'):'(ninguém logado)';
-  let cab='Sessão deste computador: '+quem+'\nEmpresa da minha sessão: '+(empAtual||'(SEM EMPRESA — a cura carimba sozinha; o botão verde força agora)')+
-          '\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'')+
-          '\nVersão deste sistema: '+versao;
-  if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
-  const semSessaoComUmaEmpresa = !empAtual && empresas.length===1;
-  // v6.1.4 — alarme honesto: drama só quando existe dado escondido de verdade.
-  // Tudo visível + sessão sem carimbo = NADA quebrado (o sistema carimba
-  // sozinho na entrada; o botão verde é opcional). Era aqui que ele se
-  // assustava sem motivo.
-  const temDadoEscondido = (totalInvis + totalOrfaos) > 0;
-  const corpo = (semSessaoComUmaEmpresa && temDadoEscondido)
-    ? '\n\n>>> A CAUSA ESTÁ AQUI EM CIMA: sua SESSÃO está SEM empresa, mas o banco tem exatamente 1 ('+empresas[0].id+'). É por isso que dados somem das telas: as listas só mostram a empresa da sessão. Resolva NA HORA clicando no botão verde «Reparar sessão agora» (ao lado deste) — depois recarregue as telas que tudo volta.\n\n(Detalhe técnico, v6.0.4: a sonda antiga só tentava carimbar por 30 segundos depois de abrir o sistema. Quem entrava depois disso ficava o dia inteiro sem carimbo — por isso às vezes aparecia, às vezes não. Agora a cura insiste por até 10 minutos e é rearmada a cada login.)'
-    : (semSessaoComUmaEmpresa && !temDadoEscondido)
-    ? '\n\n✅ NADA QUEBRADO AQUI: as listas acima estão TODAS VISÍVEIS e não há registro escondido — só o carimbo da sessão ainda não caiu (ele é gravado sozinho na entrada do sistema). Isto NÃO some com dado nenhum: pode trabalhar normal. Se quiser adiantar, o botão verde «Reparar sessão agora» carimba na hora; senão deixe que ele se carimba sozinho.'
-    : totalOrfaos
-    ? '\n\n>>> A CAUSA PROVÁVEL DOS SUMIÇOS: '+totalOrfaos+' registros SEM carimbo de empresa ('+
-      Object.keys(orfaosPor).map(function(k){return k+': '+orfaosPor[k];}).join(', ')+
-      '). Quem criou estava com sessão sem empresa — por isso "sumia" nos outros PCs. '+
-      (empAtual? 'A cura carimba sozinho na entrada (a v6.0.4 insiste até 10 minutos e rearma a cada login). Se essa contagem continuar subindo, manda foto.'
-               : '>>> SUA PRÓPRIA SESSÃO TAMBÉM ESTÁ SEM EMPRESA (cabeçalho acima). Clique no botão verde «Reparar sessão agora». Se continuar, manda foto.')
-    : totalInvis
-    ? '\n\n>>> A CHAVE DO MISTÉRIO: '+totalInvis+' registros chegaram da nuvem mas estão carimbados com OUTRA empresa — por isso não aparecem nas telas. Manda foto deste diagnóstico que eu selo a correção (unir as empresas) em 1 versão.'
-    : '\n\nNada escondido por empresa: os dados deste PC estão todos visíveis. O problema é outro — manda foto deste diagnóstico mesmo assim.';
-  const rodape = '\n\nPara comparar com outro computador (é assim que se acha diferença de dados): '+
-    'abra ESTE mesmo botão no outro PC e compare as duas telas — se a «Empresa da minha sessão» for diferente entre os PCs, me manda as duas que eu junto as empresas em 1 versão.';
-  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo+rodape;
-  if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Por que dados não aparecem?');
-  else alert(msg);
-};
+// v7.1.0 (r46) — faixa de botões removida a pedido do dono: o diagnóstico de
+// invisíveis, o botão verde de reparo (a cura automática continua sozinha) e
+// o CHECK-UP inteiro com os 5 consertos manuais. Só ficou o acompanhamento.
+// O mandar-erro continua vivo no patch v7.0.20 + avisos de erro (v52239).
 
 function watchModal(){
   const modal=document.getElementById('digicopy-cloud-modal');
@@ -44239,63 +43935,12 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52246ver){
 setTimeout(pintarRodape, 200);
 setTimeout(pintarRodape, 900);
 
-async function executar(){
-  if(!window.DIGICOPY_CLOUD_SYNC || typeof window.DIGICOPY_CLOUD_SYNC.discardLocalKeepCloud!=='function'){
-    aviso('Motor de sincronização não carregado.','Nuvem');
-    return;
-  }
-  var ok1=typeof window.confirmSistema==='function'
-    ? await window.confirmSistema('Os dados que só existem NESTE computador vão sair daqui. A nuvem NÃO será apagada. Este PC passa a usar o que já está na nuvem. Continuar?','Não autorizar dados deste PC')
-    : false;
-  if(!ok1) return;
-  var ok2=typeof window.confirmSistema==='function'
-    ? await window.confirmSistema('Último aviso: o que só estava neste PC não sobe depois. O que você lançar daqui pra frente sincroniza normal. Confirma?','Confirmar')
-    : false;
-  if(!ok2) return;
-  try{
-    var r=await window.DIGICOPY_CLOUD_SYNC.discardLocalKeepCloud();
-    if(typeof window.DIGICOPY_CLOUD_SYNC.tick==='function') await window.DIGICOPY_CLOUD_SYNC.tick('nao-autorizar-local');
-    aviso('Pronto. Este PC está com a nuvem. '+((r&&r.removed)||0)+' registro(s) que só existiam aqui saíram deste computador. A nuvem não mudou. O que você lançar agora sobe.','Nuvem');
-    if(typeof window.abrirCloudflareNuvem==='function') window.abrirCloudflareNuvem();
-  }catch(e){
-    aviso((e&&e.message)||String(e),'Não autorizado');
-  }
-}
-
-function injetarBotao(){
-  var modal=document.getElementById('digicopy-cloud-modal');
-  if(!modal) return;
-  var body=modal.querySelector('#dc-body');
-  if(!body || document.getElementById('dc-nao-autorizar-local')) return;
-  if(!body.querySelector('#dc-sync-now') && !body.querySelector('#dc-forget')) return;
-  var box=document.createElement('div');
-  box.style.cssText='border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px';
-  box.innerHTML='<h3 style="font-size:14px;font-weight:900">Não enviar os dados atuais deste PC (opcional)</h3>'
-    +'<p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.45">A sincronização agora é automática: quem conecta já sincroniza nos dois sentidos. Use este botão só se quiser que este PC passe a usar apenas o que está na nuvem — o que só existe aqui sai DESTE computador e a nuvem não é apagada.</p>'
-    +'<button id="dc-nao-autorizar-local" type="button" style="height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74">Não autorizar dados deste PC</button>';
-  var forgetRow=body.querySelector('#dc-forget');
-  if(forgetRow && forgetRow.parentNode){
-    forgetRow.parentNode.insertBefore(box, forgetRow);
-  } else {
-    body.appendChild(box);
-  }
-  var btn=document.getElementById('dc-nao-autorizar-local');
-  if(btn) btn.onclick=function(){ executar(); };
-}
-
-if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuvem.__v52246nao){
-  var oldA=window.abrirCloudflareNuvem;
-  window.abrirCloudflareNuvem=async function(){
-    var r=await oldA.apply(this, arguments);
-    try{ setTimeout(injetarBotao, 80); setTimeout(injetarBotao, 400); }catch(e){}
-    return r;
-  };
-  window.abrirCloudflareNuvem.__v52246nao=true;
-}
+// v7.1.0 (r46) — botão de não-enviar REMOVIDO a pedido do dono. Ficaram só os
+// ajudantes puros (testados) + o pintor do rodapé. O motor de descarte local
+// continua (a escolha da reinstalação usa outro caminho).
 
 console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
 })();
-
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52246_nuvem_nao_autorizar_patch.js", e); }
 ;
 
@@ -50362,23 +50007,7 @@ async function baixarTodos(avisoEl, botao){
   return itens.length;
 }
 
-async function excluirTodos(avisoEl){
-  const d = await listar();
-  const qtd = ((d && d.backups) || []).length;
-  if(!qtd){ aviso(avisoEl, 'Não há backups para apagar.', 'info'); return 0; }
-  const ok1 = await window.confirmSistema(
-    'Excluir <b>' + qtd + ' backup(s)</b> da nuvem? Isso apaga <b>somente os backups</b> — os dados atuais do sistema <b>continuam intactos</b>.',
-    'Excluir backups da nuvem');
-  if(!ok1) return 0;
-  const ok2 = await window.confirmSistema(
-    'Última confirmação: tem certeza? Se baixar tudo no HD primeiro, lembre de guardar o arquivo <b>.zip</b>. Depois de apagar, o ciclo continua normal (amanhã 18:30 sai o diário e a cada atualização sai o de sistema).',
-    'Tem certeza?');
-  if(!ok2) return 0;
-  const call = api();
-  const r = await call('/v1/backups', { method: 'DELETE' });
-  aviso(avisoEl, '🗑️ Apaguei <b>' + (r.apagados || qtd) + ' backup(s)</b> da nuvem. Os dados do sistema não foram tocados — amanhã 18:30 tem diário novo.', 'ok');
-  return r.apagados || qtd;
-}
+// v7.1.0 (r46) — «Excluir todos os backups» (RALADOR) REMOVIDO a pedido do dono.
 
 // ─── A tela (card dentro do painel Nuvem) ──────────────────────────────────
 function estiloBtn(principal){
@@ -50472,7 +50101,6 @@ async function abrir(painelBody){
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
         '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
         '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(false) + '">📥 Baixar todos os backups (.zip)</button>' +
-        '<button type="button" id="bk-excluir-todos" style="' + estiloBtn(false) + ';color:#b91c1c;border-color:#fecaca">🗑️ Excluir todos os backups da nuvem</button>' +
       '</div>' +
       '<div id="bk-resumo" style="margin-top:10px"></div>' +
       '<div id="bk-aviso" style="margin-top:10px"></div>' +
@@ -50480,7 +50108,6 @@ async function abrir(painelBody){
     '</div>';
 
   const btnB = card.querySelector('#bk-baixar-todos');
-  const btnE = card.querySelector('#bk-excluir-todos');
   const avisoEl = card.querySelector('#bk-aviso');
   card.querySelector('#bk-agora').onclick = async function(){
     const b = this;
@@ -50490,10 +50117,6 @@ async function abrir(painelBody){
   btnB.onclick = async function(){
     try{ await baixarTodos(avisoEl, btnB); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
     finally{ btnB.innerText = '📥 Baixar todos os backups'; carregar(card); }
-  };
-  btnE.onclick = async function(){
-    try{ await excluirTodos(avisoEl); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
-    finally{ carregar(card); }
   };
   carregar(card);
 }
@@ -50907,7 +50530,8 @@ async function restaurarLista(registros, aoProgresso){
   return { ok: ok, falhas: falhas, primeiroErro: primeiroErro };
 }
 
-// Botão dentro do painel da Nuvem, logo abaixo do "Ver itens excluídos".
+// "Trazer de volta" — mora DENTRO do bloco admin (r46: confirmado a pedido do
+// dono; só admin vê). Ancora depois do "Ver excluídos", que só existe p/ admin.
 function instalarBotao(){
   const modal = document.getElementById('digicopy-cloud-modal');
   if(!modal || modal.classList.contains('hidden')) return;
@@ -51940,6 +51564,13 @@ function parqueAtivoOutroCliente(dbRef, eq, clienteId){
     return p && p.status==='ativo' && p.clienteId && p.clienteId!==clienteId;
   })||null;
 }
+// v7.1.0 (r46, R3) — mesma serial no MESMO contrato: já está aqui, nada a salvar.
+function parqueAtivoMesmoContrato(dbRef, eq, contratoId){
+  if(!eq) return null;
+  return parquesDoEquip(dbRef, eq.id).find(function(p){
+    return p && p.status==='ativo' && p.contratoId===contratoId;
+  })||null;
+}
 function snapshotFrozen(eq, p){
   return {
     modelo: (eq&&eq.modelo)||'',
@@ -51957,6 +51588,7 @@ function msgRemanejar(nomeCliente, contador){
 window.IMPRESSORA_REMANEJO_V52435_PURE = {
   acharEquipPorSerial: acharEquipPorSerial,
   parqueAtivoOutroCliente: parqueAtivoOutroCliente,
+  parqueAtivoMesmoContrato: parqueAtivoMesmoContrato,
   snapshotFrozen: snapshotFrozen,
   msgRemanejar: msgRemanejar
 };
@@ -52078,6 +51710,9 @@ if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpresso
     if(!serie) return oldSal.apply(this, arguments);
     var eqOld=acharEquipPorSerial(db, serie, sessao().empresaId);
     if(!eqOld) return oldSal.apply(this, arguments);
+    // v7.1.0 (r46, R3) — mesma serial no MESMO contrato: bloqueia (só vale para
+    // cadastro novo; a edição sai mais acima, pelo caminho do parqueId).
+    if(parqueAtivoMesmoContrato(db, eqOld, c.id)){ aviso('Essa impressora (serial '+serie+') já está NESTE contrato — nada a salvar.'); return; }
     var outro=parqueAtivoOutroCliente(db, eqOld, c.clienteId);
     var executar=function(){
       if(outro){
@@ -52115,7 +51750,7 @@ if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpresso
         window.confirmSistema(msgRemanejar(nomeCli(outro.clienteId), cont),'Remanejar impressora').then(function(ok){ if(ok) executar(); });
         return;
       }
-      return;
+      return aviso('Não consegui abrir a pergunta de remanejar (a janela do sistema não carregou). Recarregue (F5) e tente de novo.');
     }
     return executar();
   };
@@ -54425,8 +54060,8 @@ try{
 //     • rearmada a CADA login (wrap do setSession) e a CADA gravação do banco
 //       (wrap do db.save — é por onde os dados da nuvem pousam, cobrindo PC que
 //       abre o sistema antes dos dados descerem);
-//     • botão manual "Reparar sessão agora" na tela Nuvem (ao lado do
-//       diagnóstico, instalado no patch 5227) chama window.acForcarCura().
+//     • (r46: o botão manual saiu da faixa; a cura roda sozinha e
+//       window.acForcarCura() continua disponível para chamar por fora.)
 //  2) PERFIS DA NUVEM (pedido dele): a tela Nuvem abre pra todo PC; PC que
 //     entrou com a senha do GERENTE vira Administrador na nuvem (gastos,
 //     aparelhos, convites — implementado no worker 5.26.3 e nos gates do
@@ -60717,8 +60352,8 @@ try{
 //   • "este computador não está conectado à nuvem" ....... [Conectar agora]
 //   • "a sincronização está pausada (motivo)" ........... [Resolver agora]
 //   • "a nuvem tem mais registros do que aqui" .......... [Baixar tudo de novo]
-//   • "a nuvem atingiu o limite de hoje (volta ~21h)" .... [Ver check-up]
-//   • "a última conversa com a nuvem falhou: <erro>" .... [Ver check-up]
+//   • "a nuvem atingiu o limite de hoje (volta ~21h)" .... [Abrir a Nuvem]
+//   • "a última conversa com a nuvem falhou: <erro>" .... [Abrir a Nuvem]
 // Com tudo certo, ela NÃO aparece. Nada é apagado em nenhum caminho: o
 // "Baixar tudo de novo" só relê o diário da nuvem desde o começo (o que já está
 // mais novo aqui não volta atrás) e a nuvem não é tocada.
@@ -60815,10 +60450,12 @@ try{
   }
   function irResolver(){
     if (typeof window.abrirCloudflareNuvem === 'function') window.abrirCloudflareNuvem();
-    else if (typeof window.dcCheckupNuvem === 'function') window.dcCheckupNuvem();
   }
   function irCheckup(){
-    if (typeof window.dcCheckupNuvem === 'function') window.dcCheckupNuvem();
+    // v7.1.0 (r46) — o check-up saiu da faixa de botões; o aviso agora abre a
+    // janela da Nuvem (que tem o Diagnóstico + os números). Nome da função
+    // mantido para não quebrar os 5 lugares que a chamam.
+    if (typeof window.abrirCloudflareNuvem === 'function') window.abrirCloudflareNuvem();
   }
   async function baixarTudo(){
     const s = S();
@@ -60883,7 +60520,7 @@ try{
       if (!inf.authorized && soNuvem()) {
         mostrar('Este computador <b>não está conectado à nuvem</b> — por isso as listas aparecem vazias. É só conectar uma vez.',
           [{ rotulo: 'Conectar agora', id: 'v7015-bt-conectar', acao: irConectar },
-           { rotulo: 'Ver check-up', id: 'v7015-bt-ck1', transparente: true, acao: irCheckup }], '#9a3412');
+           { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck1', transparente: true, acao: irCheckup }], '#9a3412');
         return;
       }
 
@@ -60891,7 +60528,7 @@ try{
       if (inf.paused) {
         mostrar('A sincronização está <b>pausada</b>' + (inf.pauseReason ? ' (' + String(inf.pauseReason) + ')' : '') + ' — este computador não está baixando os dados da nuvem.',
           [{ rotulo: 'Resolver agora', id: 'v7015-bt-pausa', acao: irResolver },
-           { rotulo: 'Ver check-up', id: 'v7015-bt-ck2', transparente: true, acao: irCheckup }], '#9a3412');
+           { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck2', transparente: true, acao: irCheckup }], '#9a3412');
         return;
       }
 
@@ -60900,7 +60537,7 @@ try{
       if (limiteAte > Date.now()) {
         const hora = new Date(limiteAte).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         mostrar('A nuvem aplicou o <b>freio preventivo de gravações</b> para não estourar o limite do plano — <b>nada foi perdido</b>. O envio volta sozinho por volta das <b>' + hora + '</b>.',
-          [{ rotulo: 'Ver check-up', id: 'v7015-bt-limite', acao: irCheckup }], '#92400e');
+          [{ rotulo: 'Abrir a Nuvem', id: 'v7015-bt-limite', acao: irCheckup }], '#92400e');
         return;
       }
 
@@ -60910,7 +60547,7 @@ try{
       const erroGrave = /401|403|revog|token|autoriz|quota|cota|limite|429|503|indispon|sem espa/i.test(erro);
       if (erro && erroGrave) {
         mostrar('A última conversa com a nuvem falhou: <b>' + erro.slice(0, 120) + '</b>',
-          [{ rotulo: 'Ver check-up', id: 'v7015-bt-ck4', acao: irCheckup }], '#9a3412');
+          [{ rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck4', acao: irCheckup }], '#9a3412');
         return;
       }
 
@@ -60927,7 +60564,7 @@ try{
           const mais = faltando.length > 3 ? ' (+' + (faltando.length - 3) + ' outra(s) lista(s))' : '';
           mostrar('A <b>nuvem tem mais registros</b> do que este computador — ' + trecho + mais + '.',
             [{ rotulo: 'Baixar tudo de novo', id: 'v7015-bt-baixar', acao: baixarTudo },
-             { rotulo: 'Ver check-up', id: 'v7015-bt-ck3', transparente: true, acao: irCheckup }], '#92400e');
+             { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck3', transparente: true, acao: irCheckup }], '#92400e');
           return;
         }
       }

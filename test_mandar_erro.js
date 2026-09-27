@@ -116,11 +116,12 @@ console.log('-- o aviso de erro ganha o botão (só com o patch) --');
   ok('clicar no botão abre o pacote para copiar', typeof textoPopup(com) === 'string');
 }
 
-console.log('-- o check-up ganha o botão --');
+console.log('-- o check-up saiu (r46); o mandar-erro continua no patch próprio --');
 {
   const ck = fs.readFileSync('ajustes_v5227_nuvem_acompanhamento_patch.js', 'utf8');
-  ok('o check-up tem o botão mandar (dc-ck-mandar)', ck.indexOf('dc-ck-mandar') >= 0);
-  ok('o botão chama a função (com guarda)', ck.indexOf('digicopyMandarErro') >= 0);
+  ok('o check-up saiu da tela (sem dc-ck-mandar)', ck.indexOf('dc-ck-mandar') < 0);
+  const me = fs.readFileSync('ajustes_v7020_mandar_erro_patch.js', 'utf8');
+  ok('a função continua viva no próprio patch', me.indexOf('digicopyMandarErro') >= 0);
 }
 
 console.log('\nRESULTADO: ' + passou + ' verificações passaram.');

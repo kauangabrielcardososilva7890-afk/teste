@@ -85,8 +85,8 @@ ok('o motor para colar foi regerado junto (não fica para trás)',
   ler('cloudflare-worker/motor_para_colar.js').indexOf('API_VERSION = "0.4.9"') >= 0);
 
 console.log('\n== 4) SÓ NUVEM: NADA GUARDADO NO PC (ordem dele em maiúsculas) ==');
-ok('o modo existe e vem LIGADO por padrão',
-  /function modoSoNuvem\(\)\{ try\{ const v=localStorage\.getItem\(SO_NUVEM_KEY\); return v===null\?true:v==='1'; \}/.test(sync));
+ok('o modo existe e vem LIGADO sempre (r46: modo único, sem escolha guardada)',
+  /function modoSoNuvem\(\)\{ return true; \}/.test(sync));
 ok('em SÓ NUVEM a base não é gravada no computador (saveDB não persiste)',
   /const soNuvem=!!window\.DIGICOPY_SO_NUVEM&&authorized\(\)/.test(sync) &&
   /const r=soNuvem\?true:original\.apply\(this,arguments\)/.test(sync));
@@ -107,8 +107,8 @@ ok('a base é remontada lendo o diário da nuvem desde o começo',
   /state\.cursor=0; state\.versions=\{\}; state\.initialPull=true;/.test(sync));
 ok('a tela se redesenha sozinha quando os dados chegam da nuvem',
   /function hidratarTela\(\)/.test(sync) && /window\.navigateTo\(tela\)/.test(sync));
-ok('o painel da Nuvem mostra onde os dados ficam (com ligar/desligar e limpar)',
-  panel.indexOf('dc-sonuvem-toggle') >= 0 && panel.indexOf('dc-sonuvem-limpar') >= 0 &&
+ok('o painel da Nuvem mostra onde os dados ficam (só-nuvem único, sem ligar/desligar)',
+  panel.indexOf('dc-sonuvem-toggle') < 0 && panel.indexOf('dc-sonuvem-limpar') < 0 &&
   panel.indexOf('SÓ NUVEM') >= 0);
 ok('o rodapé diz, em português, que os dados estão só na nuvem',
   ler('ajustes_v52245_rodape_versao_patch.js').indexOf('dados só na nuvem') >= 0);
@@ -140,10 +140,10 @@ ok('o rodapé diz, em português, que os dados estão só na nuvem',
     storage.getItem('digicopy_erp_v42_demo_apresentacao_part__clientes__#0') === null &&
     storage.getItem('digicopy_cloud_device_token') === 'token-do-pc' &&
     storage.getItem('digicopy_cf_sync_outbox_v1') === '[]');
-  ok('dá para desligar (guardar cópia) e a escolha fica guardada',
-    S.definirSoNuvem(false) === false && storage.getItem('digicopy_cf_so_nuvem_v1') === '0' &&
-    S.modoSoNuvem() === false);
-  ok('e dá para ligar de novo', S.definirSoNuvem(true) === true && S.modoSoNuvem() === true);
+  ok('NÃO dá mais para desligar (r46: modo único, sempre ligado)',
+    S.definirSoNuvem(false) === true && storage.getItem('digicopy_cf_so_nuvem_v1') === '1' &&
+    S.modoSoNuvem() === true);
+  ok('e continua ligado', S.definirSoNuvem(true) === true && S.modoSoNuvem() === true);
 })();
 
 console.log('\n== 5) VERSÃO ACOMPANHA A PUBLICAÇÃO (ordem dele: "vai atualizando") ==');

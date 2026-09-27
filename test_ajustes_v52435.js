@@ -27,6 +27,8 @@ ok(patch.includes("p.status==='remanejada'") && patch.includes('Histórico conge
 ok(patch.includes('msgRemanejar') && patch.includes('deseja remanejar essa impressora pra esse cadastro?'), 'frase do remanejo (a dele, do desenho original)');
 ok(patch.includes("status='remanejada'") && patch.includes('remanejadoParaContratoId') && patch.includes('remanejadoParaClienteId'), 'remanejo marca o antigo com rastro do destino');
 ok(patch.includes('idsAntes') && patch.includes('duplicata') && patch.includes('prqNovo.equipamentoId'), 'fixup anti-duplicata: reusa o equipamento existente e reponta o parque');
+ok(patch.includes('parqueAtivoMesmoContrato') && patch.includes('já está NESTE contrato'), 'r46 R3: mesma serial no MESMO contrato bloqueia com aviso');
+ok(patch.includes('Não consegui abrir a pergunta de remanejar'), 'r46 3.2: sem janela de confirmação, avisa em vez de travar calado');
 
 // ── 2. Vencedor filtra remanejada das operações ─────────────────────────────
 const filtros = (venc.match(/status!=='inativo'&&[a-z]+\.?status!=='remanejada'|status!=='remanejada'/g) || []).length;
@@ -65,7 +67,7 @@ ok(filtros >= 3, 'vencedor: remanejada fora de máquinas do contrato + mensal fi
     salvarImpressoraContrato(contratoId){
       flags.salvarChamou++;
       // simula o vencedor: cria equipamento NOVO + parque e amarra no contrato
-      const eqN = { id:'eqNEW', empresaId:'EMP1', modelo:'HP 426', serie:'SN-777', patrimonio:'P-09' };
+      const eqN = { id:'eqNEW', empresaId:'EMP1', modelo:'HP 426', serie:els['impf-serie'].value, patrimonio:'P-09' };
       dbFix.equipamentos.push(eqN);
       dbFix.parque.push({ id:'pNEW'+flags.salvarChamou, equipamentoId:'eqNEW', clienteId: dbFix.contratos.find(c=>c.id===contratoId).clienteId, contratoId: contratoId, status:'ativo' });
       dbFix.contratos.find(c=>c.id===contratoId).equipamentos.push('eqNEW');
@@ -109,16 +111,31 @@ ok(filtros >= 3, 'vencedor: remanejada fora de máquinas do contrato + mensal fi
   ok(cB.equipamentos.filter(id=>id==='eqOLD').length === 1 && !cB.equipamentos.includes('eqNEW'), 'contrato referencia só o equipamento existente');
   ok(flags.saveDB === 1 && flags.reRender === 1, 'fixup persiste e re-renderiza o contrato');
 
-  // 3c. serial conhecido SÓ no próprio cliente → sem pergunta, sem duplicar
+  // 3c. serial conhecido no PRÓPRIO cliente mas em OUTRO contrato → sem pergunta, sem duplicar
   const eq2 = { id:'eq2', empresaId:'EMP1', modelo:'Brother L2', serie:'SN-555', patrimonio:'P-55' };
   dbFix.equipamentos.push(eq2);
   dbFix.parque.push({ id:'pA2', equipamentoId:'eq2', clienteId:'cliA', contratoId:'cA', status:'ativo' });
+  dbFix.contratos.push({ id:'cA2', clienteId:'cliA', equipamentos:[] });
   flags.confirmMsg = null; flags.salvarChamou = 0;
   const antesAlertas = alertas.length;
   els['impf-serie'].value = 'SN-555';
+  win.salvarImpressoraContrato('cA2', null);
+  ok(flags.confirmMsg === null && flags.salvarChamou === 1, 'mesmo cliente outro contrato: sem pergunta, segue direto');
+  ok(!dbFix.equipamentos.some(e=>e.id==='eqNEW') && alertas.slice(antesAlertas).some(a=>a.includes('serial reconhecido')), 'mesmo cliente outro contrato: reusa o existente e avisa "serial reconhecido"');
+
+  // 3d. r46 R3: mesma serial no MESMO contrato → BLOQUEIA com aviso (nada salva)
+  ok(P.parqueAtivoMesmoContrato(dbFix, eqOld, 'cB') !== null, 'PURE acha parque ATIVO no mesmo contrato (eqOLD em cB)');
+  ok(P.parqueAtivoMesmoContrato(dbFix, eqOld, 'cA') === null, 'PURE: contrato diferente não é conflito');
+  flags.confirmMsg = null; flags.salvarChamou = 0;
+  const antesAlertas2 = alertas.length;
+  els['impf-serie'].value = 'SN-777';
+  win.salvarImpressoraContrato('cB', null);
+  ok(flags.salvarChamou === 0 && flags.confirmMsg === null, 'mesmo contrato: não salva nem pergunta');
+  ok(alertas.slice(antesAlertas2).some(a=>a.includes('já está NESTE contrato')), 'mesmo contrato: avisa "já está NESTE contrato"');
+  flags.salvarChamou = 0;
+  els['impf-serie'].value = 'SN-555';
   win.salvarImpressoraContrato('cA', null);
-  ok(flags.confirmMsg === null && flags.salvarChamou === 1, 'mesmo cliente: sem pergunta, segue direto');
-  ok(!dbFix.equipamentos.some(e=>e.id==='eqNEW') && alertas.slice(antesAlertas).some(a=>a.includes('serial reconhecido')), 'mesmo cliente: reusa o existente e avisa "serial reconhecido"');
+  ok(flags.salvarChamou === 0, 'mesmo contrato (2º caso): bloqueia também');
 
   // ── 4. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));

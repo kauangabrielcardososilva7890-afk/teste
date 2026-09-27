@@ -39,7 +39,7 @@ console.log('== v5.24.0 — relatório grande ==');
 // 1) item 1.2: tela Backup sem manual local duplicado, restauração preservada
 console.log('-- item 1.2: só os 3 botões da nuvem + restaurar --');
 ok(patchBk.indexOf('id="bk-pc-baixar"') < 0 && patchBk.indexOf('pcBtn') < 0, 'botão local duplicado "💾 Baixar backup para este PC" removido da fonte (comentário histórico fica)');
-ok(patchBk.indexOf('bk-agora') >= 0 && patchBk.indexOf('bk-baixar-todos') >= 0 && patchBk.indexOf('bk-excluir-todos') >= 0, 'os 3 botões da nuvem (manual/.zip/excluir) seguem na fonte');
+ok(patchBk.indexOf('bk-agora') >= 0 && patchBk.indexOf('bk-baixar-todos') >= 0 && patchBk.indexOf('bk-excluir-todos') < 0, 'manual + .zip ficam, ralador saiu (r46)');
 ok(patchBk.indexOf('bk-rest-arq') >= 0 && patchBk.indexOf('Restaurar a partir de um arquivo de backup') >= 0, 'restauração por arquivo preservada');
 ok(patchBk.indexOf('pcBtn') < 0, 'handler do botão removido junto');
 ok(bundle.indexOf('bk-pc-baixar') < 0 && bundleMob.indexOf('bk-pc-baixar') < 0, 'botão duplicado fora dos 2 bundles');

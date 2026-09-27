@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Relatório de Teste — Sistema Digicopy v7.0.27</title>
+<title>Relatório de Teste — Sistema Digicopy v7.1.0</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -56,7 +56,7 @@
 <body>
 
 <header>
-  <h1>Relatório de Teste — Sistema Digicopy v7.0.27</h1>
+  <h1>Relatório de Teste — Sistema Digicopy v7.1.0</h1>
   <p>Marque <b>uma caixa</b> por pergunta. Se quiser explicar algo daquela pergunta, escreva na caixinha ao lado.
      No fim, clique em <b>💾 Salvar relatório (.txt)</b> e me mande o arquivo que baixar (ou copie e cole aqui no chat).</p>
   <div class="aviso">🔒 <b>Nunca escreva senha, token, certificado, CSC ou dado de cartão aqui.</b> Só diga onde aconteceu e o que apareceu na tela.</div>
@@ -65,7 +65,7 @@
 <div class="campos" id="dados">
   <div class="campo"><label>Quem testou</label><input type="text" id="d_nome" placeholder="seu nome"></div>
   <div class="campo"><label>Data do teste</label><input type="text" id="d_data" placeholder="dd/mm/aaaa"></div>
-  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v7.0.27 + carimbo"></div>
+  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v7.1.0 + carimbo"></div>
   <div class="campo"><label>Versão da nuvem (painel/health)</label><input type="text" id="d_nuvem" placeholder="5.28.0"></div>
 </div>
 
@@ -158,7 +158,7 @@ const PARTES = [
     ['PC comum NÃO mostra os botões exclusivos do Administrador', 'repetida'],
     ['Entrar na nuvem não apaga os dados locais deste PC', 'repetida'],
     ['O painel mostra a versão real da nuvem (ex.: 5.27.0)', 'repetida'],
-    ['Botão verde "Reparar sessão agora" responde na hora', 'repetida']
+    ['Botão verde "Reparar sessão agora" saiu da tela na v7.1.0 (a cura virou automática, sem botão)', 'repetida']
   ]},
   { id:'C', nome:'PARTE C — FISCAL (SOMENTE HOMOLOGAÇÃO)', itens:[
     ['Central de Nota Fiscal abre como tela inteira (menu)', 'repetida'],
@@ -179,8 +179,8 @@ const PARTES = [
     ['O que existe em um PC apareceu no outro (os dois conectados, sem precisar clicar em nada)', 'novo'],
     ['Nada foi apagado no PC que já tinha dados (venda, cliente, contrato, OS — tudo onde estava)', 'novo'],
     ['O mesmo dado NÃO duplicou depois de sincronizar (não virou dois clientes / duas vendas)', 'novo'],
-    ['O botão "Check-up da nuvem" mostra lista por lista o que está diferente, com o resumo para copiar', 'novo'],
-    ['Os consertos do check-up (baixar tudo de novo / enviar este PC inteiro / sincronizar agora) funcionaram', 'novo']
+    ['O "Diagnóstico deste computador" (dentro da Nuvem) mostra a última sincronização e as pendências, com o botão "Conferir agora"', 'novo'],
+    ['A janela da Nuvem não tem mais botão de sincronizar/baixar/enviar — a sincronização é automática', 'novo']
   ]},
   { id:'F', nome:'PARTE F — CONTRATOS E CLIENTES', itens:[
     ['Contrato que mostrava "Cliente sem vínculo" agora mostra o nome do cliente', 'novo'],
@@ -189,7 +189,7 @@ const PARTES = [
     ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada', 'novo']
   ]},
   { id:'G', nome:'PARTE G — VERSÃO NO RODAPÉ E ATUALIZAÇÃO', itens:[
-    ['O rodapé mostra a versão v7.0.27 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
+    ['O rodapé mostra a versão v7.1.0 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
     ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat', 'novo'],
     ['O sistema abriu com as correções novas (nada de tela velha do cache)', 'novo'],
     ['O guardar_repo.cmd (dois cliques) salvou e enviou tudo para o GitHub e mostrou o nome do último commit', 'novo']

@@ -21,7 +21,7 @@ const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 216; override v6.0.9 (214), 6 submenus v6.0.10 (215), hover NF-e/NFC-e v6.0.11 fecha a fila', man.length >= 225 && man[208] === 'perfis_nuvem_cura_sessao_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[205] === 'fiscal_guard_patch.js' && man[206] === 'nf_transmissao_patch.js' && man[207] === 'autocura_empresa_central_nf_tela_patch.js');
 ok('bundle contém o patch da cura (PURE + banner)', bundle.indexOf('pncProximoPasso') >= 0 && bundle.indexOf('v6.0.4 — cura da sessão DEFINITIVA') >= 0);
-ok('bundle contém o botão Reparar (5227)', bundle.indexOf('dc-reparar-sessao') >= 0 && bundle.indexOf('Reparar sessão agora') >= 0);
+ok('bundle NÃO contém mais o botão Reparar (r46)', bundle.indexOf('dc-reparar-sessao') < 0 && bundle.indexOf('Reparar sessão agora') < 0);
 
 console.log('== CURA DA SESSÃO (patch novo) ==');
 ok('patch tem PURE exportável e testável', pnc.indexOf('PNC604_PURE_START') >= 0 && pnc.indexOf("module.exports={pncProximoPasso") >= 0);
@@ -42,10 +42,10 @@ ok('PURE: banco vazio (nuvem descendo) → esperar', P.pncProximoPasso({ temSess
 ok('PURE: estourou tentativas → fim-tentativas', P.pncProximoPasso({ temSessao: true, sessTemEmpresa: false, nEmpresas: 0, tentativas: 301, teto: 300 }) === 'fim-tentativas');
 
 console.log('== DIAGNÓSTICO + BOTÃO (5227) ==');
-ok('caso dele vira resposta clara (semSessaoComUmaEmpresa)', vig.indexOf('semSessaoComUmaEmpresa') >= 0 && vig.indexOf('A CAUSA ESTÁ AQUI EM CIMA') >= 0 && vig.indexOf('empresas[0].id') >= 0);
-ok('explica o detalhe técnico (sonda morria em 30s)', vig.indexOf('30 segundos') >= 0 && vig.indexOf('10 minutos') >= 0);
-ok('botão verde Reparar sessão agora instalado', vig.indexOf("rp.id='dc-reparar-sessao'") >= 0 && vig.indexOf('acForcarCura') >= 0);
-ok('fallback honesto se a cura não carregou (F5)', vig.indexOf('ainda não carregou nesta tela') >= 0);
+ok('resposta do diagnóstico saiu com a faixa (r46)', vig.indexOf('semSessaoComUmaEmpresa') < 0 && vig.indexOf('A CAUSA ESTÁ AQUI EM CIMA') < 0);
+ok('detalhe técnico saiu junto', vig.indexOf('30 segundos') < 0);
+ok('botão verde Reparar saiu (cura automática continua no patch da cura)', vig.indexOf("rp.id='dc-reparar-sessao'") < 0 && vig.indexOf('dc-reparar-sessao') < 0);
+ok('fallback do botão saiu junto', vig.indexOf('ainda não carregou nesta tela') < 0);
 
 console.log('== PERFIS DA NUVEM (app) ==');
 ok('gastos trancados: usoBloco só no admin', sync.indexOf("(isAdmin?usoBloco:'')+linhaVersaoNuvem") >= 0);

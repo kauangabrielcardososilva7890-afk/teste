@@ -26,8 +26,8 @@
 //   • "este computador não está conectado à nuvem" ....... [Conectar agora]
 //   • "a sincronização está pausada (motivo)" ........... [Resolver agora]
 //   • "a nuvem tem mais registros do que aqui" .......... [Baixar tudo de novo]
-//   • "a nuvem atingiu o limite de hoje (volta ~21h)" .... [Ver check-up]
-//   • "a última conversa com a nuvem falhou: <erro>" .... [Ver check-up]
+//   • "a nuvem atingiu o limite de hoje (volta ~21h)" .... [Abrir a Nuvem]
+//   • "a última conversa com a nuvem falhou: <erro>" .... [Abrir a Nuvem]
 // Com tudo certo, ela NÃO aparece. Nada é apagado em nenhum caminho: o
 // "Baixar tudo de novo" só relê o diário da nuvem desde o começo (o que já está
 // mais novo aqui não volta atrás) e a nuvem não é tocada.
@@ -124,10 +124,12 @@
   }
   function irResolver(){
     if (typeof window.abrirCloudflareNuvem === 'function') window.abrirCloudflareNuvem();
-    else if (typeof window.dcCheckupNuvem === 'function') window.dcCheckupNuvem();
   }
   function irCheckup(){
-    if (typeof window.dcCheckupNuvem === 'function') window.dcCheckupNuvem();
+    // v7.1.0 (r46) — o check-up saiu da faixa de botões; o aviso agora abre a
+    // janela da Nuvem (que tem o Diagnóstico + os números). Nome da função
+    // mantido para não quebrar os 5 lugares que a chamam.
+    if (typeof window.abrirCloudflareNuvem === 'function') window.abrirCloudflareNuvem();
   }
   async function baixarTudo(){
     const s = S();
@@ -192,7 +194,7 @@
       if (!inf.authorized && soNuvem()) {
         mostrar('Este computador <b>não está conectado à nuvem</b> — por isso as listas aparecem vazias. É só conectar uma vez.',
           [{ rotulo: 'Conectar agora', id: 'v7015-bt-conectar', acao: irConectar },
-           { rotulo: 'Ver check-up', id: 'v7015-bt-ck1', transparente: true, acao: irCheckup }], '#9a3412');
+           { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck1', transparente: true, acao: irCheckup }], '#9a3412');
         return;
       }
 
@@ -200,7 +202,7 @@
       if (inf.paused) {
         mostrar('A sincronização está <b>pausada</b>' + (inf.pauseReason ? ' (' + String(inf.pauseReason) + ')' : '') + ' — este computador não está baixando os dados da nuvem.',
           [{ rotulo: 'Resolver agora', id: 'v7015-bt-pausa', acao: irResolver },
-           { rotulo: 'Ver check-up', id: 'v7015-bt-ck2', transparente: true, acao: irCheckup }], '#9a3412');
+           { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck2', transparente: true, acao: irCheckup }], '#9a3412');
         return;
       }
 
@@ -209,7 +211,7 @@
       if (limiteAte > Date.now()) {
         const hora = new Date(limiteAte).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         mostrar('A nuvem aplicou o <b>freio preventivo de gravações</b> para não estourar o limite do plano — <b>nada foi perdido</b>. O envio volta sozinho por volta das <b>' + hora + '</b>.',
-          [{ rotulo: 'Ver check-up', id: 'v7015-bt-limite', acao: irCheckup }], '#92400e');
+          [{ rotulo: 'Abrir a Nuvem', id: 'v7015-bt-limite', acao: irCheckup }], '#92400e');
         return;
       }
 
@@ -219,7 +221,7 @@
       const erroGrave = /401|403|revog|token|autoriz|quota|cota|limite|429|503|indispon|sem espa/i.test(erro);
       if (erro && erroGrave) {
         mostrar('A última conversa com a nuvem falhou: <b>' + erro.slice(0, 120) + '</b>',
-          [{ rotulo: 'Ver check-up', id: 'v7015-bt-ck4', acao: irCheckup }], '#9a3412');
+          [{ rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck4', acao: irCheckup }], '#9a3412');
         return;
       }
 
@@ -236,7 +238,7 @@
           const mais = faltando.length > 3 ? ' (+' + (faltando.length - 3) + ' outra(s) lista(s))' : '';
           mostrar('A <b>nuvem tem mais registros</b> do que este computador — ' + trecho + mais + '.',
             [{ rotulo: 'Baixar tudo de novo', id: 'v7015-bt-baixar', acao: baixarTudo },
-             { rotulo: 'Ver check-up', id: 'v7015-bt-ck3', transparente: true, acao: irCheckup }], '#92400e');
+             { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck3', transparente: true, acao: irCheckup }], '#92400e');
           return;
         }
       }

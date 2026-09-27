@@ -19,6 +19,8 @@
 // mesmo com o estado de agora já na base (o passe rápido). Agora o passe rápido
 // libera na hora: o aviso afina (faixinha embaixo, sem bloquear) e a tela se
 // atualiza; o resto compõe em silêncio atrás.
+// r46: modo único só-nuvem — na ABERTURA não há mais aviso de carga (a tela
+// libera direto); a faixinha continua existindo só no "Baixar tudo de novo".
 //
 // O QUE ESTE TESTE FAZ:
 //   1. confere o mapa: todas as telas com view são ao vivo, menos config;
@@ -141,7 +143,7 @@ function abrirNavegador(nuvem, op) {
     { url: 'http://localhost/', runScripts: 'outside-only', pretendToBeVisual: true });
   const w = dom.window;
   w.localStorage.setItem('digicopy_cf_token_v1', 'token-de-teste');
-  if (op.soNuvem === false) w.localStorage.setItem('digicopy_cf_so_nuvem_v1', '0');
+  void op; // r46: modo único só-nuvem (a flag soNuvem:false não existe mais)
   w.DIGICOPY_CLOUD = { token: () => 'token-de-teste', api: nuvem.api, deviceInfo: () => null };
   w.DIGICOPY_APP_VERSION = '7.0.19';
   w.getSession = () => null;
@@ -195,7 +197,7 @@ function abrirNavegador(nuvem, op) {
     const TOTAL = 8000;
     const nuvem = nuvemFingida();
     nuvem.semear(TOTAL);
-    const B = abrirNavegador(nuvem, { soNuvem: false });   // primeira abertura COM aviso de carga
+    const B = abrirNavegador(nuvem);   // primeira abertura (r46: sem aviso de carga, modo único)
     let momento = null;
     for (let passo = 0; passo < 400 && !momento; passo++) {
       await B.andar(61);
@@ -206,7 +208,7 @@ function abrirNavegador(nuvem, op) {
     ok('o dado recente chegou na tela e a trava abriu', !!momento, JSON.stringify(momento));
     ok('E ISSO ANTES de terminar o histórico (não segura tudo)',
       !!momento && momento.total < TOTAL, 'banco=' + (momento && momento.total) + ' de ' + TOTAL);
-    ok('o aviso virou faixinha (continua lá, sem bloquear)', !!momento && momento.avisoAindaLa === true);
+    ok('sem aviso de carga na abertura (r46: modo único libera direto)', !!momento && momento.avisoAindaLa === false);
     await B.andar(120000);
     ok('depois o histórico completa (tudo chega)', B.totalBanco() === TOTAL, 'banco=' + B.totalBanco());
     ok('e o aviso sai no fim', !B.temAviso() && !B.cargaLigada());
@@ -235,7 +237,7 @@ function abrirNavegador(nuvem, op) {
     nuvem.comFoto = true;
     nuvem.injetarDuranteFoto = true;
     nuvem.semearVersoes(15, 100);   // 1500 no diário, 15 vivos
-    const B = abrirNavegador(nuvem, { soNuvem: false });
+    const B = abrirNavegador(nuvem);
     // lê os contadores LOGO que o banco enche (cada tique de 3s faria +1 depois)
     for (let passo = 0; passo < 400 && B.totalBanco() < 16; passo++) await B.andar(61);
     const contaFoto = 'foto=' + nuvem.fotoReqs + ' diario=' + nuvem.diarioReqs;
@@ -253,7 +255,7 @@ function abrirNavegador(nuvem, op) {
   {
     const nuvem = nuvemFingida();   // sem comFoto: /v1/snapshot dá 404, igual ao motor antigo
     nuvem.semearVersoes(15, 100);
-    const B = abrirNavegador(nuvem, { soNuvem: false });
+    const B = abrirNavegador(nuvem);
     for (let passo = 0; passo < 400 && B.totalBanco() < 15; passo++) await B.andar(61);
     const contaDiario = 'foto=' + nuvem.fotoReqs + ' diario=' + nuvem.diarioReqs;
     ok('o app tentou a foto primeiro (404 do motor antigo) e caiu no diário',

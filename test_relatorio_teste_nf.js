@@ -55,7 +55,7 @@ ok('numeração completa e na ordem (A1..J4)',
 // As 3 partes novas (22/09/2026): nuvem automática, contratos e rodapé
 ok('PARTE E pergunta a sincronização automática (conectou = sincroniza)',
    html.indexOf('PARTE E — SINCRONIZAÇÃO AUTOMÁTICA') >= 0 &&
-   html.indexOf('sincronizou SOZINHO') >= 0 && html.indexOf('Check-up da nuvem') >= 0);
+   html.indexOf('sincronizou SOZINHO') >= 0 && html.indexOf('Diagnóstico deste computador') >= 0);
 ok('PARTE F pergunta contrato sem vínculo e o botão de vincular na mão',
    html.indexOf('PARTE F — CONTRATOS E CLIENTES') >= 0 &&
    html.indexOf('Cliente sem vínculo') >= 0 && html.indexOf('🔗 Vincular cliente') >= 0);

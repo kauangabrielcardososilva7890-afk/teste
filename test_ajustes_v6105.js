@@ -53,8 +53,8 @@ ok(syncUI.indexOf('Sincronizando automaticamente — nada a escolher') >= 0,
    'durante a sincronização ela avisa que não há nada a escolher');
 ok(sync.indexOf('function baixarTudoDaNuvem(') >= 0 && sync.indexOf('function estadoDetalhado(') >= 0,
    'o check-up da nuvem continua aqui (baixar tudo + estado detalhado por lista)');
-ok(syncUI.indexOf('dc-sync-now') >= 0 || syncUI.indexOf('Sincronizar agora') >= 0,
-   'o botão manual continua existindo para quem quiser forçar (não é obrigatório)');
+ok(syncUI.indexOf('dc-sync-now') < 0 && syncUI.indexOf('Sincronizar agora') < 0,
+   'o botão manual saiu da janela (r46: sincroniza sozinho, sem botão)');
 
 // ── 2. INÍCIO: cartões de vendas e orçamentos ───────────────────────────────
 console.log('\n== INÍCIO: vendas e orçamentos no painel ==');

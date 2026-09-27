@@ -133,14 +133,11 @@ function createWindow () {
   // regra do 'will-navigate' acima (que manda link externo para o navegador do
   // Windows): o que está DENTRO do navegador embutido fica dentro.
   try{
-    // O emissor da NFS-e da prefeitura de Janaúba (Sintese Tecnologia) é
-    // http:// — site antigo, sem cadeado. Ele é o ÚNICO endereço http liberado
-    // aqui (ordem dele: "eu uso o site http://sistema.sintesetecnologia.com.br/
-    // NFEWeb/indexNFe.xhtml?Param=Janauba"); todo o resto continua exigindo https.
-    const NAV_HTTP_PREFEITURA = /^http:\/\/sistema\.sintesetecnologia\.com\.br(\/|$)/i;
+    // v7.1.0 — o attach é SEMPRE permitido: a webview nasce sem src e o endereço
+    // só é conhecido na navegação (avaliar o src aqui bloqueava TUDO, inclusive
+    // https — foi assim que o navegador parou de abrir). O filtro real está por
+    // navegação, logo abaixo. As travas de isolamento continuam todas ligadas.
     win.webContents.on('will-attach-webview', (evento, webPreferences, params) => {
-      const url = String((params && params.src) || '');
-      if (!/^https:\/\//i.test(url) && !NAV_HTTP_PREFEITURA.test(url)) { evento.preventDefault(); return; }
       try { delete webPreferences.preload; } catch(e){}
       webPreferences.nodeIntegration = false;
       webPreferences.contextIsolation = true;
@@ -149,6 +146,13 @@ function createWindow () {
       webPreferences.allowRunningInsecureContent = false;
     });
     win.webContents.on('did-attach-webview', (evento, conteudo) => {
+      // v7.1.0 — filtro por NAVEGAÇÃO (aqui a URL é a de verdade): só http/https
+      // entram no navegador embutido. file://, javascript: e outros esquemas nunca.
+      try{
+        conteudo.on('will-navigate', (evNav, navUrl) => {
+          if(!/^https?:\/\//i.test(String(navUrl||''))){ try{evNav.preventDefault();}catch(e){} }
+        });
+      }catch(e){}
       // Janela nova pedida DENTRO do site (WhatsApp/prefeitura) abre no mesmo
       // lugar, em vez de virar janela solta fora do sistema.
       try{

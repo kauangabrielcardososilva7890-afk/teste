@@ -395,12 +395,13 @@ normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
 // memória do programa; ao abrir o sistema, a base é remontada LENDO O DIÁRIO DA
 // NUVEM desde o começo. No PC fica guardado só o necessário para não pedir a
 // senha de novo e para não perder nada que ainda não subiu (token + fila de
-// envio). Quem quiser abrir sem internet desliga isto no painel da Nuvem.
+// envio).
+// v7.1.0 — virou o ÚNICO modo (ordem do dono): sem interruptor, sempre ligado.
 // ═══════════════════════════════════════════════════════════════════════════
 const SO_NUVEM_KEY='digicopy_cf_so_nuvem_v1';
 const BASE_CHAVES=['digicopy_erp_v42_demo_apresentacao','digicopy_erp_backup_pre_sync','digicopy_erp_v20','digicopy_erp_v10'];
 const BASE_IDB='digicopy_erp_storage_v1';
-function modoSoNuvem(){ try{ const v=localStorage.getItem(SO_NUVEM_KEY); return v===null?true:v==='1'; }catch(e){ return true; } }
+function modoSoNuvem(){ return true; }
 function aplicarSoNuvem(){
   const ligado=modoSoNuvem();
   try{ window.DIGICOPY_SO_NUVEM=ligado; }catch(e){}
@@ -412,11 +413,11 @@ function aplicarSoNuvem(){
   return ligado;
 }
 function definirSoNuvem(ligado){
-  try{ localStorage.setItem(SO_NUVEM_KEY, ligado?'1':'0'); }catch(e){}
+  // v7.1.0 — sem efeito (modo único, sempre ligado). Mantida a assinatura para
+  // não quebrar chamadas antigas; a limpeza automática continua por conta própria.
+  try{ localStorage.setItem(SO_NUVEM_KEY,'1'); }catch(e){}
   aplicarSoNuvem();
-  if(ligado){ try{ soltarCopiaLocal(); }catch(e){} }
-  else persistAgora();
-  return modoSoNuvem();
+  return true;
 }
 // Apaga o que ESTE computador guardou da base (navegador). Não toca no token da
 // nuvem, nem na fila de envio, nem em nada da nuvem.

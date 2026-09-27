@@ -67,16 +67,16 @@ ok(fmc.indexOf('sem-certificado') >= 0, 'a tentativa sem certificado entra na Au
 ok(fmc.indexOf('ponte.status') >= 0, 'confere o certificado ANTES de pedir senha/assinar');
 ok(fmc.indexOf('a senha do') >= 0 && fmc.indexOf('NÃO fica salva') >= 0, 'relembra que a senha é pedida na hora e não fica salva');
 
-console.log('== B9 / observações — fim do alarme falso do diagnóstico ==');
-ok(diag.indexOf('temDadoEscondido') >= 0, 'diagnóstico mede se existe dado escondido de verdade antes de acusar');
-ok(diag.indexOf('NADA QUEBRADO AQUI') >= 0, 'quando está tudo visível, avisa que está tudo bem (sem drama)');
-ok(diag.indexOf("alvoSess.empresaId||alvoSess.empresa") >= 0, 'lê a empresa da sessão nos dois nomes possíveis (empresaId e empresa)');
-ok(diag.indexOf('A CAUSA ESTÁ AQUI EM CIMA') >= 0, 'o aviso dramático continua existindo — mas só quando há dado escondido');
-ok(diag.indexOf('DIAGNÓSTICO (só lê, não muda nada)') >= 0, 'o diagnóstico continua SÓ LENDO (regra de sempre)');
+console.log('== B9 / observações — diagnóstico removido com a faixa (r46) ==');
+ok(diag.indexOf('temDadoEscondido') < 0, 'medidor de dado escondido removido');
+ok(diag.indexOf('NADA QUEBRADO AQUI') < 0, 'aviso de tudo-bem removido junto');
+ok(diag.indexOf("alvoSess.empresaId||alvoSess.empresa") < 0, 'leitura de empresa do diagnóstico removida');
+ok(diag.indexOf('A CAUSA ESTÁ AQUI EM CIMA') < 0, 'aviso dramático removido');
+ok(diag.indexOf('DIAGNÓSTICO (só lê, não muda nada)') < 0, 'texto do diagnóstico removido');
 
 console.log('== Nada disso pesa na abertura do sistema ==');
 ok(man.indexOf('.github') < 0 && man.indexOf('publicar-motor') < 0 && man.indexOf('deploy_github_actions') < 0, 'botão de deploy (arquivo do GitHub) não entra no bundle do sistema');
-ok(bundle.indexOf('nfAuditarFiscal') >= 0 && bundle.indexOf('NADA QUEBRADO AQUI') >= 0, 'bundle já tem as correções (rodar npm run bundle antes de entregar)');
+ok(bundle.indexOf('nfAuditarFiscal') >= 0 && bundle.indexOf('NADA QUEBRADO AQUI') < 0, 'bundle com fiscal e SEM o diagnóstico removido (rodar npm run bundle antes de entregar)');
 
 console.log('== O botão de deploy existe e é manual (sem susto na nuvem da loja) ==');
 const wf = fs.readFileSync('deploy_github_actions/publicar-motor.yml', 'utf8');
@@ -94,12 +94,12 @@ ok(escuro.indexOf('.fx-tb tbody tr:hover') >= 0 && escuro.indexOf('.fx-sel{ back
 ok(escuro.indexOf('.fx-tb .fx-btn{ background:#22307a') >= 0, 'botão da linha (Alterar/Excluir) ganha contraste no escuro');
 ok(escuro.indexOf('FOTO DO DONO (21/09/2026, item A3)') >= 0, 'o motivo (a foto dele) ficou registrado no arquivo');
 
-console.log('== A causa do "(nenhuma?!)" em TODO computador ==');
-ok(diag.indexOf("const getS=(typeof getSession==='function')?getSession()") >= 0, 'diagnóstico passa a usar getSession() direto (sess() não existe neste módulo)');
-ok(diag.indexOf("const alvoSess=getS;") >= 0, 'a sessão real é a que o sistema tem de verdade (e não mais null fixo)');
-ok(diag.indexOf('SEM EMPRESA — a cura carimba sozinha') >= 0, 'quando faltar carimbo, o texto explica em vez de gritar "(nenhuma?!)"');
-ok(diag.indexOf('Sessão deste computador: ') >= 0 && diag.indexOf('Versão deste sistema: ') >= 0, 'o diagnóstico mostra quem está logado e a versão do sistema');
-ok(diag.indexOf('Para comparar com outro computador') >= 0, 'ensina a comparar com outro PC (é assim que se acha diferença de dados)');
+console.log('== A causa do "(nenhuma?!)" — diagnóstico removido com a faixa (r46) ==');
+ok(diag.indexOf("const getS=(typeof getSession==='function')?getSession()") < 0, 'leitura getSession do diagnóstico removida');
+ok(diag.indexOf("const alvoSess=getS;") < 0, 'sessão do diagnóstico removida');
+ok(diag.indexOf('SEM EMPRESA — a cura carimba sozinha') < 0, 'texto de sem-empresa removido');
+ok(diag.indexOf('Sessão deste computador: ') < 0 && diag.indexOf('Versão deste sistema: ') < 0, 'cabeçalho do diagnóstico removido');
+ok(diag.indexOf('Para comparar com outro computador') < 0, 'ensinamento de comparar PCs removido');
 
 console.log('== Certificado A1 instalado DENTRO do sistema (pedido dele) ==');
 ok(fmc.indexOf('window.nfInstalarCertificado') >= 0, 'função de instalar o A1 criada no módulo fiscal');
@@ -576,18 +576,20 @@ async function testarCheckupDaNuvem(){
   ok(motor.indexOf('baixarTudoDaNuvem,') >= 0 && motor.indexOf('estadoDetalhado') >= 0, 'as duas funções ficam disponíveis para a tela');
   ok(motor.indexOf('nada é enviado nem apagado') >= 0, 'o próprio código registra que a releitura não apaga nem envia nada');
 
-  ok(ck.indexOf('window.dcCheckupNuvem=async function') >= 0, 'existe o check-up na tela');
-  ok(ck.indexOf('sincronização está PAUSADA esperando a sua escolha') >= 0,
-     'quando está pausado, a tela explica em português por que o outro PC não aparece');
-  ok(ck.indexOf('Lista por lista (aqui x nuvem)') >= 0 && ck.indexOf("naNuvem!==estado.porListaLocal[k]") >= 0,
-     'compara lista por lista e marca o que está diferente');
-  ok(ck.indexOf('dc-ck-baixar') >= 0 && ck.indexOf('dc-ck-enviar') >= 0 && ck.indexOf('dc-ck-sync') >= 0,
-     'tem os três consertos: baixar tudo de novo, enviar este PC inteiro e sincronizar agora');
-  ok(ck.indexOf('dc-ck-copiar') >= 0 && ck.indexOf('dcCheckupNuvemResumo') >= 0,
-     'tem o resumo copiável (o texto que ele me manda quando o problema voltar)');
-  ok(ck.indexOf('🩺 Check-up da nuvem') >= 0 && ck.indexOf('injetarBotaoCheckup') >= 0,
-     'o botão aparece dentro da janela da Nuvem');
-  ok(ck.indexOf('Nada é apagado em lugar nenhum') >= 0, 'deixa claro na tela que nada é apagado');
+  // r46 — o check-up saiu da tela com a faixa de botões (pedido do dono).
+  // O motor (baixar tudo + estado detalhado, travados acima) continua.
+  ok(ck.indexOf('window.dcCheckupNuvem=async function') < 0, 'check-up removido da tela');
+  ok(ck.indexOf('sincronização está PAUSADA esperando a sua escolha') < 0,
+     'aviso de pausado do check-up removido junto');
+  ok(ck.indexOf('Lista por lista (aqui x nuvem)') < 0 && ck.indexOf("naNuvem!==estado.porListaLocal[k]") < 0,
+     'comparação lista por lista removida');
+  ok(ck.indexOf('dc-ck-baixar') < 0 && ck.indexOf('dc-ck-enviar') < 0 && ck.indexOf('dc-ck-sync') < 0,
+     'os três consertos manuais saíram: baixar, enviar e sincronizar');
+  ok(ck.indexOf('dc-ck-copiar') < 0 && ck.indexOf('dcCheckupNuvemResumo') < 0,
+     'resumo copiável do check-up removido (mandar-erro continua no patch próprio)');
+  ok(ck.indexOf('🩺 Check-up da nuvem') < 0 && ck.indexOf('injetarBotaoCheckup') < 0,
+     'botão de abrir o check-up removido da janela da Nuvem');
+  ok(ck.indexOf('Nada é apagado em lugar nenhum') < 0, 'texto do check-up removido');
 
   // o comportamento, de verdade: cursor volta a zero e estado pausado respeitado
   const w = { localStorage: { _d:{}, getItem(k){ return this._d[k]===undefined?null:this._d[k]; }, setItem(k,v){ this._d[k]=String(v); }, removeItem(k){ delete this._d[k]; } } };

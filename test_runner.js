@@ -283,9 +283,12 @@ const tests=[
   "test_dado_aparece_outro_pc.js",
   // v7.0.20 (rodada 32, ideia L) — "tem vários problemas, eu não consigo
   // identificar": 1 clique monta o pacote (versão + tela + últimos erros, SEM
-  // segredo) e abre o popup de copiar. Mora no aviso de erro e no check-up
-  // (NÃO é botão de rodapé, por ordem dele).
+  // segredo) e abre o popup de copiar. Mora no aviso de erro (r46: o check-up
+  // saiu da faixa; NÃO é botão de rodapé, por ordem dele).
   "test_mandar_erro.js",
+  // r46 (v7.1.0) — faixa de botões da Nuvem: 8 remoções + trazer-de-volta no
+  // admin + avisos abrindo a nuvem.
+  "test_faixa_botoes_r46.js",
   // r33 (ideia D): trava contra redefinição silenciosa — patch novo que
   // redefine função antiga sem marcador e sem encadear NÃO passa.
   "test_sem_sobrescrita.js",

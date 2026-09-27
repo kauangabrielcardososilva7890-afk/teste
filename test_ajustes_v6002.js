@@ -50,11 +50,11 @@ ok('já carimbados não envelopam', sandbox.acContarOrfaos(db1Emp).total === 0);
 ok('com 2 empresas não carimba NADA', sandbox.acCarimbarOrfaos({ empresas: [{ id: 'a' }, { id: 'b' }], vendas: [{ id: 'v' }] }).total === 0);
 
 console.log('== DIAGNÓSTICO passa a enxergar órfãos (a prova que escapava) ==');
-ok('conta "SEM CARIMBO (órfãos)"  por entidade', diag.indexOf('orfaos++') >= 0 && diag.indexOf('SEM CARIMBO (órfãos)') >= 0);
-ok('diagnóstico aponta a causa provável dos sumiços', diag.indexOf('CAUSA PROVÁVEL DOS SUMIÇOS') >= 0);
-ok('diagnóstico percebe sessão sem empresa como fator', diag.indexOf('PRÓPRIA SESSÃO TAMBÉM ESTÁ SEM EMPRESA') >= 0);
-ok('cura garante "recarregar não resolve — carimbar resolve" (v6.0.4+: insiste 10min + botão Reparar)', diag.indexOf('v6.0.4') >= 0 && diag.indexOf('Reparar sessão agora') >= 0);
-ok('o diagnóstico continua só LENDO (não escreve no banco)', diag.indexOf('DIAGNÓSTICO (só lê, não muda nada)') >= 0);
+ok('diagnóstico de órfãos saiu da tela com a faixa (r46)', diag.indexOf('orfaos++') < 0 && diag.indexOf('SEM CARIMBO (órfãos)') < 0);
+ok('causa provável dos sumiços saiu junto', diag.indexOf('CAUSA PROVÁVEL DOS SUMIÇOS') < 0);
+ok('aviso de sessão sem empresa saiu junto', diag.indexOf('PRÓPRIA SESSÃO TAMBÉM ESTÁ SEM EMPRESA') < 0);
+ok('botão Reparar saiu; a cura automática continua no próprio patch', diag.indexOf('Reparar sessão agora') < 0);
+ok('texto do diagnóstico removido (a cura carimba sozinha)', diag.indexOf('DIAGNÓSTICO (só lê, não muda nada)') < 0);
 
 console.log('== CENTRAL NF VIRA MENU (aba flutuante morta) ==');
 ok('view "central-nf" criada com ensureView (padrão das telas)', src.indexOf("ensureView('central-nf')") >= 0);

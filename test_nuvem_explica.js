@@ -32,7 +32,7 @@ function ok(nome, cond, extra) {
 }
 const MOTOR = fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8');
 const FAIXA = fs.readFileSync('ajustes_v7015_nuvem_explica_patch.js', 'utf8');
-const CHECKUP = fs.readFileSync('ajustes_v5227_nuvem_acompanhamento_patch.js', 'utf8');   // o check-up (resumo que ele copia)
+const CHECKUP = fs.readFileSync('ajustes_v5227_nuvem_acompanhamento_patch.js', 'utf8');   // r46: check-up removido; o freio continua no motor
 const TOKEN_KEY = 'digicopy_cf_token_v1';
 const STATE_KEY = 'digicopy_cf_sync_state_v1';
 
@@ -248,12 +248,10 @@ function abrir(cenario) {
     ok('com o freio disparado, a contagem diz que disparou HOJE e o motivo',
       comFreio.freio.disparouHoje === true && comFreio.freio.motivo === 'dia');
 
-    // o check-up entra só nesta janela (não mexe no resto do teste)
-    try { n.w.eval(CHECKUP); } catch (e) { /* se a tela não montar aqui, o assert cobra */ }
-    const resumo = (typeof n.w.dcCheckupNuvemResumo === 'function')
-      ? n.w.dcCheckupNuvemResumo(n.w.DIGICOPY_CLOUD_SYNC.estadoDetalhado(), comFreio) : '';
-    ok('e o resumo que ele copia leva essa linha (é a prova que chega para a manutenção)',
-      /Freio preventivo da nuvem: DISPAROU HOJE/.test(resumo) && /plano pago/.test(resumo));
+    // r46: o resumo copiável do check-up saiu com a faixa; a prova do freio
+    // continua no motor (apiStatus, cobrado acima) e no /health da nuvem.
+    ok('e o resumo copiável do check-up saiu com a faixa (r46)',
+      CHECKUP.indexOf('dcCheckupNuvemResumo') < 0 && CHECKUP.indexOf('dc-ck-copiar') < 0);
     freioDisparou = false;
   }
 

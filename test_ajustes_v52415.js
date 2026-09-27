@@ -12,23 +12,20 @@ function ok(cond, msg) {
   else { console.error('✘', msg); falhas++; }
 }
 
+// r46 — o diagnóstico "Por que dados não aparecem?" saiu da tela com a faixa
+// de botões (pedido do dono). A cura automática continua sozinha no patch
+// da cura; estes asserts travam a REMOÇÃO (fonte + 2 bundles).
 const p = fs.readFileSync('ajustes_v5227_nuvem_acompanhamento_patch.js', 'utf8');
-ok(p.includes('v5.24.34'), 'carimbo v5.24.34 no painel de nuvem');
-ok(p.includes('window.dcDiagnosticoInvisiveis'), 'função de diagnóstico exposta');
-ok(p.includes('dc-diag-invisiveis'), 'botão injetado no painel (id dc-diag-invisiveis)');
-ok(p.includes('Por que dados não aparecem?'), 'título do diagnóstico na língua dele');
-ok(p.includes("INVISÍVEIS (outra empresa)"), 'marca registros invisíveis por empresa');
-ok(p.includes("u.empresaId") || p.includes('empAtual'), 'compara contra empresaId da sessão');
-ok(/ENTS=\['usuarios','tecnicos','clientes','produtos'/.test(p.replace(/\s/g,'')),
-   'varre as entidades citadas por ele (usuarios, tecnicos, vendas, orcamentos...)');
-ok(p.includes('vendas') && p.includes('orcamentos'), 'vendas e orçamentos incluídos na varredura');
-ok(p.includes('só lê, não muda nada'), 'diagnóstico declara-se somente-leitura');
-ok(!/fetch\(|api\('/.test(p.split('window.dcDiagnosticoInvisiveis=function')[1] || ''),
-   'diagnóstico NÃO gasta nuvem (zero chamadas de API)');
+ok(p.includes('v7.1.0 (r46)'), 'carimbo r46 da faixa no patch');
+ok(!p.includes('window.dcDiagnosticoInvisiveis'), 'função de diagnóstico removida');
+ok(!p.includes('dc-diag-invisiveis'), 'botão removido do painel (id dc-diag-invisiveis)');
+ok(!p.includes('Por que dados não aparecem?'), 'título do diagnóstico removido');
+ok(!p.includes("INVISÍVEIS (outra empresa)"), 'marca de invisíveis removida');
+ok(!p.includes('semSessaoComUmaEmpresa'), 'caso semSessaoComUmaEmpresa removido');
 
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
-ok(bundle.includes('dcDiagnosticoInvisiveis'), 'bundle contém o diagnóstico');
-ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('dcDiagnosticoInvisiveis'), 'bundle do CELULAR contém');
+ok(!bundle.includes('dcDiagnosticoInvisiveis'), 'bundle NÃO contém mais o diagnóstico');
+ok(!fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('dcDiagnosticoInvisiveis'), 'bundle do CELULAR também não contém');
 
 const idx = fs.readFileSync('index.html', 'utf8');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -41,4 +38,4 @@ const vW = (wkR.match(/const WORKER_VERSION = '([^']+)'/) || [])[1] || '';
 ok(vW !== '' && fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8').includes('Worker ' + vW), 'worker carimbado (v' + vW + ') e motor colado na mesma versão');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v' + pkg.version + ' (diagnóstico "por que dados não aparecem", custo zero de nuvem).');
+console.log('\nTudo OK — v' + pkg.version + ' (r46: diagnóstico "por que dados não aparecem" removido com a faixa).');

@@ -269,13 +269,13 @@ console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?"
       /key = 'freio_ultimo'/.test(motorNuvem) && /key = 'saude_relatos'/.test(motorNuvem) &&
       /const RELATOS_MAX = 12;/.test(motorNuvem) && /\bfreio,/.test(motorNuvem) && /\bsaude,/.test(motorNuvem) &&
       /url\.pathname === '\/v1\/relato'/.test(motorNuvem));
-    ok('o check-up mostra o freio e leva a linha no resumo que ele copia',
-      /Freio preventivo da nuvem/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')) && /nuvem\.freio\.disparouHoje/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')));
+    ok('o check-up saiu com a faixa (r46: sem texto de freio na tela antiga)',
+      !/Freio preventivo da nuvem/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')) && !/nuvem\.freio\.disparouHoje/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')));
     ok('a contagem da nuvem no app traz o freio junto (apiStatus lê o /health)',
       /saida&&saida\.freio/.test(sync) && /totais\.freio=saida\.freio/.test(sync));
-    ok('e traz também os relatos de saúde (aparecem no check-up e no resumo que ele copia)',
+    ok('e traz também os relatos de saúde (motor; o check-up saiu na r46)',
       /saida&&saida\.saude/.test(sync) && /totais\.saude=saida\.saude/.test(sync) &&
-      /Relatos de saúde/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')));
+      !/Relatos de saúde/.test(ler('ajustes_v5227_nuvem_acompanhamento_patch.js')));
     ok('o app relata sozinho: freio, credencial, falha, base vazia e fila presa',
       /function relatarSaude\(tipo,codigo\)/.test(sync) && /relatarSaude\('freio'/.test(sync) &&
       /relatarSaude\('credencial'/.test(sync) && /relatarSaude\('falha'/.test(sync) &&

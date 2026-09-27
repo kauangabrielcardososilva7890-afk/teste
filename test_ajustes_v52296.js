@@ -59,7 +59,7 @@ ok(sync.indexOf("x-digicopy-versao") >= 0 && sync.indexOf('DIGICOPY_APP_VERSION'
 
 // 7) zip baixado mantém as pastas
 ok(patch.indexOf(".replace(/\\\\/g, '/')") >= 0 && patch.indexOf('montarZip') >= 0, 'zip montado com pastas dentro');
-ok(patch.indexOf('📥 Baixar todos os backups (.zip)') >= 0 && patch.indexOf('🗑️ Excluir todos os backups da nuvem') >= 0, 'botões de baixar-todos e excluir-todos (rótulos novos do modelo do dono)');
+ok(patch.indexOf('📥 Baixar todos os backups (.zip)') >= 0 && patch.indexOf('🗑️ Excluir todos os backups da nuvem') < 0, 'baixar-todos fica, ralador saiu (r46)');
 ok(patch.indexOf('Backup diario') >= 0 && patch.indexOf('Backup atualizações') >= 0, 'card mostra as duas pastas');
 
 // 8) instruções da nuvem sem armadilha de cartão
@@ -74,7 +74,7 @@ ok(patch.indexOf('3 jeitos') >= 0 && patch.indexOf('18:30') >= 0 && patch.indexO
 ok(patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') >= 0, 'botão 1: backup manual FAZ OS DOIS (nuvem + PC)');
 ok(patch.indexOf('acaoBackupManual') >= 0 && patch.indexOf('baixarUmBackup(chave)') >= 0, 'manual: guarda na nuvem e baixa em seguida');
 ok(patch.indexOf('📥 Baixar todo histórico de backup') >= 0 || patch.indexOf('📥 Baixar todos os backups') >= 0, 'botão 2: baixar histórico');
-ok(patch.indexOf('🗑️ Excluir todos os backups da nuvem') >= 0 && patch.indexOf('Excluir <b>') >= 0 && patch.indexOf('Última confirmação') >= 0, 'botão 3: excluir backups com DUAS confirmações (uma já sugere baixar o .zip antes)');
+ok(patch.indexOf('🗑️ Excluir todos os backups da nuvem') < 0 && patch.indexOf('excluirTodos') < 0, 'ralador removido de vez com a função (r46)');
 ok(patch.indexOf('bk-pc-baixar') < 0 && patch.indexOf('Backup no PC') < 0 && patch.indexOf('bk-rest-arq') >= 0, 'v5.24.0: botão local duplicado ("Baixar backup para este PC") fora; restaurar por arquivo fica');
 ok(patch.indexOf("__v52301bkClick") >= 0 && patch.indexOf("addEventListener('click'") >= 0 && patch.indexOf("closest('#btn-backup-top')") >= 0, 'menu Backup: clique interceptado por captura (sempre abre a aba)');
 ok(patch.indexOf("button[onclick]") >= 0 && patch.indexOf('exportBackup') >= 0 && patch.indexOf('.module-menu') >= 0, 'captura cobre botões de menu sem id (onclick clássico)');
@@ -153,9 +153,9 @@ ok(patch.indexOf('html.digi-escuro .bk-sec') >= 0 && patch.indexOf('bk-msg-erro'
 ok(patch.indexOf('class="bk-aba"') >= 0 && patch.indexOf('class="bk-sec-head"') >= 0 && patch.indexOf('bk-dashed') >= 0, 'tela Backup classificada para o tema');
 ok(bundle.indexOf('bk-aba-css') >= 0 && bundle.indexOf('digi-escuro .bk-card') >= 0, 'bundle carrega o modo escuro da tela Backup');
 
-// 21) v5.23.8 — tela Backup no modelo do dono: 3 botões (manual → zip → excluir) + cura do 403 escrita no aviso + auto-backup de atualização é do worker
+// 21) v5.23.8 — tela Backup no modelo do dono: 2 botões (manual → zip; excluir saiu na r46) + cura do 403 escrita no aviso + auto-backup de atualização é do worker
 ok(patch.indexOf('id="bk-atualizar"') < 0 && bundle.indexOf('id="bk-atualizar"') < 0, 'sem botão Atualizar (a lista recarrega sozinha ao abrir/após ações)');
-ok(patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') >= 0 && patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') < patch.indexOf('📥 Baixar todos os backups (.zip)') && patch.indexOf('📥 Baixar todos os backups (.zip)') < patch.indexOf('🗑️ Excluir todos os backups da nuvem'), 'exatamente 3 botões na ordem do dono: manual → zip → excluir');
+ok(patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') >= 0 && patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') < patch.indexOf('📥 Baixar todos os backups (.zip)') && patch.indexOf('🗑️ Excluir todos os backups da nuvem') < 0, '2 botões na ordem do dono: manual → zip (ralador saiu, r46)');
 ok(patch.indexOf('UPDATE devices SET role') < 0 && patch.indexOf('Seu USUÁRIO não tem cargo Admin') >= 0, 'v5.24.1: aviso de 403 agora diz que vale o USUÁRIO (não o aparelho)');
 ok(worker.indexOf('checarTrocaDeVersao') >= 0 && worker.indexOf('nomeBackupSistema') >= 0, 'backup a-cada-atualização roda sozinho no worker (foto da versão anterior)');
 ok(patch.indexOf('Só o aparelho administrador pode mexer nos backups') < 0 || patch.indexOf('Pra liberar, rode UMA vez') >= 0, 'mensagem velha substituída pela orientação');

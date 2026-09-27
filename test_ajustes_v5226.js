@@ -19,5 +19,5 @@ ok('PC convidado não apaga nada e não fica parado',!invite.isolate&&!invite.pa
 ok('scan pula chave retida',code.includes('held.has(k)'));
 ok('enviar os dados atuais é escolha da pessoa',code.includes('async function publishLocalToCloud')&&code.includes('async function manterLocalSemEnviar'));
 ok('painel avisa que a sincronização é automática',/Sincronização automática ativa/.test(ui)||/Sincronizando automaticamente/.test(ui));
-ok('o botão manual de não enviar continua existindo (opcional)',fs.readFileSync('ajustes_v52246_nuvem_nao_autorizar_patch.js','utf8').includes('dc-nao-autorizar-local'));
+ok('o botão manual de não enviar SAIU (r46: sincronização automática, sem botão)',!fs.readFileSync('ajustes_v52246_nuvem_nao_autorizar_patch.js','utf8').includes('dc-nao-autorizar-local'));
 console.log('\nRESULTADO: reinstalação não duplica na nuvem!');

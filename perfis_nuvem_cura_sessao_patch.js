@@ -16,8 +16,8 @@
 //     • rearmada a CADA login (wrap do setSession) e a CADA gravação do banco
 //       (wrap do db.save — é por onde os dados da nuvem pousam, cobrindo PC que
 //       abre o sistema antes dos dados descerem);
-//     • botão manual "Reparar sessão agora" na tela Nuvem (ao lado do
-//       diagnóstico, instalado no patch 5227) chama window.acForcarCura().
+//     • (r46: o botão manual saiu da faixa; a cura roda sozinha e
+//       window.acForcarCura() continua disponível para chamar por fora.)
 //  2) PERFIS DA NUVEM (pedido dele): a tela Nuvem abre pra todo PC; PC que
 //     entrou com a senha do GERENTE vira Administrador na nuvem (gastos,
 //     aparelhos, convites — implementado no worker 5.26.3 e nos gates do

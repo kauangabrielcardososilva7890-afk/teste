@@ -285,23 +285,7 @@ async function baixarTodos(avisoEl, botao){
   return itens.length;
 }
 
-async function excluirTodos(avisoEl){
-  const d = await listar();
-  const qtd = ((d && d.backups) || []).length;
-  if(!qtd){ aviso(avisoEl, 'Não há backups para apagar.', 'info'); return 0; }
-  const ok1 = await window.confirmSistema(
-    'Excluir <b>' + qtd + ' backup(s)</b> da nuvem? Isso apaga <b>somente os backups</b> — os dados atuais do sistema <b>continuam intactos</b>.',
-    'Excluir backups da nuvem');
-  if(!ok1) return 0;
-  const ok2 = await window.confirmSistema(
-    'Última confirmação: tem certeza? Se baixar tudo no HD primeiro, lembre de guardar o arquivo <b>.zip</b>. Depois de apagar, o ciclo continua normal (amanhã 18:30 sai o diário e a cada atualização sai o de sistema).',
-    'Tem certeza?');
-  if(!ok2) return 0;
-  const call = api();
-  const r = await call('/v1/backups', { method: 'DELETE' });
-  aviso(avisoEl, '🗑️ Apaguei <b>' + (r.apagados || qtd) + ' backup(s)</b> da nuvem. Os dados do sistema não foram tocados — amanhã 18:30 tem diário novo.', 'ok');
-  return r.apagados || qtd;
-}
+// v7.1.0 (r46) — «Excluir todos os backups» (RALADOR) REMOVIDO a pedido do dono.
 
 // ─── A tela (card dentro do painel Nuvem) ──────────────────────────────────
 function estiloBtn(principal){
@@ -395,7 +379,6 @@ async function abrir(painelBody){
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
         '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
         '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(false) + '">📥 Baixar todos os backups (.zip)</button>' +
-        '<button type="button" id="bk-excluir-todos" style="' + estiloBtn(false) + ';color:#b91c1c;border-color:#fecaca">🗑️ Excluir todos os backups da nuvem</button>' +
       '</div>' +
       '<div id="bk-resumo" style="margin-top:10px"></div>' +
       '<div id="bk-aviso" style="margin-top:10px"></div>' +
@@ -403,7 +386,6 @@ async function abrir(painelBody){
     '</div>';
 
   const btnB = card.querySelector('#bk-baixar-todos');
-  const btnE = card.querySelector('#bk-excluir-todos');
   const avisoEl = card.querySelector('#bk-aviso');
   card.querySelector('#bk-agora').onclick = async function(){
     const b = this;
@@ -413,10 +395,6 @@ async function abrir(painelBody){
   btnB.onclick = async function(){
     try{ await baixarTodos(avisoEl, btnB); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
     finally{ btnB.innerText = '📥 Baixar todos os backups'; carregar(card); }
-  };
-  btnE.onclick = async function(){
-    try{ await excluirTodos(avisoEl); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
-    finally{ carregar(card); }
   };
   carregar(card);
 }
@@ -830,7 +808,8 @@ async function restaurarLista(registros, aoProgresso){
   return { ok: ok, falhas: falhas, primeiroErro: primeiroErro };
 }
 
-// Botão dentro do painel da Nuvem, logo abaixo do "Ver itens excluídos".
+// "Trazer de volta" — mora DENTRO do bloco admin (r46: confirmado a pedido do
+// dono; só admin vê). Ancora depois do "Ver excluídos", que só existe p/ admin.
 function instalarBotao(){
   const modal = document.getElementById('digicopy-cloud-modal');
   if(!modal || modal.classList.contains('hidden')) return;
