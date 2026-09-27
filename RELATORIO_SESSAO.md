@@ -7771,3 +7771,58 @@ só entre turnos) — algo externo está repondo o ref. Commit 11787a3 saiu na b
 resgate igual: reset+transplante (12 arquivos exatos da r44, conteúdo conferido) →
 recommitado. 11787a3 abandonado. REGRA AMPLIADA: conferir `git log -1` (pai correto)
 IMEDIATAMENTE antes de cada commit/push, não só no início do turno.
+
+## Rodada 45 — 27/09/2026 — RELATÓRIO ANTES DE EDITAR (navegador + botões + impressora + parecer sobre relatório externo)
+
+### 0. Ordem do dono (valendo)
+
+Primeiro o relatório mastigado; só edita sistema depois que ele confirmar. Esta rodada:
+só leitura + este registro. Nenhum arquivo de sistema tocado. Frustração dele anotada
+com razão: r40–r44 foram consertos invisíveis; os bugs visíveis dele (impressora some,
+sem-cliente, entre-PCs) continuam abertos — o relatório mira exatamente eles.
+
+### 1. Vereditos (V = verificado no código)
+
+- V1 navegador: allowlist main.js:141-144 (https + 1 exceção http Janaúba) CONFIRMADA;
+  literal dele ("não consegui acessar (URL)") NÃO existe no nosso código (é texto do
+  Chromium ou paráfrase do nosso toast "Não consegui abrir "+url); no SITE aparece nosso
+  aviso amarelo (não o texto dele) → ele está no EXE. Aberto: `will-attach` avalia o
+  `src` do attach (criamos webview SEM src → '': pode estar bloqueando TUDO, não só
+  http). Precisa 2 respostas: algum site abre ou nenhum? qual URL? (Electron 28,
+  webviewTag true — handler ativo.)
+- V2 botões: tabela do relatório externo 13/14 (correção: "Por que dados não aparecem?"
+  é v5227, não cura_sessao). 8 arquivos de teste cravam rótulos/IDs. Meu corte ≠ dele:
+  remover os 7 pedidos + Não-autorizar + Sincronizar-agora; MANTER Desconectar (fluxos
+  CNPJ/recuperar!), Ver aparelhos (bloqueio pré-zero!), Zerar (wipe pendente!),
+  Acompanhar (mostra dados + abriga o mandar-erro). "Trazer de volta" = desfazer
+  exclusão (recurso de segurança, não diagnóstico) — proponho manter dentro do admin,
+  confirmar com ele.
+- V3 maquinasContrato: 5 defs existem MAS todas IIFE-locais, zero window.*, zero chamada
+  cruzada → SOMBRA ZERO, sem bug, sem loteria. A tela usa a versão completa do próprio
+  arquivo. O "fix" proposto (apagar 4) QUEBRARIA 4 arquivos — REJEITADO.
+- V4 remanejo silencioso: forma do código real (v52435:205-212), mas `confirmSistema`
+  EXISTE (popup_sistema:46) → risco desprezível; endurecimento opcional de 1 linha.
+- V5 html: par orcamento byte-idêntico (md5 igual ✓), par pix divergente ✓ — item 100%
+  correto; direção (fonte única + gerar) certa; prioridade baixa (fase 2).
+- V6 mesma-serial-mesmo-contrato: ponto exato mapeado (v52435 após eqOld, antes de
+  `outro`; só para cadastro novo `!parqueId`, edição liberada). Helpers triplicados nos
+  3 wrappers (alvo da consolidação gradual).
+
+### 2. Parecer sobre o relatório externo (pedido dele)
+
+Útil como MAPA (tabela de botões, pares html, perguntas do item 3), ERRADO nos dois
+diagnósticos principais (sombra de maquinasContrato não existe; bloqueio http como
+certeza ignora EXE-vs-site e o attach sem src). Este relatório o substitui.
+
+### 3. Pendências dele (checklist no chat)
+
+Reanexar imagens (não chegaram); 2 respostas do navegador; 2 do item 3 (contrato
+novo/migrado? some na hora/depois?); confirmar corte de botões (Trazer-de-volta e
+Zerar); 4-a re-explicado (prints da Nuvem por PC); mandar-erro do bug B.
+
+### 4. Nota de branch
+
+Só registro. Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31 comentado.
+Links: https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App segue v7.0.27, motor 5.28.0. Próximo: confirmação dele → edições.
