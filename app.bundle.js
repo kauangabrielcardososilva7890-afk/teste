@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 229 | sha256: e9b1b763c884ef50
+ * scripts: 229 | sha256: ad6fbbc9045dd643
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -16422,6 +16422,37 @@ function sincronizarEmailCampanhaEventos(empId){
   return alterou;
 }
 
+// v7.0.27 — TEMPORÁRIO r44: move a tabela de custos da chave antiga para
+// CONFIG_CUSTOS (voto RENOMEAR do dono). Idempotente: só age se a chave antiga
+// existir; pode rodar em todo PC sem medo. REMOVER quando todos os PCs
+// confirmarem atualizados — aí o nome antigo some 100% (ver SESSAO r44).
+const TABELA_CUSTOS_ANTIGA = 'CONFIG_SISPRINTER';
+function migrarTabelaCustosLegada(){
+  if(typeof db==='undefined'||!db) return 0;
+  let mud = 0;
+  if(db.modulosDinamicos && db.modulosDinamicos[TABELA_CUSTOS_ANTIGA]){
+    const old = db.modulosDinamicos[TABELA_CUSTOS_ANTIGA]||{};
+    const cur = db.modulosDinamicos['CONFIG_CUSTOS']||{};
+    const dados = (cur.dados||[]).slice();
+    (old.dados||[]).forEach(function(r){
+      const codR = cod(pick(r,['COS_CODIGO','CODIGO']));
+      if(codR && !dados.some(function(x){ return cod(pick(x,['COS_CODIGO','CODIGO']))===codR; })) dados.push(r);
+    });
+    db.modulosDinamicos['CONFIG_CUSTOS'] = { label: cur.label||old.label||'Custos', dados: dados };
+    delete db.modulosDinamicos[TABELA_CUSTOS_ANTIGA];
+    mud++;
+  }
+  if(db.configSisprinterMigradas){
+    db.configCustosMigradas = db.configCustosMigradas||[];
+    db.configSisprinterMigradas.forEach(function(x){
+      if(x && !db.configCustosMigradas.some(function(y){ return y&&(y.id===x.id||(y.codigoAntigo===x.codigoAntigo&&String(y.descricao)===String(x.descricao))); })) db.configCustosMigradas.push(x);
+    });
+    delete db.configSisprinterMigradas;
+    mud++;
+  }
+  return mud;
+}
+
 function sincronizarConfigsAvulsas(empId){
   let alterou=0;
   const cfgClientes=rows('CONFIG_CLIENTES');
@@ -16436,23 +16467,23 @@ function sincronizarConfigsAvulsas(empId){
       alterou++;
     });
   }
-  const cfgSis=rows('CONFIG_SISPRINTER');
-  if(cfgSis.length){
-    db.configSisprinterMigradas=db.configSisprinterMigradas||[];
-    cfgSis.forEach(r=>{
+  const cfgCustos=rows('CONFIG_CUSTOS');
+  if(cfgCustos.length){
+    db.configCustosMigradas=db.configCustosMigradas||[];
+    cfgCustos.forEach(r=>{
       const codigo=cod(pick(r,['COS_CODIGO','CODIGO'])); if(!codigo) return;
       const cliente=clientePorCodigo(pick(r,['COS_COD_CLIENTE','COD_CLIENTE']), empId);
-      let c=db.configSisprinterMigradas.find(x=>x.empresaId===empId&&x.codigoAntigo===codigo);
+      let c=db.configCustosMigradas.find(x=>x.empresaId===empId&&x.codigoAntigo===codigo);
       const dados={empresaId:empId,codigoAntigo:codigo,clienteId:cliente?cliente.id:null,clienteCodigoAntigo:cod(pick(r,['COS_COD_CLIENTE','COD_CLIENTE'])),descricao:up(pick(r,['COS_DESCRICAO','DESCRICAO'])),valor:num(pick(r,['COS_VALOR','VALOR']),0),somenteHistorico:true};
-      if(c) Object.assign(c,dados); else db.configSisprinterMigradas.push({id:uidSafe('cos'),...dados});
+      if(c) Object.assign(c,dados); else db.configCustosMigradas.push({id:uidSafe('cos'),...dados});
       alterou++;
     });
   }
   return alterou;
 }
-function configSisValor(codCliente, descricao){
+function configCustoValor(codCliente, descricao){
   const cc=cod(codCliente); const d=up(descricao);
-  const all=[...(db.configSisprinterMigradas||[]), ...rows('CONFIG_SISPRINTER').map(r=>({clienteCodigoAntigo:cod(pick(r,['COS_COD_CLIENTE','COD_CLIENTE'])),descricao:up(pick(r,['COS_DESCRICAO','DESCRICAO'])),valor:num(pick(r,['COS_VALOR','VALOR']),NaN)}))];
+  const all=[...(db.configCustosMigradas||[]), ...rows('CONFIG_CUSTOS').map(r=>({clienteCodigoAntigo:cod(pick(r,['COS_COD_CLIENTE','COD_CLIENTE'])),descricao:up(pick(r,['COS_DESCRICAO','DESCRICAO'])),valor:num(pick(r,['COS_VALOR','VALOR']),NaN)}))];
   const vals=all.filter(x=>(!cc||cod(x.clienteCodigoAntigo)===cc)&&up(x.descricao)===d).map(x=>num(x.valor,NaN)).filter(Number.isFinite);
   return vals.length?Math.max(...vals):null;
 }
@@ -16466,7 +16497,7 @@ function classificarContaAvulsa(row, contagemEmail){
   if(low.includes('enviou email:')||low.includes('enviou emails:')){
     tipo='EMAIL'; cos='EMVIAR_EMAIL'; valor=0;
     const chave=cli+'|'+minutoChave(data);
-    if((contagemEmail[chave]||0)>10){ const cfg=configSisValor(cli,'VALOR_EMAIL'); valor=cfg!=null?cfg:0.01; }
+    if((contagemEmail[chave]||0)>10){ const cfg=configCustoValor(cli,'VALOR_EMAIL'); valor=cfg!=null?cfg:0.01; }
   } else if(low.includes('enviou sms:')){ tipo='SMS'; cos='VALOR_SMS'; valor=0.10; }
   else if(low.includes('enviou whatsapp:')){ tipo='WHATSAPP'; cos='VALOR_WHATSAPP'; valor=0.15; }
   else if(low.includes('gerou boleto:')){ tipo='BOLETO'; cos='VALOR_BOLETOS'; valor=1.00; }
@@ -16475,7 +16506,7 @@ function classificarContaAvulsa(row, contagemEmail){
   else if(low.includes('gerou nfe:')){ tipo='NFE'; cos='VALOR_NFE'; valor=1.99; }
   else if(low.includes('backup realizado nas nuvens')){ tipo='BACKUP'; cos='VALOR_BACKUP'; valor=1.00; }
   else if(low.includes('geolocalizacao google')){ tipo='GEOLOCALIZACAO'; cos='VALOR_GEOLOCALIZACAO'; valor=0.01; }
-  const override=configSisValor(cli,cos);
+  const override=configCustoValor(cli,cos);
   if(override!=null) valor=override;
   return {tipo,cosDescricao:cos,valor:round2(valor)};
 }
@@ -16661,9 +16692,10 @@ function sincronizarLocacaoEstoqueFinal(empId){
 function aplicarAutomacoesFinaisLocacaoAux(empId){
   if(!db||!empId) return 0;
   db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
-  const sig=assinaturaTabela(['ENQUETES_PERGUNTA','ENQUETES_VOTOS','CARTAO_CLIENTE','CONTADORES_OFF','EMAIL_OFF','EMAIL_CAMPANHA_ENVIOS_EMAIL','CONFIG_CLIENTES','CONFIG_SISPRINTER','CONTAS_RECEBER_AVULSA','PRODUTOS_ATACADO','RAMO','REGISTROS','BOLETOS_HISTORICO','PIX_HISTORICO','SELECIONADOS','LOCACAO_ESTOQUE','LOCACAO_ESTOQUE_HISTORICO','CONTADORES','CONTADOR','ITENS_VENDA','CARTUCHOS','RAMO_ITENS_FABRICANTE']);
-  if(db.config.automacoes.finaisLocacaoAuxAssinatura===sig) return 0;
-  let total=0;
+  const migrou=migrarTabelaCustosLegada(); // TEMPORÁRIO r44: antes da assinatura, senão o preço some no dia da troca
+  const sig=assinaturaTabela(['ENQUETES_PERGUNTA','ENQUETES_VOTOS','CARTAO_CLIENTE','CONTADORES_OFF','EMAIL_OFF','EMAIL_CAMPANHA_ENVIOS_EMAIL','CONFIG_CLIENTES','CONFIG_CUSTOS','CONTAS_RECEBER_AVULSA','PRODUTOS_ATACADO','RAMO','REGISTROS','BOLETOS_HISTORICO','PIX_HISTORICO','SELECIONADOS','LOCACAO_ESTOQUE','LOCACAO_ESTOQUE_HISTORICO','CONTADORES','CONTADOR','ITENS_VENDA','CARTUCHOS','RAMO_ITENS_FABRICANTE']);
+  if(db.config.automacoes.finaisLocacaoAuxAssinatura===sig && !migrou) return 0;
+  let total=migrou;
   total+=sincronizarEnquetesDetalhes(empId);
   total+=sincronizarCartoesOffEmails(empId);
   total+=sincronizarEmailCampanhaEventos(empId);

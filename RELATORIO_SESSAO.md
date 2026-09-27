@@ -7727,3 +7727,47 @@ Resgate igual ao r42b: `reset --hard FETCH_HEAD` (6a02578) + transplante da árv
 17e1277 (`checkout 17e1277 -- .`) → exatos 13 arquivos da r43, conteúdo conferido
 (entrada r43, `puxarAoAbrirTela`, v7.0.26) → recommitado. 17e1277 abandonado. REGRA
 REAFIRMADA: todo turno começa com fetch+reset ANTES de qualquer edição — sem exceção.
+
+## Rodada 44 — 26/09/2026 — RENOMEAR VOTADO: TABELA DE CUSTOS MIGRADA (APP 7.0.27)
+
+### 0. Votos aplicados
+
+nome-legado=RENOMEAR, consolidação=GRADUAL (limpar duplicados mortos a cada conserto
+na raiz; sem big-bang). Regra fundida: migração de dados sincronizados exige todos os
+PCs atualizados no mesmo dia (dono avisado no chat).
+
+### 1. O rename (raiz, com calço temporário)
+
+`CONFIG_*`→`CONFIG_CUSTOS`, `db.config*Migradas`→`db.configCustosMigradas`,
+`configSisValor`→`configCustoValor`, `cfgSis`→`cfgCustos` (só no arquivo dono;
+chamadores só internos; não exportado). Por que o calço: a tabela mora em
+`modulosDinamicos` (SINCRONIZADO, mapa) e a coleção viaja pelo auto-include do
+`definicoes()` — rename seco apagaria os preços no dia da troca. O
+`migrarTabelaCustosLegada()` move tabela+coleção (idempotente, com dedupe) ANTES da
+assinatura e força rodada completa+save; PC velho que ressuscitar a chave antiga só
+gera re-migração inofensiva. Colunas `COS_*` MANTIDAS (campos dos dados dele, sem o
+nome). Nome restante no repo: só o calço (4) + seu teste (2) + espelhos de build +
+Android estacionado (8, congelado de propósito — some sozinho quando o nº 3 voltar a
+andar) + histórico Git. Remoção do calço = rodada futura, após ele confirmar todos
+os PCs atualizados.
+
+### 2. Provas
+
+Teste comportamental estendido: fixture na chave nova + bloco TEMPORÁRIO (chave
+antiga→nova, chave some, coleção pop, PREÇO 0.05 intacto). Suíte 239/0. App 7.0.27.
+
+### 3. Nota de branch
+
+Commitado e empurrado na **`arena/01a0d9c3-teste`**, PR #31 comentado. Links:
+https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App v7.0.27, motor 5.28.0. Próximo: números do stall-side + mandar-erro do bug B
+(lição de casa dele) → conserto do lado travado → bug B → inventário fiscal.
+
+### Nota r44b — resgate (amnésia NO MEIO do turno, sem perda)
+
+Desta vez o ref da branch voltou à base ENTRE dois commits meus no mesmo turno (não
+só entre turnos) — algo externo está repondo o ref. Commit 11787a3 saiu na base;
+resgate igual: reset+transplante (12 arquivos exatos da r44, conteúdo conferido) →
+recommitado. 11787a3 abandonado. REGRA AMPLIADA: conferir `git log -1` (pai correto)
+IMEDIATAMENTE antes de cada commit/push, não só no início do turno.

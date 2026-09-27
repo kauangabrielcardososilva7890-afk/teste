@@ -17,7 +17,7 @@ const db = {
     EMAIL_OFF:{dados:[{EMO_CODIGO:1, EMO_EMAIL:'CLIENTE@X.COM', EMO_ASSUNTO:'Fila'}]},
     EMAIL_CAMPANHA_ENVIOS_EMAIL:{dados:[{ECM_CODIGO:1, ECM_COD_EMAIL:5, ECM_ACAO:1},{ECM_CODIGO:2, ECM_COD_EMAIL:5, ECM_ACAO:0}]},
     CONFIG_CLIENTES:{dados:[{CLC_CODIGO:1, CLC_COD_CLIENTE:10, CLC_DESCRICAO:'limite', CLC_VALOR:'1'}]},
-    CONFIG_SISPRINTER:{dados:[{COS_CODIGO:1, COS_COD_CLIENTE:10, COS_DESCRICAO:'VALOR_EMAIL', COS_VALOR:0.05},{COS_CODIGO:2, COS_COD_CLIENTE:10, COS_DESCRICAO:'VALOR_WHATSAPP', COS_VALOR:0.20}]},
+    CONFIG_CUSTOS:{dados:[{COS_CODIGO:1, COS_COD_CLIENTE:10, COS_DESCRICAO:'VALOR_EMAIL', COS_VALOR:0.05},{COS_CODIGO:2, COS_COD_CLIENTE:10, COS_DESCRICAO:'VALOR_WHATSAPP', COS_VALOR:0.20}]},
     CONTAS_RECEBER_AVULSA:{dados:[
       ...Array.from({length:11}, (_,i)=>({CRA_CODIGO:i+1, CRA_COD_CLIENTE:10, CRA_DESCRICAO:'Enviou Email: teste', CRA_DATA:'2026-08-01T10:00:10Z'})),
       {CRA_CODIGO:20, CRA_COD_CLIENTE:10, CRA_DESCRICAO:'Enviou Whatsapp: teste', CRA_DATA:'2026-08-01T11:00:00Z'},
@@ -49,7 +49,7 @@ ok('aplicou automações parte 12', changed > 0);
 ok('perguntas e votos de enquete migrados', db.enquetesPerguntasMigradas[0].pergunta === 'Gostou?' && db.enquetesVotosMigrados[0].clienteId === 'cli1');
 ok('cartão cliente, contador off e email off migrados', db.cartoesClienteMigrados.length === 1 && db.contadoresOffMigrados[0].contador === 123 && db.emailsOffMigrados[0].email === 'cliente@x.com');
 ok('evento de campanha incrementou abertura do e-mail', db.emailCampanhaEventosMigrados.length === 2 && db.emailsMigrados[0].emailAbriu === 1);
-ok('configurações migradas', db.configClientesMigradas.length === 1 && db.configSisprinterMigradas.length === 2);
+ok('configurações migradas', db.configClientesMigradas.length === 1 && db.configCustosMigradas.length === 2);
 ok('conta avulsa classificou custo de e-mail em lote', db.contasReceberAvulsasMigradas.find(x=>x.codigoAntigo==='1').valor === 0.05);
 ok('conta avulsa usou override de whatsapp e ignorou importado mysql', db.contasReceberAvulsasMigradas.find(x=>x.codigoAntigo==='20').valor === 0.2 && !db.contasReceberAvulsasMigradas.find(x=>x.codigoAntigo==='22'));
 ok('conta avulsa NFE padrão', db.contasReceberAvulsasMigradas.find(x=>x.codigoAntigo==='21').valor === 1.99);
@@ -59,4 +59,24 @@ ok('selecionados e ramo/fabricante migrados', db.selecionadosMigrados.length ===
 ok('locação estoque histórico calculou entrada por vida útil do produto', db.locacaoEstoqueHistorico.find(x=>x.codigoAntigo==='LEH-1').impressoes === 2000);
 ok('locação estoque calculou saldo, média, dias e percentual', db.locacaoEstoqueMigrado[0].estoqueToner === 1 && db.locacaoEstoqueMigrado[0].impressoes === 1700 && db.locacaoEstoqueMigrado[0].impressoesMediaDia === 15 && db.locacaoEstoqueMigrado[0].dias === 113 && db.locacaoEstoqueMigrado[0].porcentagem === 100);
 ok('contrato recebeu resumo de toner', db.contratos[0].estoqueToner === 1 && db.contratos[0].diasToner === 113);
+// v7.0.27 — TEMPORÁRIO r44: prova que dado na chave antiga migra para CONFIG_CUSTOS
+// (remover junto com migrarTabelaCustosLegada, quando todos os PCs atualizarem)
+console.log('== MIGRAÇÃO DA CHAVE ANTIGA (temporário) ==');
+const dbAntigo = {
+  config:{},
+  clientes:[{id:'cli1', empresaId:'emp', codigo:'10', codigoAntigo:'10', nome:'Cliente'}],
+  modulosDinamicos:{
+    CONFIG_SISPRINTER:{dados:[{COS_CODIGO:1, COS_COD_CLIENTE:10, COS_DESCRICAO:'VALOR_EMAIL', COS_VALOR:0.05}]},
+    CONTAS_RECEBER_AVULSA:{dados:Array.from({length:11},(_,i)=>({CRA_CODIGO:i+1, CRA_COD_CLIENTE:10, CRA_DESCRICAO:'Enviou Email: teste', CRA_DATA:'2026-08-01T10:00:00Z'}))}
+  }
+};
+const ctx2 = { window:{}, db: dbAntigo };
+new Function('window','db', code)(ctx2.window, ctx2.db);
+const A2 = ctx2.window.AUTOMACOES_FINAIS_LOCACAO_AUX_PURE;
+A2.aplicarAutomacoesFinaisLocacaoAux('emp');
+ok('chave antiga virou CONFIG_CUSTOS', !!dbAntigo.modulosDinamicos.CONFIG_CUSTOS && dbAntigo.modulosDinamicos.CONFIG_CUSTOS.dados.length===1);
+ok('chave antiga sumiu', !dbAntigo.modulosDinamicos.CONFIG_SISPRINTER);
+ok('coleção nova populada', (dbAntigo.configCustosMigradas||[]).length===1);
+ok('preço igual após migrar (0.05)', dbAntigo.contasReceberAvulsasMigradas.find(x=>x.codigoAntigo==='1').valor===0.05);
+
 console.log('\nRESULTADO: Testes de automações finais/locação/auxiliares passaram!');
