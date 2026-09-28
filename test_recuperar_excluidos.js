@@ -80,12 +80,12 @@ ok('rótulo cai para o id quando não tem nome',
 console.log('\n== 5) A OPERAÇÃO SÓ ADICIONA (nunca apaga) ==');
 ok('usa a rota de restaurar do Worker', /\/v1\/restore/.test(code));
 ok('lê a lista de excluídos do Worker (paginada, não só os últimos 200)',
-   code.indexOf('/v1/deleted?limit=1000') >= 0);
+   fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8').indexOf('/v1/deleted?limit=1000') >= 0);
 ok('NÃO chama rota de apagar nada', !/\/v1\/backup'[\s\S]{0,80}DELETE/.test(code) && !/'DELETE'/.test(code));
 ok('pede confirmação no modal do sistema (não no diálogo do navegador)',
    /confirmSistema/.test(code) && !/\bconfirm\(/.test(code) && !/\balert\(/.test(code) && !/\bprompt\(/.test(code));
-ok('avisa que pode clicar de novo para as levas mais antigas',
-   /clique de novo/i.test(code));
+ok('a recuperação automática continua de onde parou (levas antigas)',
+   /continua de onde parou/.test(fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8')));
 ok('explica que só ADMIN pode (o Worker exige)', /requireAdmin/.test(code));
 
 console.log('\n== 6) RECUPERAÇÃO AUTOMÁTICA (v7.0.4 — sem clicar em nada) ==');

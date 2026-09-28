@@ -1,7 +1,7 @@
-// test_faixa_botoes_r46.js — r46 (v7.1.0): faixa de botões da Nuvem.
+// test_faixa_botoes_r46.js — r46 (v7.1.0) + r47 (v7.1.1, Q2): faixa de botões.
 // Pedido do dono (relatório r45, confirmado com "sim"): tirar os botões de
 // teste/confusão e deixar a sincronização 100% automática.
-// 8 REMOÇÕES + 1 MUDANÇA (Trazer de volta confirmados dentro do admin).
+// 8 REMOÇÕES na r46 + TRAZER-DE-VOLTA apagado de vez na r47 (para todos os logins).
 const fs = require('fs');
 function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1); } console.log('  ✔ '+name); }
 const ler = a => fs.readFileSync(a, 'utf8');
@@ -29,22 +29,22 @@ ok('ver aparelhos + ver excluídos', sync.includes('dc-list-devices') && sync.in
 ok('zerar dados da nuvem (admin)', sync.includes('dc-reset-cloud'));
 ok('escolha da reinstalação (enviar/não-enviar)', sync.includes('dc-enviar-locais') && sync.includes('dc-nao-enviar'));
 ok('acompanhar dados dos PCs', vig.includes('dc-watch-devices'));
-ok('trazer de volta (dentro do admin)', bk.includes('dc-restaurar-lote') && bk.includes('Trazer de volta'));
+ok('trazer-de-volta APAGADO de vez (r47 Q2: botão some p/ todos os logins)', !bk.includes('dc-restaurar-lote') && !bk.includes('instalarBotao') && !bk.includes('🩹 Trazer de volta o que foi excluído'));
+ok('motor de recuperação guardado e testado (volta em 1 versão se pedir)', bk.includes('DIGICOPY_RECUPERAR') && bk.includes('restaurarLista'));
 ok('diagnóstico + conferir agora', bk.includes('dc-diag-btn') && bk.includes('Conferir agora'));
 ok('backup manual + baixar .zip', bk.includes('bk-agora') && bk.includes('bk-baixar-todos'));
 ok('mandar-erro vivo no patch próprio', ler('ajustes_v7020_mandar_erro_patch.js').includes('digicopyMandarErro'));
 
-console.log('== r46: trazer-de-volta mora no admin + avisos abrem a nuvem ==');
-const inst = bk.split('function instalarBotao')[1] || '';
-ok('trazer ancora no ver-excluídos (só existe p/ admin)', inst.includes("querySelector('#dc-list-deleted')"));
+console.log('== r46: avisos abrem a nuvem (trazer saiu na r47) ==');
+ok('restaurar item-a-item continua (dentro de Ver excluídos)', ler('cloudflare_sync_patch.js').includes('dc-restore'));
 ok('avisos renomeados (5× Abrir a Nuvem)', (fx.match(/rotulo: 'Abrir a Nuvem'/g) || []).length === 5);
 ok('aviso abre a janela da nuvem', /function irCheckup\(\)\{[^}]*abrirCloudflareNuvem/s.test(fx));
 
 console.log('== r46: bundles limpos (rodar npm run bundle antes de entregar) ==');
 const b1 = ler('app.bundle.js'), b2 = ler('mobile/www/app.bundle.js');
-['dc-sync-now', 'dc-sonuvem-toggle', 'dc-diag-invisiveis', 'dc-reparar-sessao', 'dc-abrir-checkup', 'dcCheckupNuvem', 'dcDiagnosticoInvisiveis', 'dc-nao-autorizar-local', 'bk-excluir-todos'].forEach(id => {
+['dc-sync-now', 'dc-sonuvem-toggle', 'dc-diag-invisiveis', 'dc-reparar-sessao', 'dc-abrir-checkup', 'dcCheckupNuvem', 'dcDiagnosticoInvisiveis', 'dc-nao-autorizar-local', 'bk-excluir-todos', 'dc-restaurar-lote', 'instalarBotao'].forEach(id => {
   ok('bundle sem ' + id, !b1.includes(id) && !b2.includes(id));
 });
-ok('bundles com o que fica', b1.includes('dc-watch-devices') && b2.includes('dc-watch-devices') && b1.includes('Trazer de volta') && b2.includes('Trazer de volta'));
+ok('bundles com o que fica', b1.includes('dc-watch-devices') && b2.includes('dc-watch-devices') && b1.includes('DIGICOPY_RECUPERAR') && b2.includes('DIGICOPY_RECUPERAR'));
 
 console.log('\nRESULTADO: faixa de botões r46 passou!');

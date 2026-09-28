@@ -7881,3 +7881,65 @@ relatório + passo-a-passo + importar) sem menção aos botões mortos, v7.1.0.
 Push stall (PC dele 5,2 dias sem sincronizar, 34775 pendências) = próximo
 alvo; impressora-que-some precisa das respostas Q4 (contrato novo ou
 migrado? some na hora ou depois?). Instrumentação de erro segue FORA.
+
+### Nota r47b — resgate (5ª amnésia do sandbox, sem perda)
+
+Checkout amanheceu em `e9bb5ec` com 123 arquivos sujos (snapshot velho);
+remoto tinha o r46 intacto (`0bac218`). `reset --hard FETCH_HEAD` resolveu.
+Achado no caminho: o rewrite D3 do GUIA (r46) NÃO tinha pousado (3ª edição
+paralela no mesmo arquivo perdeu a corrida — mesma causa da exclusão que
+foi refeita na r46); corrigido nesta rodada. REGRA: edições no mesmo
+arquivo sempre SEQUENCIAIS, e conferir o diff depois.
+
+## Rodada 47 — 28/09/2026 — Q2 APAGADO DE VEZ (v7.1.1) + DIAGNÓSTICO Q3/Q4 (report-first)
+
+### 0. Respostas do dono (valendo)
+
+Q2 = "sim, apague por vez" — para TODOS os logins (não só admin, vale para
+novos também). Q3 = "sim, deixa" o Zerar + print do erro ("Não foi possível
+zerar / Aguarde a sincronização atual terminar"). Q4 = vale para contrato
+novo E velho; impressoras EXISTEM mas não APARECEM; relato do balcão:
+2→criou 1→reabriu e viu 6→Ctrl+Shift+R voltou a 2→criou de novo e ficou.
+
+### 1. Q2 feito: botão sumiu para todo mundo
+
+`instalarBotao` + wrap `dc-restaurar-lote` + chamadas do poller removidos
+do v52296. Mantidos (invisíveis, testados): motor DIGICOPY_RECUPERAR,
+`restaurarLista`, recuperação AUTOMÁTICA e o Restaurar item-a-item dentro
+de Ver excluídos. Reversível em 1 versão se ele pedir de volta.
+
+### 2. Q3 diagnosticado (SEM editar — report-first): Zerar em deadlock
+
+`resetCloudOnly` (data_sync:1798) joga erro se `busy`. Com a fila presa
+(34775), cada tick engata outro em 3 s (`schedule(3000)` pós-push) e o
+push falha há dias → `busy` quase sempre ligado → Zerar NUNCA passa.
+Não é "esperar mostrar os dados": é esperar a sincronização TERMINAR,
+e ela nunca termina. Metade do conserto JÁ EXISTE (`estadoGeracao` +
+`trocou()`: reset no meio do tick aborta o tick sozinho). Proposta:
+tirar o `if(busy)throw` do reset + 1-2 checagens de aborto no aplicar
+do pull/push (risco mapeado: pull tardio pré-wipe poluindo o estado
+novo). Aguardando "pode fazer".
+
+### 3. Q4 diagnosticado (SEM editar): sumiço = fila presa + modo memória
+
+Verificado no código: salvar cria 1 linha no parque; a tabela do contrato
+é lista ÚNICA mas client-wide (contrato OU cliente) e SEM filtro de status
+(ativas + remanejadas + inativas juntas); só-nuvem não grava base local
+(só memória + fila). Encaixe do relato: "6" = 1 nova + 2 antigas + 3
+chegadas tarde da nuvem (carga progressiva) e/ou linhas de migração;
+Ctrl+Shift+R limpou a memória e a nova nunca tinha subido (fila presa)
+→ voltou a 2; a 2ª tentativa subiu porque a fila destravou no meio
+(cota diária vira às 21h). Hipótese alternativa viva: 1ª impressora
+RECUSADA pela nuvem (result.error descarta + toast — relatarSaude
+'recusado'). Falta dele: texto do "Último erro" + tabela do balcão
+HOJE (linhas e bolinha verde) + nº de contratos do balcão.
+
+### 4. Provas e branch
+
+Suíte 249/249 (1 falha intermediária: regra "doc não cita versão velha"
+mordeu os marcadores históricos — reescritos sem número). Bundles PC +
+celular regenerados (botão 0 refs, motor 2 refs cada). Commitado e
+empurrado na **`arena/01a0d9c3-teste`**, PR #31 comentado.
+Links: https://teste-60f.pages.dev e
+https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
+App v7.1.1, motor 5.28.0.

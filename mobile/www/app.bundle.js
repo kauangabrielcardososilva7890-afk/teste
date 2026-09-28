@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 229 | sha256: 398b36edff3a715a
+ * scripts: 229 | sha256: f3e88311def91bc4
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -50530,56 +50530,11 @@ async function restaurarLista(registros, aoProgresso){
   return { ok: ok, falhas: falhas, primeiroErro: primeiroErro };
 }
 
-// "Trazer de volta" — mora DENTRO do bloco admin (r46: confirmado a pedido do
-// dono; só admin vê). Ancora depois do "Ver excluídos", que só existe p/ admin.
-function instalarBotao(){
-  const modal = document.getElementById('digicopy-cloud-modal');
-  if(!modal || modal.classList.contains('hidden')) return;
-  if(document.getElementById('dc-restaurar-lote')) return;
-  const lista = modal.querySelector('#dc-list-deleted');
-  if(!lista || !lista.parentNode) return;
-
-  const wrap = document.createElement('div');
-  wrap.id = 'dc-restaurar-lote';
-  wrap.style.cssText = 'margin-top:10px;border-top:1px solid #e2e8f0;padding-top:10px';
-  wrap.innerHTML = '<button id="dc-restaurar-lote-btn" style="width:100%;height:40px;border:0;border-radius:10px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">🩹 Trazer de volta o que foi excluído</button>'
-    + '<div id="dc-restaurar-lote-res" style="margin-top:8px;font-size:12.5px;color:#334155;line-height:1.5"></div>';
-  lista.parentNode.insertBefore(wrap, lista.nextSibling);
-
-  wrap.querySelector('#dc-restaurar-lote-btn').onclick = async function(){
-    const res = wrap.querySelector('#dc-restaurar-lote-res');
-    const btn = wrap.querySelector('#dc-restaurar-lote-btn');
-    btn.disabled = true; btn.textContent = 'Procurando o que foi excluído...';
-    res.textContent = '';
-    try{
-      const call = apiNuvem();
-      if(!call) throw new Error('Motor da nuvem não carregado.');
-      // v7.0.4 — varre TUDO o que está excluído (não só os últimos 200): usa o
-      // mesmo caminho paginado do automático, que alcança o que foi apagado
-      // meses atrás. O que o automático já trouxe não aparece mais aqui.
-      const sync = window.DIGICOPY_CLOUD_SYNC;
-      const registros = (sync && typeof sync.listarExcluidosDaNuvem === 'function')
-        ? await sync.listarExcluidosDaNuvem(call)
-        : ((await call('/v1/deleted?limit=1000', { method:'GET' })).records || []);
-      const plano = window.DIGICOPY_RECUPERAR.planejarRecuperacao(registros);
-      if(!plano.total){ res.textContent = window.DIGICOPY_RECUPERAR.textoResumo(plano); btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
-      const ok = await confirmar(window.DIGICOPY_RECUPERAR.textoResumo(plano) + '\n\nTrazer todos de volta agora?', 'Trazer de volta o que foi excluído');
-      if(!ok){ btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
-      btn.textContent = 'Trazendo de volta...';
-      const r = await restaurarLista(plano.escolhidos, (feito, total)=>{ res.textContent = 'Trazendo de volta ' + feito + ' de ' + total + '...'; });
-      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick === 'function'){
-        try{ await window.DIGICOPY_CLOUD_SYNC.tick('restauracao'); }catch(e){}
-      }
-      res.innerHTML = '<b>' + r.ok + ' registro(s) trazido(s) de volta.</b>'
-        + (r.falhas ? ' ' + r.falhas + ' recusado(s)' + (r.primeiroErro ? ' (' + String(r.primeiroErro).slice(0,120) + ')' : '') + '.' : '')
-        + '<br>Os registros mais antigos vão aparecendo nas próximas vezes: clique de novo para trazer a leva seguinte.';
-      avisar('Pronto', r.ok + ' registro(s) trazido(s) de volta. Confira as telas de Contratos e Impressoras.');
-    }catch(e){
-      res.textContent = 'Não deu para trazer: ' + ((e && e.message) || e);
-    }
-    btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído';
-  };
-}
+// v7.1.1 (r47, Q2) — botão "Trazer de volta" APAGADO de vez a pedido do dono
+// (para TODOS os logins, não só admin). O motor (DIGICOPY_RECUPERAR +
+// restaurarLista) continua guardado e testado — se ele pedir de volta,
+// volta em 1 versão. A recuperação AUTOMÁTICA e o Restaurar item-a-item
+// (dentro de Ver excluídos) não mudaram.
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DIAGNÓSTICO DA NUVEM — v7.0.5 (23/09/2026)
@@ -50678,13 +50633,13 @@ async function instalarDiagnostico(){
     btn.disabled = false; btn.textContent = 'Conferir agora';
   };
 }
-// A tela da Nuvem é redesenhada por vários caminhos; o botão é reinstalado
+// A tela da Nuvem é redesenhada por vários caminhos; o diagnóstico é reinstalado
 // quando ela aparece (sem mexer em nada do que já existe).
-setInterval(function(){ try{ instalarBotao(); }catch(e){} try{ instalarDiagnostico(); }catch(e){} }, 2500);
+setInterval(function(){ try{ instalarDiagnostico(); }catch(e){} }, 2500);
 if(typeof document !== 'undefined' && document.addEventListener){
-  document.addEventListener('click', function(){ setTimeout(function(){ try{ instalarBotao(); }catch(e){} try{ instalarDiagnostico(); }catch(e){} }, 600); }, true);
+  document.addEventListener('click', function(){ setTimeout(function(){ try{ instalarDiagnostico(); }catch(e){} }, 600); }, true);
 }
-console.log('[DIGICOPY] recuperação em massa (trazer de volta o que foi excluído) carregada');
+console.log('[DIGICOPY] recuperação em massa carregada (motor guardado; botão removido na r47)');
 })();
 
 
