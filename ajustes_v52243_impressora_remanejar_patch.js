@@ -201,8 +201,9 @@ function pintarListas(contratoId){
   if(!c) return;
   var body = document.getElementById('modal-body');
   if(!body) return;
-  var todas = (db.parque||[]).filter(function(p){
-    return p && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
+  // v5.24.37 (r49, unificar) — mesmo conjunto da lista e do cartão verde.
+  var todas = (typeof maquinasContrato==='function') ? maquinasContrato(c) : (db.parque||[]).filter(function(p){
+    return p && p.empresaId===c.empresaId && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
   });
   var ativas = todas.filter(function(p){ return p.status==='ativo'; });
   var rem = todas.filter(function(p){ return p.status==='remanejada'; });

@@ -543,4 +543,10 @@ const oldShowApp = window.showApp;
 window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; const s=sess(); if(s){ const job=()=>reconciliar(s.empresaId); if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 100); else setTimeout(job,100); } return ret; };
 { const job=()=>{ const s=sess(); if(s) reconciliar(s.empresaId); }; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 500); else setTimeout(job,500); }
 console.log('[DIGICOPY] contratos_final_patch.js v4.9.17 carregado');
+// v5.24.37 (r49, unificar) — UMA conta oficial de impressoras do contrato.
+// As tabelas do modal (v52243/v52245) e o unificador usam esta mesma função,
+// então lista, cartão verde e tabelas mostram sempre o mesmo conjunto.
+window.maquinasContrato = maquinasContrato;
+window.clienteContrato = clienteContrato;
+window.codigoContrato = codigoContrato;
 })();

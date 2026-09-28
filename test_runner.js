@@ -321,7 +321,9 @@ const tests=[
   // r35 (ideia E, bloco 1): o portão existe e registra — antes/depois idênticos.
   "test_portao_escrita.js",
   // r38 (ideia E, bloco 2): função única + 3 primeiros sites migrados (antes/depois).
-  "test_salvar_alteracao.js"
+  "test_salvar_alteracao.js",
+  // r49: unificar contratos duplicados (sugestão automática + desfazer) + UMA conta oficial
+  "test_unificar_contratos_r49.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

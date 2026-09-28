@@ -7989,3 +7989,38 @@ Nenhuma fusão/exclusão antes da resposta (report-first).
 excluídos (sim/não); (c) Auditoria do contrato 77 + qual é o certo;
 (d) re-checar contagens com fila em 0; (e) atualizar o PC dele para a
 versão atual quando conveniente. Docs-only: sem bump, sem bundle.
+
+## r49 — 28/09/2026: versão 7.1.0 + unificação (autorizada, sem perguntas)
+
+### 1. Pedidos dele (3, todos executados)
+(a) "mude a versão pra 7.1.0" — feito via `npm run versao -- 7.1.0`
+(package + index.html + sync) + 4 guias + mobile/www/index.html; carimbo
+`?v=7.1.0-91f66cb38fa7`. Restos de 7.1.1 só em comentários históricos
+(v52296, teste r46, SESSAO r47) — ficam como história. (b) Explicação
+simples do sumiço das impressoras — dada no chat (caderno PC x nuvem +
+rascunho da fila + Ctrl+Shift+R jogando o rascunho fora). (c) "continue
+unificando sem eu dizer mais nada, eu não sei dizer qual é o importante"
+— AUTORIZAÇÃO EXPLÍCITA: report-first suspenso para a unificação; a
+decisão do "qual fica" foi implementada em regra documentada + testada.
+
+### 2. Unificação entregue (código)
+UMA conta oficial: `contratos_final` exporta `maquinasContrato` (+
+`clienteContrato`, `codigoContrato`) no window; tabelas do modal v52243
+e v52245 usam a mesma função (antes: query própria sem filtro de
+empresa); verde recalculado no instante da tabela (`sincVerdeContrato`
+— mata o skew dos +80ms). Novo `ajustes_v52437_contrato_unificar_patch`:
+banner no modal quando há 2+ contratos do cliente, botão Unificar com
+sugestão automática (gente>migração, mais impressoras, mais antigo,
+menor código — simulado Balcão: fica o nº 1), aposenta com `encerrado`
++ `contratoIdAnterior` por linha + botão Desfazer, tudo na Auditoria.
+Travas: mesma empresa + mesmo cliente ou não unifica.
+
+### 3. Provas e branch
+Suíte 250 (241✔ + 9 jsdom + 0✘): teste novo `test_unificar_contratos_r49`
+(4 regras puras + estrutura + bundles) registrado no runner + linha 33
+na RECLAMACOES. Manifest 229→230: 7 testes de posição (v52293, v52295,
+v52296, v52435, v52436, v5266, v6003) tiveram offsets de fim +1 (nomes
+atualizados onde citavam contagem). Bundle PC+celular regenerados
+(230 scripts, sha `b37f6360a39b6947`). Commitado e empurrado na
+`arena/01a0d9c3-teste`, PR #31 comentado. App v7.1.0, motor 5.28.0.
+Pendentes antigos seguem: Q3 "pode fazer?", ♻️ por item.

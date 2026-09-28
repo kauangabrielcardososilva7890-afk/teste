@@ -295,20 +295,38 @@ function htmlLista(c, lista, titulo, editar){
     +'</tbody></table></div></div>';
 }
 
+// v5.24.37 (r49, unificar) — a tabela pinta 80ms DEPOIS do cartão verde; sem
+// isto, uma impressora que chega/cura nesse intervalo deixa os números
+// diferentes. Recalcula o verde no MESMO instante da tabela.
+function sincVerdeContrato(body, n){
+  if(!body) return;
+  try{
+    var ps = body.querySelectorAll('p');
+    for(var i=0;i<ps.length;i++){
+      if((ps[i].textContent||'').trim()==='Impressoras'){
+        var num = ps[i].nextElementSibling;
+        if(num) num.textContent = String(n);
+        return;
+      }
+    }
+  }catch(e){}
+}
+
 function pintarListas(contratoId){
   if(typeof db==='undefined') return;
   var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
   if(!c) return;
   var body = document.getElementById('modal-body');
   if(!body) return;
-  var todas = (db.parque||[]).filter(function(p){
-    return p && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
+  // v5.24.37 (r49, unificar) — mesmo conjunto da lista e do cartão verde.
+  var todas = (typeof maquinasContrato==='function') ? maquinasContrato(c) : (db.parque||[]).filter(function(p){
+    return p && p.empresaId===c.empresaId && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
   });
   var ativas = todas.filter(function(p){ return p.status==='ativo'; });
   var rem = todas.filter(function(p){ return p.status==='remanejada' || p.status==='oculta'; });
   var html = htmlLista(c, ativas, 'Impressoras ativas', true) + htmlLista(c, rem, 'Impressoras remanejadas (histórico)', false);
   var old = document.getElementById('v52245-listas-imp') || document.getElementById('v52243-listas-imp') || document.getElementById('v52242-listas-imp');
-  if(old){ old.id='v52245-listas-imp'; old.innerHTML = html; return; }
+  if(old){ old.id='v52245-listas-imp'; old.innerHTML = html; sincVerdeContrato(body, ativas.length); return; }
   var wrap = document.createElement('div');
   wrap.id = 'v52245-listas-imp';
   wrap.innerHTML = html;
@@ -318,6 +336,7 @@ function pintarListas(contratoId){
   });
   if(cand) cand.replaceWith(wrap);
   else body.appendChild(wrap);
+  sincVerdeContrato(body, ativas.length);
 }
 
 if(typeof window.openContratoCompleto==='function' && !window.openContratoCompleto.__v52245imp){
