@@ -7943,3 +7943,49 @@ empurrado na **`arena/01a0d9c3-teste`**, PR #31 comentado.
 Links: https://teste-60f.pages.dev e
 https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0d9c3-teste.zip
 App v7.1.1, motor 5.28.0.
+
+## r48 — 28/09/2026 (report-first, SEM código): mistério das contagens + contrato 77 duplicado
+
+### 1. Dados novos do dono (build do PC dele, ~15 atrás da atual; motor igual ao atual)
+Diagnóstico colado: sync "há 163 s", **551 pendências** (era 34775 —
+fila DESTRAVOU sozinha, sem linha "Último erro"), "tela está em dia",
+aviso de pendências ligado. 3 prints: lista C1=8/C77=1 impressoras;
+modal C1 verde=7 + tabela 8 linhas; modal C77 verde=1 + tabela 8 linhas
+visualmente IDÊNTICAS às do C1. 2 contratos do Cliente Balcão: nº 1
+(R$200, 17/08/26–27) e nº 77 (R$521, 04/09/26–27) — "nunca criei esse
+segundo, acho que foi duplicado". NÃO respondeu: Q3 "pode fazer?" nem
+♻️ por item no Ver excluídos.
+
+### 2. Contagens explicadas (verificado no código exato do build dele)
+PROVA: coluna da lista (`renderContratos`) e cartão verde do modal usam
+a MESMA expressão (`maquinasContrato(c).filter(p=>p.status==='ativo')`).
+C1 dá 8 num e 7 noutro → o banco MUDOU entre os dois renders (QED).
+Causa raiz: cada número foi calculado num MOMENTO diferente de um banco
+ainda carregando (sync despejando o atraso + autocura carimbando órfãos).
+Agravantes: (a) a tabela visível "Impressoras ativas" NÃO é a base — é o
+wrapper `pintarListas` (ajustes v52243/v52245) que recalcula +80ms DEPOIS
+do verde via setTimeout; (b) verde/lista filtram empresaId da sessão,
+a tabela do wrapper NÃO filtra empresa — carimbos mistos dividem os
+números. C77 estável em 1 (lista E verde) = conjunto próprio menor;
+tabela com 8 = janela dos +80ms + chegadas tardias. NÃO é bug de query.
+Veredito: deixar a fila zerar (551→0) e reabrir; se discordar EM REPOUSO,
+aí sim caçar bug. Nada a implementar.
+
+### 3. Contrato 77: quem pode ter criado (mapa de criadores, SEM editar)
+Locais com `db.contratos.push` no repo: 5 telas de usuário (botão Novo
+contrato / salvar — ação humana) + 1 importação/migração Job
+(`locacao_patch`, `criadoPor:'migracao'`, desduplica por codigoAntigo;
+reimportação com código diferente gera 2º contrato). reconciliar/sync
+NUNCA criam contrato (só vinculam/recriam parque+clientes). C77 NÃO é
+cópia (valor e datas diferentes do C1) = contrato criado à parte.
+Rastro: Auditoria (menu, filtro entidade=Contratos, buscar "77") mostra
+"Contrato 77 criado por [nome]" SE veio pelo formulário kc (único que
+loga 'contrato/criar'; demais telas não logam; logs capados em 500).
+Perguntado a ele: Auditoria + "qual contrato é o certo, 1 ou 77?".
+Nenhuma fusão/exclusão antes da resposta (report-first).
+
+### 4. Pendências para a próxima rodada
+(a) Q3 "pode fazer?" (Zerar+tela branca); (b) ♻️ por item no Ver
+excluídos (sim/não); (c) Auditoria do contrato 77 + qual é o certo;
+(d) re-checar contagens com fila em 0; (e) atualizar o PC dele para a
+versão atual quando conveniente. Docs-only: sem bump, sem bundle.
