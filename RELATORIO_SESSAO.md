@@ -8093,3 +8093,29 @@ Setup-7.1.0 (se o rodapé insistir no velho: apagar
 `%APPDATA%\digicopy-erp\Cache` — armadilha documentada no BUILD_EXE).
 ZIP: baixar de novo o link da branch. Pedido de volta: dizer o que o
 rodapé mostra. Docs-only: sem bump, sem bundle. PR #31 comentado.
+
+## r52 — 28/09/2026: "Ctrl+Shift+R e nada" — ele refresha o endereço VELHO (docs-only)
+
+### 1. Achado decisivo (verificado de fora)
+O push NÃO atualiza o endereço que ele usa. Topologia real: (a) site
+principal `teste-60f.pages.dev` = `main` ANCESTRAL (v5.21.2, sem versão
+no título); (b) o PC dele roda v7.0.17 = branch da sessão ANTERIOR
+(`arena/01a0cf4a-teste`, congelada); (c) NOSSA branch está publicada e
+VIVA em `https://arena-01a0d9c3-teste.teste-60f.pages.dev` (título
+"Sistema Digicopy v7.1.0" conferido agora). Ele dá Ctrl+Shift+R num
+endereço congelado — nenhum refresh traz o novo. PR #31 (base =
+sessão anterior, MERGEABLE/CLEAN) NÃO foi fundido: fundir sem saber
+qual branch o painel segue não muda o endereço dele; vai pra decisão.
+
+### 2. Ritual passado (o update já existe — é só abrir o endereço novo)
+Abrir a URL nova (já no ar, 7.1.0). Ordem: PRIMEIRO zerar a fila no
+endereço velho (551 pendentes moram na origem velha; trocar antes
+encalha os writes), DEPOIS abrir a nova. Avisos dados: endereço novo =
+origem nova = (1) pede CNPJ + senha de conexão de novo (usar as mesmas),
+(2) login igual, (3) primeira carga repete o diário inteiro (lento na
+1ª vez, normal depois). Conferência: rodapé "v7.1.0 • b70ad931".
+.exe/ZIP: continuam exigindo rebuild/re-download dele (guia r51).
+
+### 3. Docs-only: sem bump, sem bundle. PR #31 comentado. Pendência
+estrutural: definir a linha de produção (main ancestral x cadeia de
+sessões) — com ele, depois que ele estiver vendo a 7.1.0.
