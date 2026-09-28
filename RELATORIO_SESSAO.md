@@ -8061,3 +8061,35 @@ empurrado na `arena/01a0d9c3-teste`, PR #31 comentado. App v7.1.0.
 8ª amnésia do sandbox no caminho (HEAD no e9bb5ec; resgate soft-reset —
 delta limpo, sem perda). Pendente dele agora: só usar (Unificar o Balcão,
 testar o Zerar) com a fila zerada.
+
+## r51 — 28/09/2026: "piorou + rodapé não mudou" (entrega, SEM código)
+
+### 1. Reclamação dele (forte)
+"Fez piorar o sistema, dados demorando aparecer de novo, rodapé nem
+mudou, cadê a versão que pedi?" Diagnóstico: NÃO é defeito de código —
+é ENTREGA. O PC dele roda v7.0.17 (diagnóstico r48); o repo está em
+v7.1.0 com tudo (r46–r50) publicado. Nenhuma correção chegou na tela
+dele ainda: (a) site Pages deveria republicar sozinho no push (config
+do PASSO; não dá pra conferir o painel daqui); (b) .exe exige rebuild
+manual dele (`npm run build:win` + instalar o Setup-7.1.0) — sem isso,
+o .exe continua o velho; (c) ZIP exige baixar de novo.
+
+### 2. Verificado no repo (tudo certo do meu lado)
+index.html + mobile com 7.1.0 (versão, título, rodapé), `?v=` fresco
+(7.1.0-b70ad931b21b), bundles com código r49+r50, `_headers` com
+no-cache, suíte verde. Nada a consertar no código.
+
+### 3. Lentidão: não pode ser meu código
+r49/r50 não rodam no PC dele (7.0.17) → não causam nada lá. Causa: o
+atraso ainda escoando no build velho (551 pendências + replay do diário
+± freio de cota). Prova pra ele: tela da nuvem mostra "faltam N"; acaba
+quando zera. Falha MINHA de comunicação: eu disse "no ar" sem deixar
+claro que o PC dele precisava do passo de atualizar — ritual dado agora.
+
+### 4. Ritual passado (curto, por canal + conferência)
+Site: abrir Pages + Ctrl+Shift+R → rodapé tem que mostrar
+"v7.1.0 • b70ad931". .exe: git pull + `npm run build:win` + instalar o
+Setup-7.1.0 (se o rodapé insistir no velho: apagar
+`%APPDATA%\digicopy-erp\Cache` — armadilha documentada no BUILD_EXE).
+ZIP: baixar de novo o link da branch. Pedido de volta: dizer o que o
+rodapé mostra. Docs-only: sem bump, sem bundle. PR #31 comentado.
