@@ -758,7 +758,7 @@
 - sobrepõe: app.js:175 — função de topo, no carregamento
 - sobrepõe: performance_patch.js:77 — função, no carregamento
 - sobrepõe: indexeddb_persistence_patch.js:134 — função, no carregamento
-- sobrepõe: cloudflare_data_sync_patch.js:2373 — função, no carregamento
+- sobrepõe: cloudflare_data_sync_patch.js:2384 — função, no carregamento
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:431 — alias, em uso
 - **GANHA →** ajustes_v7021_portao_escrita_patch.js:59 — função, no carregamento
@@ -831,7 +831,7 @@
 
 - sobrepõe: performance_patch.js:84 — função, no carregamento
 - sobrepõe: indexeddb_persistence_patch.js:136 — função, no carregamento
-- sobrepõe: cloudflare_data_sync_patch.js:2388 — função, no carregamento
+- sobrepõe: cloudflare_data_sync_patch.js:2399 — função, no carregamento
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:432 — alias, em uso
 - **GANHA →** ajustes_v7021_portao_escrita_patch.js:68 — função, no carregamento

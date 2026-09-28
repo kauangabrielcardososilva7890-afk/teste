@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: b37f6360a39b6947
+ * scripts: 230 | sha256: 39fb123ba90217b1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29707,6 +29707,7 @@ async function passeRapidoInicial(call){
   return changed;
 }
 async function pullAll(opcoes){
+  const geracaoPull=estadoGeracao;   // v7.1.0-r50 (Q3): zerou no meio da leitura? resposta velha não entra
   const silencioso=!!(opcoes&&opcoes.silencioso);
   const cargaCompleta=silencioso?false:cargaPedida;cargaPedida=false;
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
@@ -29727,6 +29728,7 @@ async function pullAll(opcoes){
   const mapa=definicoes();
   if(await fotoRapidaBoot(call,mapa,comAviso))changed=true;
   else if(await passeRapidoInicial(call))changed=true;
+  if(geracaoPull!==estadoGeracao)return changed;   // zerou na leitura rápida: para aqui
   // v7.0.19 — O PASSE RÁPIDO JÁ DEIXOU O ESTADO DE AGORA NA TELA: não segura mais o
   // programa inteiro até o fim do histórico (num diário grande são minutos olhando a
   // tela azul — o "demora sincronizar para aparecer tudo"). O aviso afina (faixinha
@@ -29734,6 +29736,7 @@ async function pullAll(opcoes){
   if(comAviso&&changed){mostrarCargaNuvem(true,'dados recentes na tela — trazendo o histórico… (pode usar)',true);tentarRedesenhoPendente();}
   do{
     const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
+    if(geracaoPull!==estadoGeracao)return changed;   // página pré-wipe: não aplica nem anda o cursor novo
     for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
     const cursorAntes=Number(state.cursor)||0;
     state.cursor=Number(data.nextCursor)||cursorAntes;
@@ -30091,6 +30094,7 @@ function materializarConfirmado(item){
 let lote=PUSH_BATCH;
 async function pushOutbox(){
   const call=api();if(!call||!outbox.length)return 0;
+  const geracaoPush=estadoGeracao;   // v7.1.0-r50 (Q3): zerou no meio do envio? confirmação velha não marca nada
   let sent=0;
   while(outbox.length){
     const batch=[];let bytes=0;
@@ -30112,6 +30116,7 @@ async function pushOutbox(){
       }
       throw e;
     }
+    if(geracaoPush!==estadoGeracao)return sent;   // nuvem zerada no meio do lote: volta sem marcar
     if(lote<PUSH_BATCH)lote=Math.min(PUSH_BATCH,lote+1);
     const remove=new Set();
     for(const result of (response.results||[])){
@@ -30309,6 +30314,7 @@ async function tick(reason){
     // a pessoa ver na hora (era a queixa "faço num PC e não aparece no outro").
     // Quem decide se pode é podeRedesenharSync — e as travas existem para não
     // atrapalhar quem está digitando.
+    if(trocou())return false;   // v7.1.0-r50 (Q3): zerou no fim da rodada — não anuncia sucesso nem redesenha por cima da escolha
     if(mudouNaTela){redesenhoPendente=true;tentarRedesenhoPendente();}
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     avisarSeBaseVazia();   // v7.0.13 — base vazia com a nuvem respondendo NUNCA fica em silêncio
@@ -30493,7 +30499,11 @@ async function mergeDuplicateClients(){
 }
 
 async function resetCloudOnly(){
-  if(busy)throw new Error('Aguarde a sincronização atual terminar.');
+  // v7.1.0-r50 (Q3): SEM a trava de busy (era `if (busy) throw`) — com a fila presa,
+  // dias e cada tick engatava outro em 3 s, então `busy` quase nunca apagava e o
+  // Zerar NUNCA passava (deadlock). É seguro entrar no meio do tick: o
+  // trocarEstado() abaixo muda a geração e o tick aborta sozinho nas checagens
+  // trocou() (leitura, envio e indicador), e o pull/push ignoram resposta velha.
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
   const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
@@ -30545,6 +30555,7 @@ async function publishLocalToCloud(){
 // Continua disponível como OPÇÃO manual (a pedido, na tela da Nuvem) — o
 // caminho normal agora é sincronizar sozinho, sem perguntar nada.
 async function manterLocalSemEnviar(){
+  outbox=[];   // v7.1.0-r50 (Q3): escolheu NÃO enviar — fila residual não vaza para a nuvem nova
   const snap=localKeysSnapshot();
   const extras=planNaoAutorizarLocal([...snap], state.known);
   state.heldLocalOnly=extras;

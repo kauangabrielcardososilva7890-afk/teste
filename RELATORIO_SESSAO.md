@@ -8024,3 +8024,40 @@ atualizados onde citavam contagem). Bundle PC+celular regenerados
 (230 scripts, sha `b37f6360a39b6947`). Commitado e empurrado na
 `arena/01a0d9c3-teste`, PR #31 comentado. App v7.1.0, motor 5.28.0.
 Pendentes antigos seguem: Q3 "pode fazer?", ♻️ por item.
+
+## r50 — 28/09/2026: Q3 Zerar sem deadlock + ♻️ decidido (continuando sem perguntas)
+
+### 1. Contexto
+Ele: "parou pq, continua ai". A r49 estava entregue; segui nos pendentes
+com a mesma autonomia ("sem eu dizer mais nada"). Escopo: Q3 (proposta
+pronta desde a r47, só faltava o "pode fazer") + decisão do ♻️ por item.
+Sem bump (segue v7.1.0 por ordem dele).
+
+### 2. Q3 feito: fim do "Aguarde a sincronização atual terminar"
+`resetCloudOnly` perdeu a trava de busy: com a fila presa, o push falhava
+há dias e cada tick engatava outro em 3 s → busy quase sempre ligado →
+Zerar NUNCA passava. Seguro porque o `trocarEstado` do próprio reset muda
+a geração e o tick aborta (leitura, envio, indicador final novo). Resposta
+velha não polui o estado novo: pull captura geração e aborta em 2 pontos
+(leitura rápida + antes de aplicar cada página/cursor); push aborta antes
+de marcar versões; `manterLocalSemEnviar` limpa a outbox (fila residual
+não vaza na escolha Não-enviar). baixarTudo e discardLocal MANTÊM a trava
+de propósito (não trocam geração / ocupam o busy). Risco residual mapeado:
+push em voo que aterrissa depois do wipe (bytes zumbis) — se cura no fluxo
+de conflito (reenvio por id); Zerar × descartar-local clicados juntos
+continuam sem trava mútua (raro; descartar tem rollback).
+
+### 3. ♻️ por item: DECIDIDO manter (sem código)
+Após o Q2 apagar o Trazer-de-volta em lote, o Restaurar item-a-item dentro
+do Ver excluídos é o ÚNICO resgate manual. Tirar = zero caminho manual.
+Mantido; nada a implementar.
+
+### 4. Provas e branch
+Suíte 251 (242✔ + 9 jsdom + 0✘): teste novo `test_zerar_deadlock_r50`
+(sem trava no reset + 2 abortos no pull + 1 no push + final do tick +
+outbox no Não-enviar + 2 travas mantidas + bundles) registrado + linha 34
+na RECLAMACOES. Bundles PC+celular regenerados (230 scripts). Commitado e
+empurrado na `arena/01a0d9c3-teste`, PR #31 comentado. App v7.1.0.
+8ª amnésia do sandbox no caminho (HEAD no e9bb5ec; resgate soft-reset —
+delta limpo, sem perda). Pendente dele agora: só usar (Unificar o Balcão,
+testar o Zerar) com a fila zerada.

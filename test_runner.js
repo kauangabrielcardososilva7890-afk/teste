@@ -323,7 +323,9 @@ const tests=[
   // r38 (ideia E, bloco 2): função única + 3 primeiros sites migrados (antes/depois).
   "test_salvar_alteracao.js",
   // r49: unificar contratos duplicados (sugestão automática + desfazer) + UMA conta oficial
-  "test_unificar_contratos_r49.js"
+  "test_unificar_contratos_r49.js",
+  // r50 (Q3): Zerar sem deadlock (aborto por geração) + Não-enviar sem vazamento
+  "test_zerar_deadlock_r50.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não
