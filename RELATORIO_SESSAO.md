@@ -8119,3 +8119,53 @@ origem nova = (1) pede CNPJ + senha de conexão de novo (usar as mesmas),
 ### 3. Docs-only: sem bump, sem bundle. PR #31 comentado. Pendência
 estrutural: definir a linha de produção (main ancestral x cadeia de
 sessões) — com ele, depois que ele estiver vendo a 7.1.0.
+
+## r53 — 28/09/2026: auditoria externa v7.0.17 + "Digicopy Único" (veredito, SEM código)
+
+### 1. O que chegou
+Relatório externo (código 7.0.17 + nuvem ao vivo com credenciais dele):
+A1–A6 arquitetura, S1–S9 segurança, D1–D8 sujeira de dados, + pitch do
+"Digicopy Único" (rewrite server.py+SQLite+PBKDF2) com o banco dele JÁ
+IMPORTADO lá. Verifiquei item a item contra o repo (app 7.1.0 + worker
+5.28.0 do repo = implantado). NADA implementado de propósito: mexer em
+senha/identidade sem "pode fazer" pode travar 34 PCs; e a decisão Único
+x atual muda tudo.
+
+### 2. Veredito (com prova de linha)
+CONFIRMADOS: S3 texto puro (`app.js:339-340` senha '6132'/'3232' + fila
+de sync sem excluir `usuarios` — `NAO_SINCRONIZA` data_sync:67 só tira
+meta/logs/notificacoes); S4 prova sem salt (`provaUsuario` = SHA-256
+login|senha, sync_patch:52-58, header :75); S1 bundle público (inerente);
+S5 token em localStorage + S6 34 aparelhos (arquitetura atual); A1/A2/A4/
+A5/A6 (conhecidos); "migração v7.0.1" fake (`patch_relatorio.js:50-51`:
+só carimba flag + troca '1234'→'3232', zero cripto). ACHADO MEU além do
+relatório: backdoor master NO CÓDIGO PÚBLICO (`app.js:427`: CNPJ dele +
+'senha digicopy8698' entra sem cadastro).
+NUANCEADOS: S2 — no worker 5.28.0 conexão→`device` comum, admin exige
+senha do gerente DIFERENTE (worker index.js:1844-1870); "CNPJ+senha→
+admin" impreciso, MAS leitura do banco inteiro passa com qualquer token
+válido → núcleo procede. S8 user-agent block NÃO achei no worker atual.
+A3 — write-behind 900ms (não 25) + flush no beforeunload/visibility +
+varredura 3s (performance_patch:70-110): residual = crash na janela.
+D6 — logs NUNCA viajam (NAO_SINCRONIZA) + teto 500: "516→0" é
+fragmentação por PC/origem, não wipe (origem nova mostra 0 — esperado).
+D1–D5,D7–D8: plausíveis, só verificáveis no banco; D4 (108 pares) + D5
+(katia×2) + D7 (órfãos) = próximos alvos do Unificar (r49 fez contratos).
+Re-inspeção: dual-source config.empresa×empresas plausível; app-release
+existe no repo (3 refs); /v1/status com token = endurecimento real.
+
+### 3. Riscos novos que o relatório CRIA (dito a ele)
+(a) Cópia COMPLETA do banco (clientes, vendas, senhas em texto) mora HOJE
+num sistema de terceiros (Único) — exigir garantia escrita de exclusão +
+contrato; (b) credenciais circularam fora → rotação URGENTE (recs 1–4
+deles endossadas + revogar "Arena-Analise"); (c) rotação também corta o
+valor das cópias do Único (hashes de senhas velhas). Único: classes de
+defeito somem no rewrite, MAS migração = paridade fiscal (NF-e!), offline,
+34 PCs, retraining — checklist passado; não decidir hoje.
+
+### 4. Proposta feita (aguarda "pode fazer")
+P1 hash real PBKDF2+salt + fim do texto puro + fim do backdoor/defaults
+(com migração que não trava ninguém); P2 `senha` fora do sync (só hash
+viaja); P3 salt na prova (cliente+worker, ele republica o worker); P4
+Unificar clientes (108 pares) + órfãos; P5 /v1/backups (worker, S7).
+Docs-only: sem bump, sem bundle. PR #31 comentado.
