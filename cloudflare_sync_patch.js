@@ -70,9 +70,18 @@ async function api(path, options){
     if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
       const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
       const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
-      if(u&&u.senha){
-        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
-        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      // v7.1.0-r54 (P3): prova conforme a fase — NUNCA as duas juntas.
+      // Com texto puro (transição): manda SÓ a antiga, que funciona na nuvem
+      // velha e na nova (a nova não ganha nada recebendo as duas juntas).
+      // Sem texto puro (pós-Corte): manda SÓ a nova com salt (a antiga é
+      // impossível). Corte só depois da nuvem republicada — ver guia.
+      if(u&&(u.senha||u.senhaHash)){
+        const loginBaixo=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-login']=loginBaixo;
+        if(u.senha) opts.headers['x-digicopy-usuario-prova']=await provaUsuario(loginBaixo,u.senha);
+        else if(u.senhaHash&&u.senhaSalt&&typeof provaSal==='function'){
+          try{ const p2=await provaSal(loginBaixo,u.senhaSalt,u.senhaHash); if(p2) opts.headers['x-digicopy-usuario-prova2']=p2; }catch(eP2){}
+        }
       }
     }
   }catch(e){}

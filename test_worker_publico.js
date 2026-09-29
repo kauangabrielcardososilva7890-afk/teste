@@ -1,4 +1,4 @@
-// test_worker_publico.js — v7.0.19 (motor da nuvem 5.28.0: + foto /v1/snapshot)
+// test_worker_publico.js — v7.0.19 (motor da nuvem 5.28.1: + foto /v1/snapshot)
 // Roda o MOTOR DA NUVEM DE VERDADE (cloudflare-worker/src/index.js) sobre um banco
 // SQLite em memória, aplicando as migrations reais do projeto. É o mesmo código
 // que o dono publica — só o banco é de mentira.
@@ -31,7 +31,7 @@ catch(e){
   process.exit(0);
 }
 
-console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.28.0) ==');
+console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.28.1) ==');
 
 // ── banco de mentira, igual ao D1: prepare/bind/first/all/run/batch/exec ────
 function abrirBanco(){
@@ -322,7 +322,7 @@ const conta=(banco,sql,...args)=>banco.db.prepare(sql).get(...args).n;
   }
 
 
-  // ═══ 8) FOTO DA NUVEM (v5.28.0 — rodada 31) ═════════════════════════════
+  // ═══ 8) FOTO DA NUVEM (v5.28.1 — rodada 31) ═════════════════════════════
   console.log('-- 8) foto: o estado atual sem recontar a história --');
   {
     const banco=abrirBanco();

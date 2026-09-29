@@ -60,7 +60,7 @@ ok('remessa grande continua correndo até o fim (fila cheia não para em 100)',
 ok('a cópia do registro não é mais feita duas vezes por varredura',
   /if\(mode==='array'\)return \(Array\.isArray\(value\)\?value:\[\]\)\.filter\(x=>x&&x\.id\)\.map\(x=>\(\{id:String\(x\.id\),data:x\}\)\)/.test(code));
 ok('a limpeza (_rt/_cf) é feita na hora de montar a remessa',
-  /data:clean\(entry\.data\)/.test(code));
+  /data:clean\(dadoEnvio\)/.test(code) && /tirarSegredosDoEnvio\(entity,entry\.data\)/.test(code));
 
 console.log('-- 5) menos peso na nuvem --');
 ok('a conferência que solta a cópia local é no máximo 1× por minuto',

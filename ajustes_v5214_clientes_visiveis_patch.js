@@ -132,7 +132,115 @@ function cliUnir(base, idsRepetidos, principalId, principalNome){
   return mudou;
 }
 
-window.CLIENTES_VISIVEIS_PURE={empresaUnica,normalizarEmpresaClientes,pertenceEmpresa,cliNormNome,cliRefsDe,cliGruposDuplicados,cliEscolherPrincipal,cliUnir};
+// ── r54 (P4): união REVERSÍVEL + usuários repetidos + órfãos (D5/D7) ─────────
+// Mesma união do cliUnir, mas GUARDA o valor anterior de cada registro tocado
+// (clienteId + clienteNome + situação do cadastro). O "Desfazer" devolve tudo.
+function cliUnirReversivel(base, idsRepetidos, principalId, principalNome){
+  const ids=(idsRepetidos||[]).filter(id=>id&&id!==principalId);
+  const out={total:0, itens:[]};
+  if(!base||!ids.length) return out;
+  Object.keys(base).forEach(k=>{
+    const arr=base[k];
+    if(!Array.isArray(arr)) return;
+    arr.forEach(r=>{
+      if(!r||typeof r!=='object') return;
+      if(r.clienteId!==undefined&&r.clienteId!==null&&ids.indexOf(r.clienteId)>=0){
+        out.itens.push({ent:k, id:r.id, campo:'clienteId', antes:r.clienteId, nomeAntes:(r.clienteNome==null?null:r.clienteNome)});
+        r.clienteId=principalId;
+        if(r.clienteNome) r.clienteNome=principalNome||r.clienteNome;
+        out[k]=(out[k]||0)+1; out.total++;
+      }
+    });
+  });
+  (base.clientes||[]).forEach(c=>{
+    if(c&&ids.indexOf(c.id)>=0){
+      out.itens.push({ent:'clientes', id:c.id, campo:'__cadastro', antes:{status:(c.status==null?null:c.status), unificadoEm:(c.unificadoEm||null), unificadoPara:(c.unificadoPara||null), unificadoParaNome:(c.unificadoParaNome||null)}});
+      c.status='unificado'; c.unificadoEm=new Date().toISOString();
+      c.unificadoPara=principalId; c.unificadoParaNome=principalNome||'';
+      out.clientesUnificados=(out.clientesUnificados||0)+1;
+    }
+  });
+  return out;
+}
+// Devolve cada registro ao valor guardado. PURA (recebe base + itens).
+function cliDesfazerUniao(base, itens){
+  let feitos=0;
+  (itens||[]).forEach(t=>{
+    if(!t||!base) return;
+    const arr=base[t.ent];
+    if(!Array.isArray(arr)) return;
+    const r=arr.find(x=>x&&x.id===t.id);
+    if(!r) return;
+    if(t.campo==='__cadastro'){
+      const a=t.antes||{};
+      if(a.status==null) delete r.status; else r.status=a.status;
+      if(a.unificadoEm==null) delete r.unificadoEm; else r.unificadoEm=a.unificadoEm;
+      if(a.unificadoPara==null) delete r.unificadoPara; else r.unificadoPara=a.unificadoPara;
+      if(a.unificadoParaNome==null) delete r.unificadoParaNome; else r.unificadoParaNome=a.unificadoParaNome;
+      feitos++;
+    }else if(t.campo==='clienteId'){
+      r.clienteId=t.antes;
+      if(t.nomeAntes==null){ if(r.clienteNome!==undefined) delete r.clienteNome; }else r.clienteNome=t.nomeAntes;
+      feitos++;
+    }
+  });
+  return feitos;
+}
+// ── usuários repetidos (D5: mesmo login 2× quebra a busca por login) ────────
+function usuNormLogin(v){ return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9._@-]/g,'').trim(); }
+function usuGruposDuplicados(usuarios, empId){
+  const map={};
+  (usuarios||[]).forEach(u=>{
+    if(!u||!u.id) return;
+    if(empId&&u.empresaId&&u.empresaId!==empId) return;
+    if(u.ativo===false) return; // inativo já está "resolvido"
+    const chave=usuNormLogin(u.login||'');
+    if(!chave||chave.length<2) return;
+    (map[chave]=map[chave]||[]).push(u);
+  });
+  return Object.keys(map).filter(k=>map[k].length>1).map(k=>({chave:k, login:map[k][0].login, itens:map[k].slice().sort((a,b)=>String(a.criadoEm||a.id||'')<String(b.criadoEm||b.id||'')?-1:1)}));
+}
+// Não apaga nem funde usuário (auditoria!): desativa os repetidos, mantendo o
+// mais antigo como principal. Reversível (é só reativar na tela de Usuários).
+function usuDesativarRepetidos(base, idsRepetidos, principalId){
+  const ids=(idsRepetidos||[]).filter(id=>id&&id!==principalId);
+  let feitos=0;
+  ((base&&base.usuarios)||[]).forEach(u=>{
+    if(u&&ids.indexOf(u.id)>=0&&u.ativo!==false){
+      u.ativo=false; u.desativadoPorUniao=principalId; u.desativadoPorUniaoEm=new Date().toISOString();
+      feitos++;
+    }
+  });
+  return feitos;
+}
+// ── órfãos (D7): apontam para um cliente que não existe ─────────────────────
+function orfaosListar(base){
+  const out=[];
+  if(!base) return out;
+  const ids={};
+  (base.clientes||[]).forEach(c=>{ if(c&&c.id) ids[c.id]=true; });
+  CLI_ENTIDADES_REF.forEach(k=>{
+    const arr=base[k];
+    if(!Array.isArray(arr)) return;
+    arr.forEach(r=>{
+      if(!r||r.clienteId==null||r.clienteId==='') return;
+      if(ids[r.clienteId]) return;
+      out.push({ent:k, id:r.id, desc:String(r.numero||r.codigo||r.nome||r.id||''), clienteId:r.clienteId});
+    });
+  });
+  return out;
+}
+function orfaoDesvincular(base, ent, id){
+  const arr=base?base[ent]:null;
+  if(!Array.isArray(arr)) return false;
+  const r=arr.find(x=>x&&x.id===id);
+  if(!r) return false;
+  r.clienteId=null;
+  if(r.clienteNome!==undefined) delete r.clienteNome;
+  return true;
+}
+
+window.CLIENTES_VISIVEIS_PURE={empresaUnica,normalizarEmpresaClientes,pertenceEmpresa,cliNormNome,cliRefsDe,cliGruposDuplicados,cliEscolherPrincipal,cliUnir,cliUnirReversivel,cliDesfazerUniao,usuNormLogin,usuGruposDuplicados,usuDesativarRepetidos,orfaosListar,orfaoDesvincular};
 
 if(typeof document==='undefined')return;
 
@@ -238,10 +346,26 @@ window.clientesDuplicadosAbrir=async function(){
       'fica registrada na Auditoria com o motivo.</p>'
     : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum contrato sem vínculo de cliente.</p>';
   window.__cliDupGrupos=grupos;
-  const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+
+  // r54 (P4): Desfazer (se há união guardada) + órfãos (D7) na mesma janela.
+  let tokUniao=null;
+  try{ tokUniao=JSON.parse(localStorage.getItem('digicopy_ultima_uniao')||'null'); }catch(eTok){ tokUniao=null; }
+  const desfazer=(tokUniao&&tokUniao.itens&&tokUniao.itens.length)
+    ? '<p style="margin:0 0 10px"><button type="button" onclick="clientesDuplicadosDesfazer()" style="height:36px;padding:0 14px;border-radius:10px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;font-weight:800;font-size:12.5px;cursor:pointer">↩ Desfazer última união ('+String(tokUniao.nome||'').replace(/[<>&]/g,'')+')</button></p>' : '';
+  const orf=orfaosListar(db);
+  const orfHtml=orf.length
+    ? '<p style="font-size:12.5px;color:#9a3412;font-weight:700;margin:0 0 4px">'+orf.length+' registro(s) apontando para cliente que não existe:</p>'+
+      '<ul style="margin:0 0 0 16px;font-size:12.5px">'+orf.slice(0,20).map((o,i)=>{
+        const vinc=(o.ent==='contratos')?' <button type="button" onclick="clientesDuplicadosVincularContrato(\''+String(o.id)+'\')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;font-weight:800;font-size:11.5px;cursor:pointer">🔗 Vincular cliente</button>':'';
+        return '<li style="margin:4px 0">'+String(o.ent)+' <b>'+String(o.desc).replace(/[<>&]/g,'')+'</b> → cliente '+String(o.clienteId).replace(/[<>&]/g,'')+' (não existe)'+vinc+
+          ' <button type="button" onclick="clientesOrfaoDesvincular('+i+')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff;color:#64748b;border:1px solid #e2e8f0;font-weight:800;font-size:11.5px;cursor:pointer">✖️ Desvincular</button></li>';
+      }).join('')+(orf.length>20?'<li>… e mais '+(orf.length-20)+'</li>':'')+'</ul>'
+    : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum registro órfão.</p>';
+  window.__cliOrfaos=orf;
+  const corpo=desfazer+'<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+
     'A união <b>não apaga nada</b>: as referências (contratos, vendas, ordens, leituras, títulos) passam para o cadastro principal e o repetido fica marcado como <b>UNIFICADO</b>.</p>'+
     '<h4 style="font-size:13px;color:#0a1e8a;margin:0 0 6px">Clientes repetidos</h4>'+cards+
-    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Contratos sem vínculo</h4>'+sv;
+    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Contratos sem vínculo</h4>'+sv+
+    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Registros sem cliente (órfãos)</h4>'+orfHtml;
   if(!modalSistema('Clientes duplicados', corpo)) if(typeof window.lfbAlert==='function') window.lfbAlert('Não achei a janela de modal nesta tela. Recarregue (F5) e tente de novo.','Clientes duplicados');
 };
 // v6.1.4 (22/09/2026) — DONO: "quero resolver o Cliente sem vínculo". O botão
@@ -270,16 +394,132 @@ window.clientesDuplicadosUnir=async function(indice){
   else if(typeof confirm==='function'){ ok=confirm(msg); }
   if(!ok) return;
   try{
-    const r=cliUnir(db, repetidos.map(it=>it.cliente.id), principal.cliente.id, principal.cliente.nome||'');
+    const r=cliUnirReversivel(db, repetidos.map(it=>it.cliente.id), principal.cliente.id, principal.cliente.nome||'');
+    try{ localStorage.setItem('digicopy_ultima_uniao', JSON.stringify({quando:new Date().toISOString(), principalId:principal.cliente.id, nome:g.nome, itens:r.itens})); }catch(eTok){}
     try{ if(typeof logAction==='function') logAction('cliente','unificar',principal.cliente.id,'Uniu '+g.itens.length+' cadastros de "'+g.nome+'" → principal código '+String(principal.cliente.codigo||principal.cliente.id)+' · '+r.total+' referência(s) movida(s)'); }catch(e){}
     if(typeof saveDB==='function') saveDB();
     try{ if(typeof renderClientes==='function') renderClientes(); }catch(e){}
     try{ if(typeof renderContratos==='function') renderContratos(); }catch(e){}
     try{ if(typeof renderAuditoria==='function') renderAuditoria(); }catch(e){}
-    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ União feita.\n\n• '+r.total+' referência(s) movida(s) para '+String(principal.cliente.nome||'')+'\n• '+(r.clientesUnificados||0)+' cadastro(s) repetido(s) marcado(s) como UNIFICADO (nada foi apagado)\n\nA lista de clientes já está atualizada.','Unir clientes duplicados');
+    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ União feita.\n\n• '+r.total+' referência(s) movida(s) para '+String(principal.cliente.nome||'')+'\n• '+(r.clientesUnificados||0)+' cadastro(s) repetido(s) marcado(s) como UNIFICADO (nada foi apagado)\n\nA lista de clientes já está atualizada.\\n\\n↩ Errou? Reabra esta janela e use o botão \"Desfazer última união\" no topo.','Unir clientes duplicados');
     setTimeout(function(){ try{ window.clientesDuplicadosAbrir(); }catch(e){} },300);
   }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu para unir: '+(e.message||e),'Erro'); }
 };
+// r54 (P4): DESFAZER a última união (devolve cada registro ao valor guardado).
+window.clientesDuplicadosDesfazer=async function(){
+  let tok=null;
+  try{ tok=JSON.parse(localStorage.getItem('digicopy_ultima_uniao')||'null'); }catch(e){ tok=null; }
+  if(!tok||!tok.itens||!tok.itens.length){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não há união guardada para desfazer.','Desfazer união'); return; }
+  if(!podeUnirClientes()){ if(typeof window.lfbAlert==='function') window.lfbAlert('Desfazer união exige permissão de apagar/estornar (ou ser Admin/Dono).','Sem permissão'); return; }
+  const msg='Desfazer a união de "'+(tok.nome||'')+'"?\n\nCada registro volta para o cadastro de onde saiu ('+tok.itens.length+' ajuste(s)). Nada é apagado.';
+  let ok=true;
+  if(typeof window.confirmSistema==='function'){ ok=await window.confirmSistema(msg,'Desfazer união'); }
+  else if(typeof confirm==='function'){ ok=confirm(msg); }
+  if(!ok) return;
+  try{
+    const n=cliDesfazerUniao(db, tok.itens);
+    try{ localStorage.removeItem('digicopy_ultima_uniao'); }catch(e2){}
+    try{ if(typeof logAction==='function') logAction('cliente','desfazer-uniao',tok.principalId||'','Desfez a união de "'+(tok.nome||'')+'" ('+n+' ajuste(s))'); }catch(e3){}
+    if(typeof saveDB==='function') saveDB();
+    try{ if(typeof renderClientes==='function') renderClientes(); }catch(e4){}
+    try{ if(typeof renderAuditoria==='function') renderAuditoria(); }catch(e5){}
+    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ União desfeita ('+n+' ajuste(s)).','Desfazer união');
+    setTimeout(function(){ try{ window.clientesDuplicadosAbrir(); }catch(e6){} },300);
+  }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu para desfazer: '+(e.message||e),'Erro'); }
+};
+// r54 (P4): desvincula UM órfão (o registro continua existindo, só solta o cliente fantasma).
+window.clientesOrfaoDesvincular=async function(indice){
+  const lista=window.__cliOrfaos||[];
+  const o=lista[indice];
+  if(!o) return;
+  if(!podeUnirClientes()){ if(typeof window.lfbAlert==='function') window.lfbAlert('Desvincular exige permissão de apagar/estornar (ou ser Admin/Dono).','Sem permissão'); return; }
+  const msg='Soltar este registro do cliente fantasma?\n\n• '+o.ent+' '+(o.desc||o.id)+'\n• cliente '+o.clienteId+' (não existe)\n\nO registro CONTINUA no banco, só fica sem cliente.';
+  let ok=true;
+  if(typeof window.confirmSistema==='function'){ ok=await window.confirmSistema(msg,'Desvincular órfão'); }
+  else if(typeof confirm==='function'){ ok=confirm(msg); }
+  if(!ok) return;
+  try{
+    if(orfaoDesvincular(db, o.ent, o.id)){
+      try{ if(typeof logAction==='function') logAction(o.ent,'desvincular-orfao',o.id,'Soltou do cliente fantasma '+o.clienteId); }catch(e2){}
+      if(typeof saveDB==='function') saveDB();
+    }
+    setTimeout(function(){ try{ window.clientesDuplicadosAbrir(); }catch(e3){} },300);
+  }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu: '+(e.message||e),'Erro'); }
+};
+// ── r54 (P4): USUÁRIOS repetidos (D5) — mesmo login 2× ───────────────────────
+window.usuariosDuplicadosContar=function(){
+  try{ return usuGruposDuplicados(db.usuarios, empresaUnica()).length; }catch(e){ return 0; }
+};
+window.usuariosDuplicadosAbrir=function(){
+  if(typeof db==='undefined'||!db){ if(typeof window.lfbAlert==='function') window.lfbAlert('O banco ainda está carregando.','Usuários repetidos'); return; }
+  const grupos=usuGruposDuplicados(db.usuarios, empresaUnica());
+  window.__usuDupGrupos=grupos;
+  const cards=grupos.length?grupos.map((g,i)=>{
+    const linhas=g.itens.map((u,j)=>{
+      return '<li style="margin:3px 0">'+(j===0?'⭐ ':'• ')+'<b>'+String(u.login||'').replace(/[<>&]/g,'')+'</b> — '+String(u.nome||'').replace(/[<>&]/g,'')+' ('+String(u.perfil||'')+')'+(j===0?' <b style="color:#15803d">— fica como principal (mais antigo)</b>':'')+'</li>';
+    }).join('');
+    return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:11px 13px;margin-bottom:9px">'+
+      '<p style="font-size:13.5px;font-weight:800;margin:0 0 5px">'+String(i+1)+'. login "'+String(g.login).replace(/[<>&]/g,'')+'" — '+g.itens.length+' cadastros ativos</p>'+
+      '<ul style="margin:0 0 8px 16px;font-size:12.5px;color:#334155">'+linhas+'</ul>'+
+      '<button type="button" onclick="usuariosDuplicadosResolver('+i+')" style="height:36px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-weight:800;font-size:12.5px;cursor:pointer">Manter o principal, desativar repetidos</button>'+
+    '</div>';
+  }).join('') : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum login repetido.</p>';
+  const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Login repetido confunde o sistema (ele acha o primeiro e ignora o outro). '+
+    'A correção <b>não apaga ninguém</b>: desativa os repetidos e o principal continua valendo. Desativar é reversível (é só reativar na tela de Usuários).</p>'+cards;
+  if(!modalSistema('Usuários repetidos', corpo)) if(typeof window.lfbAlert==='function') window.lfbAlert('Não achei a janela de modal nesta tela. Recarregue (F5) e tente de novo.','Usuários repetidos');
+};
+window.usuariosDuplicadosResolver=async function(indice){
+  const grupos=window.__usuDupGrupos||[];
+  const g=grupos[indice];
+  if(!g) return;
+  if(!podeUnirClientes()){ if(typeof window.lfbAlert==='function') window.lfbAlert('Resolver repetidos exige permissão de apagar/estornar (ou ser Admin/Dono).','Sem permissão'); return; }
+  const principal=g.itens[0];
+  const repetidos=g.itens.slice(1);
+  const msg='Resolver o login "'+(g.login||'')+'"?\n\nFICA ATIVO (principal):\n• '+(principal.nome||'')+' ('+(principal.perfil||'')+')\n\nSERÃO DESATIVADOS (nada é apagado):\n'+repetidos.map(u=>'• '+(u.nome||'')+' ('+(u.perfil||'')+')').join('\n');
+  let ok=true;
+  if(typeof window.confirmSistema==='function'){ ok=await window.confirmSistema(msg,'Usuários repetidos'); }
+  else if(typeof confirm==='function'){ ok=confirm(msg); }
+  if(!ok) return;
+  try{
+    const n=usuDesativarRepetidos(db, repetidos.map(u=>u.id), principal.id);
+    try{ if(typeof logAction==='function') logAction('usuario','desativar-repetido',principal.id,'Desativou '+n+' cadastro(s) repetido(s) do login "'+(g.login||'')+'"'); }catch(e2){}
+    if(typeof saveDB==='function') saveDB();
+    try{ if(typeof renderUsuarios==='function') renderUsuarios(); }catch(e3){}
+    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ Pronto: '+n+' repetido(s) desativado(s). Para reverter, reative na tela de Usuários.','Usuários repetidos');
+    setTimeout(function(){ try{ window.usuariosDuplicadosAbrir(); }catch(e4){} },300);
+  }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu: '+(e.message||e),'Erro'); }
+};
+function injetarBotaoUsuariosDup(){
+  try{
+    const view=document.getElementById('view-usuarios');
+    if(!view||view.classList.contains('hidden')) return;
+    const barra=view.firstElementChild;
+    if(!barra) return;
+    if(view.querySelector('#btn-usuarios-duplicados')) return;
+    const n=window.usuariosDuplicadosContar();
+    const b=document.createElement('button');
+    b.id='btn-usuarios-duplicados';
+    b.type='button';
+    b.title='Acha logins cadastrados 2 vezes e ajuda a resolver (sem apagar ninguém)';
+    b.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:'+(n?'#fff7ed':'#fff')+';color:'+(n?'#9a3412':'#334155')+';border:1px solid '+(n?'#fdba74':'#dbe3ef')+';cursor:pointer';
+    b.textContent='🔎 Logins repetidos'+(n?(' ('+n+')'):'');
+    b.onclick=window.usuariosDuplicadosAbrir;
+    const alvo=barra.querySelector('.flex.gap-2')||barra;
+    alvo.appendChild(b);
+  }catch(e){}
+}
+// SUBSTITUICAO DE PROPOSITO (r54): embrulha renderUsuarios para injetar o botão de logins repetidos; chama a original.
+if(typeof window.renderUsuarios==='function'&&!window.renderUsuarios.__v5214usu){
+  const origU=window.renderUsuarios;
+  window.renderUsuarios=function(){
+    const r=origU.apply(this,arguments);
+    try{ injetarBotaoUsuariosDup(); }catch(e){}
+    return r;
+  };
+  window.renderUsuarios.__v5214usu=true;
+}
+setTimeout(injetarBotaoUsuariosDup,1500);
+
 function injetarBotaoDuplicados(){
   try{
     const view=document.getElementById('view-clientes');
@@ -310,5 +550,5 @@ if(typeof window.renderClientes==='function'&&!window.renderClientes.__v5214dup)
 }
 setTimeout(injetarBotaoDuplicados,1200);
 
-console.log('[DIGICOPY] v6.1.4 clientes: duplicados com união guiada (nada é apagado)');
+console.log('[DIGICOPY] v6.1.4 clientes: duplicados com união guiada + desfazer + usuários repetidos + órfãos (r54, nada é apagado)');
 })();

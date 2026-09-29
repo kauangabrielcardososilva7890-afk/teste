@@ -158,7 +158,8 @@
     }
 
     // Sobrescreve login de forma infalível
-    window.doLoginUser = function(){
+    // v7.1.0-r54 (P1): async — hash primeiro; texto puro da transição faz upgrade automático.
+    window.doLoginUser = async function(){
       try{
         var uInput = document.getElementById('login-user');
         var pInput = document.getElementById('login-senha-user');
@@ -174,6 +175,21 @@
         var _db = window.db || (typeof db !== 'undefined' ? db : null) || {};
         var usuarios = _db.usuarios || [];
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
+        // v7.1.0-r54 (P1): entrou pelo texto puro da transição → grava o hash agora (upgrade).
+        if(user && !user.senhaHash && typeof atualizarHashRegistro === 'function'){
+          try{ await atualizarHashRegistro(user, senhaVal); }catch(eUp){}
+        }
+        // v7.1.0-r54 (P1): texto não achou (pós-Corte não tem texto) → tenta o hash+salt.
+        if(!user && typeof confereSenha === 'function'){
+          var ffH = (typeof fold === 'function') ? fold : function(s){ return String(s || '').toLowerCase().trim(); };
+          var fLH = ffH(loginVal);
+          for(var hi = 0; hi < usuarios.length; hi++){
+            var hu = usuarios[hi];
+            if(!hu || !hu.ativo || !hu.senhaHash) continue;
+            if(ffH(hu.login) !== fLH) continue;
+            try{ if(await confereSenha(senhaVal, hu)){ user = hu; break; } }catch(eH){}
+          }
+        }
 
         if(!user){
           // v5.24.34 — diagnóstico partido (carimbo de fala): diz SE é o
@@ -224,6 +240,15 @@
         if(typeof saveDB === 'function') saveDB();
         forcarExibicaoApp();
         if(typeof toast === 'function') toast('Bem-vindo, ' + sess.usuarioNome + '!', 'success');
+        // v7.1.0-r54 (P1): senha de fábrica → abre o próprio cadastro e obriga a troca.
+        if(user && user.senhaPadrao && typeof openModal === 'function'){
+          try{
+            setTimeout(function(){
+              try{ if(typeof toast === 'function') toast('Senha padrão: troque pela sua senha', 'error'); }catch(e){}
+              openModal('usuario', user.id);
+            }, 900);
+          }catch(ePadrao){}
+        }
       }catch(err){
         console.error('[DIGICOPY] Erro no login:', err);
         forcarExibicaoApp();

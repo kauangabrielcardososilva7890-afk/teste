@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.0   (igual ao src/index.js)
- * GERADO EM: 2026-09-25 18:56 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.1   (igual ao src/index.js)
+ * GERADO EM: 2026-09-29 02:45 UTC
  * sha256 do código (sem este cabeçalho):
- *   49106475e81f52887448bd50fae8091827bf6ec83b6f8d4083d4a709b29c43ad
+ *   f290e354ae6d07b4c2e661307a4b9939cacc37fda164102b52790906dc82f6aa
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,7 +35,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.28.0";
+var WORKER_VERSION = "5.28.1";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -45,7 +45,7 @@ var JSON_HEADERS = {
   "x-content-type-options": "nosniff",
   "referrer-policy": "no-referrer",
   "access-control-allow-origin": "*",
-  "access-control-allow-headers": "authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova",
+  "access-control-allow-headers": "authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova, x-digicopy-usuario-prova2",
   "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
   "access-control-max-age": "86400"
 };
@@ -140,9 +140,10 @@ async function requireAdmin(request, env) {
 __name(requireAdmin, "requireAdmin");
 async function requireUsuarioAdmin(request, env) {
   await authenticate(request, env);
-  const login = cleanText(request.headers.get("x-digicopy-usuario-login") || "", 80).toLowerCase();
+  const login = String(cleanText(request.headers.get("x-digicopy-usuario-login") || "", 80) || "").toLowerCase();
   const prova = String(request.headers.get("x-digicopy-usuario-prova") || "");
-  if (!login || !prova) {
+  const prova2 = String(request.headers.get("x-digicopy-usuario-prova2") || "");
+  if (!login || !prova && !prova2) {
     throw new ApiError(403, "USUARIO_ADMIN_REQUERIDO", "Backups dependem do usu\xE1rio: entre no sistema com um usu\xE1rio de cargo Admin.");
   }
   const rows = await env.DB.prepare(
@@ -159,8 +160,14 @@ async function requireUsuarioAdmin(request, env) {
     if (data.ativo === false) continue;
     const cargo = String(data.perfil || data.cargo || "").trim().toLowerCase();
     if (cargo !== "admin") continue;
-    const esperado = await sha256(login + "|" + String(data.senha || ""));
-    if (esperado === prova) return { login };
+    if (prova && data.senha) {
+      const esperado = await sha256(login + "|" + String(data.senha));
+      if (esperado === prova) return { login };
+    }
+    if (prova2 && data.senhaSalt && data.senhaHash) {
+      const esperado2 = await sha256(login + "|" + String(data.senhaSalt) + "|" + String(data.senhaHash));
+      if (esperado2 === prova2) return { login };
+    }
   }
   throw new ApiError(403, "USUARIO_ADMIN_REQUERIDO", "Somente usu\xE1rios com cargo Admin podem ver, baixar ou apagar backups \u2014 em qualquer computador.");
 }
@@ -1710,6 +1717,16 @@ async function route(request, env, ctx) {
       empresa: seg0.owner_cnpj === cnpj0 ? seg0.owner_nome || "" : ""
     });
   }
+  if (request.method === "POST" && url.pathname === "/v1/company-pass-liberar") {
+    const body = await readBody(request);
+    const cnpj = soDigitos(body && body.cnpj || "");
+    const senhaGerente = String(body && body.senhaGerente || "");
+    if (!cnpjValido(cnpj) || !senhaGerente) throw new ApiError(400, "DADOS_NECESSARIOS", "Informe CNPJ e senha do gerente.");
+    const seg = await lerSegredos(env);
+    const ok = !!(seg && seg.gerente_hash && cnpj === seg.owner_cnpj && await conferirSenha(env, cnpj, senhaGerente, "gerente_hash"));
+    if (!ok) throw new ApiError(403, "NAO_LIBERADO", "Senha do gerente n\xE3o confere.");
+    return json({ ok: true });
+  }
   if (request.method === "POST" && url.pathname === "/v1/enroll-cnpj") {
     const body = await readBody(request);
     const cnpj = soDigitos(body && body.cnpj || "");
@@ -2403,7 +2420,7 @@ async function handleBackupListar(request, env) {
     tamanho: x.tamanho_original,
     tamanhoGzip: x.tamanho_gzip,
     registros: x.registros,
-    geradoEm: new Date(Number(x.gerado_em)).toISOString()
+    geradoEm: x.gerado_em == null || isNaN(Number(x.gerado_em)) ? null : new Date(Number(x.gerado_em)).toISOString()
   }));
   return json({ ok: true, backups });
 }

@@ -132,7 +132,7 @@ ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json com versão válida (v' + 
 
 // 12) v5.24.2 — CORS da prova do usuário + menus Nuvem/Backup só para Admin
 console.log('-- v5.24.2: CORS consertado + menus só Admin --');
-ok(worker.indexOf("'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova',") >= 0, 'CORS da nuvem aceita os cabeçalhos da prova do usuário (fim do "Sem conexão"/"ANTIGO")');
+ok(worker.indexOf("'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova, x-digicopy-usuario-prova2',") >= 0, 'CORS da nuvem aceita os cabeçalhos da prova do usuário, antiga e nova com salt (r54 P3)');
 ok(patchBk.indexOf("if(cargo==='admin') return true;") >= 0 && patchBk.indexOf("||cargo==='dono'") < 0 && patchBk.indexOf("||cargo2==='dono'") < 0, 'trava do app: cargo Dono NÃO abre mais backup (só Admin)');
 ok(patchBk.indexOf('function aplicarVisibilidadeMenusNuvemBackup') >= 0 && patchBk.indexOf("getElementById('btn-nuvem')") >= 0 && patchBk.indexOf("getElementById('btn-backup-top')") >= 0 && patchBk.indexOf('button[onclick="exportBackup()"]') >= 0, 'helper esconde os menus Nuvem, Backup e o ícone de download para não-Admin');
 ok(patchBk.indexOf('__v5242') >= 0 && patchBk.indexOf('O menu Nuvem é só para usuário com cargo Admin') >= 0, 'tela da Nuvem travada por cargo (defesa em profundidade)');

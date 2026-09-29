@@ -8175,3 +8175,57 @@ Ele adiou os 4 urgentes da r53 (1 trocar senha de conexão, 2 gerente ≠
 conexão, 3 apagar aparelhos velhos incl. Arena-Analise, 4 trocar senhas
 dos 7 usuários) e ordenou: LEMBRAR EM TODA MENSAGEM. Vale até ele
 concluir ou cancelar. Rodapé padrão definido no chat desta rodada.
+
+## r54 — 28→29/09/2026: P1–P5 autorizados (hash, corte, prova, dedup, backups)
+Ele: "ok, faça as outras alterações" (urgentes seguem adiados + rodapé toda msg).
+REGRA NOVA DELE (permanente): não criar muitos arquivos de correção — mesclar
+nos existentes. r54 criou ZERO .js novo de correção (só 1 teste): v52438 fundida
+no fim do app.js; P4 fundida na v5214; P3/P2 nos sync patches. Mesclagem do
+passivo (139 ajustes_*.js, 694 refs em 168 testes) = tarefa r55 (a quantificar
+isolamento de erro: bundle isola por arquivo; mesclar exige replicar).
+
+### P1 senhas com hash (fim app.js + v52253 + worker)
+PBKDF2-SHA256 100k + salt 16B (confere/atualizar/provaSal/tirarSegredosDoEnvio,
+PURE SENHA_HASH_PURE). doLoginCNPJ/User/saveUsuario async+hash+upgrade; seeds
+senhaPadrao (troca forçada abre o cadastro). Mestra fixa APAGADA (grep 0).
+Sem trancar: modo configuração (banco sem senha → cria na hora) + "Esqueci a
+senha do CNPJ" (prova gerente → /v1/company-pass-liberar → cria nova).
+v52253 (login que vale): texto→upgrade, sem texto→hash.
+test_login_sem_backdoor atualizado (autorizado): trava ausência da mestra +
+setup + recuperação; emp.senha só no setter (1 ocorrência).
+
+### P2 corte (data_sync + app.js) — MECANISMO PRONTO, padrão DESLIGADO
+dadoEnvio=tirarSegredosDoEnvio(entity,entry.data); hash+envio no MESMO dado
+(ligar reenvia 1× limpo). Chave db.config.seguranca.corteTextoPuro (viaja).
+Botão trava na Usuários (só Admin/Dono + pré-condições). Histórico do diário
+mantém senhas velhas — rotação é o que salva (dito a ele).
+
+### P3 prova por fase (sync_patch + worker 5.28.1)
+Com texto: SÓ antiga (compat velha+nova; as duas juntas não ganham nada e
+quebrariam CORS na nuvem velha). Sem texto (pós-Corte): SÓ prova2
+sha256(login|salt|hash). Worker aceita qualquer uma + trava `prova && data.senha`
+(sem ela, pós-Corte sha256(login|) entraria!). CORS += prova2.
+test_ajustes_v5240:135 atualizado (autorizado).
+
+### P4 dedup (tudo dentro da v5214, PURE estendida)
+cliUnirReversivel (guarda antes de cada toque) + cliDesfazerUniao + bilhete em
+localStorage + botão Desfazer na janela; usuGruposDuplicados (login, ignora
+maiúscula) + usuDesativarRepetidos (não apaga; reativar reverte) + botão na
+Usuários; orfaosListar + orfaoDesvincular (+Vincular p/ contratos).
+
+### P5+S7+worker 5.28.1 + motor + guias
+Listar backups: gerado_em nulo/inválido → null (era 500). S7: login vazio na
+prova → 403 (era 500 no toLowerCase). WORKER_VERSION 5.28.1; 23 testes c/ sed
+(+2 regex escapados) + PASSO_A_PASSO/GUIA/REL_TESTE + ordem de implantação no
+PASSO_A_PASSO (nuvem→app→troca→corte). Motor regenerado (wrangler reinstalado:
+node_modules não persiste no sandbox): 135229B API 0.4.9/5.28.1, sha f290e354.
+Console do setter/modal sem menção à mestra.
+
+### Provas e fechamento
+test_r54_senhas_dedup.js (45 verificações, PBKDF2 real) registrado no runner.
+Bundle 230 scripts, sha 155d680028ab8bcc. Suíte: 243 passam, 0 falham, 9 jsdom
+(só DEV; `npm install` no sandbox resolve). Falhas do caminho, todas corrigidas: regex
+5.28 escapado (2 testes), clean(dadoEnvio), baseline/mapa regen, embrulhos
+renderUsuarios com SUBSTITUICAO DE PROPOSITO + orig*.apply, bundle stale 1×.
+Amnésia #13 (HEAD e9bb5ec de novo) — fetch + soft-reset ritual; index velho
+saneado com add -A (conferido: só r54 no diff).

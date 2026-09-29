@@ -336,8 +336,8 @@ function seedData(force=false){
   }
 
   const garantidos = [
-    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132'},
-    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232'}
+    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132', senhaPadrao:true},
+    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232', senhaPadrao:true}
   ];
   const demoLogins = ['admin','carlos','ana','financeiro'];
   const demoIds = ['usr_admin'];
@@ -369,7 +369,7 @@ function seedData(force=false){
   garantidos.forEach(g=>{
     const u = db.usuarios.find(x=>String(x.login||'').toLowerCase()===g.login);
     if(!u){
-      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,senhaPadrao:!!g.senhaPadrao,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
       mudou = true;
     } else {
       if(u.id !== g.id){ u.id = g.id; mudou = true; }
@@ -417,31 +417,36 @@ function formatarLoginCNPJ(input){
 function togglePass(id){
   const el=document.getElementById(id); if(!el) return; el.type=el.type==='password'?'text':'password';
 }
-function doLoginCNPJ(){
+async function doLoginCNPJ(){
   const cnpjInput=document.getElementById('login-cnpj').value.trim();
   const senha=document.getElementById('login-senha-cnpj').value.trim();
   if(!cnpjInput || !senha){toast('Informe CNPJ e senha CNPJ','error'); return;}
   const digits=onlyDigits(cnpjInput);
-  let emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
-  // Credencial corporativa única da empresa; dados importados permanecem vinculados à primeira empresa.
-  if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
-    emp=db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
+  // v7.1.0-r54 (P1): senha-mestra fixa APAGADA (estava no código público).
+  // Troca segura, sem risco de trancar ninguém:
+  //  • se NENHUMA empresa tem senha ainda → modo configuração: cria na hora;
+  //  • se já tem → confere hash (texto puro só na transição, com upgrade).
+  // Esqueceu a senha? Link "Esqueci a senha do CNPJ" (prova a senha do
+  // gerente na nuvem e libera criar outra) — sem segredo no código.
+  const algumaTemSenha=(db.empresas||[]).some(e=>e&&(e.senha||e.senhaHash));
+  let emp=(db.empresas||[]).find(e=>onlyDigits(e.cnpj||'')===digits);
+  let ok=false, modoSetup=false;
+  if(!algumaTemSenha){
+    if(digits.length!==14){toast('CNPJ precisa de 14 dígitos','error'); return;}
+    emp=emp || db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
     if(!emp){toast('Empresa não encontrada','error'); return;}
-    // AUDITORIA 23/09/2026 — duas coisas ruins saíram daqui, sem tirar a
-    // credencial corporativa (ela fica: tirar poderia trancar o dono pra fora):
-    //  1) emp.senha=... SOBRESCREVIA a senha de CNPJ que o dono configurou em
-    //     "Dados da loja" por esta credencial fixa, toda vez que esta entrada
-    //     era usada. Agora só completa o cadastro (cnpj/fantasia), sem mexer na
-    //     senha dele.
-    //  2) o forEach reativava (ativo=true) qualquer usuário cuja senha fosse
-    //     uma senha de demonstração. Ou seja: desativar um usuário desses e
-    //     entrar por aqui o trazia de volta sozinho. Desativar usuário é
-    //     decisão do dono; nada no sistema pode desfazer isso em silêncio.
-    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.fantasia=emp.fantasia||'DIGICOPY';
+    emp.cnpj=cnpjInput; emp.cnpjDigits=digits; emp.fantasia=emp.fantasia||'DIGICOPY';
     if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
     saveDB();
+    ok=true; modoSetup=true;
+  }else if(emp){
+    if(typeof confereSenha==='function'){
+      try{ const r=await confereSenha(senha,emp); ok=!!r;
+        if(ok&&r==='texto'&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(emp,senha); saveDB(); }catch(e){} }
+      }catch(e){ ok=(String(emp.senha||'')===String(senha||'')); }
+    }else ok=(String(emp.senha||'')===String(senha||''));
   }
-  if(!emp){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
+  if(!ok){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
   setPendingEmpresa(emp);
   document.getElementById('login-step-cnpj').classList.add('hidden');
   document.getElementById('login-step-user').classList.remove('hidden');
@@ -452,26 +457,42 @@ function doLoginCNPJ(){
   // prefill usuarios demo list
   const users=db.usuarios.filter(u=>u.empresaId===emp.id && u.ativo);
   if(users.length) document.getElementById('login-user').value=users[0].login;
+  if(modoSetup){ // primeira vez: cria a senha do CNPJ agora (sem ela, pede de novo a cada entrada)
+    try{ toast('Primeiro acesso: crie a senha do CNPJ','success'); }catch(e){}
+    try{ if(typeof senhaDefinirCNPJ==='function') setTimeout(function(){ senhaDefinirCNPJ(true); },600); }catch(e2){}
+  }
 }
 function backToCNPJ(){
   localStorage.removeItem(PENDING_CNPJ_KEY);
   document.getElementById('login-step-user').classList.add('hidden');
   document.getElementById('login-step-cnpj').classList.remove('hidden');
 }
-function doLoginUser(){
+async function doLoginUser(){
   const login=(document.getElementById('login-user')?.value||'').trim().toLowerCase();
   const senha=(document.getElementById('login-senha-user')?.value||'').trim();
   if(!login || !senha){toast('Informe usuário e senha','error'); return;}
   // Busca empresa (pega a primeira disponível)
   let emp=db.empresas.find(e=>e.id) || escolherEmpresaPadrao(db);
-  const user=db.usuarios.find(u=>u.empresaId===emp.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
-  if(!user){alert('Usuário ou senha incorreto'); return;}
+  // v7.1.0-r54 (P1): confere hash primeiro; texto puro só na transição (com upgrade automático).
+  const user=db.usuarios.find(u=>u.empresaId===emp.id && String(u.login||'').toLowerCase()===login && u.ativo);
+  let okU=false;
+  if(user){
+    if(typeof confereSenha==='function'){
+      try{ const r=await confereSenha(senha,user); okU=!!r;
+        if(okU&&r==='texto'&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(user,senha); }catch(e){} }
+      }catch(e){ okU=(user.senha===senha); }
+    }else okU=(user.senha===senha);
+  }
+  if(!okU){alert('Usuário ou senha incorreto'); return;}
   const session={empresaId:emp.id, empresaNome:emp.fantasia||emp.nome, cnpj:emp.cnpj||'', cnpjDigits:onlyDigits(emp.cnpj||''), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
   setSession(session);
   db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login ${user.login} perfil ${user.perfil}`});
   saveDB();
   showApp();
   toast('Bem-vindo, '+user.nome+'!','success');
+  if(user.senhaPadrao&&typeof openModal==='function'){ // senha de fábrica: troca agora (abre o próprio cadastro)
+    try{ setTimeout(function(){ try{ toast('Senha padrão: troque pela sua senha','error'); }catch(e){} openModal('usuario',user.id); },900); }catch(e2){}
+  }
 }
 function showApp(){
   const sess=getSession(); if(!sess) {showLogin(); return;}
@@ -1011,13 +1032,17 @@ function renderModalUsuario(id){
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">${isEdit?'Salvar':'Criar usuário'}</button>`;
 }
 function openModalCriarUsuario(){renderModalUsuario(null); document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'usuario',id:null};}
-function saveUsuario(){
+async function saveUsuario(){
   const sess=getSession(); const id=window.modalContext?.id;
   const payload={empresaId:sess.empresaId, nome:document.getElementById('u-nome').value.trim(), login:document.getElementById('u-login').value.trim().toLowerCase(), senha:document.getElementById('u-senha').value.trim(), perfil:document.getElementById('u-perfil').value, ativo:document.getElementById('u-ativo').value==='true'};
   if(!payload.nome||!payload.login||!payload.senha) return toast('Preencha nome, login e senha','error');
   if(!id && db.usuarios.find(u=>u.empresaId===sess.empresaId && u.login===payload.login)) return toast('Login já existe neste CNPJ','error');
+  const u=id?db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId):null;
+  // v7.1.0-r54 (P1): grava hash+salt junto (texto puro segue junto na transição p/ os PCs velhos).
+  const precisaHash=!id||!u||!u.senhaHash||(u.senha!==payload.senha);
+  if(precisaHash&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(payload,payload.senha); }catch(e){} }
+  if(u&&u.senhaPadrao&&payload.senha!==u.senha) payload.senhaPadrao=false; // trocou a de fábrica: libera o login
   if(id){
-    const u=db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId);
     Object.assign(u,payload,{atualizadoEm:new Date().toISOString(), atualizadoPor:sess.usuarioId});
     logAction('usuario','editar',id,`Editado usuário ${payload.login} perfil ${payload.perfil}`);
   }else{
@@ -1114,6 +1139,7 @@ function renderDashboard(){
 }
 
 // USUARIOS RENDER
+// SUBSTITUICAO DE PROPOSITO (r54): renderUsuarios é embrulhada no fim do app.js (botões de senha) e na v5214 (botão de logins repetidos); cada embrulho chama a original.
 function renderUsuarios(){
   const sess=getSession(); if(!sess) return;
   const list=db.usuarios.filter(u=>u.empresaId===sess.empresaId);
@@ -2441,3 +2467,287 @@ async function fbExportExtracted(){
 }
 
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.24.38 — Senhas com hash de verdade (r54, P1/P2/P3-cliente).
+// Auditoria externa r53: senhas em TEXTO PURO no banco/nuvem/34 PCs (S3),
+// prova de login sem salt (S4), backdoor master no código público.
+// O que este arquivo entrega:
+//   1) PBKDF2-SHA256 (100 mil voltas) + salt por usuário/empresa;
+//   2) login confere hash primeiro, texto puro só na transição — e na
+//      transição o próprio login grava o hash sozinho (upgrade automático);
+//   3) texto puro CONTINUA gravado junto (dual-write) até o dia do corte,
+//      para os PCs antigos (7.0.17) não travarem no meio da troca;
+//   4) corte do texto puro: chave `db.config.seguranca.corteTextoPuro`
+//      (viaja na nuvem); ligada, `senha` some do envio (mecanismo pronto +
+//      testado; LIGAR só com todos os PCs na 7.1.0+ e senhas trocadas);
+//   5) prova nova com salt (`prova2`), a antiga segue valendo na transição.
+// NADA aqui trava ninguém: sem `crypto.subtle`, cai no comportamento velho.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var ITERACOES=100000;
+
+function sutil(){ try{ if(typeof crypto!=='undefined'&&crypto.subtle) return crypto.subtle; }catch(e){} return null; }
+function hex(buf){ return Array.from(new Uint8Array(buf),function(b){ return b.toString(16).padStart(2,'0'); }).join(''); }
+function hexParaBytes(h){
+  h=String(h||''); var b=new Uint8Array(Math.floor(h.length/2));
+  for(var i=0;i<b.length;i++) b[i]=parseInt(h.substr(i*2,2),16)||0;
+  return b;
+}
+function senhaNovaSalt(){
+  try{
+    var c=(typeof crypto!=='undefined')?crypto:null;
+    if(c&&c.getRandomValues){ var b=new Uint8Array(16); c.getRandomValues(b); return hex(b.buffer); }
+  }catch(e){}
+  var s=''; for(var i=0;i<32;i++) s+='0123456789abcdef'[Math.floor(Math.random()*16)];
+  return s;
+}
+async function senhaHash(senha, saltHex){
+  var s=sutil(); if(!s) return '';
+  try{
+    var chave=await s.importKey('raw', new TextEncoder().encode(String(senha)), 'PBKDF2', false, ['deriveBits']);
+    var bits=await s.deriveBits({name:'PBKDF2', salt:hexParaBytes(saltHex), iterations:ITERACOES, hash:'SHA-256'}, chave, 256);
+    return hex(bits);
+  }catch(e){ return ''; }
+}
+// Devolve 'hash' | 'texto' | false. Com hash gravado, só o hash vale.
+async function confereSenha(digitada, reg){
+  try{
+    if(!reg) return false;
+    if(reg.senhaHash&&reg.senhaSalt){
+      var h=await senhaHash(digitada, reg.senhaSalt);
+      return (h&&h===reg.senhaHash)?'hash':false;
+    }
+    if(reg.senha!=null&&String(reg.senha)===String(digitada)) return 'texto';
+    return false;
+  }catch(e){ return false; }
+}
+// Grava hash+salt no registro (mantém `senha` em texto para os PCs velhos).
+async function atualizarHashRegistro(reg, senhaPlana){
+  if(!reg||senhaPlana==null||String(senhaPlana)==='') return false;
+  try{
+    var salt=reg.senhaSalt||senhaNovaSalt();
+    var h=await senhaHash(senhaPlana, salt);
+    if(!h) return false;
+    reg.senhaSalt=salt; reg.senhaHash=h;
+    return true;
+  }catch(e){ return false; }
+}
+async function provaSal(login, salt, hash){
+  var s=sutil(); if(!s) return '';
+  try{
+    var dados=new TextEncoder().encode(String(login)+'|'+String(salt)+'|'+String(hash));
+    var digest=await s.digest('SHA-256',dados);
+    return hex(digest);
+  }catch(e){ return ''; }
+}
+// PURA: tira `senha` do que viaja quando o corte está ligado.
+function tirarSegredosDoEnvioPuro(entity, data, corte){
+  if(!corte) return data;
+  if(entity!=='usuarios'&&entity!=='empresas') return data;
+  if(!data||typeof data!=='object') return data;
+  if(Array.isArray(data)) return data.map(function(x){ return tirarSegredosDoEnvioPuro(entity,x,corte); });
+  if(!('senha' in data)) return data;
+  var out={};
+  Object.keys(data).forEach(function(k){ if(k!=='senha') out[k]=data[k]; });
+  return out;
+}
+function corteTextoPuroLigado(){
+  try{
+    if(typeof db!=='undefined'&&db&&db.config&&db.config.seguranca) return db.config.seguranca.corteTextoPuro===true;
+  }catch(e){}
+  return false;
+}
+function tirarSegredosDoEnvio(entity, data){ return tirarSegredosDoEnvioPuro(entity, data, corteTextoPuroLigado()); }
+
+var G=(typeof window!=='undefined')?window:{};
+G.confereSenha=confereSenha;
+G.atualizarHashRegistro=atualizarHashRegistro;
+G.senhaHash=senhaHash;
+G.senhaNovaSalt=senhaNovaSalt;
+G.provaSal=provaSal;
+G.tirarSegredosDoEnvio=tirarSegredosDoEnvio;
+G.corteTextoPuroLigado=corteTextoPuroLigado;
+G.SENHA_HASH_PURE={senhaHash:senhaHash, senhaNovaSalt:senhaNovaSalt, confereSenha:confereSenha, atualizarHashRegistro:atualizarHashRegistro, provaSal:provaSal, tirarSegredosDoEnvioPuro:tirarSegredosDoEnvioPuro, ITERACOES:ITERACOES};
+if(typeof window==='undefined'&&typeof module!=='undefined'&&module.exports){ module.exports=G.SENHA_HASH_PURE; }
+
+if(typeof document==='undefined') return;
+
+function podeMexerSenha(){
+  try{
+    var s=(typeof getSession==='function')?getSession():null;
+    var p=String((s&&s.perfil)||'');
+    var l=String((s&&(s.login||s.usuarioNome))||'').toLowerCase();
+    return p==='Admin'||p==='Dono'||l==='kauan'||l==='denivaldo';
+  }catch(e){ return false; }
+}
+function avisar(m,t){ try{ if(typeof toast==='function'){ toast(m,t||'success'); return; } }catch(e){} try{ if(typeof aviso==='function') aviso(m); }catch(e2){} }
+function salvarBanco(){ try{ if(typeof saveDB==='function') saveDB(); }catch(e){} }
+function auditar(acao,id,det){ try{ if(typeof logAction==='function') logAction('usuario',acao,id,det||''); }catch(e){} }
+
+// Modal própria com campos de senha mascarados (sem depender de outros patches).
+function modalSenha(titulo, texto, aoSalvar, op){
+  var soUm=!!(op&&op.soUm); // soUm: só pede a senha (recuperação), sem criar/repetir
+  var tid='senha-modal-'+Date.now();
+  var div=document.createElement('div'); div.id=tid;
+  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.55);';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  div.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px 24px;max-width:440px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0">'+esc(titulo)+'</p>'
+    +'<p style="font-size:13px;color:#334155;margin:10px 0 12px;line-height:1.5;white-space:pre-wrap">'+esc(texto)+'</p>'
+    +'<input id="'+tid+'-a" type="password" autocomplete="new-password" placeholder="Nova senha (4+ dígitos)" style="width:100%;height:44px;border:1.5px solid #cbd5e1;border-radius:12px;padding:0 14px;font-size:15px;margin-bottom:10px;box-sizing:border-box">'
+    +'<input id="'+tid+'-b" type="password" autocomplete="new-password" placeholder="Repete a senha" style="width:100%;height:44px;border:1.5px solid #cbd5e1;border-radius:12px;padding:0 14px;font-size:15px;margin-bottom:14px;box-sizing:border-box">'
+    +'<div style="display:flex;gap:10px;justify-content:flex-end"><button id="'+tid+'-c" style="height:42px;padding:0 18px;border-radius:12px;background:#fff;border:1.5px solid #cbd5e1;font-weight:700;cursor:pointer">Cancelar</button>'
+    +'<button id="'+tid+'-s" style="height:42px;padding:0 18px;border-radius:12px;background:#0a1e8a;color:#fff;border:none;font-weight:800;cursor:pointer">Salvar</button></div></div>';
+  document.body.appendChild(div);
+  function fechar(){ try{ div.remove(); }catch(e){} }
+  document.getElementById(tid+'-c').onclick=fechar;
+  div.onclick=function(ev){ if(ev.target===div) fechar(); };
+  if(soUm){ try{ document.getElementById(tid+'-b').style.display='none'; document.getElementById(tid+'-a').setAttribute('placeholder','Digite a senha'); }catch(e){} }
+  document.getElementById(tid+'-s').onclick=function(){
+    var a=document.getElementById(tid+'-a').value||'', b=document.getElementById(tid+'-b').value||'';
+    if(soUm){
+      if(!a){ avisar('Digite a senha.','error'); return; }
+      fechar();
+      aoSalvar(a);
+      return;
+    }
+    if(a.length<4){ avisar('Senha curta demais (mínimo 4).','error'); return; }
+    if(a!==b){ avisar('As duas senhas não conferem.','error'); return; }
+    fechar();
+    aoSalvar(a);
+  };
+  setTimeout(function(){ try{ document.getElementById(tid+'-a').focus(); }catch(e){} },60);
+}
+
+// Pede uma senha (mascarada) sem criar nada — usado pela recuperação do CNPJ.
+function senhaPedirTexto(titulo, texto, aoSalvar){
+  modalSenha(titulo, texto, aoSalvar, {soUm:true});
+}
+
+async function senhaDefinirCNPJ(forcar){
+  if(typeof db==='undefined') return;
+  // forcar=true só vem de dois lugares confiáveis: modo configuração (banco sem senha,
+  // chamado pelo doLoginCNPJ) e recuperação verificada (provou a senha do gerente
+  // na nuvem). Nunca de tela comum.
+  if(!forcar&&!podeMexerSenha()){ avisar('Só Admin/Dono troca a senha do CNPJ.','error'); return; }
+  var s=(typeof getSession==='function')?getSession():null;
+  var emp=((db.empresas||[]).find(function(e){ return e&&s&&e.id===s.empresaId; })||(db.empresas||[]).find(function(e){ return e&&e.id; }));
+  if(!emp){ avisar('Nenhuma empresa no banco.','error'); return; }
+  var corteOn=corteTextoPuroLigado();
+  modalSenha('Senha do CNPJ','Cria/troca a senha do CNPJ '+(emp.cnpj||'')+'. Ela é gravada com hash (código irreversível).',function(nova){
+    emp.senha=corteOn?'':nova;
+    atualizarHashRegistro(emp,nova).then(function(){
+      try{ salvarBanco(); }catch(e){}
+      try{ if(typeof logAction==='function') logAction('empresa','senha',emp.id,'Senha do CNPJ criada/trocada (com hash)'); }catch(e2){}
+      avisar('Senha do CNPJ pronta (com hash).');
+    });
+  });
+}
+
+async function senhaCorteAlternar(){
+  if(typeof db==='undefined') return;
+  if(!podeMexerSenha()){ avisar('Só Admin/Dono mexe no corte.','error'); return; }
+  var ligado=corteTextoPuroLigado();
+  if(!ligado){
+    var msg='LIGAR o corte do texto puro?\n\nDaqui em diante a senha em texto NÃO viaja mais na nuvem (só o hash).\n\nLIGUE SOMENTE SE:\n1) TODOS os PCs já estão na versão 7.1.0 ou maior;\n2) TODAS as senhas já foram trocadas pelo menos 1 vez nesta versão.\n\nLigar antes disso TRAVA o login nos PCs velhos.';
+    var ok=true;
+    try{
+      if(typeof window.confirmSistema==='function') ok=await window.confirmSistema(msg,'Cortar texto puro');
+      else if(typeof confirm==='function') ok=confirm(msg);
+    }catch(e){ ok=false; }
+    if(!ok) return;
+  }
+  try{
+    db.config=db.config||{}; db.config.seguranca=db.config.seguranca||{};
+    db.config.seguranca.corteTextoPuro=!ligado;
+    salvarBanco();
+    auditar('corte-texto-puro','config','Corte do texto puro '+(db.config.seguranca.corteTextoPuro?'LIGADO':'desligado'));
+    avisar(db.config.seguranca.corteTextoPuro?'Corte LIGADO: texto puro não viaja mais.':'Corte desligado.');
+  }catch(e){ avisar('Não deu: '+(e.message||e),'error'); }
+}
+
+// "Esqueci a senha do CNPJ": prova a senha do GERENTE na nuvem; conferindo,
+// libera criar uma senha nova do CNPJ na hora (sem segredo fixo no código).
+async function senhaRecuperarCNPJ(){
+  if(typeof db==='undefined') return;
+  var emp=((db.empresas||[]).find(function(e){ return e&&e.cnpj; })||(db.empresas||[]).find(function(e){ return e&&e.id; }));
+  if(!emp){ avisar('Sem empresa no banco para recuperar.','error'); return; }
+  var cnpjSoNum=String(emp.cnpj||'').replace(/\D/g,'');
+  if(cnpjSoNum.length!==14){ avisar('CNPJ da empresa está incompleto no banco.','error'); return; }
+  senhaPedirTexto('Esqueci a senha do CNPJ','Digite a senha do GERENTE (a da nuvem, não a do CNPJ). Se conferir, você cria uma senha nova do CNPJ na hora.',function(sg){
+    var base=''; try{ base=(typeof API!=='undefined'&&API)?API:''; }catch(e){ base=''; }
+    if(!base){ avisar('Nuvem não configurada neste PC.','error'); return; }
+    avisar('Conferindo com a nuvem...');
+    fetch(base+'/v1/company-pass-liberar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cnpj:cnpjSoNum,senhaGerente:sg})}).then(function(r){
+      if(r.ok){ senhaDefinirCNPJ(true); return; }
+      avisar(r.status===403?'Senha do gerente não confere.':'A nuvem não liberou (tente de novo).','error');
+    }).catch(function(){ avisar('Sem falar com a nuvem agora. Tente com internet.','error'); });
+  });
+}
+
+function injetarLinkRecuperar(){
+  try{
+    if(document.getElementById('link-esqueci-cnpj')) return true;
+    var step=document.getElementById('login-step-cnpj');
+    if(!step) return false;
+    var a=document.createElement('button'); a.id='link-esqueci-cnpj'; a.type='button';
+    a.textContent='Esqueci a senha do CNPJ';
+    a.style.cssText='background:none;border:none;color:#0a1e8a;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px;text-decoration:underline;padding:0';
+    a.onclick=function(){ senhaRecuperarCNPJ(); };
+    step.appendChild(a);
+    return true;
+  }catch(e){ return false; }
+}
+
+G.senhaDefinirCNPJ=senhaDefinirCNPJ;
+G.senhaCorteAlternar=senhaCorteAlternar;
+G.senhaPedirTexto=senhaPedirTexto;
+G.senhaRecuperarCNPJ=senhaRecuperarCNPJ;
+
+function injetarBotoesSenha(){
+  try{
+    var view=document.getElementById('view-usuarios');
+    if(!view||view.classList.contains('hidden')) return;
+    var barra=view.firstElementChild;
+    if(!barra) return;
+    if(view.querySelector('#btn-senha-cnpj')) return;
+    var alvo=barra.querySelector('.flex.gap-2')||barra;
+    var b1=document.createElement('button'); b1.id='btn-senha-cnpj'; b1.type='button';
+    b1.title='Cria/troca a senha do CNPJ (gravada com hash, código irreversível).';
+    b1.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:#fff;color:#334155;border:1px solid #dbe3ef;cursor:pointer';
+    b1.textContent='🔑 Senha do CNPJ';
+    b1.onclick=function(){ senhaDefinirCNPJ(); };
+    alvo.appendChild(b1);
+    var b2=document.createElement('button'); b2.id='btn-senha-corte'; b2.type='button';
+    var ligado=corteTextoPuroLigado();
+    b2.title='Quando LIGADO, a senha em texto não viaja mais (só o hash). Só ligue com todos os PCs atualizados.';
+    b2.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:'+(ligado?'#ecfdf5':'#fff')+';color:'+(ligado?'#065f46':'#334155')+';border:1px solid '+(ligado?'#a7f3d0':'#dbe3ef')+';cursor:pointer';
+    b2.textContent=ligado?'🔒 Texto-puro: CORTADO':'🔒 Texto-puro: viajando';
+    b2.onclick=function(){ senhaCorteAlternar().then(function(){ try{ if(typeof renderUsuarios==='function') renderUsuarios(); }catch(e){} }); };
+    alvo.appendChild(b2);
+  }catch(e){}
+}
+// SUBSTITUICAO DE PROPOSITO (r54): embrulha renderUsuarios para injetar os botões de senha; chama a original.
+if(typeof window.renderUsuarios==='function'&&!window.renderUsuarios.__v52438){
+  var origRU=window.renderUsuarios;
+  window.renderUsuarios=function(){
+    var r=origRU.apply(this,arguments);
+    try{ injetarBotoesSenha(); }catch(e){}
+    return r;
+  };
+  window.renderUsuarios.__v52438=true;
+}
+setTimeout(injetarBotoesSenha,1500);
+// A tela de login é montada por outro patch depois do boot: tenta por 30s e para.
+var tentLinkRec=0;
+var ivLinkRec=setInterval(function(){
+  var feito=false; try{ feito=injetarLinkRecuperar(); }catch(e){}
+  tentLinkRec++;
+  if(feito||tentLinkRec>30){ try{ clearInterval(ivLinkRec); }catch(e2){} }
+},1000);
+
+console.log('[DIGICOPY] v5.24.38 senha: hash PBKDF2 + corte do texto puro');
+})();

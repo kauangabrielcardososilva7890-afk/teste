@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.28.0';
+const WORKER_VERSION = '5.28.1';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -22,7 +22,7 @@ const JSON_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova',
+  'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova, x-digicopy-usuario-prova2',
   'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
   'access-control-max-age': '86400'
 };
@@ -125,9 +125,12 @@ async function requireAdmin(request, env) {
 // sincronizado na nuvem.
 async function requireUsuarioAdmin(request, env) {
   await authenticate(request, env);
-  const login = cleanText(request.headers.get('x-digicopy-usuario-login') || '', 80).toLowerCase();
+  // r54: cleanText devolve null quando vazio — sem esta trava, login ausente
+  // quebrava no .toLowerCase() e virava erro 500 em vez de 403 (S7).
+  const login = String(cleanText(request.headers.get('x-digicopy-usuario-login') || '', 80) || '').toLowerCase();
   const prova = String(request.headers.get('x-digicopy-usuario-prova') || '');
-  if (!login || !prova) {
+  const prova2 = String(request.headers.get('x-digicopy-usuario-prova2') || '');
+  if (!login || (!prova && !prova2)) {
     throw new ApiError(403, 'USUARIO_ADMIN_REQUERIDO', 'Backups dependem do usuário: entre no sistema com um usuário de cargo Admin.');
   }
   const rows = await env.DB.prepare(
@@ -141,8 +144,18 @@ async function requireUsuarioAdmin(request, env) {
     if (data.ativo === false) continue;
     const cargo = String(data.perfil || data.cargo || '').trim().toLowerCase();
     if (cargo !== 'admin') continue;
-    const esperado = await sha256(login + '|' + String(data.senha || ''));
-    if (esperado === prova) return { login };
+    // r54 (P3): aceita a prova antiga (transição) OU a nova com salt.
+    // Antiga: sha256(login|senha) — SÓ vale se o cadastro ainda tem senha em
+    // texto (sem este &&, pós-Corte qualquer um entraria com sha256(login|)).
+    if (prova && data.senha) {
+      const esperado = await sha256(login + '|' + String(data.senha));
+      if (esperado === prova) return { login };
+    }
+    // Nova: sha256(login|salt|hash) — vale com hash, com ou sem texto puro.
+    if (prova2 && data.senhaSalt && data.senhaHash) {
+      const esperado2 = await sha256(login + '|' + String(data.senhaSalt) + '|' + String(data.senhaHash));
+      if (esperado2 === prova2) return { login };
+    }
   }
   throw new ApiError(403, 'USUARIO_ADMIN_REQUERIDO', 'Somente usuários com cargo Admin podem ver, baixar ou apagar backups — em qualquer computador.');
 }
@@ -1841,6 +1854,19 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     });
   }
 
+  // r54 (P1): "Esqueci a senha do CNPJ" — o app prova a senha do GERENTE aqui;
+  // conferindo, libera criar uma senha nova do CNPJ no PC. A nuvem nunca vê
+  // nem guarda a senha do CNPJ. Só o CNPJ dono recupera (a senha do gerente é dele).
+  if (request.method === 'POST' && url.pathname === '/v1/company-pass-liberar') {
+    const body = await readBody(request);
+    const cnpj = soDigitos((body && body.cnpj) || '');
+    const senhaGerente = String((body && body.senhaGerente) || '');
+    if (!cnpjValido(cnpj) || !senhaGerente) throw new ApiError(400, 'DADOS_NECESSARIOS', 'Informe CNPJ e senha do gerente.');
+    const seg = await lerSegredos(env);
+    const ok = !!(seg && seg.gerente_hash && cnpj === seg.owner_cnpj && (await conferirSenha(env, cnpj, senhaGerente, 'gerente_hash')));
+    if (!ok) throw new ApiError(403, 'NAO_LIBERADO', 'Senha do gerente não confere.');
+    return json({ ok: true });
+  }
   if (request.method === 'POST' && url.pathname === '/v1/enroll-cnpj') {
     // v5.26.0 — PC novo entra com CNPJ + senha de conexão (sem código de convite).
     // v5.26.3 — pedido dele: a SENHA DO GERENTE também entra aqui. O PC que
@@ -2557,7 +2583,7 @@ async function handleBackupListar(request, env){
   const backups = (r.results || []).map(x => ({
     chave: x.id, nome: x.nome, pasta: x.pasta, tipo: x.tipo,
     tamanho: x.tamanho_original, tamanhoGzip: x.tamanho_gzip,
-    registros: x.registros, geradoEm: new Date(Number(x.gerado_em)).toISOString()
+    registros: x.registros, geradoEm: (x.gerado_em == null || isNaN(Number(x.gerado_em)) ? null : new Date(Number(x.gerado_em)).toISOString())
   }));
   return json({ ok: true, backups });
 }

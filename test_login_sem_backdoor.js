@@ -98,9 +98,16 @@ const appCodigo = semComentarios(app);
 const corpoCnpj = corpoDaFuncao(appCodigo, 'function doLoginCNPJ(){');
 ok('achei a função doLoginCNPJ', !!corpoCnpj);
 ok('login por CNPJ não reativa usuário sozinho', !/\.ativo\s*=\s*true/.test(corpoCnpj));
-ok('login por CNPJ não sobrescreve a senha da empresa', !/emp\.senha\s*=/.test(corpoCnpj));
-ok('a credencial corporativa de CNPJ continua funcionando (não tranca ninguém fora)', /digits===/.test(corpoCnpj) && /senha===/.test(corpoCnpj));
-ok('nenhum outro ponto do app.js sobrescreve emp.senha', !/emp\.senha\s*=/.test(appCodigo));
+ok('login por CNPJ não sobrescreve a senha da empresa', !/emp\.senha\s*=[^=]/.test(corpoCnpj));
+// r54 (P1, autorizado pelo dono em 28/09/2026): a mestra fixa SAIU do código
+// público. No lugar dela, sem trancar ninguém: modo configuração (banco sem
+// senha → cria na hora) + recuperação (esqueceu → prova o gerente na nuvem).
+ok('backdoor apagado: nenhum segredo fixo no login CNPJ', !/digicopy8698/.test(corpoCnpj) && !/08385589000103/.test(corpoCnpj));
+ok('modo configuração existe (banco sem senha → cria na hora)', /modoSetup/.test(corpoCnpj) && /algumaTemSenha/.test(corpoCnpj));
+ok('recuperação existe (esqueci → prova gerente na nuvem)', /senhaRecuperarCNPJ/.test(appCodigo) && /company-pass-liberar/.test(appCodigo));
+// Dual-write autorizado na transição: o setter oficial senhaDefinirCNPJ é o
+// ÚNICO lugar do app.js que grava emp.senha (conta exata: 1 ocorrência).
+ok('emp.senha só é gravado no setter oficial', (appCodigo.match(/emp\.senha\s*=[^=]/g) || []).length === 1);
 
 console.log('== 3) Nenhuma tela mostra dado de usuário ==');
 

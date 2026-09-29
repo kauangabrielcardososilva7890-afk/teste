@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: 39fb123ba90217b1
+ * scripts: 230 | sha256: 155d680028ab8bcc
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -588,8 +588,8 @@ function seedData(force=false){
   }
 
   const garantidos = [
-    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132'},
-    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232'}
+    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132', senhaPadrao:true},
+    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232', senhaPadrao:true}
   ];
   const demoLogins = ['admin','carlos','ana','financeiro'];
   const demoIds = ['usr_admin'];
@@ -621,7 +621,7 @@ function seedData(force=false){
   garantidos.forEach(g=>{
     const u = db.usuarios.find(x=>String(x.login||'').toLowerCase()===g.login);
     if(!u){
-      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,senhaPadrao:!!g.senhaPadrao,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
       mudou = true;
     } else {
       if(u.id !== g.id){ u.id = g.id; mudou = true; }
@@ -669,31 +669,36 @@ function formatarLoginCNPJ(input){
 function togglePass(id){
   const el=document.getElementById(id); if(!el) return; el.type=el.type==='password'?'text':'password';
 }
-function doLoginCNPJ(){
+async function doLoginCNPJ(){
   const cnpjInput=document.getElementById('login-cnpj').value.trim();
   const senha=document.getElementById('login-senha-cnpj').value.trim();
   if(!cnpjInput || !senha){toast('Informe CNPJ e senha CNPJ','error'); return;}
   const digits=onlyDigits(cnpjInput);
-  let emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
-  // Credencial corporativa única da empresa; dados importados permanecem vinculados à primeira empresa.
-  if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
-    emp=db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
+  // v7.1.0-r54 (P1): senha-mestra fixa APAGADA (estava no código público).
+  // Troca segura, sem risco de trancar ninguém:
+  //  • se NENHUMA empresa tem senha ainda → modo configuração: cria na hora;
+  //  • se já tem → confere hash (texto puro só na transição, com upgrade).
+  // Esqueceu a senha? Link "Esqueci a senha do CNPJ" (prova a senha do
+  // gerente na nuvem e libera criar outra) — sem segredo no código.
+  const algumaTemSenha=(db.empresas||[]).some(e=>e&&(e.senha||e.senhaHash));
+  let emp=(db.empresas||[]).find(e=>onlyDigits(e.cnpj||'')===digits);
+  let ok=false, modoSetup=false;
+  if(!algumaTemSenha){
+    if(digits.length!==14){toast('CNPJ precisa de 14 dígitos','error'); return;}
+    emp=emp || db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
     if(!emp){toast('Empresa não encontrada','error'); return;}
-    // AUDITORIA 23/09/2026 — duas coisas ruins saíram daqui, sem tirar a
-    // credencial corporativa (ela fica: tirar poderia trancar o dono pra fora):
-    //  1) emp.senha=... SOBRESCREVIA a senha de CNPJ que o dono configurou em
-    //     "Dados da loja" por esta credencial fixa, toda vez que esta entrada
-    //     era usada. Agora só completa o cadastro (cnpj/fantasia), sem mexer na
-    //     senha dele.
-    //  2) o forEach reativava (ativo=true) qualquer usuário cuja senha fosse
-    //     uma senha de demonstração. Ou seja: desativar um usuário desses e
-    //     entrar por aqui o trazia de volta sozinho. Desativar usuário é
-    //     decisão do dono; nada no sistema pode desfazer isso em silêncio.
-    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.fantasia=emp.fantasia||'DIGICOPY';
+    emp.cnpj=cnpjInput; emp.cnpjDigits=digits; emp.fantasia=emp.fantasia||'DIGICOPY';
     if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
     saveDB();
+    ok=true; modoSetup=true;
+  }else if(emp){
+    if(typeof confereSenha==='function'){
+      try{ const r=await confereSenha(senha,emp); ok=!!r;
+        if(ok&&r==='texto'&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(emp,senha); saveDB(); }catch(e){} }
+      }catch(e){ ok=(String(emp.senha||'')===String(senha||'')); }
+    }else ok=(String(emp.senha||'')===String(senha||''));
   }
-  if(!emp){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
+  if(!ok){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
   setPendingEmpresa(emp);
   document.getElementById('login-step-cnpj').classList.add('hidden');
   document.getElementById('login-step-user').classList.remove('hidden');
@@ -704,26 +709,42 @@ function doLoginCNPJ(){
   // prefill usuarios demo list
   const users=db.usuarios.filter(u=>u.empresaId===emp.id && u.ativo);
   if(users.length) document.getElementById('login-user').value=users[0].login;
+  if(modoSetup){ // primeira vez: cria a senha do CNPJ agora (sem ela, pede de novo a cada entrada)
+    try{ toast('Primeiro acesso: crie a senha do CNPJ','success'); }catch(e){}
+    try{ if(typeof senhaDefinirCNPJ==='function') setTimeout(function(){ senhaDefinirCNPJ(true); },600); }catch(e2){}
+  }
 }
 function backToCNPJ(){
   localStorage.removeItem(PENDING_CNPJ_KEY);
   document.getElementById('login-step-user').classList.add('hidden');
   document.getElementById('login-step-cnpj').classList.remove('hidden');
 }
-function doLoginUser(){
+async function doLoginUser(){
   const login=(document.getElementById('login-user')?.value||'').trim().toLowerCase();
   const senha=(document.getElementById('login-senha-user')?.value||'').trim();
   if(!login || !senha){toast('Informe usuário e senha','error'); return;}
   // Busca empresa (pega a primeira disponível)
   let emp=db.empresas.find(e=>e.id) || escolherEmpresaPadrao(db);
-  const user=db.usuarios.find(u=>u.empresaId===emp.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
-  if(!user){alert('Usuário ou senha incorreto'); return;}
+  // v7.1.0-r54 (P1): confere hash primeiro; texto puro só na transição (com upgrade automático).
+  const user=db.usuarios.find(u=>u.empresaId===emp.id && String(u.login||'').toLowerCase()===login && u.ativo);
+  let okU=false;
+  if(user){
+    if(typeof confereSenha==='function'){
+      try{ const r=await confereSenha(senha,user); okU=!!r;
+        if(okU&&r==='texto'&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(user,senha); }catch(e){} }
+      }catch(e){ okU=(user.senha===senha); }
+    }else okU=(user.senha===senha);
+  }
+  if(!okU){alert('Usuário ou senha incorreto'); return;}
   const session={empresaId:emp.id, empresaNome:emp.fantasia||emp.nome, cnpj:emp.cnpj||'', cnpjDigits:onlyDigits(emp.cnpj||''), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
   setSession(session);
   db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login ${user.login} perfil ${user.perfil}`});
   saveDB();
   showApp();
   toast('Bem-vindo, '+user.nome+'!','success');
+  if(user.senhaPadrao&&typeof openModal==='function'){ // senha de fábrica: troca agora (abre o próprio cadastro)
+    try{ setTimeout(function(){ try{ toast('Senha padrão: troque pela sua senha','error'); }catch(e){} openModal('usuario',user.id); },900); }catch(e2){}
+  }
 }
 function showApp(){
   const sess=getSession(); if(!sess) {showLogin(); return;}
@@ -1263,13 +1284,17 @@ function renderModalUsuario(id){
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">${isEdit?'Salvar':'Criar usuário'}</button>`;
 }
 function openModalCriarUsuario(){renderModalUsuario(null); document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'usuario',id:null};}
-function saveUsuario(){
+async function saveUsuario(){
   const sess=getSession(); const id=window.modalContext?.id;
   const payload={empresaId:sess.empresaId, nome:document.getElementById('u-nome').value.trim(), login:document.getElementById('u-login').value.trim().toLowerCase(), senha:document.getElementById('u-senha').value.trim(), perfil:document.getElementById('u-perfil').value, ativo:document.getElementById('u-ativo').value==='true'};
   if(!payload.nome||!payload.login||!payload.senha) return toast('Preencha nome, login e senha','error');
   if(!id && db.usuarios.find(u=>u.empresaId===sess.empresaId && u.login===payload.login)) return toast('Login já existe neste CNPJ','error');
+  const u=id?db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId):null;
+  // v7.1.0-r54 (P1): grava hash+salt junto (texto puro segue junto na transição p/ os PCs velhos).
+  const precisaHash=!id||!u||!u.senhaHash||(u.senha!==payload.senha);
+  if(precisaHash&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(payload,payload.senha); }catch(e){} }
+  if(u&&u.senhaPadrao&&payload.senha!==u.senha) payload.senhaPadrao=false; // trocou a de fábrica: libera o login
   if(id){
-    const u=db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId);
     Object.assign(u,payload,{atualizadoEm:new Date().toISOString(), atualizadoPor:sess.usuarioId});
     logAction('usuario','editar',id,`Editado usuário ${payload.login} perfil ${payload.perfil}`);
   }else{
@@ -1366,6 +1391,7 @@ function renderDashboard(){
 }
 
 // USUARIOS RENDER
+// SUBSTITUICAO DE PROPOSITO (r54): renderUsuarios é embrulhada no fim do app.js (botões de senha) e na v5214 (botão de logins repetidos); cada embrulho chama a original.
 function renderUsuarios(){
   const sess=getSession(); if(!sess) return;
   const list=db.usuarios.filter(u=>u.empresaId===sess.empresaId);
@@ -2693,6 +2719,290 @@ async function fbExportExtracted(){
 }
 
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.24.38 — Senhas com hash de verdade (r54, P1/P2/P3-cliente).
+// Auditoria externa r53: senhas em TEXTO PURO no banco/nuvem/34 PCs (S3),
+// prova de login sem salt (S4), backdoor master no código público.
+// O que este arquivo entrega:
+//   1) PBKDF2-SHA256 (100 mil voltas) + salt por usuário/empresa;
+//   2) login confere hash primeiro, texto puro só na transição — e na
+//      transição o próprio login grava o hash sozinho (upgrade automático);
+//   3) texto puro CONTINUA gravado junto (dual-write) até o dia do corte,
+//      para os PCs antigos (7.0.17) não travarem no meio da troca;
+//   4) corte do texto puro: chave `db.config.seguranca.corteTextoPuro`
+//      (viaja na nuvem); ligada, `senha` some do envio (mecanismo pronto +
+//      testado; LIGAR só com todos os PCs na 7.1.0+ e senhas trocadas);
+//   5) prova nova com salt (`prova2`), a antiga segue valendo na transição.
+// NADA aqui trava ninguém: sem `crypto.subtle`, cai no comportamento velho.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var ITERACOES=100000;
+
+function sutil(){ try{ if(typeof crypto!=='undefined'&&crypto.subtle) return crypto.subtle; }catch(e){} return null; }
+function hex(buf){ return Array.from(new Uint8Array(buf),function(b){ return b.toString(16).padStart(2,'0'); }).join(''); }
+function hexParaBytes(h){
+  h=String(h||''); var b=new Uint8Array(Math.floor(h.length/2));
+  for(var i=0;i<b.length;i++) b[i]=parseInt(h.substr(i*2,2),16)||0;
+  return b;
+}
+function senhaNovaSalt(){
+  try{
+    var c=(typeof crypto!=='undefined')?crypto:null;
+    if(c&&c.getRandomValues){ var b=new Uint8Array(16); c.getRandomValues(b); return hex(b.buffer); }
+  }catch(e){}
+  var s=''; for(var i=0;i<32;i++) s+='0123456789abcdef'[Math.floor(Math.random()*16)];
+  return s;
+}
+async function senhaHash(senha, saltHex){
+  var s=sutil(); if(!s) return '';
+  try{
+    var chave=await s.importKey('raw', new TextEncoder().encode(String(senha)), 'PBKDF2', false, ['deriveBits']);
+    var bits=await s.deriveBits({name:'PBKDF2', salt:hexParaBytes(saltHex), iterations:ITERACOES, hash:'SHA-256'}, chave, 256);
+    return hex(bits);
+  }catch(e){ return ''; }
+}
+// Devolve 'hash' | 'texto' | false. Com hash gravado, só o hash vale.
+async function confereSenha(digitada, reg){
+  try{
+    if(!reg) return false;
+    if(reg.senhaHash&&reg.senhaSalt){
+      var h=await senhaHash(digitada, reg.senhaSalt);
+      return (h&&h===reg.senhaHash)?'hash':false;
+    }
+    if(reg.senha!=null&&String(reg.senha)===String(digitada)) return 'texto';
+    return false;
+  }catch(e){ return false; }
+}
+// Grava hash+salt no registro (mantém `senha` em texto para os PCs velhos).
+async function atualizarHashRegistro(reg, senhaPlana){
+  if(!reg||senhaPlana==null||String(senhaPlana)==='') return false;
+  try{
+    var salt=reg.senhaSalt||senhaNovaSalt();
+    var h=await senhaHash(senhaPlana, salt);
+    if(!h) return false;
+    reg.senhaSalt=salt; reg.senhaHash=h;
+    return true;
+  }catch(e){ return false; }
+}
+async function provaSal(login, salt, hash){
+  var s=sutil(); if(!s) return '';
+  try{
+    var dados=new TextEncoder().encode(String(login)+'|'+String(salt)+'|'+String(hash));
+    var digest=await s.digest('SHA-256',dados);
+    return hex(digest);
+  }catch(e){ return ''; }
+}
+// PURA: tira `senha` do que viaja quando o corte está ligado.
+function tirarSegredosDoEnvioPuro(entity, data, corte){
+  if(!corte) return data;
+  if(entity!=='usuarios'&&entity!=='empresas') return data;
+  if(!data||typeof data!=='object') return data;
+  if(Array.isArray(data)) return data.map(function(x){ return tirarSegredosDoEnvioPuro(entity,x,corte); });
+  if(!('senha' in data)) return data;
+  var out={};
+  Object.keys(data).forEach(function(k){ if(k!=='senha') out[k]=data[k]; });
+  return out;
+}
+function corteTextoPuroLigado(){
+  try{
+    if(typeof db!=='undefined'&&db&&db.config&&db.config.seguranca) return db.config.seguranca.corteTextoPuro===true;
+  }catch(e){}
+  return false;
+}
+function tirarSegredosDoEnvio(entity, data){ return tirarSegredosDoEnvioPuro(entity, data, corteTextoPuroLigado()); }
+
+var G=(typeof window!=='undefined')?window:{};
+G.confereSenha=confereSenha;
+G.atualizarHashRegistro=atualizarHashRegistro;
+G.senhaHash=senhaHash;
+G.senhaNovaSalt=senhaNovaSalt;
+G.provaSal=provaSal;
+G.tirarSegredosDoEnvio=tirarSegredosDoEnvio;
+G.corteTextoPuroLigado=corteTextoPuroLigado;
+G.SENHA_HASH_PURE={senhaHash:senhaHash, senhaNovaSalt:senhaNovaSalt, confereSenha:confereSenha, atualizarHashRegistro:atualizarHashRegistro, provaSal:provaSal, tirarSegredosDoEnvioPuro:tirarSegredosDoEnvioPuro, ITERACOES:ITERACOES};
+if(typeof window==='undefined'&&typeof module!=='undefined'&&module.exports){ module.exports=G.SENHA_HASH_PURE; }
+
+if(typeof document==='undefined') return;
+
+function podeMexerSenha(){
+  try{
+    var s=(typeof getSession==='function')?getSession():null;
+    var p=String((s&&s.perfil)||'');
+    var l=String((s&&(s.login||s.usuarioNome))||'').toLowerCase();
+    return p==='Admin'||p==='Dono'||l==='kauan'||l==='denivaldo';
+  }catch(e){ return false; }
+}
+function avisar(m,t){ try{ if(typeof toast==='function'){ toast(m,t||'success'); return; } }catch(e){} try{ if(typeof aviso==='function') aviso(m); }catch(e2){} }
+function salvarBanco(){ try{ if(typeof saveDB==='function') saveDB(); }catch(e){} }
+function auditar(acao,id,det){ try{ if(typeof logAction==='function') logAction('usuario',acao,id,det||''); }catch(e){} }
+
+// Modal própria com campos de senha mascarados (sem depender de outros patches).
+function modalSenha(titulo, texto, aoSalvar, op){
+  var soUm=!!(op&&op.soUm); // soUm: só pede a senha (recuperação), sem criar/repetir
+  var tid='senha-modal-'+Date.now();
+  var div=document.createElement('div'); div.id=tid;
+  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.55);';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  div.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px 24px;max-width:440px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0">'+esc(titulo)+'</p>'
+    +'<p style="font-size:13px;color:#334155;margin:10px 0 12px;line-height:1.5;white-space:pre-wrap">'+esc(texto)+'</p>'
+    +'<input id="'+tid+'-a" type="password" autocomplete="new-password" placeholder="Nova senha (4+ dígitos)" style="width:100%;height:44px;border:1.5px solid #cbd5e1;border-radius:12px;padding:0 14px;font-size:15px;margin-bottom:10px;box-sizing:border-box">'
+    +'<input id="'+tid+'-b" type="password" autocomplete="new-password" placeholder="Repete a senha" style="width:100%;height:44px;border:1.5px solid #cbd5e1;border-radius:12px;padding:0 14px;font-size:15px;margin-bottom:14px;box-sizing:border-box">'
+    +'<div style="display:flex;gap:10px;justify-content:flex-end"><button id="'+tid+'-c" style="height:42px;padding:0 18px;border-radius:12px;background:#fff;border:1.5px solid #cbd5e1;font-weight:700;cursor:pointer">Cancelar</button>'
+    +'<button id="'+tid+'-s" style="height:42px;padding:0 18px;border-radius:12px;background:#0a1e8a;color:#fff;border:none;font-weight:800;cursor:pointer">Salvar</button></div></div>';
+  document.body.appendChild(div);
+  function fechar(){ try{ div.remove(); }catch(e){} }
+  document.getElementById(tid+'-c').onclick=fechar;
+  div.onclick=function(ev){ if(ev.target===div) fechar(); };
+  if(soUm){ try{ document.getElementById(tid+'-b').style.display='none'; document.getElementById(tid+'-a').setAttribute('placeholder','Digite a senha'); }catch(e){} }
+  document.getElementById(tid+'-s').onclick=function(){
+    var a=document.getElementById(tid+'-a').value||'', b=document.getElementById(tid+'-b').value||'';
+    if(soUm){
+      if(!a){ avisar('Digite a senha.','error'); return; }
+      fechar();
+      aoSalvar(a);
+      return;
+    }
+    if(a.length<4){ avisar('Senha curta demais (mínimo 4).','error'); return; }
+    if(a!==b){ avisar('As duas senhas não conferem.','error'); return; }
+    fechar();
+    aoSalvar(a);
+  };
+  setTimeout(function(){ try{ document.getElementById(tid+'-a').focus(); }catch(e){} },60);
+}
+
+// Pede uma senha (mascarada) sem criar nada — usado pela recuperação do CNPJ.
+function senhaPedirTexto(titulo, texto, aoSalvar){
+  modalSenha(titulo, texto, aoSalvar, {soUm:true});
+}
+
+async function senhaDefinirCNPJ(forcar){
+  if(typeof db==='undefined') return;
+  // forcar=true só vem de dois lugares confiáveis: modo configuração (banco sem senha,
+  // chamado pelo doLoginCNPJ) e recuperação verificada (provou a senha do gerente
+  // na nuvem). Nunca de tela comum.
+  if(!forcar&&!podeMexerSenha()){ avisar('Só Admin/Dono troca a senha do CNPJ.','error'); return; }
+  var s=(typeof getSession==='function')?getSession():null;
+  var emp=((db.empresas||[]).find(function(e){ return e&&s&&e.id===s.empresaId; })||(db.empresas||[]).find(function(e){ return e&&e.id; }));
+  if(!emp){ avisar('Nenhuma empresa no banco.','error'); return; }
+  var corteOn=corteTextoPuroLigado();
+  modalSenha('Senha do CNPJ','Cria/troca a senha do CNPJ '+(emp.cnpj||'')+'. Ela é gravada com hash (código irreversível).',function(nova){
+    emp.senha=corteOn?'':nova;
+    atualizarHashRegistro(emp,nova).then(function(){
+      try{ salvarBanco(); }catch(e){}
+      try{ if(typeof logAction==='function') logAction('empresa','senha',emp.id,'Senha do CNPJ criada/trocada (com hash)'); }catch(e2){}
+      avisar('Senha do CNPJ pronta (com hash).');
+    });
+  });
+}
+
+async function senhaCorteAlternar(){
+  if(typeof db==='undefined') return;
+  if(!podeMexerSenha()){ avisar('Só Admin/Dono mexe no corte.','error'); return; }
+  var ligado=corteTextoPuroLigado();
+  if(!ligado){
+    var msg='LIGAR o corte do texto puro?\n\nDaqui em diante a senha em texto NÃO viaja mais na nuvem (só o hash).\n\nLIGUE SOMENTE SE:\n1) TODOS os PCs já estão na versão 7.1.0 ou maior;\n2) TODAS as senhas já foram trocadas pelo menos 1 vez nesta versão.\n\nLigar antes disso TRAVA o login nos PCs velhos.';
+    var ok=true;
+    try{
+      if(typeof window.confirmSistema==='function') ok=await window.confirmSistema(msg,'Cortar texto puro');
+      else if(typeof confirm==='function') ok=confirm(msg);
+    }catch(e){ ok=false; }
+    if(!ok) return;
+  }
+  try{
+    db.config=db.config||{}; db.config.seguranca=db.config.seguranca||{};
+    db.config.seguranca.corteTextoPuro=!ligado;
+    salvarBanco();
+    auditar('corte-texto-puro','config','Corte do texto puro '+(db.config.seguranca.corteTextoPuro?'LIGADO':'desligado'));
+    avisar(db.config.seguranca.corteTextoPuro?'Corte LIGADO: texto puro não viaja mais.':'Corte desligado.');
+  }catch(e){ avisar('Não deu: '+(e.message||e),'error'); }
+}
+
+// "Esqueci a senha do CNPJ": prova a senha do GERENTE na nuvem; conferindo,
+// libera criar uma senha nova do CNPJ na hora (sem segredo fixo no código).
+async function senhaRecuperarCNPJ(){
+  if(typeof db==='undefined') return;
+  var emp=((db.empresas||[]).find(function(e){ return e&&e.cnpj; })||(db.empresas||[]).find(function(e){ return e&&e.id; }));
+  if(!emp){ avisar('Sem empresa no banco para recuperar.','error'); return; }
+  var cnpjSoNum=String(emp.cnpj||'').replace(/\D/g,'');
+  if(cnpjSoNum.length!==14){ avisar('CNPJ da empresa está incompleto no banco.','error'); return; }
+  senhaPedirTexto('Esqueci a senha do CNPJ','Digite a senha do GERENTE (a da nuvem, não a do CNPJ). Se conferir, você cria uma senha nova do CNPJ na hora.',function(sg){
+    var base=''; try{ base=(typeof API!=='undefined'&&API)?API:''; }catch(e){ base=''; }
+    if(!base){ avisar('Nuvem não configurada neste PC.','error'); return; }
+    avisar('Conferindo com a nuvem...');
+    fetch(base+'/v1/company-pass-liberar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cnpj:cnpjSoNum,senhaGerente:sg})}).then(function(r){
+      if(r.ok){ senhaDefinirCNPJ(true); return; }
+      avisar(r.status===403?'Senha do gerente não confere.':'A nuvem não liberou (tente de novo).','error');
+    }).catch(function(){ avisar('Sem falar com a nuvem agora. Tente com internet.','error'); });
+  });
+}
+
+function injetarLinkRecuperar(){
+  try{
+    if(document.getElementById('link-esqueci-cnpj')) return true;
+    var step=document.getElementById('login-step-cnpj');
+    if(!step) return false;
+    var a=document.createElement('button'); a.id='link-esqueci-cnpj'; a.type='button';
+    a.textContent='Esqueci a senha do CNPJ';
+    a.style.cssText='background:none;border:none;color:#0a1e8a;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px;text-decoration:underline;padding:0';
+    a.onclick=function(){ senhaRecuperarCNPJ(); };
+    step.appendChild(a);
+    return true;
+  }catch(e){ return false; }
+}
+
+G.senhaDefinirCNPJ=senhaDefinirCNPJ;
+G.senhaCorteAlternar=senhaCorteAlternar;
+G.senhaPedirTexto=senhaPedirTexto;
+G.senhaRecuperarCNPJ=senhaRecuperarCNPJ;
+
+function injetarBotoesSenha(){
+  try{
+    var view=document.getElementById('view-usuarios');
+    if(!view||view.classList.contains('hidden')) return;
+    var barra=view.firstElementChild;
+    if(!barra) return;
+    if(view.querySelector('#btn-senha-cnpj')) return;
+    var alvo=barra.querySelector('.flex.gap-2')||barra;
+    var b1=document.createElement('button'); b1.id='btn-senha-cnpj'; b1.type='button';
+    b1.title='Cria/troca a senha do CNPJ (gravada com hash, código irreversível).';
+    b1.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:#fff;color:#334155;border:1px solid #dbe3ef;cursor:pointer';
+    b1.textContent='🔑 Senha do CNPJ';
+    b1.onclick=function(){ senhaDefinirCNPJ(); };
+    alvo.appendChild(b1);
+    var b2=document.createElement('button'); b2.id='btn-senha-corte'; b2.type='button';
+    var ligado=corteTextoPuroLigado();
+    b2.title='Quando LIGADO, a senha em texto não viaja mais (só o hash). Só ligue com todos os PCs atualizados.';
+    b2.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:'+(ligado?'#ecfdf5':'#fff')+';color:'+(ligado?'#065f46':'#334155')+';border:1px solid '+(ligado?'#a7f3d0':'#dbe3ef')+';cursor:pointer';
+    b2.textContent=ligado?'🔒 Texto-puro: CORTADO':'🔒 Texto-puro: viajando';
+    b2.onclick=function(){ senhaCorteAlternar().then(function(){ try{ if(typeof renderUsuarios==='function') renderUsuarios(); }catch(e){} }); };
+    alvo.appendChild(b2);
+  }catch(e){}
+}
+// SUBSTITUICAO DE PROPOSITO (r54): embrulha renderUsuarios para injetar os botões de senha; chama a original.
+if(typeof window.renderUsuarios==='function'&&!window.renderUsuarios.__v52438){
+  var origRU=window.renderUsuarios;
+  window.renderUsuarios=function(){
+    var r=origRU.apply(this,arguments);
+    try{ injetarBotoesSenha(); }catch(e){}
+    return r;
+  };
+  window.renderUsuarios.__v52438=true;
+}
+setTimeout(injetarBotoesSenha,1500);
+// A tela de login é montada por outro patch depois do boot: tenta por 30s e para.
+var tentLinkRec=0;
+var ivLinkRec=setInterval(function(){
+  var feito=false; try{ feito=injetarLinkRecuperar(); }catch(e){}
+  tentLinkRec++;
+  if(feito||tentLinkRec>30){ try{ clearInterval(ivLinkRec); }catch(e2){} }
+},1000);
+
+console.log('[DIGICOPY] v5.24.38 senha: hash PBKDF2 + corte do texto puro');
+})();
 
 ;
 
@@ -28354,9 +28664,18 @@ async function api(path, options){
     if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
       const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
       const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
-      if(u&&u.senha){
-        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
-        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      // v7.1.0-r54 (P3): prova conforme a fase — NUNCA as duas juntas.
+      // Com texto puro (transição): manda SÓ a antiga, que funciona na nuvem
+      // velha e na nova (a nova não ganha nada recebendo as duas juntas).
+      // Sem texto puro (pós-Corte): manda SÓ a nova com salt (a antiga é
+      // impossível). Corte só depois da nuvem republicada — ver guia.
+      if(u&&(u.senha||u.senhaHash)){
+        const loginBaixo=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-login']=loginBaixo;
+        if(u.senha) opts.headers['x-digicopy-usuario-prova']=await provaUsuario(loginBaixo,u.senha);
+        else if(u.senhaHash&&u.senhaSalt&&typeof provaSal==='function'){
+          try{ const p2=await provaSal(loginBaixo,u.senhaSalt,u.senhaHash); if(p2) opts.headers['x-digicopy-usuario-prova2']=p2; }catch(eP2){}
+        }
       }
     }
   }catch(e){}
@@ -29825,11 +30144,17 @@ function scanLocal(opcoes){
     const mode=MAPA[entity],entries=entriesFor(entity,mode),present=new Set(entries.map(x=>key(entity,x.id)));
     for(const entry of entries){
       if(outbox.length>=teto)break;
-      const k=key(entity,entry.id),h=hash(entry.data);
+      const k=key(entity,entry.id);
+      // v7.1.0-r54 (P2): com o corte ligado, `senha` (usuarios/empresas) não viaja.
+      // Hash e envio usam o MESMO dado (o cortado): ligar o corte faz cada registro
+      // ser reenviado uma vez, já sem o texto — a nuvem limpa o retrato atual.
+      // Corte desligado (padrão): tirarSegredosDoEnvio devolve o dado intacto, zero mudança.
+      const dadoEnvio=(typeof tirarSegredosDoEnvio==='function')?tirarSegredosDoEnvio(entity,entry.data):entry.data;
+      const h=hash(dadoEnvio);
       if(!state.sumindo||typeof state.sumindo!=='object')state.sumindo={};
       if(state.sumindo[k])delete state.sumindo[k];
       if(held.has(k)||state.hashes[k]===h||pending.has(k))continue;
-      outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:clean(entry.data)}});
+      outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:clean(dadoEnvio)}});
       pending.add(k);added++;
     }
     // v7.0.9 — ORÇAMENTO APAGADO POR ELE SAI MESMO (defeito provado)
@@ -31326,7 +31651,115 @@ function cliUnir(base, idsRepetidos, principalId, principalNome){
   return mudou;
 }
 
-window.CLIENTES_VISIVEIS_PURE={empresaUnica,normalizarEmpresaClientes,pertenceEmpresa,cliNormNome,cliRefsDe,cliGruposDuplicados,cliEscolherPrincipal,cliUnir};
+// ── r54 (P4): união REVERSÍVEL + usuários repetidos + órfãos (D5/D7) ─────────
+// Mesma união do cliUnir, mas GUARDA o valor anterior de cada registro tocado
+// (clienteId + clienteNome + situação do cadastro). O "Desfazer" devolve tudo.
+function cliUnirReversivel(base, idsRepetidos, principalId, principalNome){
+  const ids=(idsRepetidos||[]).filter(id=>id&&id!==principalId);
+  const out={total:0, itens:[]};
+  if(!base||!ids.length) return out;
+  Object.keys(base).forEach(k=>{
+    const arr=base[k];
+    if(!Array.isArray(arr)) return;
+    arr.forEach(r=>{
+      if(!r||typeof r!=='object') return;
+      if(r.clienteId!==undefined&&r.clienteId!==null&&ids.indexOf(r.clienteId)>=0){
+        out.itens.push({ent:k, id:r.id, campo:'clienteId', antes:r.clienteId, nomeAntes:(r.clienteNome==null?null:r.clienteNome)});
+        r.clienteId=principalId;
+        if(r.clienteNome) r.clienteNome=principalNome||r.clienteNome;
+        out[k]=(out[k]||0)+1; out.total++;
+      }
+    });
+  });
+  (base.clientes||[]).forEach(c=>{
+    if(c&&ids.indexOf(c.id)>=0){
+      out.itens.push({ent:'clientes', id:c.id, campo:'__cadastro', antes:{status:(c.status==null?null:c.status), unificadoEm:(c.unificadoEm||null), unificadoPara:(c.unificadoPara||null), unificadoParaNome:(c.unificadoParaNome||null)}});
+      c.status='unificado'; c.unificadoEm=new Date().toISOString();
+      c.unificadoPara=principalId; c.unificadoParaNome=principalNome||'';
+      out.clientesUnificados=(out.clientesUnificados||0)+1;
+    }
+  });
+  return out;
+}
+// Devolve cada registro ao valor guardado. PURA (recebe base + itens).
+function cliDesfazerUniao(base, itens){
+  let feitos=0;
+  (itens||[]).forEach(t=>{
+    if(!t||!base) return;
+    const arr=base[t.ent];
+    if(!Array.isArray(arr)) return;
+    const r=arr.find(x=>x&&x.id===t.id);
+    if(!r) return;
+    if(t.campo==='__cadastro'){
+      const a=t.antes||{};
+      if(a.status==null) delete r.status; else r.status=a.status;
+      if(a.unificadoEm==null) delete r.unificadoEm; else r.unificadoEm=a.unificadoEm;
+      if(a.unificadoPara==null) delete r.unificadoPara; else r.unificadoPara=a.unificadoPara;
+      if(a.unificadoParaNome==null) delete r.unificadoParaNome; else r.unificadoParaNome=a.unificadoParaNome;
+      feitos++;
+    }else if(t.campo==='clienteId'){
+      r.clienteId=t.antes;
+      if(t.nomeAntes==null){ if(r.clienteNome!==undefined) delete r.clienteNome; }else r.clienteNome=t.nomeAntes;
+      feitos++;
+    }
+  });
+  return feitos;
+}
+// ── usuários repetidos (D5: mesmo login 2× quebra a busca por login) ────────
+function usuNormLogin(v){ return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9._@-]/g,'').trim(); }
+function usuGruposDuplicados(usuarios, empId){
+  const map={};
+  (usuarios||[]).forEach(u=>{
+    if(!u||!u.id) return;
+    if(empId&&u.empresaId&&u.empresaId!==empId) return;
+    if(u.ativo===false) return; // inativo já está "resolvido"
+    const chave=usuNormLogin(u.login||'');
+    if(!chave||chave.length<2) return;
+    (map[chave]=map[chave]||[]).push(u);
+  });
+  return Object.keys(map).filter(k=>map[k].length>1).map(k=>({chave:k, login:map[k][0].login, itens:map[k].slice().sort((a,b)=>String(a.criadoEm||a.id||'')<String(b.criadoEm||b.id||'')?-1:1)}));
+}
+// Não apaga nem funde usuário (auditoria!): desativa os repetidos, mantendo o
+// mais antigo como principal. Reversível (é só reativar na tela de Usuários).
+function usuDesativarRepetidos(base, idsRepetidos, principalId){
+  const ids=(idsRepetidos||[]).filter(id=>id&&id!==principalId);
+  let feitos=0;
+  ((base&&base.usuarios)||[]).forEach(u=>{
+    if(u&&ids.indexOf(u.id)>=0&&u.ativo!==false){
+      u.ativo=false; u.desativadoPorUniao=principalId; u.desativadoPorUniaoEm=new Date().toISOString();
+      feitos++;
+    }
+  });
+  return feitos;
+}
+// ── órfãos (D7): apontam para um cliente que não existe ─────────────────────
+function orfaosListar(base){
+  const out=[];
+  if(!base) return out;
+  const ids={};
+  (base.clientes||[]).forEach(c=>{ if(c&&c.id) ids[c.id]=true; });
+  CLI_ENTIDADES_REF.forEach(k=>{
+    const arr=base[k];
+    if(!Array.isArray(arr)) return;
+    arr.forEach(r=>{
+      if(!r||r.clienteId==null||r.clienteId==='') return;
+      if(ids[r.clienteId]) return;
+      out.push({ent:k, id:r.id, desc:String(r.numero||r.codigo||r.nome||r.id||''), clienteId:r.clienteId});
+    });
+  });
+  return out;
+}
+function orfaoDesvincular(base, ent, id){
+  const arr=base?base[ent]:null;
+  if(!Array.isArray(arr)) return false;
+  const r=arr.find(x=>x&&x.id===id);
+  if(!r) return false;
+  r.clienteId=null;
+  if(r.clienteNome!==undefined) delete r.clienteNome;
+  return true;
+}
+
+window.CLIENTES_VISIVEIS_PURE={empresaUnica,normalizarEmpresaClientes,pertenceEmpresa,cliNormNome,cliRefsDe,cliGruposDuplicados,cliEscolherPrincipal,cliUnir,cliUnirReversivel,cliDesfazerUniao,usuNormLogin,usuGruposDuplicados,usuDesativarRepetidos,orfaosListar,orfaoDesvincular};
 
 if(typeof document==='undefined')return;
 
@@ -31432,10 +31865,26 @@ window.clientesDuplicadosAbrir=async function(){
       'fica registrada na Auditoria com o motivo.</p>'
     : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum contrato sem vínculo de cliente.</p>';
   window.__cliDupGrupos=grupos;
-  const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+
+  // r54 (P4): Desfazer (se há união guardada) + órfãos (D7) na mesma janela.
+  let tokUniao=null;
+  try{ tokUniao=JSON.parse(localStorage.getItem('digicopy_ultima_uniao')||'null'); }catch(eTok){ tokUniao=null; }
+  const desfazer=(tokUniao&&tokUniao.itens&&tokUniao.itens.length)
+    ? '<p style="margin:0 0 10px"><button type="button" onclick="clientesDuplicadosDesfazer()" style="height:36px;padding:0 14px;border-radius:10px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;font-weight:800;font-size:12.5px;cursor:pointer">↩ Desfazer última união ('+String(tokUniao.nome||'').replace(/[<>&]/g,'')+')</button></p>' : '';
+  const orf=orfaosListar(db);
+  const orfHtml=orf.length
+    ? '<p style="font-size:12.5px;color:#9a3412;font-weight:700;margin:0 0 4px">'+orf.length+' registro(s) apontando para cliente que não existe:</p>'+
+      '<ul style="margin:0 0 0 16px;font-size:12.5px">'+orf.slice(0,20).map((o,i)=>{
+        const vinc=(o.ent==='contratos')?' <button type="button" onclick="clientesDuplicadosVincularContrato(\''+String(o.id)+'\')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;font-weight:800;font-size:11.5px;cursor:pointer">🔗 Vincular cliente</button>':'';
+        return '<li style="margin:4px 0">'+String(o.ent)+' <b>'+String(o.desc).replace(/[<>&]/g,'')+'</b> → cliente '+String(o.clienteId).replace(/[<>&]/g,'')+' (não existe)'+vinc+
+          ' <button type="button" onclick="clientesOrfaoDesvincular('+i+')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff;color:#64748b;border:1px solid #e2e8f0;font-weight:800;font-size:11.5px;cursor:pointer">✖️ Desvincular</button></li>';
+      }).join('')+(orf.length>20?'<li>… e mais '+(orf.length-20)+'</li>':'')+'</ul>'
+    : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum registro órfão.</p>';
+  window.__cliOrfaos=orf;
+  const corpo=desfazer+'<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+
     'A união <b>não apaga nada</b>: as referências (contratos, vendas, ordens, leituras, títulos) passam para o cadastro principal e o repetido fica marcado como <b>UNIFICADO</b>.</p>'+
     '<h4 style="font-size:13px;color:#0a1e8a;margin:0 0 6px">Clientes repetidos</h4>'+cards+
-    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Contratos sem vínculo</h4>'+sv;
+    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Contratos sem vínculo</h4>'+sv+
+    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Registros sem cliente (órfãos)</h4>'+orfHtml;
   if(!modalSistema('Clientes duplicados', corpo)) if(typeof window.lfbAlert==='function') window.lfbAlert('Não achei a janela de modal nesta tela. Recarregue (F5) e tente de novo.','Clientes duplicados');
 };
 // v6.1.4 (22/09/2026) — DONO: "quero resolver o Cliente sem vínculo". O botão
@@ -31464,16 +31913,132 @@ window.clientesDuplicadosUnir=async function(indice){
   else if(typeof confirm==='function'){ ok=confirm(msg); }
   if(!ok) return;
   try{
-    const r=cliUnir(db, repetidos.map(it=>it.cliente.id), principal.cliente.id, principal.cliente.nome||'');
+    const r=cliUnirReversivel(db, repetidos.map(it=>it.cliente.id), principal.cliente.id, principal.cliente.nome||'');
+    try{ localStorage.setItem('digicopy_ultima_uniao', JSON.stringify({quando:new Date().toISOString(), principalId:principal.cliente.id, nome:g.nome, itens:r.itens})); }catch(eTok){}
     try{ if(typeof logAction==='function') logAction('cliente','unificar',principal.cliente.id,'Uniu '+g.itens.length+' cadastros de "'+g.nome+'" → principal código '+String(principal.cliente.codigo||principal.cliente.id)+' · '+r.total+' referência(s) movida(s)'); }catch(e){}
     if(typeof saveDB==='function') saveDB();
     try{ if(typeof renderClientes==='function') renderClientes(); }catch(e){}
     try{ if(typeof renderContratos==='function') renderContratos(); }catch(e){}
     try{ if(typeof renderAuditoria==='function') renderAuditoria(); }catch(e){}
-    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ União feita.\n\n• '+r.total+' referência(s) movida(s) para '+String(principal.cliente.nome||'')+'\n• '+(r.clientesUnificados||0)+' cadastro(s) repetido(s) marcado(s) como UNIFICADO (nada foi apagado)\n\nA lista de clientes já está atualizada.','Unir clientes duplicados');
+    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ União feita.\n\n• '+r.total+' referência(s) movida(s) para '+String(principal.cliente.nome||'')+'\n• '+(r.clientesUnificados||0)+' cadastro(s) repetido(s) marcado(s) como UNIFICADO (nada foi apagado)\n\nA lista de clientes já está atualizada.\\n\\n↩ Errou? Reabra esta janela e use o botão \"Desfazer última união\" no topo.','Unir clientes duplicados');
     setTimeout(function(){ try{ window.clientesDuplicadosAbrir(); }catch(e){} },300);
   }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu para unir: '+(e.message||e),'Erro'); }
 };
+// r54 (P4): DESFAZER a última união (devolve cada registro ao valor guardado).
+window.clientesDuplicadosDesfazer=async function(){
+  let tok=null;
+  try{ tok=JSON.parse(localStorage.getItem('digicopy_ultima_uniao')||'null'); }catch(e){ tok=null; }
+  if(!tok||!tok.itens||!tok.itens.length){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não há união guardada para desfazer.','Desfazer união'); return; }
+  if(!podeUnirClientes()){ if(typeof window.lfbAlert==='function') window.lfbAlert('Desfazer união exige permissão de apagar/estornar (ou ser Admin/Dono).','Sem permissão'); return; }
+  const msg='Desfazer a união de "'+(tok.nome||'')+'"?\n\nCada registro volta para o cadastro de onde saiu ('+tok.itens.length+' ajuste(s)). Nada é apagado.';
+  let ok=true;
+  if(typeof window.confirmSistema==='function'){ ok=await window.confirmSistema(msg,'Desfazer união'); }
+  else if(typeof confirm==='function'){ ok=confirm(msg); }
+  if(!ok) return;
+  try{
+    const n=cliDesfazerUniao(db, tok.itens);
+    try{ localStorage.removeItem('digicopy_ultima_uniao'); }catch(e2){}
+    try{ if(typeof logAction==='function') logAction('cliente','desfazer-uniao',tok.principalId||'','Desfez a união de "'+(tok.nome||'')+'" ('+n+' ajuste(s))'); }catch(e3){}
+    if(typeof saveDB==='function') saveDB();
+    try{ if(typeof renderClientes==='function') renderClientes(); }catch(e4){}
+    try{ if(typeof renderAuditoria==='function') renderAuditoria(); }catch(e5){}
+    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ União desfeita ('+n+' ajuste(s)).','Desfazer união');
+    setTimeout(function(){ try{ window.clientesDuplicadosAbrir(); }catch(e6){} },300);
+  }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu para desfazer: '+(e.message||e),'Erro'); }
+};
+// r54 (P4): desvincula UM órfão (o registro continua existindo, só solta o cliente fantasma).
+window.clientesOrfaoDesvincular=async function(indice){
+  const lista=window.__cliOrfaos||[];
+  const o=lista[indice];
+  if(!o) return;
+  if(!podeUnirClientes()){ if(typeof window.lfbAlert==='function') window.lfbAlert('Desvincular exige permissão de apagar/estornar (ou ser Admin/Dono).','Sem permissão'); return; }
+  const msg='Soltar este registro do cliente fantasma?\n\n• '+o.ent+' '+(o.desc||o.id)+'\n• cliente '+o.clienteId+' (não existe)\n\nO registro CONTINUA no banco, só fica sem cliente.';
+  let ok=true;
+  if(typeof window.confirmSistema==='function'){ ok=await window.confirmSistema(msg,'Desvincular órfão'); }
+  else if(typeof confirm==='function'){ ok=confirm(msg); }
+  if(!ok) return;
+  try{
+    if(orfaoDesvincular(db, o.ent, o.id)){
+      try{ if(typeof logAction==='function') logAction(o.ent,'desvincular-orfao',o.id,'Soltou do cliente fantasma '+o.clienteId); }catch(e2){}
+      if(typeof saveDB==='function') saveDB();
+    }
+    setTimeout(function(){ try{ window.clientesDuplicadosAbrir(); }catch(e3){} },300);
+  }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu: '+(e.message||e),'Erro'); }
+};
+// ── r54 (P4): USUÁRIOS repetidos (D5) — mesmo login 2× ───────────────────────
+window.usuariosDuplicadosContar=function(){
+  try{ return usuGruposDuplicados(db.usuarios, empresaUnica()).length; }catch(e){ return 0; }
+};
+window.usuariosDuplicadosAbrir=function(){
+  if(typeof db==='undefined'||!db){ if(typeof window.lfbAlert==='function') window.lfbAlert('O banco ainda está carregando.','Usuários repetidos'); return; }
+  const grupos=usuGruposDuplicados(db.usuarios, empresaUnica());
+  window.__usuDupGrupos=grupos;
+  const cards=grupos.length?grupos.map((g,i)=>{
+    const linhas=g.itens.map((u,j)=>{
+      return '<li style="margin:3px 0">'+(j===0?'⭐ ':'• ')+'<b>'+String(u.login||'').replace(/[<>&]/g,'')+'</b> — '+String(u.nome||'').replace(/[<>&]/g,'')+' ('+String(u.perfil||'')+')'+(j===0?' <b style="color:#15803d">— fica como principal (mais antigo)</b>':'')+'</li>';
+    }).join('');
+    return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:11px 13px;margin-bottom:9px">'+
+      '<p style="font-size:13.5px;font-weight:800;margin:0 0 5px">'+String(i+1)+'. login "'+String(g.login).replace(/[<>&]/g,'')+'" — '+g.itens.length+' cadastros ativos</p>'+
+      '<ul style="margin:0 0 8px 16px;font-size:12.5px;color:#334155">'+linhas+'</ul>'+
+      '<button type="button" onclick="usuariosDuplicadosResolver('+i+')" style="height:36px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-weight:800;font-size:12.5px;cursor:pointer">Manter o principal, desativar repetidos</button>'+
+    '</div>';
+  }).join('') : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum login repetido.</p>';
+  const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Login repetido confunde o sistema (ele acha o primeiro e ignora o outro). '+
+    'A correção <b>não apaga ninguém</b>: desativa os repetidos e o principal continua valendo. Desativar é reversível (é só reativar na tela de Usuários).</p>'+cards;
+  if(!modalSistema('Usuários repetidos', corpo)) if(typeof window.lfbAlert==='function') window.lfbAlert('Não achei a janela de modal nesta tela. Recarregue (F5) e tente de novo.','Usuários repetidos');
+};
+window.usuariosDuplicadosResolver=async function(indice){
+  const grupos=window.__usuDupGrupos||[];
+  const g=grupos[indice];
+  if(!g) return;
+  if(!podeUnirClientes()){ if(typeof window.lfbAlert==='function') window.lfbAlert('Resolver repetidos exige permissão de apagar/estornar (ou ser Admin/Dono).','Sem permissão'); return; }
+  const principal=g.itens[0];
+  const repetidos=g.itens.slice(1);
+  const msg='Resolver o login "'+(g.login||'')+'"?\n\nFICA ATIVO (principal):\n• '+(principal.nome||'')+' ('+(principal.perfil||'')+')\n\nSERÃO DESATIVADOS (nada é apagado):\n'+repetidos.map(u=>'• '+(u.nome||'')+' ('+(u.perfil||'')+')').join('\n');
+  let ok=true;
+  if(typeof window.confirmSistema==='function'){ ok=await window.confirmSistema(msg,'Usuários repetidos'); }
+  else if(typeof confirm==='function'){ ok=confirm(msg); }
+  if(!ok) return;
+  try{
+    const n=usuDesativarRepetidos(db, repetidos.map(u=>u.id), principal.id);
+    try{ if(typeof logAction==='function') logAction('usuario','desativar-repetido',principal.id,'Desativou '+n+' cadastro(s) repetido(s) do login "'+(g.login||'')+'"'); }catch(e2){}
+    if(typeof saveDB==='function') saveDB();
+    try{ if(typeof renderUsuarios==='function') renderUsuarios(); }catch(e3){}
+    if(typeof window.lfbAlert==='function') window.lfbAlert('✅ Pronto: '+n+' repetido(s) desativado(s). Para reverter, reative na tela de Usuários.','Usuários repetidos');
+    setTimeout(function(){ try{ window.usuariosDuplicadosAbrir(); }catch(e4){} },300);
+  }catch(e){ if(typeof window.lfbAlert==='function') window.lfbAlert('Não deu: '+(e.message||e),'Erro'); }
+};
+function injetarBotaoUsuariosDup(){
+  try{
+    const view=document.getElementById('view-usuarios');
+    if(!view||view.classList.contains('hidden')) return;
+    const barra=view.firstElementChild;
+    if(!barra) return;
+    if(view.querySelector('#btn-usuarios-duplicados')) return;
+    const n=window.usuariosDuplicadosContar();
+    const b=document.createElement('button');
+    b.id='btn-usuarios-duplicados';
+    b.type='button';
+    b.title='Acha logins cadastrados 2 vezes e ajuda a resolver (sem apagar ninguém)';
+    b.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:'+(n?'#fff7ed':'#fff')+';color:'+(n?'#9a3412':'#334155')+';border:1px solid '+(n?'#fdba74':'#dbe3ef')+';cursor:pointer';
+    b.textContent='🔎 Logins repetidos'+(n?(' ('+n+')'):'');
+    b.onclick=window.usuariosDuplicadosAbrir;
+    const alvo=barra.querySelector('.flex.gap-2')||barra;
+    alvo.appendChild(b);
+  }catch(e){}
+}
+// SUBSTITUICAO DE PROPOSITO (r54): embrulha renderUsuarios para injetar o botão de logins repetidos; chama a original.
+if(typeof window.renderUsuarios==='function'&&!window.renderUsuarios.__v5214usu){
+  const origU=window.renderUsuarios;
+  window.renderUsuarios=function(){
+    const r=origU.apply(this,arguments);
+    try{ injetarBotaoUsuariosDup(); }catch(e){}
+    return r;
+  };
+  window.renderUsuarios.__v5214usu=true;
+}
+setTimeout(injetarBotaoUsuariosDup,1500);
+
 function injetarBotaoDuplicados(){
   try{
     const view=document.getElementById('view-clientes');
@@ -31504,7 +32069,7 @@ if(typeof window.renderClientes==='function'&&!window.renderClientes.__v5214dup)
 }
 setTimeout(injetarBotaoDuplicados,1200);
 
-console.log('[DIGICOPY] v6.1.4 clientes: duplicados com união guiada (nada é apagado)');
+console.log('[DIGICOPY] v6.1.4 clientes: duplicados com união guiada + desfazer + usuários repetidos + órfãos (r54, nada é apagado)');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5214_clientes_visiveis_patch.js", e); }
@@ -44830,7 +45395,8 @@ try{
     }
 
     // Sobrescreve login de forma infalível
-    window.doLoginUser = function(){
+    // v7.1.0-r54 (P1): async — hash primeiro; texto puro da transição faz upgrade automático.
+    window.doLoginUser = async function(){
       try{
         var uInput = document.getElementById('login-user');
         var pInput = document.getElementById('login-senha-user');
@@ -44846,6 +45412,21 @@ try{
         var _db = window.db || (typeof db !== 'undefined' ? db : null) || {};
         var usuarios = _db.usuarios || [];
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
+        // v7.1.0-r54 (P1): entrou pelo texto puro da transição → grava o hash agora (upgrade).
+        if(user && !user.senhaHash && typeof atualizarHashRegistro === 'function'){
+          try{ await atualizarHashRegistro(user, senhaVal); }catch(eUp){}
+        }
+        // v7.1.0-r54 (P1): texto não achou (pós-Corte não tem texto) → tenta o hash+salt.
+        if(!user && typeof confereSenha === 'function'){
+          var ffH = (typeof fold === 'function') ? fold : function(s){ return String(s || '').toLowerCase().trim(); };
+          var fLH = ffH(loginVal);
+          for(var hi = 0; hi < usuarios.length; hi++){
+            var hu = usuarios[hi];
+            if(!hu || !hu.ativo || !hu.senhaHash) continue;
+            if(ffH(hu.login) !== fLH) continue;
+            try{ if(await confereSenha(senhaVal, hu)){ user = hu; break; } }catch(eH){}
+          }
+        }
 
         if(!user){
           // v5.24.34 — diagnóstico partido (carimbo de fala): diz SE é o
@@ -44896,6 +45477,15 @@ try{
         if(typeof saveDB === 'function') saveDB();
         forcarExibicaoApp();
         if(typeof toast === 'function') toast('Bem-vindo, ' + sess.usuarioNome + '!', 'success');
+        // v7.1.0-r54 (P1): senha de fábrica → abre o próprio cadastro e obriga a troca.
+        if(user && user.senhaPadrao && typeof openModal === 'function'){
+          try{
+            setTimeout(function(){
+              try{ if(typeof toast === 'function') toast('Senha padrão: troque pela sua senha', 'error'); }catch(e){}
+              openModal('usuario', user.id);
+            }, 900);
+          }catch(ePadrao){}
+        }
       }catch(err){
         console.error('[DIGICOPY] Erro no login:', err);
         forcarExibicaoApp();

@@ -1127,11 +1127,17 @@ function scanLocal(opcoes){
     const mode=MAPA[entity],entries=entriesFor(entity,mode),present=new Set(entries.map(x=>key(entity,x.id)));
     for(const entry of entries){
       if(outbox.length>=teto)break;
-      const k=key(entity,entry.id),h=hash(entry.data);
+      const k=key(entity,entry.id);
+      // v7.1.0-r54 (P2): com o corte ligado, `senha` (usuarios/empresas) não viaja.
+      // Hash e envio usam o MESMO dado (o cortado): ligar o corte faz cada registro
+      // ser reenviado uma vez, já sem o texto — a nuvem limpa o retrato atual.
+      // Corte desligado (padrão): tirarSegredosDoEnvio devolve o dado intacto, zero mudança.
+      const dadoEnvio=(typeof tirarSegredosDoEnvio==='function')?tirarSegredosDoEnvio(entity,entry.data):entry.data;
+      const h=hash(dadoEnvio);
       if(!state.sumindo||typeof state.sumindo!=='object')state.sumindo={};
       if(state.sumindo[k])delete state.sumindo[k];
       if(held.has(k)||state.hashes[k]===h||pending.has(k))continue;
-      outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:clean(entry.data)}});
+      outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:clean(dadoEnvio)}});
       pending.add(k);added++;
     }
     // v7.0.9 — ORÇAMENTO APAGADO POR ELE SAI MESMO (defeito provado)
