@@ -8169,3 +8169,9 @@ P1 hash real PBKDF2+salt + fim do texto puro + fim do backdoor/defaults
 viaja); P3 salt na prova (cliente+worker, ele republica o worker); P4
 Unificar clientes (108 pares) + órfãos; P5 /v1/backups (worker, S7).
 Docs-only: sem bump, sem bundle. PR #31 comentado.
+
+## r53b — 28/09/2026: instrução permanente (lembrete urgente)
+Ele adiou os 4 urgentes da r53 (1 trocar senha de conexão, 2 gerente ≠
+conexão, 3 apagar aparelhos velhos incl. Arena-Analise, 4 trocar senhas
+dos 7 usuários) e ordenou: LEMBRAR EM TODA MENSAGEM. Vale até ele
+concluir ou cancelar. Rodapé padrão definido no chat desta rodada.
