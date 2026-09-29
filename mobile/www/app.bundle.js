@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: f129847b44a3ef6a
+ * scripts: 230 | sha256: 4573bf1401de80bd
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -633,10 +633,9 @@ function seedData(force=false){
       // antiga (que está no histórico do repositório) continuava valendo.
       // Agora a senha que o dono escolher manda; o padrão de fábrica só é usado
       // na PRIMEIRA vez, quando o usuário ainda não existe (bloco de cima).
-      // Perfil, nome, id e ativo continuam sendo garantidos de propósito.
-      if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
-      if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
-      if(u.ativo !== true){ u.ativo = true; mudou = true; }
+      // r58 (auditoria, achado 7): perfil/nome/ativo NÃO são mais reimpostos —
+      // a troca na tela "não pegava" porque a carga revertia. Só id/empresaId
+      // (estruturais, bloco acima) continuam garantidos; o resto quem manda é a tela.
     }
   });
 
@@ -19704,11 +19703,8 @@ try{
 function txt(v){ return String(v ?? '').trim(); }
 function fold(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
 function esc(v){ if(typeof escapeHtml==='function') return escapeHtml(v); return txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
-function money(v){ return typeof fmtMoney==='function'?fmtMoney(Number(v)||0):(Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function sess(){ return typeof getSession==='function'?getSession():null; }
 function salvar(){ if(typeof saveDB==='function') saveDB(); }
-function toastMsg(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
-function uidSafe(p){ return typeof uid==='function'?uid(p):`${p}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`; }
 
 function loja(){
   const s=sess(); const emp=(db.empresas||[]).find(e=>s&&e.id===s.empresaId)||((db.empresas||[])[0])||{}; const l=(db.config||{}).loja||{};
@@ -19716,7 +19712,6 @@ function loja(){
   const endereco=d.endereco||[d.rua||d.logradouro,d.numero,d.bairro,d.cidade||d.municipio,d.uf||d.estado,d.cep].filter(Boolean).join(' • ');
   return {fantasia:d.fantasia||'DIGICOPY',razao:d.razaoSocial||d.nome||'',cnpj:d.cnpj||'',telefone:d.telefone||d.fone||'',whatsapp:d.whatsapp||'+55 38 99109-8698',email:d.email||'',endereco};
 }
-function usuarioPodePerfil(){ const s=sess(); const l=fold(s&&s.login); return l==='kauan'||l==='denivaldo'||fold(s&&s.usuarioNome)==='kauan'||fold(s&&s.usuarioNome)==='denivaldo'; }
 function isProdutoImpressoraLocacao(p){
   const cat=fold(p.categoria||p.tipo||'');
   const origem=fold(p.origem||p.origemMigracao||p.tabelaOrigem||'');
@@ -19790,33 +19785,8 @@ if(typeof oldVos==='function') window.vosGerarHtmlNotinha=function(){ return pat
 const oldOpenModal=window.openModal;
 window.openModal=function(type,id){ const r=oldOpenModal?oldOpenModal.apply(this,arguments):undefined; if(type==='os') setTimeout(destacarChamadoModal,160); return r; };
 
-// Usuários editáveis.
-window.renderModalUsuario=function(id){
-  const s=sess(); if(!s) return;
-  const isEdit=!!id; const atual=(db.usuarios||[]).find(u=>u.id===s.usuarioId)||{};
-  const u=isEdit?(db.usuarios||[]).find(x=>x.id===id):{empresaId:s.empresaId,nome:'',login:'',senha:'',perfil:'Comercial',ativo:true};
-  const podePerfil=usuarioPodePerfil(); const podeEditar=podePerfil||!isEdit||u.id===s.usuarioId;
-  if(!podeEditar) return toastMsg('Você só pode alterar seu próprio usuário. Perfil só Kauan ou Denivaldo alteram.','error');
-  const perfilDisabled=podePerfil?'':'disabled';
-  const root=document.getElementById('modal-root'); if(root) root.classList.remove('hidden');
-  document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="u-nome" value="${esc(u.nome||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login</label><input id="u-login" value="${esc(u.login||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><input id="u-senha" type="password" value="" placeholder="deixe em branco para manter a senha atual" class="neo-input"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" ${perfilDisabled} class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select>${!podePerfil?'<p class="text-[11px] text-amber-700 mt-1">Somente Kauan ou Denivaldo alteram perfil.</p>':''}</div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option value="true" ${u.ativo!==false?'selected':''}>Ativo</option><option value="false" ${u.ativo===false?'selected':''}>Inativo</option></select></div></div></div>`;
-  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="neo-btn">Cancelar</button><button onclick="saveUsuarioFinal('${esc(id||'')}')" class="neo-btn primary">Salvar usuário</button>`;
-  window.modalContext={type:'usuario',id:id||null};
-};
-window.saveUsuarioFinal=function(id){
-  const s=sess(); if(!s) return; const podePerfil=usuarioPodePerfil();
-  const nome=txt(document.getElementById('u-nome')?.value), login=txt(document.getElementById('u-login')?.value), senha=txt(document.getElementById('u-senha')?.value), ativo=document.getElementById('u-ativo')?.value==='true';
-  if(!nome||!login||!senha) return toastMsg('Preencha nome, login e senha','error');
-  let u=id?(db.usuarios||[]).find(x=>x.id===id):null;
-  if(u && !podePerfil && u.id!==s.usuarioId) return toastMsg('Você só pode alterar seu próprio usuário','error');
-  if(!u){ u={id:uidSafe('usr'),empresaId:s.empresaId,criadoEm:new Date().toISOString(),criadoPor:s.usuarioId}; db.usuarios.push(u); }
-  const perfil=podePerfil?document.getElementById('u-perfil')?.value:(u.perfil||'Comercial');
-  Object.assign(u,{nome,login,senha,ativo,perfil,atualizadoEm:new Date().toISOString(),atualizadoPor:s.usuarioId}); salvar();
-  if(typeof renderUsuarios==='function') renderUsuarios(); if(typeof closeModal==='function') closeModal(); toastMsg('Usuário salvo','success');
-};
-
-
+// r58 (auditoria, achado 9): modal de usuário + saveUsuarioFinal REMOVIDOS daqui —
+// estavam mortos (o v5196 carrega depois e os window.* dele vencem). Uma tela, uma função.
 console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.66 carregado');
 })();
 
@@ -27521,7 +27491,8 @@ window.renderModalUsuario = function(id){
 };
 
 // Salvar usuário (sem senha CNPJ; perfil conforme hierarquia)
-window.saveUsuarioFinal = function(id){
+// r58 (auditoria, bug #0): virou async — quando a senha muda, re-hash + bandeira senhaPadrao (espelha r54 P1)
+window.saveUsuarioFinal = async function(id){
   const s = sess(); if(!s) return;
   const privilegiado = temPermissaoTotal(s);
   const nome = txt(document.getElementById('u-nome') && document.getElementById('u-nome').value);
@@ -27548,6 +27519,8 @@ window.saveUsuarioFinal = function(id){
     perfil = 'Funcionário';
   }
 
+  const eraNovo = !u;
+  const senhaAntiga = u ? txt(u.senha) : '';
   if(u){
     Object.assign(u, { nome: nome, login: login, senha: senha, ativo: ativo, perfil: perfil, atualizadoEm: new Date().toISOString(), atualizadoPor: s.usuarioId });
     if(typeof logAction === 'function') logAction('usuario', 'editar', u.id, 'Editado usuário ' + login + ' perfil ' + perfil);
@@ -27556,6 +27529,12 @@ window.saveUsuarioFinal = function(id){
     (db.usuarios = db.usuarios || []).push(u);
     if(typeof logAction === 'function') logAction('usuario', 'criar', u.id, 'Criado usuário ' + login + ' perfil ' + perfil);
   }
+  // r58 (auditoria, bug #0 — espelha r54 P1): senha mudou (ou não tinha hash) → re-hash ANTES de gravar.
+  // Bandeira: senha que OUTRA pessoa escolheu (criação ou troca por admin) → o dono troca no próximo login.
+  const precisaHash = eraNovo || !u.senhaHash || (senhaAntiga !== senha);
+  if(precisaHash && typeof atualizarHashRegistro === 'function'){ try{ await atualizarHashRegistro(u, senha); }catch(e){} }
+  if(eraNovo) u.senhaPadrao = true;
+  else if(senhaDigitada && senhaDigitada !== senhaAntiga) u.senhaPadrao = (u.id === s.usuarioId) ? false : true;
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
@@ -28395,9 +28374,12 @@ function ehUsuarioDemoAntigo(u, demoLogins, demoIds){
 }
 
 // JSON do backup SEM o campo interno de sincronização (_rt) — igual exportBackup.
+// r58 (auditoria, achado 8): senha em texto puro NÃO viaja no arquivo (vai só hash+salt, que não abrem nada).
 function jsonBackupLimpo(db){
   const o=JSON.parse(JSON.stringify(db, (k,v)=>k==='_rt'?undefined:v));
   try{ if(o&&o.config&&o.config.escolaAuth) delete o.config.escolaAuth; }catch(e){}
+  try{ (o.usuarios||[]).forEach(function(u){ if(u&&typeof u==='object') delete u.senha; }); }catch(e){}
+  try{ (o.empresas||[]).forEach(function(x){ if(x&&typeof x==='object') delete x.senha; }); }catch(e){}
   return JSON.stringify(o, null, 2);
 }
 
@@ -53053,7 +53035,7 @@ try{
       try{
         var r = await apiC('/v1/connect-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, nome:nome, senha:conn, senhaGerente:ger }) });
         if(!r || !r.ok) throw new Error((r&&r.message)||'Não salvou.');
-        res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Senhas guardadas (como embaralhado) na nuvem. PCs novos já entram com CNPJ + senha de conexão. Se trocar a senha, computadores já conectados continuam — só bloqueia os novos.</div>';
+        res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Senhas guardadas (como embaralhado) na nuvem. ATENÇÃO: trocar a senha DESCONECTA todos os computadores na hora (inclusive este) — reconecte cada um com a nova senha.</div>';
         card.querySelector('#v5260-a-conn').value=''; card.querySelector('#v5260-a-ger').value='';
       }catch(err){
         res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">'+esc((err&&err.message)||'Não salvou.')+'</div>';
@@ -61252,15 +61234,18 @@ try{
 // Lê a mesma lista do erro.txt (v52239) — zero mudança no que já existe.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
-  if(typeof window==='undefined')return;
-  var CHAVE_ERROS='digicopy_erros_txt';   // mesma chave do erro.txt (v52239)
-  var QTD_LINHAS=15;
+  // r58: puro em cima (testável em node) — o resto precisa de janela
   // segredo nunca viaja: chave=valor vira chave=***
   var RE_BEARER_SOOLTO=/\bBearer\s+[A-Za-z0-9\-._~+/=]{4,}/g;
-  var RE_CHAVE_VALOR=/(senha|password|passwd|token|authorization|bearer|api[_-]?key|secret|client[_-]?secret)(\s*[:=]\s*)([^\s&;"']+)/gi;
+  // r58 (auditoria, item 6): aceita aspas antes/depois do separador — JSON ("senha":"6132") também é redação
+  var RE_CHAVE_VALOR=/(senha|password|passwd|token|authorization|bearer|api[_-]?key|secret|client[_-]?secret)(["']?\s*[:=]\s*["']?)([^\s&;"']+)/gi;
   function redigir(s){
     return String(s==null?'':s).replace(RE_BEARER_SOOLTO,'Bearer ***').replace(RE_CHAVE_VALOR,'$1$2***');
   }
+  if(typeof window!=='undefined'){ window.AJUSTES_V7020_PURE={redigir:redigir}; }
+  if(typeof window==='undefined')return;
+  var CHAVE_ERROS='digicopy_erros_txt';   // mesma chave do erro.txt (v52239)
+  var QTD_LINHAS=15;
   function telaAtual(){
     try{
       var raiz=document.getElementById('modal-root');

@@ -22,9 +22,12 @@ function ehUsuarioDemoAntigo(u, demoLogins, demoIds){
 }
 
 // JSON do backup SEM o campo interno de sincronização (_rt) — igual exportBackup.
+// r58 (auditoria, achado 8): senha em texto puro NÃO viaja no arquivo (vai só hash+salt, que não abrem nada).
 function jsonBackupLimpo(db){
   const o=JSON.parse(JSON.stringify(db, (k,v)=>k==='_rt'?undefined:v));
   try{ if(o&&o.config&&o.config.escolaAuth) delete o.config.escolaAuth; }catch(e){}
+  try{ (o.usuarios||[]).forEach(function(u){ if(u&&typeof u==='object') delete u.senha; }); }catch(e){}
+  try{ (o.empresas||[]).forEach(function(x){ if(x&&typeof x==='object') delete x.senha; }); }catch(e){}
   return JSON.stringify(o, null, 2);
 }
 

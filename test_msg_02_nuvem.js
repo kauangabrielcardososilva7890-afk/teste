@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 43 seções (42 geradas + 1 append r57).
+// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 44 seções (42 geradas + 2 appends r57+r58).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js
+// Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -1234,8 +1234,8 @@ ok('tela Nuvem abre pra todo PC (trava antiga de usuário removida; papel é do 
 ok('desconectar só a si (rótulo claro + explicação)', sync.indexOf('Desconectar ESTE computador') >= 0 && sync.indexOf('Tira só ESTE computador') >= 0);
 ok('zona de admin segue trancada no papel do aparelho', sync.indexOf("d.role==='admin'") >= 0);
 
-console.log('== PERFIS DA NUVEM (worker 5.28.2) ==');
-ok('worker na 5.28.2', wk.indexOf("WORKER_VERSION = '5.28.2'") >= 0);
+console.log('== PERFIS DA NUVEM (worker 5.28.3) ==');
+ok('worker na 5.28.3', wk.indexOf("WORKER_VERSION = '5.28.3'") >= 0);
 ok('enroll-cnpj aceita a senha do GERENTE → role admin', wk.indexOf("via = 'cnpj-gerente'") >= 0 && wk.indexOf("role = 'admin'") >= 0);
 ok('senha errada (conexão OU gerente) cai no MESMO erro de sempre (anti-oráculo)', wk.indexOf("if (!gerOk) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha de conexão incorretos.');") >= 0);
 ok('admin só com senhas DIFERENTES (gerente ≠ conexão)', wk.indexOf('seg.gerente_hash !== seg.conn_hash') >= 0);
@@ -2237,7 +2237,7 @@ ok('continua aceitando o pedido antigo (só `before`) para não quebrar PC velho
 ok('devolve o par que fecha o cursor',
   /proximoEntity: ultimoReg \? ultimoReg\.entity : undefined/.test(worker) &&
   /proximoId: ultimoReg \? ultimoReg\.recordId : undefined/.test(worker));
-ok('motor carimbado 5.28.2 (a versão nova tem de ser publicada para valer)',
+ok('motor carimbado 5.28.3 (a versão nova tem de ser publicada para valer)',
   /WORKER_VERSION = '5\.28\.2'/.test(worker));
 
 console.log('-- o PC que varre a lista --');
@@ -2496,7 +2496,7 @@ const estadoDe=amb=>JSON.parse(amb.store['digicopy_cf_sync_state_v1']||'{}');
 
 if (false) { // ═══ test_worker_publico.js (inerte: só parse, nunca executa)
 //<<<<SECAO:test_worker_publico.js:INICIO>>>>
-// test_worker_publico.js — v7.0.19 (motor da nuvem 5.28.2: + foto /v1/snapshot)
+// test_worker_publico.js — v7.0.19 (motor da nuvem 5.28.3: + foto /v1/snapshot)
 // Roda o MOTOR DA NUVEM DE VERDADE (cloudflare-worker/src/index.js) sobre um banco
 // SQLite em memória, aplicando as migrations reais do projeto. É o mesmo código
 // que o dono publica — só o banco é de mentira.
@@ -2529,7 +2529,7 @@ catch(e){
   process.exit(0);
 }
 
-console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.28.2) ==');
+console.log('== MOTOR DA NUVEM NO BANCO DE PROVA (v5.28.3) ==');
 
 // ── banco de mentira, igual ao D1: prepare/bind/first/all/run/batch/exec ────
 function abrirBanco(){
@@ -2820,7 +2820,7 @@ const conta=(banco,sql,...args)=>banco.db.prepare(sql).get(...args).n;
   }
 
 
-  // ═══ 8) FOTO DA NUVEM (v5.28.2 — rodada 31) ═════════════════════════════
+  // ═══ 8) FOTO DA NUVEM (v5.28.3 — rodada 31) ═════════════════════════════
   console.log('-- 8) foto: o estado atual sem recontar a história --');
   {
     const banco=abrirBanco();
@@ -3303,9 +3303,9 @@ ok('backup de segurança antes do wipe continua', worker.indexOf('Backup antes d
 ok('segredos (senhas) fora do wipe', worker.indexOf("DELETE FROM system_meta WHERE key = 'resumo_json'") >= 0 && !/DELETE FROM (segredos|secrets)/.test(worker));
 ok('botão não manda mais bloquear antes', tela.indexOf('Bloqueie os outros aparelhos antes') < 0);
 ok('botão avisa que os outros saem sozinhos e a senha não muda', tela.indexOf('DESCONECTADOS sozinhos') >= 0 && tela.indexOf('A senha da nuvem NÃO muda') >= 0);
-ok('worker carimbado 5.28.2', worker.indexOf("const WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker carimbado 5.28.3', worker.indexOf("const WORKER_VERSION = '5.28.3'") >= 0);
 const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
-ok('motor regenerado com a 5.28.2', motor.indexOf('5.28.2') >= 0 && motor.indexOf('aparelhosDesconectados') >= 0);
+ok('motor regenerado com a 5.28.3', motor.indexOf('5.28.3') >= 0 && motor.indexOf('aparelhosDesconectados') >= 0);
 
 console.log('\nRESULTADO: ' + passou + ' verificações r56 — Zerar destravado!');
 //<<<<SECAO:test_r56_zerar_aparelhos.js:FIM>>>>
@@ -3333,4 +3333,30 @@ ok('motor ausente avisa em vez de quebrar', h.indexOf('Motor de dados locais nã
 ok('só admin vê (dentro de bloco isAdmin)', code.lastIndexOf('if(isAdmin){', ini) >= 0);
 console.log('\nRESULTADO: botão deste-PC provado!');
 //<<<<SECAO:test_r57_wipe_local.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r58_revogar_sessoes.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r58_revogar_sessoes.js:INICIO>>>>
+// TESTE r58 (auditoria §7, "achado extra") — trocar a senha de conexão/gerente DESCONECTA todos.
+// Antes: quem já tinha token continuava entrando. Agora: connect-pass revoga tudo na troca real.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const wk = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
+console.log('== REVOGAR SESSÕES NA TROCA (r58) ==');
+ok('worker está na 5.28.3', wk.indexOf("const WORKER_VERSION = '5.28.3'") >= 0);
+const ini = wk.indexOf("url.pathname === '/v1/connect-pass'");
+const seg = ini >= 0 ? wk.slice(ini, wk.indexOf("url.pathname === '/v1/check-pass'", ini)) : '';
+ok('trecho do connect-pass isolado', seg.length > 500);
+ok('detecta troca real (hash novo diferente do guardado)', seg.indexOf('seg.conn_hash !== conn') >= 0 && seg.indexOf('seg.gerente_hash !== gerente') >= 0);
+ok('só revoga se já havia senha (primeira definição não revoga)', seg.indexOf('seg.conn_hash && seg.conn_hash !== conn') >= 0);
+ok('revoga todos os aparelhos na troca', seg.indexOf('UPDATE devices SET revoked_at') >= 0);
+ok('resposta avisa que encerrou sessões', seg.indexOf('sessoesEncerradas') >= 0);
+const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
+ok('arquivo de colar na 5.28.3', motor.indexOf('var WORKER_VERSION = "5.28.3"') >= 0);
+ok('arquivo de colar tem a revogação (conteúdo, não só carimbo)', motor.indexOf('sessoesEncerradas') >= 0);
+const card = fs.readFileSync('ajustes_v5260_cnpj_gerente_patch.js', 'utf8');
+ok('cartão avisa que a troca desconecta todos', card.indexOf('DESCONECTA todos os computadores') >= 0);
+ok('texto antigo (continuam conectados) sumiu', card.indexOf('continuam — só bloqueia os novos') < 0);
+console.log('\nRESULTADO: revogação na troca provada!');
+//<<<<SECAO:test_r58_revogar_sessoes.js:FIM>>>>
 }

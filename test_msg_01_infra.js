@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_01_infra.js — GERADO por migrar_testes_r57.js; 88 seções.
+// test_msg_01_infra.js — GERADO por migrar_testes_r57.js; 89 seções (88 geradas + 1 append r58).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_vos.js, test_perf.js, test_extras.js, test_fluxos_operacionais.js, test_automacoes_triggers.js, test_automacoes_finais_locacao_auxiliares.js, test_otimizacao_profunda.js, test_automacoes_procedures_operacionais.js, test_correcoes_uso_diario.js, test_ajustes_pos_final.js, test_ajustes_v52023.js, test_ajustes_v52024.js, test_um_arquivo_por_modulo.js, test_app_bundle.js, test_electron_security.js, test_ajustes_v5215.js, test_ajustes_v5223.js, test_ajustes_v5224.js, test_ajustes_v52211.js, test_ajustes_v52214.js, test_ajustes_v52219.js, test_ajustes_v52220.js, test_ajustes_v52223.js, test_ajustes_v52224.js, test_ajustes_v52225.js, test_ajustes_v52226.js, test_ajustes_v52227.js, test_ajustes_v52232.js, test_ajustes_v52234.js, test_ajustes_v52247.js, test_ajustes_v52248.js, test_ajustes_v52250.js, test_ajustes_v52251.js, test_ajustes_v52252.js, test_ajustes_v52263.js, test_ajustes_v52264.js, test_ajustes_v52265.js, test_ajustes_v52267.js, test_ajustes_v52268.js, test_ajustes_v52273.js, test_ajustes_v52279.js, test_ajustes_v52282.js, test_ajustes_v52284.js, test_ajustes_v52285.js, test_ajustes_v52286.js, test_ajustes_v52287.js, test_ajustes_v52288.js, test_ajustes_v52289.js, test_ajustes_v52290.js, test_ajustes_v52294.js, test_ajustes_v52296.js, test_ajustes_v52423.js, test_ajustes_v52424.js, test_ajustes_v52427.js, test_ajustes_v52428.js, test_ajustes_v5260.js, test_ajustes_v5262.js, test_ajustes_v5263.js, test_ajustes_v5264.js, test_ajustes_v5265.js, test_ajustes_v5266.js, test_ajustes_v6001.js, test_ajustes_v5248.js, test_ponte_electron.js, test_versao_visual.js, test_ajustes_v6105.js, test_ajustes_v6106.js, test_importar_referencias.js, test_ajustes_v5183.js, test_ajustes_v5185.js, test_ajustes_v5186.js, test_ajustes_v5187.js, test_ajustes_v5189.js, test_ajustes_v5191.js, test_ajustes_v5192.js, test_ajustes_v5193.js, test_ajustes_v5196.js, test_ajustes_v51916.js, test_ajustes_v51920.js, test_linhas_tabela_clique.js, test_faixa_botoes_r46.js, test_ajustes_v5184.js, test_ajustes_v52413.js, test_ajustes_v52414.js, test_ajustes_v5243.js, test_ajustes_v5245.js, test_portao_escrita.js, test_salvar_alteracao.js
+// Seções: test_vos.js, test_perf.js, test_extras.js, test_fluxos_operacionais.js, test_automacoes_triggers.js, test_automacoes_finais_locacao_auxiliares.js, test_otimizacao_profunda.js, test_automacoes_procedures_operacionais.js, test_correcoes_uso_diario.js, test_ajustes_pos_final.js, test_ajustes_v52023.js, test_ajustes_v52024.js, test_um_arquivo_por_modulo.js, test_app_bundle.js, test_electron_security.js, test_ajustes_v5215.js, test_ajustes_v5223.js, test_ajustes_v5224.js, test_ajustes_v52211.js, test_ajustes_v52214.js, test_ajustes_v52219.js, test_ajustes_v52220.js, test_ajustes_v52223.js, test_ajustes_v52224.js, test_ajustes_v52225.js, test_ajustes_v52226.js, test_ajustes_v52227.js, test_ajustes_v52232.js, test_ajustes_v52234.js, test_ajustes_v52247.js, test_ajustes_v52248.js, test_ajustes_v52250.js, test_ajustes_v52251.js, test_ajustes_v52252.js, test_ajustes_v52263.js, test_ajustes_v52264.js, test_ajustes_v52265.js, test_ajustes_v52267.js, test_ajustes_v52268.js, test_ajustes_v52273.js, test_ajustes_v52279.js, test_ajustes_v52282.js, test_ajustes_v52284.js, test_ajustes_v52285.js, test_ajustes_v52286.js, test_ajustes_v52287.js, test_ajustes_v52288.js, test_ajustes_v52289.js, test_ajustes_v52290.js, test_ajustes_v52294.js, test_ajustes_v52296.js, test_ajustes_v52423.js, test_ajustes_v52424.js, test_ajustes_v52427.js, test_ajustes_v52428.js, test_ajustes_v5260.js, test_ajustes_v5262.js, test_ajustes_v5263.js, test_ajustes_v5264.js, test_ajustes_v5265.js, test_ajustes_v5266.js, test_ajustes_v6001.js, test_ajustes_v5248.js, test_ponte_electron.js, test_versao_visual.js, test_ajustes_v6105.js, test_ajustes_v6106.js, test_importar_referencias.js, test_ajustes_v5183.js, test_ajustes_v5185.js, test_ajustes_v5186.js, test_ajustes_v5187.js, test_ajustes_v5189.js, test_ajustes_v5191.js, test_ajustes_v5192.js, test_ajustes_v5193.js, test_ajustes_v5196.js, test_ajustes_v51916.js, test_ajustes_v51920.js, test_linhas_tabela_clique.js, test_faixa_botoes_r46.js, test_ajustes_v5184.js, test_ajustes_v52413.js, test_ajustes_v52414.js, test_ajustes_v5243.js, test_ajustes_v5245.js, test_portao_escrita.js, test_salvar_alteracao.js, test_r58_redacao_json.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -716,11 +716,14 @@ ok('o botão de backup continua de pé', /window\.exportBackup\s*=/.test(fonte))
 
 // jsonBackupLimpo: tira _rt, mantém o resto
 {
-  const db = { empresas:[{id:'emp_digicopy'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x', escolaAuth:{usuario:'x',senha:'segredo'} } };
+  const db = { empresas:[{id:'emp_digicopy', senha:'segredo-cnpj'}], usuarios:[{id:'u1', login:'kauan', senha:'6132', senhaHash:'h', senhaSalt:'s'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x', escolaAuth:{usuario:'x',senha:'segredo'} } };
   const j = JSON.parse(P.jsonBackupLimpo(db));
   ok('_rt removido dos registros', j.clientes[0]._rt === undefined && j.config._rt === undefined);
   ok('conteúdo preservado', j.clientes[0].nome === 'A' && j.config.loja.fantasia === 'DIGICOPY' && j.empresas.length === 1);
   ok('senha do Buscador não vai no backup', j.config.escolaAuth === undefined);
+  ok('r58: senha em texto puro NÃO vai no backup (usuários)', j.usuarios[0].senha === undefined);
+  ok('r58: senha em texto puro NÃO vai no backup (empresas)', j.empresas[0].senha === undefined);
+  ok('r58: hash+salt vão (restaurar mantém o login por hash)', j.usuarios[0].senhaHash === 'h' && j.usuarios[0].senhaSalt === 's');
 }
 
 ConsoleLogOk();
@@ -2819,7 +2822,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.28.2'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.28.2 = foto da nuvem (abertura instantânea); v5.26.1 = site profissional (visual+rodapé novo))');
+ok(worker.indexOf("const WORKER_VERSION = '5.28.3'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.28.3 = foto da nuvem (abertura instantânea); v5.26.1 = site profissional (visual+rodapé novo))');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
@@ -2950,7 +2953,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('aviso-update-ca
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index: versão 5.25.0');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'index: rodapé v6.0.9');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6');
-ok(wk.includes("'5.28.2'"), 'worker carimbado 5.28.2 (gerente entra como PC admin; 5.26.5 = visual profissional do site; 5.26.0 = motor do CNPJ+gerente) (visual profissional do site; o 5.26.0 foi o motor do CNPJ+gerente)')
+ok(wk.includes("'5.28.3'"), 'worker carimbado 5.28.3 (gerente entra como PC admin; 5.26.5 = visual profissional do site; 5.26.0 = motor do CNPJ+gerente) (visual profissional do site; o 5.26.0 foi o motor do CNPJ+gerente)')
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (sininho de atualização + publicador na config).');
@@ -3004,7 +3007,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'),
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9 (re-ancorado)');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9 (re-ancorado)');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6 (re-ancorado)');
-ok(wk.includes("'5.28.2'"), 'worker carimbado 5.28.2 (re-ancorado)');
+ok(wk.includes("'5.28.3'"), 'worker carimbado 5.28.3 (re-ancorado)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (site próprio de atualizações + histórico na nuvem).');
@@ -3253,7 +3256,7 @@ ok('worker: imagens servidas em /img/ só de versão viva', wk.indexOf("url.path
 ok('worker: /dl/ EXIGE sessão OU slug igual ao da versão OU gerente/admin', wk.indexOf('slugQ === essa.slug') >= 0 && wk.indexOf('sessaoDl') >= 0 && new RegExp('Área restrita: entre em /atualizacoes').test(wk));
 ok('worker: action remover-imagem (tira do tutorial e do R2)', wk.indexOf("'remover-imagem'") >= 0 && wk.indexOf('R2.delete(keyX)') >= 0);
 ok('worker: tutorial renderiza grid de imagens + zoom ao clicar (.zi + lightbox)', wk.indexOf('class="zi"') >= 0 && wk.indexOf('lbz') >= 0);
-ok('worker: versão do motor carimbada 5.28.2', wk.indexOf("WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker: versão do motor carimbada 5.28.3', wk.indexOf("WORKER_VERSION = '5.28.3'") >= 0);
 
 console.log('== APP: sininho destinatário-aware + link secreto + abas/cartões ==');
 ok('patch: guard único (__v5260cn) e PURE exportado', patch.indexOf('__v5260cn') >= 0 && patch.indexOf('window.CNPJ_V5260_PURE') >= 0);
@@ -3371,7 +3374,7 @@ ok('PURA sessaoDoDiaExpirada: login de hoje = válida; de ontem = expira',
   (sandbox.localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({loginAt:'2026-09-01T10:00:00'})), P.sessaoDoDiaExpirada() === true));
 
 console.log('== WORKER: /v1/check-pass + erros específicos do gerente ==');
-ok('worker carimbado 5.28.2', wk.indexOf("WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker carimbado 5.28.3', wk.indexOf("WORKER_VERSION = '5.28.3'") >= 0);
 ok('rota POST /v1/check-pass existe', wk.indexOf("'/v1/check-pass'") >= 0 && wk.indexOf("request.method === 'POST' && url.pathname === '/v1/check-pass'") >= 0);
 ok('check-pass NÃO cria nada (sem INSERT nesse trecho)', (function(){ const t = wk.split("'/v1/check-pass'")[1].split("'/v1/enroll-cnpj'")[0]; return t.indexOf('INSERT') < 0 && t.indexOf('INSERT INTO devices') < 0 && t.indexOf('randomToken') < 0; })());
 ok('check-pass diz quando a senha ainda não foi definida (senhaDefinida:false)', wk.indexOf('senhaDefinida: false') >= 0 && wk.indexOf('Senhas de conexão (CNPJ) e do Gerente') >= 0);
@@ -3481,7 +3484,7 @@ console.log('== CONTEXT: carimbos e trilha (v5.26.3→v5.26.5) ==');
 ok('gerente package 5.26.3', gPkg.version === '5.26.3');
 ok('app (package.json) na 6.0.9 (escola: ralo fechado)', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker 5.28.2 (re-ancorado: motor do orçamento público)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker 5.28.3 (re-ancorado: motor do orçamento público)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
 ok('manifesto hoje tem 216; posições 202/203 históricas intactas (login-nuvem, data grande); hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila', manifest.length >= 225 && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('bundle contém o patch com a máscara nova', bundle.indexOf('__v5262ln') >= 0 && bundle.indexOf('$1.$2.$3/$4-$5') >= 0);
 ok('mobile sincronizado com o bundle', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
@@ -3575,7 +3578,7 @@ console.log('== CARIMBO (app agora em 6.0.6 após a escola; worker e gerente int
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
-ok('worker 5.28.2 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker 5.28.3 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
@@ -3657,7 +3660,7 @@ console.log('== CARIMBO 6.0.9 (app; worker e gerente intactos) ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('script check valida o buscador_escola', pkg.scripts.check.indexOf('buscador_escola_patch.js') >= 0);
-ok('worker 5.28.2 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker 5.28.3 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
@@ -3758,7 +3761,7 @@ ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasRece
 console.log('== CARIMBO 6.0.9 ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker 5.28.2 (re-ancorado)', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker 5.28.3 (re-ancorado)', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 ok('guard ativo (anti dupla-instalação)', src.indexOf('__v5266pg') >= 0);
 
@@ -3889,7 +3892,7 @@ ok('patch na 207 (autocura 208; perfis 209; permissões 210; menu fiscal v6.0.6 
 ok('motor no bundle gerado', bundle.indexOf('MOTOR FISCAL v6.0.1') >= 0);
 ok('package.json na 6.0.1', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.1', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker atualizado 5.28.2 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.2'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
+ok('worker atualizado 5.28.3 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.1 (MOTOR FISCAL COMPLETO: transmissão SEFAZ-MG, DANFE A4, cancelamento, inutilização, QR NFC-e — tudo em homologação primeiro, provedor de provas nos retornos reais).');
 //<<<<SECAO:test_ajustes_v6001.js:FIM>>>>
@@ -3940,7 +3943,7 @@ ok(cmd.indexOf('digicopy-erp') >= 0 && cmd.indexOf('FROM changes') >= 0 && cmd.i
 const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
 ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
 ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
-ok(worker.indexOf("const WORKER_VERSION = '5.28.2'") >= 0, 'worker carimbado (re-ancorado v5.28.2 = foto da nuvem; o carimbo original era 5.24.34)');
+ok(worker.indexOf("const WORKER_VERSION = '5.28.3'") >= 0, 'worker carimbado (re-ancorado v5.28.3 = foto da nuvem; o carimbo original era 5.24.34)');
 ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0, 'index.html carimbado (re-ancorado v6.0.9)');
 ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.9)');
 ok(pkg.version === VERSAO_APP, 'package.json carimbado (re-ancorado v6.0.9)');
@@ -4465,7 +4468,7 @@ ok('tem a PARTE I com o navegador embutido (novo de 22/09 nº5; só no programa 
 // que está no package.json (mvp.version), que é justamente o que este teste quer
 // garantir: relatório e guia falando da MESMA versão que o sistema publica.
 ok('o relatório é da versão publicada agora (v' + mvp.version + ')',
-  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.28.2') >= 0);
+  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.28.3') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 
@@ -6103,4 +6106,26 @@ ok('C5 v5196 sem os 2 saves diretos antigos (os outros 2 ficam para os próximos
 
 console.log('\nRESULTADO: função única + bloco 2 passaram!');
 //<<<<SECAO:test_salvar_alteracao.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r58_redacao_json.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r58_redacao_json.js:INICIO>>>>
+// TESTE r58 (auditoria, item 6) — redação do "mandar o que quebrou" pega JSON.
+// Antes: "senha":"6132" (com aspas) vazava. Agora: aspas antes/depois do : ou = também redigem.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const code7020 = fs.readFileSync('ajustes_v7020_mandar_erro_patch.js', 'utf8');
+const ctx7 = { window: {} };
+new Function('window', code7020)(ctx7.window);
+const R = ctx7.window.AJUSTES_V7020_PURE.redigir;
+console.log('== REDAÇÃO JSON (r58) ==');
+ok('export puro existe (testável)', typeof R === 'function');
+ok('chave=valor redige', R('senha=6132') === 'senha=***');
+ok('JSON com aspas duplas redige', R('"senha":"6132"') === '"senha":"***"');
+ok('JSON com aspas simples redige', R("'senha':'6132'") === "'senha':'***'");
+ok('token em JSON redige', R('{"token":"abc","x":1}') === '{"token":"***","x":1}');
+ok('Bearer solto redige', R('falhou com Bearer abc123XYZ') === 'falhou com Bearer ***');
+ok('texto limpo passa intacto', R('erro normal sem segredo') === 'erro normal sem segredo');
+console.log('\nRESULTADO: redação JSON provada!');
+//<<<<SECAO:test_r58_redacao_json.js:FIM>>>>
 }

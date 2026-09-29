@@ -381,10 +381,9 @@ function seedData(force=false){
       // antiga (que está no histórico do repositório) continuava valendo.
       // Agora a senha que o dono escolher manda; o padrão de fábrica só é usado
       // na PRIMEIRA vez, quando o usuário ainda não existe (bloco de cima).
-      // Perfil, nome, id e ativo continuam sendo garantidos de propósito.
-      if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
-      if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
-      if(u.ativo !== true){ u.ativo = true; mudou = true; }
+      // r58 (auditoria, achado 7): perfil/nome/ativo NÃO são mais reimpostos —
+      // a troca na tela "não pegava" porque a carga revertia. Só id/empresaId
+      // (estruturais, bloco acima) continuam garantidos; o resto quem manda é a tela.
     }
   });
 

@@ -519,7 +519,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('central-nfe-mod
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6');
-ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.28.2'"), 'worker carimbado (re-ancorado v5.28.2)');
+ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.28.3'"), 'worker carimbado (re-ancorado v5.28.3)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (menu NF abre de verdade + certificado para limpo com data).');
@@ -611,7 +611,7 @@ ok('cura + tela no bundle gerado', bundle.indexOf('v6.0.2') >= 0 && bundle.index
 ok('guard anti dupla-instalação', src.indexOf('__v6002ac') >= 0);
 ok('package.json na 6.0.2', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker atualizado 5.28.2 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.2'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
+ok('worker atualizado 5.28.3 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.2 (dados sumidos CURADOS: sessão e registros carimbados quando há UMA empresa; Central NF vira menu de verdade; popups próprios com X em todo o fiscal).');
 //<<<<SECAO:test_ajustes_v6002.js:FIM>>>>
@@ -681,7 +681,7 @@ console.log('== CARIMBO 6.0.3 ==');
 ok('package.json na 6.0.3', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('manifesto já é 230 (v6.1.3 fechava a fila; v7.0.20 soma o mandar-erro, v7.0.22 o portão, v7.0.24 a função única no fim)', manifest.length >= 225 && manifest[manifest.length - 23] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 22] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 21] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 20] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 19] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 18] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 17] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 16] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 15] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 14] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 13] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 12] === 'fiscal_catalogo_completo_patch.js');
-ok('worker atualizado 5.28.2 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.2'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
+ok('worker atualizado 5.28.3 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');
 //<<<<SECAO:test_ajustes_v6003.js:FIM>>>>

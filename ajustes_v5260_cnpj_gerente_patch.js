@@ -170,7 +170,7 @@
       try{
         var r = await apiC('/v1/connect-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, nome:nome, senha:conn, senhaGerente:ger }) });
         if(!r || !r.ok) throw new Error((r&&r.message)||'Não salvou.');
-        res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Senhas guardadas (como embaralhado) na nuvem. PCs novos já entram com CNPJ + senha de conexão. Se trocar a senha, computadores já conectados continuam — só bloqueia os novos.</div>';
+        res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Senhas guardadas (como embaralhado) na nuvem. ATENÇÃO: trocar a senha DESCONECTA todos os computadores na hora (inclusive este) — reconecte cada um com a nova senha.</div>';
         card.querySelector('#v5260-a-conn').value=''; card.querySelector('#v5260-a-ger').value='';
       }catch(err){
         res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">'+esc((err&&err.message)||'Não salvou.')+'</div>';

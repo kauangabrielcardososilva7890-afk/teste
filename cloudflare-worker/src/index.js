@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.28.2';
+const WORKER_VERSION = '5.28.3';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -1834,8 +1834,21 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
       owner_nome = CASE WHEN excluded.owner_nome <> '' THEN excluded.owner_nome ELSE connect_secrets.owner_nome END,
       updated_at = excluded.updated_at`)
       .bind(conn, gerente, cnpj || (seg && seg.owner_cnpj) || '', nome || (seg && seg.owner_nome) || '', Date.now()).run();
+    // r58 (auditoria §7, "achado extra"): TROCOU a senha = sessões antigas MORREM.
+    // Antes, quem já tinha token continuava entrando depois da troca (só barrava
+    // os novos). Agora, na troca real (hash novo ≠ guardado, e já havia senha),
+    // todos os aparelhos são desconectados e cada um reconecta com a senha nova.
+    // Na PRIMEIRA definição não há o que revogar. O hash é determinístico, então
+    // salvar sem mudar nada não desconecta ninguém.
+    const mudouConn = !!(seg && seg.conn_hash && seg.conn_hash !== conn);
+    const mudouGerente = !!(senhaG && seg && seg.gerente_hash && seg.gerente_hash !== gerente);
+    let sessoesEncerradas = false;
+    if (mudouConn || mudouGerente) {
+      await env.DB.prepare('UPDATE devices SET revoked_at = COALESCE(revoked_at, ?) WHERE excluido_em IS NULL').bind(Date.now()).run();
+      sessoesEncerradas = true;
+    }
     if (cnpj) await upsertEmpresa(env, cnpj, nome);
-    return json({ ok: true, definida: true, gerenteDefinida: !!gerente });
+    return json({ ok: true, definida: true, gerenteDefinida: !!gerente, sessoesEncerradas });
   }
   if (request.method === 'POST' && url.pathname === '/v1/check-pass') {
     // v5.26.2 — etapa 1 do "login da nuvem": só CONFERE a credencial,

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_09_login.js — GERADO por migrar_testes_r57.js; 5 seções.
+// test_msg_09_login.js — GERADO por migrar_testes_r57.js; 6 seções (5 geradas + 1 append r58).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_login_dados_automaticos.js, test_ajustes_v52253.js, test_login_sem_backdoor.js, test_reclamacoes_do_dono.js, test_r54_senhas_dedup.js
+// Seções: test_login_dados_automaticos.js, test_ajustes_v52253.js, test_login_sem_backdoor.js, test_reclamacoes_do_dono.js, test_r54_senhas_dedup.js, test_r58_senhas_tela.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -624,13 +624,13 @@ ok('botão Desfazer existe na janela', v5214src.indexOf('clientesDuplicadosDesfa
 ok('usuários repetidos: detector + tela + botão', v5214src.indexOf('usuGruposDuplicados') >= 0 && v5214src.indexOf('usuariosDuplicadosAbrir') >= 0 && v5214src.indexOf('btn-usuarios-duplicados') >= 0);
 ok('órfãos: lista + desvincular na janela', v5214src.indexOf('orfaosListar(db)') >= 0 && v5214src.indexOf('clientesOrfaoDesvincular') >= 0);
 
-// ── P5 + worker 5.28.2 + motor ──────────────────────────────────────────────
-console.log('== r54/P5: backups + worker 5.28.2 + motor regenerado ==');
+// ── P5 + worker 5.28.3 + motor ──────────────────────────────────────────────
+console.log('== r54/P5: backups + worker 5.28.3 + motor regenerado ==');
 ok('lista de backups aguenta data vazia/inválida', worker.indexOf('x.gerado_em == null || isNaN(Number(x.gerado_em))') >= 0);
 ok('login vazio na prova vira 403, não 500 (S7)', worker.indexOf("String(cleanText(request.headers.get('x-digicopy-usuario-login')") >= 0);
-ok('worker carimbado 5.28.2', worker.indexOf("const WORKER_VERSION = '5.28.2'") >= 0);
+ok('worker carimbado 5.28.3', worker.indexOf("const WORKER_VERSION = '5.28.3'") >= 0);
 const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
-ok('motor regenerado com a 5.28.2', motor.indexOf('5.28.2') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
+ok('motor regenerado com a 5.28.3', motor.indexOf('5.28.3') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
 
 // ── RUNTIME: cripto pura (PBKDF2 de verdade, com o subtle do node) ──────────
 console.log('== r54/runtime: PBKDF2, prova com salt e tira-segredos de verdade ==');
@@ -731,4 +731,29 @@ function parteAutocura(){
   console.log('\nRESULTADO: ' + passou + ' verificações r54 — hash, corte, prova, dedup e backups!');
 })();
 //<<<<SECAO:test_r54_senhas_dedup.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r58_senhas_tela.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r58_senhas_tela.js:INICIO>>>>
+// TESTE r58 (auditoria, bug #0 + achado 9) — salvar pela tela re-hash + 1 tela/1 função.
+// Antes: a tela usava saveUsuarioFinal sem re-hash (senha velha voltava com o Corte) e havia 3 definições.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const v5196 = fs.readFileSync('ajustes_v5196_patch.js', 'utf8');
+console.log('== SENHA DA TELA COM HASH (r58) ==');
+ok('saveUsuarioFinal é async (espera o hash antes de gravar)', v5196.indexOf('window.saveUsuarioFinal = async function(id)') >= 0);
+const ini = v5196.indexOf('window.saveUsuarioFinal = async function(id)');
+const fim = v5196.indexOf('// Sobrescreve o saveUsuario antigo', ini);
+const h = (ini >= 0 && fim > ini) ? v5196.slice(ini, fim) : '';
+ok('trecho isolado', h.length > 500);
+ok('re-hash quando a senha muda', h.indexOf('await atualizarHashRegistro(u, senha)') >= 0);
+ok('criação marca senhaPadrao (o dono troca no 1º login)', h.indexOf('if(eraNovo) u.senhaPadrao = true;') >= 0);
+ok('troca por outra pessoa marca senhaPadrao', h.indexOf('u.senhaPadrao = (u.id === s.usuarioId) ? false : true;') >= 0);
+const posf = fs.readFileSync('ajustes_pos_final_patch.js', 'utf8');
+ok('pos_final sem modal morto', posf.indexOf('window.renderModalUsuario') < 0);
+ok('pos_final sem saveUsuarioFinal morto', posf.indexOf('window.saveUsuarioFinal') < 0);
+const app = fs.readFileSync('app.js', 'utf8');
+ok('referência r54 intacta no app.js', app.indexOf('async function saveUsuario') >= 0 && app.indexOf('await atualizarHashRegistro(payload,payload.senha)') >= 0);
+console.log('\nRESULTADO: senha da tela com hash provada!');
+//<<<<SECAO:test_r58_senhas_tela.js:FIM>>>>
 }

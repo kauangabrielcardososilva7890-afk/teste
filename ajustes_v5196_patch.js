@@ -202,7 +202,8 @@ window.renderModalUsuario = function(id){
 };
 
 // Salvar usuário (sem senha CNPJ; perfil conforme hierarquia)
-window.saveUsuarioFinal = function(id){
+// r58 (auditoria, bug #0): virou async — quando a senha muda, re-hash + bandeira senhaPadrao (espelha r54 P1)
+window.saveUsuarioFinal = async function(id){
   const s = sess(); if(!s) return;
   const privilegiado = temPermissaoTotal(s);
   const nome = txt(document.getElementById('u-nome') && document.getElementById('u-nome').value);
@@ -229,6 +230,8 @@ window.saveUsuarioFinal = function(id){
     perfil = 'Funcionário';
   }
 
+  const eraNovo = !u;
+  const senhaAntiga = u ? txt(u.senha) : '';
   if(u){
     Object.assign(u, { nome: nome, login: login, senha: senha, ativo: ativo, perfil: perfil, atualizadoEm: new Date().toISOString(), atualizadoPor: s.usuarioId });
     if(typeof logAction === 'function') logAction('usuario', 'editar', u.id, 'Editado usuário ' + login + ' perfil ' + perfil);
@@ -237,6 +240,12 @@ window.saveUsuarioFinal = function(id){
     (db.usuarios = db.usuarios || []).push(u);
     if(typeof logAction === 'function') logAction('usuario', 'criar', u.id, 'Criado usuário ' + login + ' perfil ' + perfil);
   }
+  // r58 (auditoria, bug #0 — espelha r54 P1): senha mudou (ou não tinha hash) → re-hash ANTES de gravar.
+  // Bandeira: senha que OUTRA pessoa escolheu (criação ou troca por admin) → o dono troca no próximo login.
+  const precisaHash = eraNovo || !u.senhaHash || (senhaAntiga !== senha);
+  if(precisaHash && typeof atualizarHashRegistro === 'function'){ try{ await atualizarHashRegistro(u, senha); }catch(e){} }
+  if(eraNovo) u.senhaPadrao = true;
+  else if(senhaDigitada && senhaDigitada !== senhaAntiga) u.senhaPadrao = (u.id === s.usuarioId) ? false : true;
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();

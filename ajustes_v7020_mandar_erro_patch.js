@@ -9,15 +9,18 @@
 // Lê a mesma lista do erro.txt (v52239) — zero mudança no que já existe.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
-  if(typeof window==='undefined')return;
-  var CHAVE_ERROS='digicopy_erros_txt';   // mesma chave do erro.txt (v52239)
-  var QTD_LINHAS=15;
+  // r58: puro em cima (testável em node) — o resto precisa de janela
   // segredo nunca viaja: chave=valor vira chave=***
   var RE_BEARER_SOOLTO=/\bBearer\s+[A-Za-z0-9\-._~+/=]{4,}/g;
-  var RE_CHAVE_VALOR=/(senha|password|passwd|token|authorization|bearer|api[_-]?key|secret|client[_-]?secret)(\s*[:=]\s*)([^\s&;"']+)/gi;
+  // r58 (auditoria, item 6): aceita aspas antes/depois do separador — JSON ("senha":"6132") também é redação
+  var RE_CHAVE_VALOR=/(senha|password|passwd|token|authorization|bearer|api[_-]?key|secret|client[_-]?secret)(["']?\s*[:=]\s*["']?)([^\s&;"']+)/gi;
   function redigir(s){
     return String(s==null?'':s).replace(RE_BEARER_SOOLTO,'Bearer ***').replace(RE_CHAVE_VALOR,'$1$2***');
   }
+  if(typeof window!=='undefined'){ window.AJUSTES_V7020_PURE={redigir:redigir}; }
+  if(typeof window==='undefined')return;
+  var CHAVE_ERROS='digicopy_erros_txt';   // mesma chave do erro.txt (v52239)
+  var QTD_LINHAS=15;
   function telaAtual(){
     try{
       var raiz=document.getElementById('modal-root');

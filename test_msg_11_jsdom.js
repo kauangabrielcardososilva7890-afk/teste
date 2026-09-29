@@ -338,7 +338,7 @@ ok('a seção não pede token, painel nem GitHub',
    html.indexOf('CLOUDFLARE_API_TOKEN') < 0 && html.indexOf('New workflow') < 0 &&
    html.indexOf('sem painel, sem token, sem GitHub') >= 0);
 ok('explica os 4 passos que a janela mostra (listar, migrar, publicar, health)',
-   html.indexOf('Proceed? (y/n)') >= 0 && html.indexOf('wrangler deploy') >= 0 && html.indexOf('"versao":"5.28.2"') >= 0);
+   html.indexOf('Proceed? (y/n)') >= 0 && html.indexOf('wrangler deploy') >= 0 && html.indexOf('"versao":"5.28.3"') >= 0);
 ok('diz que a janela fica aberta e que é para mandar foto',
    /tire uma foto|Foto e me manda|foto dela/i.test(html));
 ok('o arquivo do .cmd existe de verdade no repositório (o passo não é invenção)',
@@ -466,7 +466,7 @@ console.log('== Publicar o motor: o PASSO REAL (ordem dele: esquecer o worker) =
 ok(relHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0, 'o relatório ensina o arquivo que existe (atualizar_motor_nuvem.cmd)');
 ok(relHtml.indexOf('CLOUDFLARE_API_TOKEN') < 0 && relHtml.indexOf('New workflow') < 0,
    'não manda mais mexer em token/painel/GitHub');
-ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.28.2"') >= 0,
+ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.28.3"') >= 0,
    'explica as respostas que a janela pede e o que tem que aparecer no fim');
 ok(fs.existsSync('atualizar_motor_nuvem.cmd') && /wrangler d1 migrations apply DB --remote/.test(fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8')),
    'o passo ensinado é o do arquivo de verdade (mesmos comandos)');
@@ -2144,7 +2144,7 @@ if (false) { // ═══ test_dado_aparece_outro_pc.js (inerte: só parse, nunc
 //      da remontagem completar (e que ela complete depois, sem sobra);
 //   3. regressão do regime: com os dois PCs abertos, o que A grava aparece no
 //      banco de B em segundos.
-//   4. FOTO DA NUVEM (motor 5.28.2): a abertura lê o ESTADO ATUAL paginado e
+//   4. FOTO DA NUVEM (motor 5.28.3): a abertura lê o ESTADO ATUAL paginado e
 //      pula o replay do diário (o que for gravado DURANTE a foto chega pelo
 //      incremental); com motor antigo (404) o diário assume sozinho.
 // ═════════════════════════════════════════════════════

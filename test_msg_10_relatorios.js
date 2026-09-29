@@ -133,9 +133,12 @@ ok('NÃO existe mais "u.senha = g.senha" (a senha de fábrica voltando por cima)
    !/u\.senha\s*=\s*g\.senha/.test(app));
 ok('a troca ficou explicada no próprio código (quem mexer depois entende)',
    /A SENHA NÃO É MAIS REIMPOSTA AQUI/.test(app));
-ok('perfil, nome e ativo continuam garantidos (só a senha saiu da lista)',
-   /if\(u\.perfil !== g\.perfil\)\{ u\.perfil = g\.perfil; mudou = true; \}/.test(app) &&
-   /if\(u\.ativo !== true\)\{ u\.ativo = true; mudou = true; \}/.test(app));
+ok('r58: perfil, nome e ativo NÃO são mais reimpostos (a troca na tela pega)',
+   app.indexOf('u.perfil = g.perfil') < 0 &&
+   app.indexOf('u.nome = g.nome') < 0 &&
+   app.indexOf('u.ativo = true') < 0);
+ok('r58: id e empresaId continuam garantidos (estruturais)',
+   app.indexOf('u.id = g.id') >= 0 && app.indexOf('u.empresaId !== emp.id') >= 0);
 
 console.log('\n== 2) PC NOVO CONTINUA FUNCIONANDO (usuário criado na 1ª vez) ==');
 const cria = /db\.usuarios\.push\(\{id:g\.id[\s\S]{0,200}?\}\);/.exec(app);

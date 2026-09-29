@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.2   (igual ao src/index.js)
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.3   (igual ao src/index.js)
  * GERADO EM: 2026-09-29 03:39 UTC
  * sha256 do código (sem este cabeçalho):
- *   d4862f55e5d9175efa1b7058975b0ce590455d11b505e918f0a1935625f63ca1
+ *   99da78f046b2c601af9c7b41142120fb698df9d363e54da923673029136d611b
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,7 +35,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.28.2";
+var WORKER_VERSION = "5.28.3";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -1697,8 +1697,15 @@ async function route(request, env, ctx) {
       owner_cnpj = CASE WHEN excluded.owner_cnpj <> '' THEN excluded.owner_cnpj ELSE connect_secrets.owner_cnpj END,
       owner_nome = CASE WHEN excluded.owner_nome <> '' THEN excluded.owner_nome ELSE connect_secrets.owner_nome END,
       updated_at = excluded.updated_at`).bind(conn, gerente, cnpj || seg && seg.owner_cnpj || "", nome || seg && seg.owner_nome || "", Date.now()).run();
+    const mudouConn = !!(seg && seg.conn_hash && seg.conn_hash !== conn);
+    const mudouGerente = !!(senhaG && seg && seg.gerente_hash && seg.gerente_hash !== gerente);
+    let sessoesEncerradas = false;
+    if (mudouConn || mudouGerente) {
+      await env.DB.prepare("UPDATE devices SET revoked_at = COALESCE(revoked_at, ?) WHERE excluido_em IS NULL").bind(Date.now()).run();
+      sessoesEncerradas = true;
+    }
     if (cnpj) await upsertEmpresa(env, cnpj, nome);
-    return json({ ok: true, definida: true, gerenteDefinida: !!gerente });
+    return json({ ok: true, definida: true, gerenteDefinida: !!gerente, sessoesEncerradas });
   }
   if (request.method === "POST" && url.pathname === "/v1/check-pass") {
     const body0 = await readBody(request);
