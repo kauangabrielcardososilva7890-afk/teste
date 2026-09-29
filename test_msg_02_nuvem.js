@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 44 seções (42 geradas + 2 appends r57+r58).
+// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 45 seções (42 geradas + 3 appends r57+r58+r58c).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js
+// Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js, test_r58c_cartao_ancora.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -3359,4 +3359,31 @@ ok('cartão avisa que a troca desconecta todos', card.indexOf('DESCONECTA todos 
 ok('texto antigo (continuam conectados) sumiu', card.indexOf('continuam — só bloqueia os novos') < 0);
 console.log('\nRESULTADO: revogação na troca provada!');
 //<<<<SECAO:test_r58_revogar_sessoes.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r58c_cartao_ancora.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r58c_cartao_ancora.js:INICIO>>>>
+// TESTE r58c — o cartão "Senhas de conexão" SUMIU porque a âncora (#dc-invite)
+// foi aposentada com os códigos de convite. Agora: toda âncora que o v5260
+// procura tem que EXISTIR na tela da nuvem, senão o teste quebra antes do dono.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const v5260 = fs.readFileSync('ajustes_v5260_cnpj_gerente_patch.js', 'utf8');
+const nuvem = fs.readFileSync('cloudflare_sync_patch.js', 'utf8');
+console.log('== CARTÃO ANCORADO (r58c) ==');
+ok('âncora morta sumiu do v5260', v5260.indexOf("getElementById('dc-invite')") < 0);
+const alvos = [];
+const re = /getElementById\('([^']+)'\)/g;
+let m;
+while((m = re.exec(v5260)) !== null){ if(alvos.indexOf(m[1]) < 0) alvos.push(m[1]); }
+ok('v5260 procura âncoras (teste não está vazio)', alvos.length >= 3);
+const orfas = alvos.filter(function(id){
+  if(id.indexOf('v5260-') === 0) return false; // criado pelo próprio v5260
+  return nuvem.indexOf(id) < 0;
+});
+ok('toda âncora existe na tela da nuvem: ' + (orfas.join(', ') || 'nenhuma órfã'), orfas.length === 0);
+ok('cartão ancora na seção admin (só admin vê)', v5260.indexOf("getElementById('dc-admin-result')") >= 0);
+ok('seção admin só renderiza para admin', nuvem.indexOf('dc-admin-result') >= 0 && /isAdmin\?/.test(nuvem));
+console.log('\nRESULTADO: cartão ancorado provado!');
+//<<<<SECAO:test_r58c_cartao_ancora.js:FIM>>>>
 }

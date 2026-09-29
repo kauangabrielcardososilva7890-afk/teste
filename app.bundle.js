@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: 4573bf1401de80bd
+ * scripts: 230 | sha256: d73f9427f808c35d
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -53000,10 +53000,15 @@ try{
   }
 
   // ── (3) cartão do admin: definir senha de conexão + senha de gerente ──
+  // r58c: âncora nova. O cartão nascia ao lado do #dc-invite, que foi
+  // aposentado com os códigos de convite — sem âncora, o cartão nunca
+  // aparecia e a troca de senha sumiu da tela. Agora ancora na seção de
+  // administração (#dc-admin-result), que só existe na tela conectada de
+  // quem é admin — a regra "só perfil admin" continua valendo.
   function instalarCardAdmin(){
-    var invite = document.getElementById('dc-invite');
-    if(!invite || document.getElementById('v5260-admin-card')) return;
-    var alvoPai = invite.closest('div[style*="border-top"]') || invite;
+    if(document.getElementById('v5260-admin-card')) return;
+    var admin = document.getElementById('dc-admin-result');
+    if(!admin || !admin.parentNode) return;
     var card = document.createElement('div');
     card.id = 'v5260-admin-card';
     card.style.cssText = 'border-top:1px solid #e2e8f0;padding-top:14px;margin-top:14px';
@@ -53018,7 +53023,7 @@ try{
       '</div>'+
       '<div style="display:flex;gap:8px;margin-top:10px"><button id="v5260-a-salvar" style="height:40px;padding:0 16px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">Salvar senhas na nuvem</button></div>'+
       '<div id="v5260-a-res" style="margin-top:10px"></div>';
-    alvoPai.insertAdjacentElement('beforebegin', card);
+    admin.parentNode.appendChild(card); // dentro da seção admin, abaixo dos botões
     try{ var c1=empresaCnpj(); if(c1) card.querySelector('#v5260-a-cnpj').value=c1.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'); }catch(e){}
     try{ var n1=empresaNome(); if(n1) card.querySelector('#v5260-a-nome').value=n1; }catch(e){}
     card.querySelector('#v5260-a-salvar').onclick = async function(){
