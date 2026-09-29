@@ -8269,3 +8269,18 @@ passei os cliques exatos (Worker e Pages → Production branch da sessão);
 (+backup "antes de zerar" antes); devices, secrets (as 2 senhas) e backups
 intactos; o PC segue autorizado, só escolhe o que fazer com os dados locais.
 Publicação via npm run guardar (regra 45). Rodapé v7.1.1 • (ver ?v= do index).
+
+## r56 — 29/09/2026: Zerar destravado (pedido dele) + 7.1.2 + worker 5.28.2
+Ele: aparelhos podem sair (até logins de usuário); login da nuvem NÃO; remove
+o "bloquear antes" (34 trastes de logins repetidos travavam no 409). Worker
+handleResetCloud: gate 409 REMOVIDO; conta outros (id != admin.id, ativos);
+UPDATE devices revoga+exclui os outros; evento cloud_business_reset leva
+aparelhosDesconectados; resposta idem. Segredos intactos (env, nunca no D1);
+usuarios vão nos records e voltam no reenvio; backup-segurança mantido.
+Botão: texto novo (saem sozinhos + senha não muda). 7.1.2 (regra 45) + 4 guias;
+worker 5.28.2 + sed testes/guias/links + motor 135461B. Teste r56 (10) no
+runner. Bundle+sync+suite 244-0-9.
+Minecraft (pergunta consultiva dele): Workers NÃO roda servidor MC (sem TCP
+listen nem processo contínuo); túnel (cloudflared) só ROTEIA — servidor teria
+que rodar no PC dele (ligado 24h) ou numa VPS; Java/TCP ok via túnel,
+Bedrock/UDP não. Oferecido o passo a passo se quiser no PC.

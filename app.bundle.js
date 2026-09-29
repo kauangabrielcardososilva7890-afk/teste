@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: 69b5c00b5467e9cc
+ * scripts: 230 | sha256: 741fc9476ce2b43a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28948,7 +28948,7 @@ async function renderConnected(body){
     };
     // v7.1.0 — botões Guardar/Soltar cópia removidos (SÓ NUVEM é o único modo).
     body.querySelector('#dc-reset-cloud').onclick=async()=>{
-      const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Bloqueie os outros aparelhos antes. Continuar?','Zerar nuvem');
+      const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Os outros aparelhos serão DESCONECTADOS sozinhos (somem da lista) e entram de novo com a mesma senha. A senha da nuvem NÃO muda. Continuar?','Zerar nuvem');
       if(!ok1)return;
       const ok2=await window.confirmSistema('Último aviso: a nuvem vai ficar vazia e a sincronização parada. Depois o sistema pergunta se você quer enviar os dados deste PC. Confirma?','Confirmar zerar nuvem');
       if(!ok2)return;

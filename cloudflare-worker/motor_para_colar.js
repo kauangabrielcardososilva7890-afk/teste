@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.1   (igual ao src/index.js)
- * GERADO EM: 2026-09-29 02:45 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.2   (igual ao src/index.js)
+ * GERADO EM: 2026-09-29 03:39 UTC
  * sha256 do código (sem este cabeçalho):
- *   f290e354ae6d07b4c2e661307a4b9939cacc37fda164102b52790906dc82f6aa
+ *   d4862f55e5d9175efa1b7058975b0ce590455d11b505e918f0a1935625f63ca1
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,7 +35,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.28.1";
+var WORKER_VERSION = "5.28.2";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -1047,12 +1047,10 @@ async function handleResetCloud(request, env) {
   if (body.confirmation !== "APAGAR NUVEM") {
     throw new ApiError(400, "RESET_CONFIRMATION_REQUIRED", "Digite APAGAR NUVEM para confirmar.");
   }
-  const active = await env.DB.prepare(
-    "SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL AND excluido_em IS NULL"
-  ).first();
-  if (Number(active && active.total) !== 1) {
-    throw new ApiError(409, "RESET_REQUIRES_SINGLE_DEVICE", "Bloqueie os outros aparelhos antes de zerar a nuvem.");
-  }
+  const outros = await env.DB.prepare(
+    "SELECT COUNT(*) AS total FROM devices WHERE id != ? AND revoked_at IS NULL AND excluido_em IS NULL"
+  ).bind(admin.id).first();
+  const nOutros = Number(outros && outros.total) || 0;
   const [recordCount, changeCount] = await env.DB.batch([
     env.DB.prepare("SELECT COUNT(*) AS total FROM records"),
     env.DB.prepare("SELECT COUNT(*) AS total FROM changes")
@@ -1068,6 +1066,10 @@ async function handleResetCloud(request, env) {
     // v5.26.5 — a contagem guardada some junto: senão o painel continua dizendo
     // que a nuvem tem o que já foi apagado (ou que não tem nada do que subiu).
     env.DB.prepare("DELETE FROM system_meta WHERE key = 'resumo_json'"),
+    // r56: os outros aparelhos saem sozinhos (revogados + fora da lista).
+    env.DB.prepare(
+      "UPDATE devices SET revoked_at = ?, excluido_em = ? WHERE id != ? AND revoked_at IS NULL AND excluido_em IS NULL"
+    ).bind(now, now, admin.id),
     env.DB.prepare(
       `INSERT INTO system_meta(key, value, updated_at) VALUES ('cloud_generation', ?, ?)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
@@ -1075,12 +1077,13 @@ async function handleResetCloud(request, env) {
     env.DB.prepare(
       `INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at)
        VALUES ('cloud_business_reset', ?, ?, ?, ?)`
-    ).bind(admin.id, admin.id, JSON.stringify({ generation }), now)
+    ).bind(admin.id, admin.id, JSON.stringify({ generation, aparelhosDesconectados: nOutros }), now)
   ]);
   return json({
     ok: true,
     reset: true,
     generation,
+    aparelhosDesconectados: nOutros,
     removed: {
       records: Number(recordCount.results[0].total) || 0,
       changes: Number(changeCount.results[0].total) || 0

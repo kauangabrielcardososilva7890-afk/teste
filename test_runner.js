@@ -278,7 +278,7 @@ const tests=[
   // v7.0.19 (rodada 31) — "às vezes um dado criado não aparece em outro PC;
   // demora sincronizar para aparecer tudo": VENDAS e LEITURAS nunca se atualizavam
   // sozinhas (fora das telas ao vivo) + a carga segurava o programa até o fim do
-  // histórico + a abertura agora lê a FOTO da nuvem (/v1/snapshot, motor 5.28.1)
+  // histórico + a abertura agora lê a FOTO da nuvem (/v1/snapshot, motor 5.28.2)
   // em vez de recontar o diário (com motor antigo, o diário assume sozinho).
   "test_dado_aparece_outro_pc.js",
   // v7.0.20 (rodada 32, ideia L) — "tem vários problemas, eu não consigo
@@ -327,7 +327,9 @@ const tests=[
   // r50 (Q3): Zerar sem deadlock (aborto por geração) + Não-enviar sem vazamento
   "test_zerar_deadlock_r50.js",
   // r54 (P1–P5): hash PBKDF2+salt, corte do texto puro, prova com salt, desfazer união, logins repetidos, órfãos, backups
-  "test_r54_senhas_dedup.js"
+  "test_r54_senhas_dedup.js",
+  // r56: Zerar sem exigir bloqueio + aparelhos velhos saem sozinhos (senha da nuvem intacta)
+  "test_r56_zerar_aparelhos.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

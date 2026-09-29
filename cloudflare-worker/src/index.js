@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.28.1';
+const WORKER_VERSION = '5.28.2';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -1114,12 +1114,16 @@ async function handleResetCloud(request, env) {
   if (body.confirmation !== 'APAGAR NUVEM') {
     throw new ApiError(400, 'RESET_CONFIRMATION_REQUIRED', 'Digite APAGAR NUVEM para confirmar.');
   }
-  const active = await env.DB.prepare(
-    'SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL AND excluido_em IS NULL'
-  ).first();
-  if (Number(active && active.total) !== 1) {
-    throw new ApiError(409, 'RESET_REQUIRES_SINGLE_DEVICE', 'Bloqueie os outros aparelhos antes de zerar a nuvem.');
-  }
+  // r56 (pedido dele 29/09): SEM exigir aparelho único — os trastes de logins
+  // repetidos travavam o Zerar (409). O Zerar agora DESCONECTA os outros
+  // aparelhos sozinho (revoga + some da lista, auditado). O aparelho que pediu
+  // continua valendo. Segredos (senhas de conexão/gerente) NUNCA são tocados:
+  // moram no env do worker, não nas tabelas. Logins de USUÁRIO vão junto com
+  // os dados (são registros) e voltam quando este PC enviar de novo.
+  const outros = await env.DB.prepare(
+    'SELECT COUNT(*) AS total FROM devices WHERE id != ? AND revoked_at IS NULL AND excluido_em IS NULL'
+  ).bind(admin.id).first();
+  const nOutros = Number(outros && outros.total) || 0;
   const [recordCount, changeCount] = await env.DB.batch([
     env.DB.prepare('SELECT COUNT(*) AS total FROM records'),
     env.DB.prepare('SELECT COUNT(*) AS total FROM changes')
@@ -1138,6 +1142,10 @@ async function handleResetCloud(request, env) {
     // v5.26.5 — a contagem guardada some junto: senão o painel continua dizendo
     // que a nuvem tem o que já foi apagado (ou que não tem nada do que subiu).
     env.DB.prepare("DELETE FROM system_meta WHERE key = 'resumo_json'"),
+    // r56: os outros aparelhos saem sozinhos (revogados + fora da lista).
+    env.DB.prepare(
+      'UPDATE devices SET revoked_at = ?, excluido_em = ? WHERE id != ? AND revoked_at IS NULL AND excluido_em IS NULL'
+    ).bind(now, now, admin.id),
     env.DB.prepare(
       `INSERT INTO system_meta(key, value, updated_at) VALUES ('cloud_generation', ?, ?)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
@@ -1145,12 +1153,13 @@ async function handleResetCloud(request, env) {
     env.DB.prepare(
       `INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at)
        VALUES ('cloud_business_reset', ?, ?, ?, ?)`
-    ).bind(admin.id, admin.id, JSON.stringify({ generation }), now)
+    ).bind(admin.id, admin.id, JSON.stringify({ generation, aparelhosDesconectados: nOutros }), now)
   ]);
   return json({
     ok: true,
     reset: true,
     generation,
+    aparelhosDesconectados: nOutros,
     removed: {
       records: Number(recordCount.results[0].total) || 0,
       changes: Number(changeCount.results[0].total) || 0

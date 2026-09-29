@@ -59,13 +59,13 @@ ok('botão Desfazer existe na janela', v5214src.indexOf('clientesDuplicadosDesfa
 ok('usuários repetidos: detector + tela + botão', v5214src.indexOf('usuGruposDuplicados') >= 0 && v5214src.indexOf('usuariosDuplicadosAbrir') >= 0 && v5214src.indexOf('btn-usuarios-duplicados') >= 0);
 ok('órfãos: lista + desvincular na janela', v5214src.indexOf('orfaosListar(db)') >= 0 && v5214src.indexOf('clientesOrfaoDesvincular') >= 0);
 
-// ── P5 + worker 5.28.1 + motor ──────────────────────────────────────────────
-console.log('== r54/P5: backups + worker 5.28.1 + motor regenerado ==');
+// ── P5 + worker 5.28.2 + motor ──────────────────────────────────────────────
+console.log('== r54/P5: backups + worker 5.28.2 + motor regenerado ==');
 ok('lista de backups aguenta data vazia/inválida', worker.indexOf('x.gerado_em == null || isNaN(Number(x.gerado_em))') >= 0);
 ok('login vazio na prova vira 403, não 500 (S7)', worker.indexOf("String(cleanText(request.headers.get('x-digicopy-usuario-login')") >= 0);
-ok('worker carimbado 5.28.1', worker.indexOf("const WORKER_VERSION = '5.28.1'") >= 0);
+ok('worker carimbado 5.28.2', worker.indexOf("const WORKER_VERSION = '5.28.2'") >= 0);
 const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
-ok('motor regenerado com a 5.28.1', motor.indexOf('5.28.1') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
+ok('motor regenerado com a 5.28.2', motor.indexOf('5.28.2') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
 
 // ── RUNTIME: cripto pura (PBKDF2 de verdade, com o subtle do node) ──────────
 console.log('== r54/runtime: PBKDF2, prova com salt e tira-segredos de verdade ==');

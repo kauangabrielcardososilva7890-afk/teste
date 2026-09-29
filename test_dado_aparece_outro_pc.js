@@ -29,7 +29,7 @@
 //      da remontagem completar (e que ela complete depois, sem sobra);
 //   3. regressão do regime: com os dois PCs abertos, o que A grava aparece no
 //      banco de B em segundos.
-//   4. FOTO DA NUVEM (motor 5.28.1): a abertura lê o ESTADO ATUAL paginado e
+//   4. FOTO DA NUVEM (motor 5.28.2): a abertura lê o ESTADO ATUAL paginado e
 //      pula o replay do diário (o que for gravado DURANTE a foto chega pelo
 //      incremental); com motor antigo (404) o diário assume sozinho.
 // ═════════════════════════════════════════════════════
