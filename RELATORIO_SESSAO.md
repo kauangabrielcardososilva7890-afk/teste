@@ -8255,3 +8255,17 @@ PURE orfaosAutoSoltaveis. Teste r54 45→49. links.js: threshold do health
 5.26.5→5.28.1 (guia honesto). Mapa regen. Bundle+sync+suite 243-0-9.
 Auditor externo = OUTRO CHAT dele (outra IA com as credenciais): rotação cobre;
 não colar as senhas NOVAS em outros chats (anula a rotação).
+
+## r55 — 29/09/2026: 7.1.1 (regra 45) + branch velha + loop do Zerar + wipe
+Ele cobrou 4 coisas (certas): (1) versão não subiu (regra 45: cada leva publica
+e atualiza a versão) → 7.1.1 via npm run versao + 4 guias + suite 243-0-9;
+(2) botão em looping — diagnóstico honesto: Zerar exige 1 aparelho ativo
+(409 BLOQUEIA com os 34 dele!) + ele pode estar no app velho via branch velha
+(deadlock pré-r50); sem saber qual botão, dei o caminho certo (trocar branch →
+limpar aparelhos → Zerar) e pedi qual botão + foto do que aparece; (3) nuvem na
+branch antiga — admitido: o guia mandava trocar mas eu nunca avisei NO CHAT;
+passei os cliques exatos (Worker e Pages → Production branch da sessão);
+(4) Zerar some o login? NÃO: wipe = enrollment_codes+changes+records+resumo
+(+backup "antes de zerar" antes); devices, secrets (as 2 senhas) e backups
+intactos; o PC segue autorizado, só escolhe o que fazer com os dados locais.
+Publicação via npm run guardar (regra 45). Rodapé v7.1.1 • (ver ?v= do index).
