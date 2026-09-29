@@ -8229,3 +8229,17 @@ Bundle 230 scripts, sha 155d680028ab8bcc. Suíte: 243 passam, 0 falham, 9 jsdom
 renderUsuarios com SUBSTITUICAO DE PROPOSITO + orig*.apply, bundle stale 1×.
 Amnésia #13 (HEAD e9bb5ec de novo) — fetch + soft-reset ritual; index velho
 saneado com add -A (conferido: só r54 no diff).
+
+## r55-prep — 29/09/2026: mesclagem (pedido dele: arquivos demais)
+mesclar_ajustes.js: junta os 139 ajustes_v*.js em ajustes_consolidados.js
+(1,3MB) + .index.json, replicando o formato do build_bundle seção por seção
+(1 global + 138 isoladas, try/catch + __DIGICOPY_FALHA com nome original).
+PROVA: --dry-run confere 139/139 seções byte-a-byte no bundle atual. Gerados
+commitados; manifest/testes/bundle INTACTOS (suíte segue 243-0-9).
+Troca (r55, de dia, com cabeça fresca): manifest 139→1 (posição decide as
+cadeias "último-vence") + loader p/ testes (214 readFileSync uniformes, sed
+direto; 130 executam código — mesma chamada, bytes idênticos) + 117 testes de
+manifest (ordem mista ajustes×não-ajustes = revisão manual UMA A UMA, sem
+shim: shim mascararia mudança real de ordem e é assim que coisa quebra em
+silêncio) + baseline + check do package.json. Apagar os 139 originais só
+depois da suíte verde na nova forma.
