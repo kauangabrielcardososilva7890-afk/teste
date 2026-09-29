@@ -7,7 +7,8 @@
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+  var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+  function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -190,7 +191,7 @@
     if(!pendentes.length) return;
 
     pendentes.slice(0, 10).forEach(function(o){
-      fetch(API + '/orcamento?c=' + encodeURIComponent(o.token))
+      fetch(apiBase() + '/orcamento?c=' + encodeURIComponent(o.token))
         .then(function(r){ return r.json(); })
         .then(function(res){
           if(!res) return;
@@ -232,7 +233,7 @@
           gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
           // Notifica a API também
           if(o.token){
-            fetch(API + '/orcamento', {
+            fetch(apiBase() + '/orcamento', {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ c: o.token, acao: 'aprovar', numero: o.numero, clienteNome: o.clienteNome })
@@ -253,7 +254,7 @@
           if(!ok) return;
           recusarOrcamento(id);
           if(o.token){
-            fetch(API + '/orcamento', {
+            fetch(apiBase() + '/orcamento', {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ c: o.token, acao: 'recusar', numero: o.numero, clienteNome: o.clienteNome })

@@ -8,8 +8,9 @@
 'use strict';
 
 function ehAdmin(perfil, login){
-  if(String(perfil||'').trim()==='Admin') return true;
-  return String(login||'').trim().toLowerCase()==='kauan';
+  // r59: só perfil — Dono enxerga tudo que Admin vê.
+  var p = String(perfil||'').trim();
+  return p==='Admin' || p==='Dono';
 }
 function podeVerBackup(perfil, login){ return ehAdmin(perfil, login); }
 function podeVerNuvem(perfil, login, temToken){

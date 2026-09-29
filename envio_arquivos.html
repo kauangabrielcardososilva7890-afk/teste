@@ -292,7 +292,7 @@
           id=hit.id; ver=hit.version||0; atualizados++;
         }else{
           id=uid('prd');
-          rec=Object.assign({id:id,empresaId:'emp_digicopy',criadoEm:new Date().toISOString(),criadoPor:'migracao',criadoPorNome:'importacao'},n);
+          rec=Object.assign({id:id,empresaId:'',criadoEm:new Date().toISOString(),criadoPor:'migracao',criadoPorNome:'importacao'},n);
           delete rec.estoque; delete rec.estoqueMin; delete rec.custo; delete rec.preco;
           ver=0; criados++;
           porSku[String(n.sku)]={id:id,version:0,data:rec};
@@ -405,7 +405,7 @@
           id=hit.id; ver=hit.version||0; completados++;
         }else{
           id=uid('cli');
-          rec=Object.assign({id:id,empresaId:'emp_digicopy',criadoEm:new Date().toISOString(),criadoPor:'migracao',criadoPorNome:'importacao'},n);
+          rec=Object.assign({id:id,empresaId:'',criadoEm:new Date().toISOString(),criadoPor:'migracao',criadoPorNome:'importacao'},n);
           ver=0; criados++;
           vistos[k]={id:id,version:0,data:rec};
         }

@@ -6,7 +6,8 @@
 (function(){
 'use strict';
 
-var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
 function txt(v){ return String(v==null?'':v).trim(); }
 
@@ -84,7 +85,7 @@ function puxarAprovacoes(){
     return true;
   }).slice(0,15).forEach(function(o){
     if(o.status==='aprovado' && o.vendaId && acharVenda(o)) return;
-    fetch(API+'/orcamento?c='+encodeURIComponent(o.token))
+    fetch(apiBase()+'/orcamento?c='+encodeURIComponent(o.token))
       .then(function(r){ return r.json().then(function(j){ return j; }); })
       .then(function(j){
         if(!j) return;

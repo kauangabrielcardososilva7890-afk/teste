@@ -6,20 +6,29 @@
 (function(){
 'use strict';
 
-var PIX_PUBLICO = 'https://digicopy-sync-api.digicopyonline.workers.dev/pix';
+var PIX_PUBLICO_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev/pix';
+
+// r59: o link do pix segue a NUVEM CONFIGURADA (cada cliente tem a sua).
+function pixBase(){
+  try{
+    if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function')
+      return String(window.DIGICOPY_API_URL()).replace(/\/+$/,'')+'/pix';
+  }catch(e){}
+  return PIX_PUBLICO_OFICIAL;
+}
 
 function pixUrlPublico(payload){
-  return PIX_PUBLICO + '?c=' + encodeURIComponent(String(payload||''));
+  return pixBase() + '?c=' + encodeURIComponent(String(payload||''));
 }
 
 window.PIX_LINK_PUBLICO_PURE = {
-  PIX_PUBLICO: PIX_PUBLICO,
+  PIX_PUBLICO: PIX_PUBLICO_OFICIAL,
   pixUrlPublico: pixUrlPublico
 };
 
 if(typeof document==='undefined') return;
 
-window.PIX_PAGAR_PUBLICO = PIX_PUBLICO;
+window.PIX_PAGAR_PUBLICO = PIX_PUBLICO_OFICIAL; // retrato da oficial; o fresco sai de pixPagamentoUrl()
 window.pixPagamentoUrl = function(payload){
   return pixUrlPublico(payload);
 };

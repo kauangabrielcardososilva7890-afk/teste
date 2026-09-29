@@ -94,28 +94,13 @@ console.log('\nRESULTADO: v5.22.49 passou!');
 if (false) { // ═══ test_senha_do_dono_manda.js (inerte: só parse, nunca executa)
 //<<<<SECAO:test_senha_do_dono_manda.js:INICIO>>>>
 // ═══════════════════════════════════════════════════════════════════════════
-// TESTE — A SENHA QUE O DONO ESCOLHE É A QUE VALE
+// TESTE — SEED LIMPO + PERMISSÃO POR PERFIL (r59 COMERCIAL; reescreve r57/r58)
 //
-// O dono pediu os nomes das contas para trocar as senhas (23/09/2026). Ao
-// conferir, apareceu o impedimento: o `seedData` (app.js) roda em TODA carga do
-// sistema e reescrevia a senha dos dois usuários garantidos para o valor de
-// fábrica —
-//
-//     if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }
-//
-// Ou seja: ele trocava a senha na tela Usuários e, na próxima vez que abria o
-// sistema, a senha velha voltava sozinha — a troca "não pegava" e a senha que
-// está no histórico do repositório continuava valendo. Isso deixava a rotação
-// impossível (e é o mesmo defeito de classe do patch_relatorio.js, que trocava
-// a senha do Denivaldo por conta própria).
-//
-// O que este teste garante:
-//   • o sistema NÃO reescreve a senha de quem já existe;
-//   • o padrão de fábrica continua servindo para CRIAR o usuário na primeira vez
-//     (PC novo, base vazia) — isso não foi perdido;
-//   • a migração antiga da senha do Denivaldo roda UMA vez e nunca mais.
-// Nenhuma senha real é lida nem impressa aqui: o teste só confere o FORMATO do
-// código (quem escreve o quê), nunca o valor.
+// Antes: o seed criava empresa+usuários de fábrica (kauan/6132, denivaldo/3232)
+// e permissões vinham do NOME da pessoa. Agora: base vazia abre o SETUP (v5900,
+// a assistência cadastra loja+admin+nuvem); o seed só limpa demo antiga e
+// garante estrutura (id/empresaId); permissão vem só do PERFIL.
+// Nenhuma senha real é lida nem impressa aqui: só FORMATO de código.
 // ═══════════════════════════════════════════════════════════════════════════
 const fs = require('fs');
 let passou = 0;
@@ -127,43 +112,46 @@ function ok(nome, cond){
 const app = fs.readFileSync('app.js', 'utf8');
 const rel = fs.readFileSync('patch_relatorio.js', 'utf8');
 
-console.log('== 1) O SEED NÃO REESCREVE MAIS A SENHA ==');
+console.log('== 1) SEED NÃO CRIA NADA DE FÁBRICA (r59) ==');
 ok('o seed continua existindo e rodando na carga', /^seedData\(false\);/m.test(app));
-ok('NÃO existe mais "u.senha = g.senha" (a senha de fábrica voltando por cima)',
-   !/u\.senha\s*=\s*g\.senha/.test(app));
-ok('a troca ficou explicada no próprio código (quem mexer depois entende)',
-   /A SENHA NÃO É MAIS REIMPOSTA AQUI/.test(app));
-ok('r58: perfil, nome e ativo NÃO são mais reimpostos (a troca na tela pega)',
-   app.indexOf('u.perfil = g.perfil') < 0 &&
-   app.indexOf('u.nome = g.nome') < 0 &&
-   app.indexOf('u.ativo = true') < 0);
-ok('r58: id e empresaId continuam garantidos (estruturais)',
-   app.indexOf('u.id = g.id') >= 0 && app.indexOf('u.empresaId !== emp.id') >= 0);
+const fabrica = ['kauan', 'denivaldo', '6132', '3232', 'emp_digicopy', 'usr_kauan', 'usr_denivaldo'];
+const achados = fabrica.filter(function(k){ return app.indexOf(k) >= 0; });
+ok('app.js sem resto de fábrica: ' + (achados.join(', ') || 'limpo'), achados.length === 0);
+ok('empresa única = a primeira (a do setup)', app.indexOf('db.empresas = [db.empresas[0]]') >= 0);
+ok('sem empresa = setup pendente', app.indexOf('const emp = db.empresas[0] || null') >= 0);
+ok('órfãos só apontam com empresa', app.indexOf('if(emp) db.usuarios.forEach') >= 0);
+ok('normalização só roda com empresa', app.indexOf("if(emp) ['clientes'") >= 0);
+ok('demo antiga ainda é removida', app.indexOf("const demoLogins = ['admin','carlos','ana','financeiro']") >= 0);
+ok('config nova nasce vazia (setup preenche)', app.indexOf("config:{empresa:{nome:'',cnpj:'',fone:'',email:''}}") >= 0);
 
-console.log('\n== 2) PC NOVO CONTINUA FUNCIONANDO (usuário criado na 1ª vez) ==');
-const cria = /db\.usuarios\.push\(\{id:g\.id[\s\S]{0,200}?\}\);/.exec(app);
-ok('usuário inexistente ainda é criado com o acesso inicial', !!cria);
-ok('a criação marca que veio do sistema (não é usuário de tela)', !!cria && /criadoPor:'sistema'/.test(cria[0]));
-
-console.log('\n== 3) NENHUM OUTRO LUGAR MEXE NA SENHA POR CONTA PRÓPRIA ==');
-const suspeitos = [];
-const arquivos = fs.readdirSync('.').filter(f => f.endsWith('.js') && /^patch_|^ajustes_|^app\.js$/.test(f));
+console.log('\n== 2) NENHUM PATCH RESSUSCITA FÁBRICA (r59) ==');
+const proibidos = ["login:'kauan'", 'login:"kauan"', "login:'denivaldo'", "senha:'6132'", "senha:'3232'", "id:'usr_kauan'", "id:'usr_denivaldo'", "id:'emp_digicopy'"];
+const culpados = [];
+const arquivos = fs.readdirSync('.').filter(f => f.endsWith('.js') && /^patch_|^ajustes_|^app\.js$|^cloudflare_/.test(f));
 for(const f of arquivos){
-  if(f === 'app.js') continue;
   const src = fs.readFileSync(f, 'utf8');
-  // atribuição direta a .senha de usuário (fora de criação de registro novo)
-  const mm = src.match(/u(?:suario)?\.senha\s*=\s*[^=]/g);
-  if(mm) suspeitos.push(f + ' (' + mm.length + ')');
+  for(const p of proibidos){ if(src.indexOf(p) >= 0) culpados.push(f + ' tem ' + p); }
 }
-ok('nenhum patch reescreve senha de usuário direto: ' + (suspeitos.join(', ') || 'nenhum'),
-   suspeitos.length === 0);
+ok('criação de fábrica em 0 arquivos: ' + (culpados.join('; ') || 'nenhum'), culpados.length === 0);
+
+console.log('\n== 3) PERMISSÃO SÓ PELO PERFIL (r59) ==');
+const citacoes = ["'kauan'", '"kauan"', "'denivaldo'", "'6132'", "'3232'", "'usr_kauan'", "'usr_denivaldo'"];
+const soLeitura = ['login_dados_automaticos_patch.js']; // mantém busca de compatibilidade (e.id==='emp_digicopy')
+const alvos = ['ajustes_v5196_patch.js', 'ajustes_v5197_patch.js', 'ajustes_v52216_menus_submenus_patch.js', 'ajustes_v52217_menus_arrastar_visibilidade_patch.js', 'ajustes_v5214_clientes_visiveis_patch.js', 'login_dados_automaticos_patch.js'];
+const sujos = [];
+for(const f of alvos){
+  const src = fs.readFileSync(f, 'utf8');
+  for(const c of citacoes){ if(src.indexOf(c) >= 0) sujos.push(f + ' cita ' + c); }
+  if(src.indexOf("id:'emp_digicopy'") >= 0) sujos.push(f + ' cria emp_digicopy');
+}
+ok('permissão sem nome de gente: ' + (sujos.join('; ') || 'limpo'), sujos.length === 0);
 
 console.log('\n== 4) A MIGRAÇÃO ANTIGA DO DENIVALDO RODA UMA VEZ SÓ ==');
 ok('existe (compatibilidade com base antiga)', /login\.toLowerCase\(\) === 'denivaldo'/.test(rel));
 ok('tem a marca de "já rodou" (nunca mais mexe depois disso)', /!deni\.senhaMigradaV701/.test(rel));
 ok('a marca é gravada antes de qualquer troca', /deni\.senhaMigradaV701 = new Date\(\)\.toISOString\(\);[\s\S]{0,80}?if\(deni\.senha ===/.test(rel));
 
-console.log('\nRESULTADO: ' + passou + ' verificações — a senha trocada na tela é a que vale; o sistema não devolve mais a antiga.');
+console.log('\nRESULTADO: ' + passou + ' verificações — base nova nasce no setup, sem fábrica.');
 //<<<<SECAO:test_senha_do_dono_manda.js:FIM>>>>
 }
 

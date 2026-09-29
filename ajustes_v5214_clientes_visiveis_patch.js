@@ -9,16 +9,16 @@
 const ENTIDADES=['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'];
 
 function empresaUnica(){
-  if(typeof db==='undefined'||!db)return 'emp_digicopy';
-  const emp=(db.empresas||[]).find(e=>e&&e.id==='emp_digicopy')
-    ||(db.empresas||[]).find(e=>/digicopy/i.test(String((e&&e.fantasia)||(e&&e.nome)||'')))
-    ||(db.empresas||[])[0];
-  return (emp&&emp.id)||'emp_digicopy';
+  // r59: a primeira empresa (a do setup). Sem empresa = '' (setup pendente).
+  if(typeof db==='undefined'||!db)return '';
+  const emp=(db.empresas||[])[0];
+  return (emp&&emp.id)||'';
 }
 
 function normalizarEmpresaClientes(){
   if(typeof db==='undefined'||!db)return 0;
   const empId=empresaUnica();
+  if(!empId) return 0;
   let mudou=0;
   ENTIDADES.forEach(k=>{
     if(!Array.isArray(db[k]))return;
@@ -324,8 +324,7 @@ function podeUnirClientes(){
   try{
     const s=typeof getSession==='function'?getSession():null;
     const p=String((s&&s.perfil)||'');
-    const l=String((s&&(s.login||s.usuarioNome))||'').toLowerCase();
-    return p==='Admin'||p==='Dono'||l==='kauan'||l==='denivaldo';
+    return p==='Admin'||p==='Dono'; // r59: só perfil
   }catch(e){ return false; }
 }
 function contratoSemVinculo(){

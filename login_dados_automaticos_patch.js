@@ -42,12 +42,9 @@ function loginCompativel(user, typed){
 function senhaCompativel(user, senha){ return txt(user&&user.senha)===txt(senha); }
 function escolherEmpresaPadrao(dbRef){
   dbRef.empresas=dbRef.empresas||[];
-  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas.find(e=>e.id==='emp_digicopy') || dbRef.empresas[0];
-  if(!emp){
-    emp={id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
-    dbRef.empresas.push(emp);
-  }
-  if(!emp.cnpjDigits) emp.cnpjDigits=onlyDigitsSafe(emp.cnpj||'');
+  // r59: sem empresa de fábrica. Sem empresa = setup pendente (v5900 cria a real).
+  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas.find(e=>e.id==='emp_digicopy') || dbRef.empresas[0] || null;
+  if(emp && !emp.cnpjDigits) emp.cnpjDigits=onlyDigitsSafe(emp.cnpj||'');
   return emp;
 }
 function usuarioExiste(dbRef, empId, login, nome){ return (dbRef.usuarios||[]).find(u=>u.empresaId===empId&&(loginCompativel(u,login)||loginCompativel(u,nome))); }
@@ -68,12 +65,7 @@ function importarFuncionariosLegados(dbRef, empId){
     else { dbRef.usuarios.push({id:uidSafe('usr'),criadoEm:new Date().toISOString(),criadoPor:'migracao',...dados}); }
     alterou++;
   });
-  // Se não veio FUNCIONARIOS ainda, garante o usuário real (kauan) como admin.
-  if(!dbRef.usuarios.some(u=>u.empresaId===empId && u.ativo)){
-    const jaTemKauan = dbRef.usuarios.some(u=>u.empresaId===empId && u.id==='usr_kauan');
-    dbRef.usuarios.push({id: jaTemKauan?uidSafe('usr'):'usr_kauan',empresaId:empId,nome:'Kauan',login:'kauan',senha:'6132',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
-    alterou++;
-  }
+  // r59: sem usuário de fábrica. Base sem usuário = setup pendente (v5900).
   return alterou;
 }
 function unirAdminDemoComOriginal(dbRef, empId){
@@ -89,6 +81,7 @@ function unirAdminDemoComOriginal(dbRef, empId){
 }
 function prepararEmpresaLogin(){
   const emp=escolherEmpresaPadrao(db);
+  if(!emp) return null; // r59: setup pendente — o v5900 mostra a tela de setup
   importarFuncionariosLegados(db, emp.id);
   unirAdminDemoComOriginal(db, emp.id);
   if(typeof setPendingEmpresa==='function') setPendingEmpresa(emp);
@@ -106,7 +99,7 @@ function renderLoginDireto(emp){
   box.style.pointerEvents='auto';
   const u=document.getElementById('login-user');
   const sp=document.getElementById('login-senha-user');
-  if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; if(u.value==='kauan') u.value=''; }
+  if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
   if(sp){ sp.disabled=false; sp.readOnly=false; sp.style.pointerEvents='auto'; }
 }
 function escHtml(v){ return txt(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c])); }
@@ -127,6 +120,7 @@ function estilizarLogin(){
   `;
   if(!st.parentNode) document.head.appendChild(st);
   const emp=prepararEmpresaLogin();
+  if(!emp) return; // r59: setup pendente
   const cnpj=document.getElementById('login-step-cnpj'); if(cnpj) cnpj.classList.add('hidden');
   renderLoginDireto(emp);
   limparTopoMenus();

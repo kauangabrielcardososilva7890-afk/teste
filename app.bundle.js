@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: d73f9427f808c35d
+ * scripts: 231 | sha256: 823d6d888fd5ed34
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -266,7 +266,7 @@ const defaultData={
   clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], orcamentos:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[], // v5.22.68: sem técnico de demonstração. Ver TECNICOS_DEMO.
-  config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
+  config:{empresa:{nome:'',cnpj:'',fone:'',email:''}}
 };
 
 // Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
@@ -565,32 +565,20 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  // AUTORITATIVO (roda em toda carga): garante a empresa única + os 2 usuários
-  // reais com as credenciais corretas, e remove usuários de demonstração.
-  //   • Kauan     → login "kauan"     senha "6132"  perfil Admin
-  //   • Denivaldo → login "denivaldo" senha "3232"  perfil Dono
+  // r59 COMERCIAL — sem NADA de fábrica: empresa e usuários nascem no SETUP
+  // (v5900, assistência cadastra). Base vazia = setup abre em vez do login.
+  // Aqui só: limpeza de demo antiga + garantias estruturais (id/empresaId).
   db.empresas = Array.isArray(db.empresas) ? db.empresas : [];
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
   let mudou = false;
 
-  let emp = db.empresas.find(e=>e.id==='emp_digicopy')
-         || db.empresas.find(e=>/digicopy/i.test(String(e.fantasia||e.nome||'')))
-         || db.empresas[0];
-  if(!emp){
-    emp = {id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
-    db.empresas.push(emp);
-    mudou = true;
-  }
-  // Só mantém UMA empresa (a real). Empresas demo/órfãs são removidas.
+  // Só mantém UMA empresa (a primeira). Sem empresa = setup pendente.
   if(db.empresas.length > 1){
-    db.empresas = [emp];
+    db.empresas = [db.empresas[0]];
     mudou = true;
   }
+  const emp = db.empresas[0] || null;
 
-  const garantidos = [
-    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132', senhaPadrao:true},
-    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232', senhaPadrao:true}
-  ];
   const demoLogins = ['admin','carlos','ana','financeiro'];
   const demoIds = ['usr_admin'];
 
@@ -617,35 +605,14 @@ function seedData(force=false){
     return true;
   });
 
-  // Garante (cria OU corrige) os 2 usuários reais.
-  garantidos.forEach(g=>{
-    const u = db.usuarios.find(x=>String(x.login||'').toLowerCase()===g.login);
-    if(!u){
-      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,senhaPadrao:!!g.senhaPadrao,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
-      mudou = true;
-    } else {
-      if(u.id !== g.id){ u.id = g.id; mudou = true; }
-      if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
-      // v7.0.1 (23/09/2026) — A SENHA NÃO É MAIS REIMPOSTA AQUI. Antes esta
-      // linha devolvia a senha de fábrica toda vez que o sistema abria: o dono
-      // trocava a senha na tela Usuários, e na próxima carga o sistema
-      // reescrevia a senha velha por cima — a troca "não pegava" e a senha
-      // antiga (que está no histórico do repositório) continuava valendo.
-      // Agora a senha que o dono escolher manda; o padrão de fábrica só é usado
-      // na PRIMEIRA vez, quando o usuário ainda não existe (bloco de cima).
-      // r58 (auditoria, achado 7): perfil/nome/ativo NÃO são mais reimpostos —
-      // a troca na tela "não pegava" porque a carga revertia. Só id/empresaId
-      // (estruturais, bloco acima) continuam garantidos; o resto quem manda é a tela.
-    }
-  });
 
   // Qualquer usuário órfão aponta pra empresa real.
-  db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
+  if(emp) db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
 
   // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
   // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
-  ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+  if(emp) ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
       db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
@@ -790,7 +757,7 @@ function doLogout(){
 // REMOVIDO v5.20.23: "Cadastrar nova empresa" (openModalEmpresa/saveNovaEmpresa) criava
 // uma SEGUNDA empresa com id aleatorio (+ usuario admin/admin123) — quebrava a empresa
 // unica e fazia dados parecerem diferentes entre os PCs. O sistema tem UMA empresa so
-// (emp_digicopy). Dados da empresa/notinha se editam nas Configuracoes ("Dados da loja").
+// (a única, criada no setup). Dados da empresa/notinha se editam nas Configuracoes ("Dados da loja").
 
 function openModalCriarUsuarioPublic(){
   const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
@@ -2830,8 +2797,7 @@ function podeMexerSenha(){
   try{
     var s=(typeof getSession==='function')?getSession():null;
     var p=String((s&&s.perfil)||'');
-    var l=String((s&&(s.login||s.usuarioNome))||'').toLowerCase();
-    return p==='Admin'||p==='Dono'||l==='kauan'||l==='denivaldo';
+    return p==='Admin'||p==='Dono';
   }catch(e){ return false; }
 }
 function avisar(m,t){ try{ if(typeof toast==='function'){ toast(m,t||'success'); return; } }catch(e){} try{ if(typeof aviso==='function') aviso(m); }catch(e2){} }
@@ -18114,12 +18080,9 @@ function loginCompativel(user, typed){
 function senhaCompativel(user, senha){ return txt(user&&user.senha)===txt(senha); }
 function escolherEmpresaPadrao(dbRef){
   dbRef.empresas=dbRef.empresas||[];
-  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas.find(e=>e.id==='emp_digicopy') || dbRef.empresas[0];
-  if(!emp){
-    emp={id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
-    dbRef.empresas.push(emp);
-  }
-  if(!emp.cnpjDigits) emp.cnpjDigits=onlyDigitsSafe(emp.cnpj||'');
+  // r59: sem empresa de fábrica. Sem empresa = setup pendente (v5900 cria a real).
+  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas.find(e=>e.id==='emp_digicopy') || dbRef.empresas[0] || null;
+  if(emp && !emp.cnpjDigits) emp.cnpjDigits=onlyDigitsSafe(emp.cnpj||'');
   return emp;
 }
 function usuarioExiste(dbRef, empId, login, nome){ return (dbRef.usuarios||[]).find(u=>u.empresaId===empId&&(loginCompativel(u,login)||loginCompativel(u,nome))); }
@@ -18140,12 +18103,7 @@ function importarFuncionariosLegados(dbRef, empId){
     else { dbRef.usuarios.push({id:uidSafe('usr'),criadoEm:new Date().toISOString(),criadoPor:'migracao',...dados}); }
     alterou++;
   });
-  // Se não veio FUNCIONARIOS ainda, garante o usuário real (kauan) como admin.
-  if(!dbRef.usuarios.some(u=>u.empresaId===empId && u.ativo)){
-    const jaTemKauan = dbRef.usuarios.some(u=>u.empresaId===empId && u.id==='usr_kauan');
-    dbRef.usuarios.push({id: jaTemKauan?uidSafe('usr'):'usr_kauan',empresaId:empId,nome:'Kauan',login:'kauan',senha:'6132',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
-    alterou++;
-  }
+  // r59: sem usuário de fábrica. Base sem usuário = setup pendente (v5900).
   return alterou;
 }
 function unirAdminDemoComOriginal(dbRef, empId){
@@ -18161,6 +18119,7 @@ function unirAdminDemoComOriginal(dbRef, empId){
 }
 function prepararEmpresaLogin(){
   const emp=escolherEmpresaPadrao(db);
+  if(!emp) return null; // r59: setup pendente — o v5900 mostra a tela de setup
   importarFuncionariosLegados(db, emp.id);
   unirAdminDemoComOriginal(db, emp.id);
   if(typeof setPendingEmpresa==='function') setPendingEmpresa(emp);
@@ -18178,7 +18137,7 @@ function renderLoginDireto(emp){
   box.style.pointerEvents='auto';
   const u=document.getElementById('login-user');
   const sp=document.getElementById('login-senha-user');
-  if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; if(u.value==='kauan') u.value=''; }
+  if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
   if(sp){ sp.disabled=false; sp.readOnly=false; sp.style.pointerEvents='auto'; }
 }
 function escHtml(v){ return txt(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c])); }
@@ -18199,6 +18158,7 @@ function estilizarLogin(){
   `;
   if(!st.parentNode) document.head.appendChild(st);
   const emp=prepararEmpresaLogin();
+  if(!emp) return; // r59: setup pendente
   const cnpj=document.getElementById('login-step-cnpj'); if(cnpj) cnpj.classList.add('hidden');
   renderLoginDireto(emp);
   limparTopoMenus();
@@ -27315,21 +27275,16 @@ function uidSafe(p){ return typeof uid === 'function' ? uid(p) : (p + '_' + Date
 // Lógica pura (testável)
 // ─────────────────────────────────────────────────────────────────────────
 
-// Perfil efetivo de um usuário (hierarquia do sistema).
+// Perfil efetivo de um usuário (hierarquia do sistema). r59: só o perfil manda.
 function perfilEfetivo(u){
-  const l = fold((u && (u.login || u.nome)) || '');
-  if(l === 'kauan') return 'Admin';
-  if(l === 'denivaldo') return 'Dono';
   const p = txt(u && u.perfil);
   if(p === 'Admin') return 'Admin';
   if(p === 'Dono') return 'Dono';
   return 'Funcionário';
 }
 
-// Sessão atual tem permissão total? (Admin = Kauan / Dono = Denivaldo)
+// Sessão atual tem permissão total? (só perfil Admin/Dono — r59, sem nome de gente)
 function temPermissaoTotal(s){
-  const l = fold((s && (s.login || s.usuarioNome)) || '');
-  if(l === 'kauan' || l === 'denivaldo') return true;
   const p = txt(s && s.perfil);
   return p === 'Admin' || p === 'Dono';
 }
@@ -27668,8 +27623,7 @@ function sess(){ return typeof getSession === 'function' ? getSession() : null; 
 function fold(v){ return String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
 
 function temPermissaoTotal(s){
-  const l = fold(s && (s.login || s.usuarioNome));
-  if(l === 'kauan' || l === 'denivaldo') return true;
+  // r59: só o PERFIL manda (sem nome de gente). Admin/Dono têm tudo.
   const p = String(s && s.perfil || '');
   return p === 'Admin' || p === 'Dono';
 }
@@ -28582,7 +28536,8 @@ try{
 (function(){
 'use strict';
 
-const API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+const API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev'; // r59: padrão; cada instalação pode ter a sua (v5900)
+function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
 // v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
 // mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
@@ -28662,7 +28617,7 @@ async function api(path, options){
     }
   }catch(e){}
   let response;
-  try{ response=await fetch(API+path,opts); }
+  try{ response=await fetch(apiBase()+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
   let data=null; try{data=await response.json();}catch(e){}
   if(!response.ok){
@@ -28685,7 +28640,8 @@ async function api(path, options){
 }
 
 window.DIGICOPY_CLOUD_PURE={esc};
-window.DIGICOPY_CLOUD={API,token,deviceInfo,api,forgetAuth};
+window.DIGICOPY_CLOUD={token:token,deviceInfo:deviceInfo,api:api,forgetAuth:forgetAuth};
+Object.defineProperty(window.DIGICOPY_CLOUD,'API',{get:function(){return apiBase();},configurable:true}); // r59: .API acompanha a nuvem configurada
 
 // Desliga definitivamente os gatilhos da nuvem antiga. Algumas versões ainda
 // agendavam uma carga Firebase 4,5s após abrir, mesmo com o sync legado inativo.
@@ -31529,16 +31485,16 @@ try{
 const ENTIDADES=['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'];
 
 function empresaUnica(){
-  if(typeof db==='undefined'||!db)return 'emp_digicopy';
-  const emp=(db.empresas||[]).find(e=>e&&e.id==='emp_digicopy')
-    ||(db.empresas||[]).find(e=>/digicopy/i.test(String((e&&e.fantasia)||(e&&e.nome)||'')))
-    ||(db.empresas||[])[0];
-  return (emp&&emp.id)||'emp_digicopy';
+  // r59: a primeira empresa (a do setup). Sem empresa = '' (setup pendente).
+  if(typeof db==='undefined'||!db)return '';
+  const emp=(db.empresas||[])[0];
+  return (emp&&emp.id)||'';
 }
 
 function normalizarEmpresaClientes(){
   if(typeof db==='undefined'||!db)return 0;
   const empId=empresaUnica();
+  if(!empId) return 0;
   let mudou=0;
   ENTIDADES.forEach(k=>{
     if(!Array.isArray(db[k]))return;
@@ -31844,8 +31800,7 @@ function podeUnirClientes(){
   try{
     const s=typeof getSession==='function'?getSession():null;
     const p=String((s&&s.perfil)||'');
-    const l=String((s&&(s.login||s.usuarioNome))||'').toLowerCase();
-    return p==='Admin'||p==='Dono'||l==='kauan'||l==='denivaldo';
+    return p==='Admin'||p==='Dono'; // r59: só perfil
   }catch(e){ return false; }
 }
 function contratoSemVinculo(){
@@ -34992,9 +34947,9 @@ function limitarNome(s, max){
 }
 
 function ehCargoAdmin(perfil, login){
+  // r59: Admin e Dono, pelo perfil (o login veio só pra compatibilidade antiga).
   var p = String(perfil==null?'':perfil).trim();
-  if(p==='Admin') return true;
-  return String(login==null?'':login).trim().toLowerCase()==='kauan';
+  return p==='Admin' || p==='Dono';
 }
 
 function clonarMenu(m){
@@ -35431,8 +35386,9 @@ try{
 'use strict';
 
 function ehAdmin(perfil, login){
-  if(String(perfil||'').trim()==='Admin') return true;
-  return String(login||'').trim().toLowerCase()==='kauan';
+  // r59: só perfil — Dono enxerga tudo que Admin vê.
+  var p = String(perfil||'').trim();
+  return p==='Admin' || p==='Dono';
 }
 function podeVerBackup(perfil, login){ return ehAdmin(perfil, login); }
 function podeVerNuvem(perfil, login, temToken){
@@ -36703,20 +36659,29 @@ try{
 (function(){
 'use strict';
 
-var PIX_PUBLICO = 'https://digicopy-sync-api.digicopyonline.workers.dev/pix';
+var PIX_PUBLICO_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev/pix';
+
+// r59: o link do pix segue a NUVEM CONFIGURADA (cada cliente tem a sua).
+function pixBase(){
+  try{
+    if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function')
+      return String(window.DIGICOPY_API_URL()).replace(/\/+$/,'')+'/pix';
+  }catch(e){}
+  return PIX_PUBLICO_OFICIAL;
+}
 
 function pixUrlPublico(payload){
-  return PIX_PUBLICO + '?c=' + encodeURIComponent(String(payload||''));
+  return pixBase() + '?c=' + encodeURIComponent(String(payload||''));
 }
 
 window.PIX_LINK_PUBLICO_PURE = {
-  PIX_PUBLICO: PIX_PUBLICO,
+  PIX_PUBLICO: PIX_PUBLICO_OFICIAL,
   pixUrlPublico: pixUrlPublico
 };
 
 if(typeof document==='undefined') return;
 
-window.PIX_PAGAR_PUBLICO = PIX_PUBLICO;
+window.PIX_PAGAR_PUBLICO = PIX_PUBLICO_OFICIAL; // retrato da oficial; o fresco sai de pixPagamentoUrl()
 window.pixPagamentoUrl = function(payload){
   return pixUrlPublico(payload);
 };
@@ -40693,7 +40658,8 @@ var AVISO_EPSON = (window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.
 ].join('\n');
 
 var PAGES = 'https://digicopy-pix.pages.dev/orcamento.html';
-var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -40920,7 +40886,7 @@ function deveAplicarRespostaOrcamento(j){
 function puxarAprovacoes(){
   if(!window.DIGICOPY_CLOUD || !window.DIGICOPY_CLOUD.api) return;
   (db.orcamentos||[]).filter(function(o){ return o && o.token && o.status==='aberto'; }).slice(0,20).forEach(function(o){
-    fetch(API+'/orcamento?c='+encodeURIComponent(o.token)).then(function(r){ return r.json(); }).then(function(j){
+    fetch(apiBase()+'/orcamento?c='+encodeURIComponent(o.token)).then(function(r){ return r.json(); }).then(function(j){
       if(deveAplicarRespostaOrcamento(j)) aplicarAprovacaoRemota(Object.assign({id:o.id,token:o.token}, j));
     }).catch(function(){});
   });
@@ -41901,10 +41867,17 @@ function mostrarAvisoAtualizacao(rel){
 
 function verificarAtualizacaoNova(){
   try{
-    var api=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;
-    if(typeof api!=='function') return;
+    // r59 COMERCIAL: atualização vem SEMPRE da nuvem OFICIAL (atrelado ao
+    // vendedor), com o CNPJ da instalação para receber só o que é pra ela.
+    var base=String((typeof window!=='undefined'&&window.DIGICOPY_API_OFICIAL)||'https://digicopy-sync-api.digicopyonline.workers.dev').replace(/\/+$/,'');
+    var caminho='/v1/app-release';
+    try{
+      var PUREC=window.CNPJ_V5260_PURE;
+      var cnpjE=PUREC&&typeof PUREC.empresaCnpj==='function'?PUREC.empresaCnpj():'';
+      if(cnpjE&&cnpjE.length===14) caminho+='?cnpj='+encodeURIComponent(cnpjE);
+    }catch(eC){}
     var atual=String(window.DIGICOPY_APP_VERSION||'');
-    Promise.resolve(api('/v1/app-release',{method:'GET'})).then(function(rel){
+    fetch(base+caminho,{method:'GET'}).then(function(r){ return r.json(); }).then(function(rel){
       if(!rel||!rel.ok||!rel.versao) return;
       if(!cmpVersaoMaior(rel.versao,atual)) return;
       try{ if(localStorage.getItem(chaveAtualizacaoVista(rel.versao))) return; }catch(e){}
@@ -43439,7 +43412,8 @@ try{
 (function(){
 'use strict';
 
-var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
 function txt(v){ return String(v==null?'':v).trim(); }
 
@@ -43517,7 +43491,7 @@ function puxarAprovacoes(){
     return true;
   }).slice(0,15).forEach(function(o){
     if(o.status==='aprovado' && o.vendaId && acharVenda(o)) return;
-    fetch(API+'/orcamento?c='+encodeURIComponent(o.token))
+    fetch(apiBase()+'/orcamento?c='+encodeURIComponent(o.token))
       .then(function(r){ return r.json().then(function(j){ return j; }); })
       .then(function(j){
         if(!j) return;
@@ -45498,10 +45472,10 @@ try{
           return;
         }
 
-        var empresa = (_db.empresas && _db.empresas[0]) || { id: 'emp_digicopy', nome: 'DIGICOPY', fantasia: 'DIGICOPY', cnpj: '' };
+        var empresa = (_db.empresas && _db.empresas[0]) || { id: '', nome: '', fantasia: '', cnpj: '' }; // r59: sem empresa fictícia; setup cria a real
         var sess = {
-          empresaId: empresa.id || 'emp_digicopy',
-          empresaNome: empresa.fantasia || empresa.nome || 'DIGICOPY',
+          empresaId: empresa.id || '',
+          empresaNome: empresa.fantasia || empresa.nome || '',
           cnpj: empresa.cnpj || '',
           usuarioId: user.id || 'usr_1',
           usuarioNome: user.nome || 'Usuário',
@@ -45751,7 +45725,8 @@ try{
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+  var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+  function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -45934,7 +45909,7 @@ try{
     if(!pendentes.length) return;
 
     pendentes.slice(0, 10).forEach(function(o){
-      fetch(API + '/orcamento?c=' + encodeURIComponent(o.token))
+      fetch(apiBase() + '/orcamento?c=' + encodeURIComponent(o.token))
         .then(function(r){ return r.json(); })
         .then(function(res){
           if(!res) return;
@@ -45976,7 +45951,7 @@ try{
           gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
           // Notifica a API também
           if(o.token){
-            fetch(API + '/orcamento', {
+            fetch(apiBase() + '/orcamento', {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ c: o.token, acao: 'aprovar', numero: o.numero, clienteNome: o.clienteNome })
@@ -45997,7 +45972,7 @@ try{
           if(!ok) return;
           recusarOrcamento(id);
           if(o.token){
-            fetch(API + '/orcamento', {
+            fetch(apiBase() + '/orcamento', {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ c: o.token, acao: 'recusar', numero: o.numero, clienteNome: o.clienteNome })
@@ -61637,15 +61612,238 @@ console.log('[DIGICOPY] v5.24.37 contrato: unificar duplicados + desfazer');
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52437_contrato_unificar_patch.js", e); }
 ;
 
+/* ===== ajustes_v5900_setup_comercial_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.90.0 — SETUP COMERCIAL + NUVEM CONFIGURÁVEL (r59)
+// Para VENDER o sistema: cada cliente tem a SUA nuvem e a SUA empresa.
+//   • Base nova (sem empresa ou sem usuário) abre o SETUP em vez do login:
+//     a assistência cadastra a loja do cliente + o admin dele + o endereço
+//     da nuvem dele. Sem usuário de fábrica em lugar nenhum.
+//   • O endereço da nuvem é configuração (db.config.nuvem.apiUrl). Vazio =
+//     nuvem oficial DIGICOPY (a loja do dono).
+//   • Atualizações vêm SEMPRE da nuvem oficial (atrelado ao vendedor).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+
+// ── pura (testável em node, sem janela) ──
+function resolverApiUrl(cfg){
+  var u = cfg && cfg.nuvem ? cfg.nuvem.apiUrl : '';
+  u = String(u == null ? '' : u).trim().replace(/\/+$/, '');
+  if(!/^https?:\/\/.+\..+/i.test(u)) return API_OFICIAL;
+  return u;
+}
+function precisaSetup(dbLike){
+  try{
+    if(!dbLike) return true;
+    if(!Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0) return true;
+    if(!Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0) return true;
+    return false;
+  }catch(e){ return true; }
+}
+function validarSetup(d){
+  var erros = [];
+  d = d || {};
+  if(String(d.nome || '').trim().length < 2) erros.push('Nome da loja');
+  if(String(d.login || '').trim().length < 3) erros.push('Login do admin (mín. 3 letras)');
+  if(String(d.senha || '').length < 4) erros.push('Senha do admin (mín. 4 caracteres)');
+  var url = String(d.apiUrl || '').trim();
+  if(url && !/^https?:\/\/.+\..+/i.test(url)) erros.push('Endereço da nuvem (https://...)');
+  return erros;
+}
+
+if(typeof window !== 'undefined'){
+  window.DIGICOPY_API_OFICIAL = API_OFICIAL;
+  window.DIGICOPY_API_URL = function(){
+    try{ return resolverApiUrl(typeof db !== 'undefined' ? db.config : null); }
+    catch(e){ return API_OFICIAL; }
+  };
+  window.SETUP_COMERCIAL_PURE = { resolverApiUrl: resolverApiUrl, precisaSetup: precisaSetup, validarSetup: validarSetup, oficial: API_OFICIAL };
+}
+if(typeof document === 'undefined') return;
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function ehSetupPendente(){
+  try{ return precisaSetup(typeof db !== 'undefined' ? db : null); }
+  catch(e){ return false; }
+}
+function soDig(v){ return String(v == null ? '' : v).replace(/\D/g, ''); }
+
+// ── tela de setup (cobre tudo; some depois de salvar) ──
+function renderSetup(){
+  try{ document.getElementById('app-shell').classList.add('hidden'); }catch(e){}
+  try{
+    var ls = document.getElementById('login-screen');
+    if(ls) ls.classList.remove('hidden');
+    ['login-step-user','login-step-cnpj'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el){ el.classList.add('hidden'); el.style.display = 'none'; }
+    });
+  }catch(e){}
+  var velho = document.getElementById('v5900-setup');
+  if(velho) velho.remove();
+  var capa = document.createElement('div');
+  capa.id = 'v5900-setup';
+  capa.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1e8a,#0876c9);padding:20px;overflow:auto';
+  capa.innerHTML =
+    '<div style="width:min(560px,96vw);background:#fff;border-radius:18px;padding:26px 28px;box-shadow:0 25px 80px rgba(0,0,0,.35)">'+
+    '<h2 style="font-size:19px;font-weight:900;color:#0a1e8a;margin:0">Bem-vindo ao DIGICOPY — instalação nova</h2>'+
+    '<p style="font-size:12.5px;color:#64748b;margin:6px 0 0">A assistência preenche uma vez só. Depois desta tela, o sistema abre no login normal.</p>'+
+    '<h3 style="font-size:13px;font-weight:900;margin:16px 0 6px">1) A loja do cliente</h3>'+
+    '<label style="display:block;font-size:11px;font-weight:800">NOME DA LOJA<br><input id="v5900-nome" placeholder="Ex.: Papelaria Central" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+    '<label style="display:block;font-size:11px;font-weight:800;margin-top:8px">NOME FANTASIA (aparece no topo)<br><input id="v5900-fantasia" placeholder="Ex.: CENTRAL" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+    '<label style="display:block;font-size:11px;font-weight:800;margin-top:8px">CNPJ DA LOJA<br><input id="v5900-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+    '<h3 style="font-size:13px;font-weight:900;margin:16px 0 6px">2) O dono (primeiro usuário)</h3>'+
+    '<label style="display:block;font-size:11px;font-weight:800">NOME<br><input id="v5900-anome" placeholder="Ex.: Maria Silva" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+    '<label style="display:block;font-size:11px;font-weight:800;margin-top:8px">LOGIN (mín. 3 letras)<br><input id="v5900-login" placeholder="Ex.: maria" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+    '<label style="display:block;font-size:11px;font-weight:800;margin-top:8px">SENHA (mín. 4 caracteres)<br><input id="v5900-senha" type="password" placeholder="crie com o cliente" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+    '<h3 style="font-size:13px;font-weight:900;margin:16px 0 6px">3) A nuvem desta instalação</h3>'+
+    '<label style="display:block;font-size:11px;font-weight:800">ENDEREÇO DA NUVEM DO CLIENTE<br><input id="v5900-api" placeholder="https://digicopy-loja-cliente...workers.dev (vazio = oficial)" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:13px"></label>'+
+    '<p style="font-size:11px;color:#94a3b8;margin:6px 0 0">É o endereço que o provisionar_cliente entrega no final. Vazio usa a nuvem oficial.</p>'+
+    '<div style="display:flex;gap:8px;margin-top:16px"><button id="v5900-salvar" style="flex:1;height:44px;border:0;border-radius:10px;background:#0a1e8a;color:#fff;font-weight:900;font-size:14px;cursor:pointer">Concluir instalação</button></div>'+
+    '<div id="v5900-res" style="margin-top:10px"></div>'+
+    '</div>';
+  document.body.appendChild(capa);
+  capa.querySelector('#v5900-salvar').onclick = function(){ salvarSetup(capa); };
+}
+
+async function salvarSetup(capa){
+  var res = capa.querySelector('#v5900-res');
+  var btn = capa.querySelector('#v5900-salvar');
+  function falha(msg){
+    res.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">' + esc(msg) + '</div>';
+    btn.disabled = false; btn.textContent = 'Concluir instalação';
+  }
+  var dados = {
+    nome: capa.querySelector('#v5900-nome').value.trim(),
+    fantasia: capa.querySelector('#v5900-fantasia').value.trim(),
+    cnpj: soDig(capa.querySelector('#v5900-cnpj').value),
+    anome: capa.querySelector('#v5900-anome').value.trim(),
+    login: capa.querySelector('#v5900-login').value.trim(),
+    senha: capa.querySelector('#v5900-senha').value,
+    apiUrl: capa.querySelector('#v5900-api').value.trim().replace(/\/+$/, '')
+  };
+  var erros = validarSetup({ nome: dados.nome, login: dados.login, senha: dados.senha, apiUrl: dados.apiUrl });
+  if(erros.length){ falha('Falta arrumar: ' + erros.join(' • ')); return; }
+  if(typeof db === 'undefined' || typeof saveDB !== 'function'){ falha('Base ainda carregando. Aguarde 3 segundos e tente de novo.'); return; }
+  if(!precisaSetup(db)){ location.reload(); return; } // outra aba concluiu primeiro
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    var agora = new Date().toISOString();
+    var fazId = (typeof uid === 'function') ? uid : function(p){ return p + '_' + Date.now(); };
+    var emp = { id: fazId('emp'), nome: dados.nome, fantasia: dados.fantasia || dados.nome,
+      cnpj: dados.cnpj, cnpjDigits: dados.cnpj, criadoEm: agora, criadoPor: 'setup' };
+    db.empresas = [emp];
+    var u = { id: fazId('usr'), empresaId: emp.id, nome: dados.anome, login: dados.login,
+      senha: dados.senha, senhaPadrao: false, perfil: 'Dono', ativo: true,
+      criadoEm: agora, criadoPor: 'setup' };
+    try{ if(typeof atualizarHashRegistro === 'function') await atualizarHashRegistro(u, dados.senha); }catch(eH){}
+    db.usuarios = [u];
+    db.config = db.config || {};
+    db.config.empresa = { nome: dados.nome, fantasia: dados.fantasia || dados.nome, cnpj: dados.cnpj, fone: '', email: '' };
+    db.config.nuvem = { apiUrl: dados.apiUrl || '' };
+    saveDB();
+    res.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Instalação concluída! Abrindo o login...</div>';
+    setTimeout(function(){ try{ location.reload(); }catch(e){} }, 700);
+  }catch(err){
+    falha((err && err.message) || 'Não salvou.');
+  }
+}
+
+// ── cartão "nuvem desta instalação" no painel Nuvem (só admin) ──
+function instalarCardNuvem(){
+  if(document.getElementById('v5900-nuvem-card')) return;
+  var admin = document.getElementById('dc-admin-result');
+  if(!admin || !admin.parentNode) return;
+  var atual = '';
+  try{ atual = window.DIGICOPY_API_URL(); }catch(e){ atual = API_OFICIAL; }
+  var ehOficial = (String(atual).replace(/\/+$/, '') === API_OFICIAL);
+  var card = document.createElement('div');
+  card.id = 'v5900-nuvem-card';
+  card.style.cssText = 'border-top:1px solid #e2e8f0;padding-top:14px;margin-top:14px';
+  card.innerHTML =
+    '<h3 style="font-size:14px;font-weight:900">Nuvem desta instalação</h3>'+
+    '<p style="font-size:12px;color:#64748b;margin-top:4px;word-break:break-all">Conectado em:<br><b>' + esc(atual) + '</b>' +
+    (ehOficial ? ' <span style="background:#e8eaf8;color:#0a1e8a;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:800">OFICIAL</span>' : '') + '</p>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><button id="v5900-trocar" style="height:38px;padding:0 14px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#0a1e8a;font-weight:800;cursor:pointer">Trocar de nuvem...</button></div>'+
+    '<div id="v5900-nuvem-res" style="margin-top:8px"></div>';
+  admin.parentNode.appendChild(card);
+  card.querySelector('#v5900-trocar').onclick = async function(){
+    var res = card.querySelector('#v5900-nuvem-res');
+    var pergunta = (typeof window.pedirTextoSistema === 'function')
+      ? function(t){ return window.pedirTextoSistema(t, { titulo: 'Trocar de nuvem' }); }
+      : function(t){ return Promise.resolve(window.prompt(t)); };
+    var nova = await pergunta('Novo endereço da nuvem (https://...). Vazio volta para a OFICIAL.');
+    if(nova == null) return;
+    nova = String(nova).trim().replace(/\/+$/, '');
+    if(nova && !/^https?:\/\/.+\..+/i.test(nova)){
+      res.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Endereço inválido. Tem que começar com https://</div>';
+      return;
+    }
+    var confirma = (typeof window.confirmSistema === 'function')
+      ? await window.confirmSistema('Trocar a nuvem DESCONECTA este computador (o token da nuvem antiga não vale na nova). Os dados DESTE PC continuam. Depois reconecte no painel Nuvem. Continuar?', 'Trocar de nuvem')
+      : window.confirm('Trocar a nuvem DESCONECTA este computador. Continuar?');
+    if(!confirma) return;
+    try{
+      if(typeof db !== 'undefined'){
+        db.config = db.config || {};
+        db.config.nuvem = { apiUrl: nova || '' };
+        if(typeof saveDB === 'function') saveDB();
+      }
+      try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.forgetAuth === 'function') window.DIGICOPY_CLOUD.forgetAuth(); }catch(e){}
+      location.reload();
+    }catch(err){
+      res.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">' + esc((err && err.message) || 'Não trocou.') + '</div>';
+    }
+  };
+}
+
+// ── intercepta o login: base vazia abre o setup ──
+// SUBSTITUICAO DE PROPOSITO showLogin: base vazia abre o setup; com base, encadeia a anterior.
+var showLoginAnterior = window.showLogin;
+window.showLogin = function(){
+  try{ if(ehSetupPendente()){ renderSetup(); return; } }catch(e){}
+  if(typeof showLoginAnterior === 'function') return showLoginAnterior.apply(this, arguments);
+};
+
+// a tela da nuvem é desenhada aos poucos → observador reinstala o cartão
+var v5900mo = null;
+var v5900t = 0;
+function v5900varrer(){
+  try{ instalarCardNuvem(); }catch(e){}
+}
+function v5900ligar(){
+  if(v5900mo) return;
+  try{
+    v5900mo = new MutationObserver(function(){ clearTimeout(v5900t); v5900t = setTimeout(v5900varrer, 120); });
+    v5900mo.observe(document.body, { childList: true, subtree: true });
+  }catch(e){}
+  v5900varrer();
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', v5900ligar);
+else v5900ligar();
+
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5900_setup_comercial_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 230;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 231;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 230 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 231 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

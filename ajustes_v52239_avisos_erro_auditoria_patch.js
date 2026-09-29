@@ -150,10 +150,17 @@ function mostrarAvisoAtualizacao(rel){
 
 function verificarAtualizacaoNova(){
   try{
-    var api=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;
-    if(typeof api!=='function') return;
+    // r59 COMERCIAL: atualização vem SEMPRE da nuvem OFICIAL (atrelado ao
+    // vendedor), com o CNPJ da instalação para receber só o que é pra ela.
+    var base=String((typeof window!=='undefined'&&window.DIGICOPY_API_OFICIAL)||'https://digicopy-sync-api.digicopyonline.workers.dev').replace(/\/+$/,'');
+    var caminho='/v1/app-release';
+    try{
+      var PUREC=window.CNPJ_V5260_PURE;
+      var cnpjE=PUREC&&typeof PUREC.empresaCnpj==='function'?PUREC.empresaCnpj():'';
+      if(cnpjE&&cnpjE.length===14) caminho+='?cnpj='+encodeURIComponent(cnpjE);
+    }catch(eC){}
     var atual=String(window.DIGICOPY_APP_VERSION||'');
-    Promise.resolve(api('/v1/app-release',{method:'GET'})).then(function(rel){
+    fetch(base+caminho,{method:'GET'}).then(function(r){ return r.json(); }).then(function(rel){
       if(!rel||!rel.ok||!rel.versao) return;
       if(!cmpVersaoMaior(rel.versao,atual)) return;
       try{ if(localStorage.getItem(chaveAtualizacaoVista(rel.versao))) return; }catch(e){}

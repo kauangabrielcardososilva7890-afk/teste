@@ -2839,7 +2839,7 @@ ok(contador.indexOf("request.method === 'OPTIONS'") >= 0, 'contador responde pre
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 35] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 34] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 33] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 32] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 31] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 30] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 29] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 28] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 27] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 26] === 'painel_gerente_patch.js' && man[man.length - 25] === 'fiscal_guard_patch.js' && man[man.length - 24] === 'nf_transmissao_patch.js' && man[man.length - 23] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (17º a partir do fim (v7.0.20 soma o mandar-erro no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
+ok(man[man.length - 36] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 35] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 34] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 33] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 32] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 31] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 30] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 29] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 28] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 27] === 'painel_gerente_patch.js' && man[man.length - 26] === 'fiscal_guard_patch.js' && man[man.length - 25] === 'nf_transmissao_patch.js' && man[man.length - 24] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (17º a partir do fim (v7.0.20 soma o mandar-erro no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
@@ -2921,7 +2921,7 @@ const vistoCalls = (av.match(/marcarVisto\(\);/g)||[]).length + (av.match(/marca
 ok(/marcarVisto=\(\); marcarVisto\(\)/.test(av.replace(/\s+/g,''))===false, 'app: (sanidade da contagem)');
 ok((av.match(/marcarVisto\(\)/g)||[]).length >= 2, 'app: dois pontos de "marcar visto" (um em cada botão)');
 ok(av.includes('window.open(url'), 'app: Abrir pra baixar abre o link (baixa o .exe)');
-ok(av.includes("api('/v1/app-release',{method:'GET'}"), 'app: consulta na nuvem ao abrir');
+ok(av.includes("fetch(base+caminho,{method:'GET'})"), 'r59: consulta a OFICIAL ao abrir');
 ok(av.includes('__checagemAtualizacaoFeita'), 'app: gatilho de checagem uma única vez por abertura');
 ok(av.includes('atualização nova aparece') || av.includes('aparece uma única vez'), 'app: explicação "uma vez" no card');
 
@@ -3755,7 +3755,7 @@ ok('botão no nav-gest (Painel Gerente, primeiro da gestão)', src.indexOf("nav-
 ok('botão na tool bar clássica (topmod-painel-gerente)', src.indexOf('topmod-painel-gerente') >= 0);
 ok('navigateTo envolvido (core intocado) e render chama no view novo', src.indexOf('window.navigateTo=function(view)') >= 0 && src.indexOf('_navPG.apply') >= 0);
 ok('reinstala a cada 2s se o menu for redesenhado (padrão escola)', src.indexOf('setInterval(') >= 0 && src.indexOf('pgInstalarMenu') >= 0);
-ok('painel na 205, fila fecha com navegação fiscal firme + escuro íntegro v6.1.3 (v7.0.24: +1 no fim, função única)', manifest[manifest.length - 26] === 'painel_gerente_patch.js' && manifest[manifest.length - 25] === 'fiscal_guard_patch.js' && manifest[manifest.length - 24] === 'nf_transmissao_patch.js' && manifest[manifest.length - 23] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 22] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 21] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 20] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 19] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 18] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 17] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 16] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 15] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 14] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 13] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 12] === 'fiscal_catalogo_completo_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
+ok('painel na 205, fila fecha com navegação fiscal firme + escuro íntegro v6.1.3 (v7.0.24: +1 no fim, função única; r59: +1 no fim, setup)', manifest[manifest.length - 27] === 'painel_gerente_patch.js' && manifest[manifest.length - 26] === 'fiscal_guard_patch.js' && manifest[manifest.length - 25] === 'nf_transmissao_patch.js' && manifest[manifest.length - 24] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 23] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 22] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 21] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 20] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 19] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 18] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 17] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 16] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 15] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 14] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 13] === 'fiscal_catalogo_completo_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
 ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasReceber|parque|contratos|clientes)\.push/.test(src) && src.indexOf('db.save(') < 0);
 
 console.log('== CARIMBO 6.0.9 ==');
@@ -5049,8 +5049,8 @@ new Function('window', 'db', 'document', code)(ctx.window, ctx.db, undefined);
 const P = ctx.window.AJUSTES_V5196_PURE;
 
 console.log('== AJUSTES_V5196_PURE: hierarquia de perfis ==');
-ok('kauan => Admin', P.perfilEfetivo({ login: 'kauan', perfil: 'Qualquer' }) === 'Admin');
-ok('denivaldo => Dono', P.perfilEfetivo({ login: 'denivaldo' }) === 'Dono');
+ok('r59: nome sozinho NÃO vira Admin', P.perfilEfetivo({ login: 'kauan', perfil: 'Qualquer' }) === 'Funcionário');
+ok('r59: nome sozinho NÃO vira Dono', P.perfilEfetivo({ login: 'denivaldo' }) === 'Funcionário');
 ok('perfil Admin explícito => Admin', P.perfilEfetivo({ login: 'joao', perfil: 'Admin' }) === 'Admin');
 ok('perfil Dono explícito => Dono', P.perfilEfetivo({ login: 'maria', perfil: 'Dono' }) === 'Dono');
 ok('Comercial vira Funcionário', P.perfilEfetivo({ login: 'carlos', perfil: 'Comercial' }) === 'Funcionário');
@@ -5058,7 +5058,7 @@ ok('Financeiro vira Funcionário', P.perfilEfetivo({ login: 'ana', perfil: 'Fina
 ok('Técnico vira Funcionário', P.perfilEfetivo({ login: 'pedro', perfil: 'Técnico' }) === 'Funcionário');
 
 console.log('== AJUSTES_V5196_PURE: permissões ==');
-ok('kauan tem permissão total', P.temPermissaoTotal({ login: 'kauan' }) === true);
+ok('r59: nome sozinho NÃO tem permissão total', P.temPermissaoTotal({ login: 'kauan' }) === false);
 ok('denivaldo tem permissão total', P.temPermissaoTotal({ login: 'denivaldo', perfil: 'Dono' }) === true);
 ok('Admin tem permissão total', P.temPermissaoTotal({ login: 'x', perfil: 'Admin' }) === true);
 ok('Funcionário NÃO tem permissão total', P.temPermissaoTotal({ login: 'x', perfil: 'Funcionário' }) === false);
@@ -6067,7 +6067,7 @@ function rodar196(src, qual, usarReal) {
     confirmSistema: function () { return { then: function (cb) { cb(true); } }; }
   };
   const salvarOuNada = usarReal ? realSalvarPara(window) : undefined;
-  const sess = function () { return { usuarioId: 'u-admin', empresaId: 'e1', login: 'kauan' }; };
+  const sess = function () { return { usuarioId: 'u-admin', empresaId: 'e1', login: 'kauan', perfil: 'Admin' }; };
   avaliarArquivo(src, window, db, window.saveDB, salvarOuNada, sess);
   if (qual === 'usuario') window.excluirUsuario('u-alvo'); else window.excluirTecnico('t1');
   return { db: db, saves: chamadas.length, motivos: motivos };

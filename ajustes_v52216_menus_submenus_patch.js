@@ -20,9 +20,9 @@ function limitarNome(s, max){
 }
 
 function ehCargoAdmin(perfil, login){
+  // r59: Admin e Dono, pelo perfil (o login veio só pra compatibilidade antiga).
   var p = String(perfil==null?'':perfil).trim();
-  if(p==='Admin') return true;
-  return String(login==null?'':login).trim().toLowerCase()==='kauan';
+  return p==='Admin' || p==='Dono';
 }
 
 function clonarMenu(m){

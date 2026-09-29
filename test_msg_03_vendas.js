@@ -1478,7 +1478,7 @@ ok(g.indexOf('window.__orcResumoUltimaBaixa') >= 0, 'exposição do resumo da ú
 ok(g.indexOf('renderOrcamentos') >= 0 && g.indexOf('__v52293') >= 0, 'amarra o retrato na listagem VISÍVEL (a última que existir)');
 
 const m = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 37, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12 e, por último, a ribbon fiscal bonita v6.0.13 e a navegação+escuro v6.1.3, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24 fecha a fila);');
+ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 38, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12 e, por último, a ribbon fiscal bonita v6.0.13 e a navegação+escuro v6.1.3, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0 fecha a fila);');
 
 const v237 = fs.readFileSync('ajustes_v52237_orcamentos_menu_patch.js', 'utf8');
 ok(v237.indexOf('__orcResumoUltimaBaixa') >= 0, 'aviso "não achei" mostra a última baixa');
@@ -1538,7 +1538,7 @@ ok(p.indexOf("window.__V52295_PURE") >= 0, 'marca de diagnóstico/teste presente
 
 // regressão: bundle contém o patch por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 36] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24 fecha a fila)');
+ok(man[man.length - 37] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('__vosVendaPendente') >= 0, 'lógica presente no app.bundle.js');
 

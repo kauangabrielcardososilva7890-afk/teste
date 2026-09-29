@@ -176,8 +176,8 @@ const M=ctx.window.MENUS_ATALHOS_PURE;
 const S=ctx.window.MENUS_SUBMENUS_PURE;
 
 console.log('== SUBMENUS / OCULTOS / ATALHOS AZUL ==');
-ok('só Admin vê oculto', S.ehCargoAdmin('Admin','x')===true && S.ehCargoAdmin('Dono','denivaldo')===false && S.ehCargoAdmin('Funcionário','ana')===false);
-ok('login kauan conta como Admin', S.ehCargoAdmin('Funcionário','kauan')===true);
+ok('só Admin/Dono vê oculto', S.ehCargoAdmin('Admin','x')===true && S.ehCargoAdmin('Dono','x')===true && S.ehCargoAdmin('Funcionário','ana')===false);
+ok('r59: login não vira cargo', S.ehCargoAdmin('Funcionário','kauan')===false);
 ok('Sair não some', !!S.BLOQUEIO_OCULTAR.sair);
 
 const pad=M.menusPadrao();
@@ -254,7 +254,7 @@ const C=ctx.window.CERT_NUVEM_PURE;
 
 console.log('== MENUS / VISIBILIDADE ==');
 ok('Admin vê backup', V.podeVerBackup('Admin','x')===true);
-ok('Dono não vê backup', V.podeVerBackup('Dono','denivaldo')===false);
+ok('r59: Dono vê backup (é o dono da loja)', V.podeVerBackup('Dono','x')===true);
 ok('funcionário sem token vê Nuvem', V.podeVerNuvem('Funcionário','ana',false)===true);
 ok('funcionário com token não vê Nuvem', V.podeVerNuvem('Funcionário','ana',true)===false);
 ok('Admin com token vê Nuvem', V.podeVerNuvem('Admin','kauan',true)===true);
@@ -680,7 +680,7 @@ ok('a placa que apareceu no console é mencionada no rótulo', src.indexOf('save
 console.log('== CARIMBO 6.0.3 ==');
 ok('package.json na 6.0.3', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('manifesto já é 230 (v6.1.3 fechava a fila; v7.0.20 soma o mandar-erro, v7.0.22 o portão, v7.0.24 a função única no fim)', manifest.length >= 225 && manifest[manifest.length - 23] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 22] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 21] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 20] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 19] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 18] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 17] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 16] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 15] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 14] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 13] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 12] === 'fiscal_catalogo_completo_patch.js');
+ok('manifesto já é 231 (v6.1.3 fechava a fila; v7.0.20 soma o mandar-erro, v7.0.22 o portão, v7.0.24 a função única, r59 o setup no fim)', manifest.length >= 225 && manifest[manifest.length - 24] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 23] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 22] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 21] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 20] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 19] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 18] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 17] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 16] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 15] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 14] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 13] === 'fiscal_catalogo_completo_patch.js');
 ok('worker atualizado 5.28.3 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');

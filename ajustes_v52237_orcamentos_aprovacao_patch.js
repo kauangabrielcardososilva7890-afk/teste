@@ -17,7 +17,8 @@ var AVISO_EPSON = (window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.
 ].join('\n');
 
 var PAGES = 'https://digicopy-pix.pages.dev/orcamento.html';
-var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -244,7 +245,7 @@ function deveAplicarRespostaOrcamento(j){
 function puxarAprovacoes(){
   if(!window.DIGICOPY_CLOUD || !window.DIGICOPY_CLOUD.api) return;
   (db.orcamentos||[]).filter(function(o){ return o && o.token && o.status==='aberto'; }).slice(0,20).forEach(function(o){
-    fetch(API+'/orcamento?c='+encodeURIComponent(o.token)).then(function(r){ return r.json(); }).then(function(j){
+    fetch(apiBase()+'/orcamento?c='+encodeURIComponent(o.token)).then(function(r){ return r.json(); }).then(function(j){
       if(deveAplicarRespostaOrcamento(j)) aplicarAprovacaoRemota(Object.assign({id:o.id,token:o.token}, j));
     }).catch(function(){});
   });

@@ -14,8 +14,7 @@ function sess(){ return typeof getSession === 'function' ? getSession() : null; 
 function fold(v){ return String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
 
 function temPermissaoTotal(s){
-  const l = fold(s && (s.login || s.usuarioNome));
-  if(l === 'kauan' || l === 'denivaldo') return true;
+  // r59: só o PERFIL manda (sem nome de gente). Admin/Dono têm tudo.
   const p = String(s && s.perfil || '');
   return p === 'Admin' || p === 'Dono';
 }

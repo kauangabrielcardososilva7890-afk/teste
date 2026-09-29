@@ -6,7 +6,8 @@
 (function(){
 'use strict';
 
-const API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+const API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev'; // r59: padrão; cada instalação pode ter a sua (v5900)
+function apiBase(){ try{ if(typeof window!=='undefined'&&typeof window.DIGICOPY_API_URL==='function'){ var u=window.DIGICOPY_API_URL(); if(u) return String(u).replace(/\/+$/,''); } }catch(e){} return API_OFICIAL; }
 
 // v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
 // mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
@@ -86,7 +87,7 @@ async function api(path, options){
     }
   }catch(e){}
   let response;
-  try{ response=await fetch(API+path,opts); }
+  try{ response=await fetch(apiBase()+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
   let data=null; try{data=await response.json();}catch(e){}
   if(!response.ok){
@@ -109,7 +110,8 @@ async function api(path, options){
 }
 
 window.DIGICOPY_CLOUD_PURE={esc};
-window.DIGICOPY_CLOUD={API,token,deviceInfo,api,forgetAuth};
+window.DIGICOPY_CLOUD={token:token,deviceInfo:deviceInfo,api:api,forgetAuth:forgetAuth};
+Object.defineProperty(window.DIGICOPY_CLOUD,'API',{get:function(){return apiBase();},configurable:true}); // r59: .API acompanha a nuvem configurada
 
 // Desliga definitivamente os gatilhos da nuvem antiga. Algumas versões ainda
 // agendavam uma carga Firebase 4,5s após abrir, mesmo com o sync legado inativo.

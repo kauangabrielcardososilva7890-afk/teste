@@ -220,10 +220,10 @@
           return;
         }
 
-        var empresa = (_db.empresas && _db.empresas[0]) || { id: 'emp_digicopy', nome: 'DIGICOPY', fantasia: 'DIGICOPY', cnpj: '' };
+        var empresa = (_db.empresas && _db.empresas[0]) || { id: '', nome: '', fantasia: '', cnpj: '' }; // r59: sem empresa fictícia; setup cria a real
         var sess = {
-          empresaId: empresa.id || 'emp_digicopy',
-          empresaNome: empresa.fantasia || empresa.nome || 'DIGICOPY',
+          empresaId: empresa.id || '',
+          empresaNome: empresa.fantasia || empresa.nome || '',
           cnpj: empresa.cnpj || '',
           usuarioId: user.id || 'usr_1',
           usuarioNome: user.nome || 'Usuário',

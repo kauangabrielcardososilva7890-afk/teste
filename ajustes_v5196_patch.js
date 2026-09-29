@@ -26,21 +26,16 @@ function uidSafe(p){ return typeof uid === 'function' ? uid(p) : (p + '_' + Date
 // Lógica pura (testável)
 // ─────────────────────────────────────────────────────────────────────────
 
-// Perfil efetivo de um usuário (hierarquia do sistema).
+// Perfil efetivo de um usuário (hierarquia do sistema). r59: só o perfil manda.
 function perfilEfetivo(u){
-  const l = fold((u && (u.login || u.nome)) || '');
-  if(l === 'kauan') return 'Admin';
-  if(l === 'denivaldo') return 'Dono';
   const p = txt(u && u.perfil);
   if(p === 'Admin') return 'Admin';
   if(p === 'Dono') return 'Dono';
   return 'Funcionário';
 }
 
-// Sessão atual tem permissão total? (Admin = Kauan / Dono = Denivaldo)
+// Sessão atual tem permissão total? (só perfil Admin/Dono — r59, sem nome de gente)
 function temPermissaoTotal(s){
-  const l = fold((s && (s.login || s.usuarioNome)) || '');
-  if(l === 'kauan' || l === 'denivaldo') return true;
   const p = txt(s && s.perfil);
   return p === 'Admin' || p === 'Dono';
 }

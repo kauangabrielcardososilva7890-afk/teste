@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_09_login.js — GERADO por migrar_testes_r57.js; 6 seções (5 geradas + 1 append r58).
+// test_msg_09_login.js — GERADO por migrar_testes_r57.js; 7 seções (5 geradas + 2 appends r58+r59).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_login_dados_automaticos.js, test_ajustes_v52253.js, test_login_sem_backdoor.js, test_reclamacoes_do_dono.js, test_r54_senhas_dedup.js, test_r58_senhas_tela.js
+// Seções: test_login_dados_automaticos.js, test_ajustes_v52253.js, test_login_sem_backdoor.js, test_reclamacoes_do_dono.js, test_r54_senhas_dedup.js, test_r58_senhas_tela.js, test_r59_setup.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -45,13 +45,16 @@ ok('login compatível ignora capslock', L.loginCompativel({login:'kauan',nome:'K
 ok('login compatível por nome', L.loginCompativel({login:'kg',nome:'Kauan Gabriel'}, 'KAUAN'));
 ok('senha literal confere', L.senhaCompativel({senha:'1234'}, '1234'));
 const emp=L.escolherEmpresaPadrao(db);
-ok('cria empresa padrão', !!emp.id && db.empresas.length===1);
-const imp=L.importarFuncionariosLegados(db, emp.id);
+ok('r59: sem empresa de fábrica (setup cria a real)', emp===null && db.empresas.length===0);
+db.empresas.push({id:'emp1',nome:'Loja Teste'});
+const emp2=L.escolherEmpresaPadrao(db);
+ok('com empresa, usa a que existe', emp2 && emp2.id==='emp1');
+const imp=L.importarFuncionariosLegados(db, emp2.id);
 ok('importa funcionários como usuários', imp>=2 && db.usuarios.some(u=>u.login==='kauan'&&u.senha==='1234'&&u.perfil==='Admin'));
 ok('perfil vendedor vira comercial', db.usuarios.some(u=>u.login==='atendente'&&u.perfil==='Comercial'));
-db.usuarios.push({id:'demo2',empresaId:emp.id,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoPor:'sistema'});
-const merged=L.unirAdminDemoComOriginal(db, emp.id);
-ok('une admin demo ao original migrado', merged===1 && !db.usuarios.find(u=>u.id==='demo2'));
+db.usuarios.push({id:'demo2',empresaId:emp2.id,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoPor:'sistema'});
+const merged=L.unirAdminDemoComOriginal(db, emp2.id);
+ok('une admin demo ao original migrado', merged===1 && !db.usuarios.find(u=>u.id==='demo'));
 console.log('\nRESULTADO: Testes de login direto/dados automáticos passaram!');
 //<<<<SECAO:test_login_dados_automaticos.js:FIM>>>>
 }
@@ -596,7 +599,7 @@ ok('mestra fixa sumiu do app.js', app.indexOf('digicopy8698') < 0);
 ok('doLoginCNPJ é async e tem modo configuração', app.indexOf('async function doLoginCNPJ') >= 0 && app.indexOf('algumaTemSenha') >= 0 && app.indexOf('modoSetup') >= 0);
 ok('doLoginUser confere hash (com upgrade na transição)', app.indexOf('async function doLoginUser') >= 0 && app.indexOf('await confereSenha(senha,user)') >= 0);
 ok('saveUsuario grava hash junto', app.indexOf('async function saveUsuario') >= 0 && app.indexOf('await atualizarHashRegistro(payload,payload.senha)') >= 0);
-ok('seeds marcadas como senha padrão (troca forçada)', app.indexOf("login:'kauan'") >= 0 && (app.match(/senhaPadrao:true/g) || []).length >= 2);
+ok('r59: sem seeds de fábrica no app.js', app.indexOf("login:'kauan'") < 0 && app.indexOf("senha:'6132'") < 0 && app.indexOf('emp_digicopy') < 0);
 ok('login que vale (v52253) é async e tenta o hash', v52253.indexOf('window.doLoginUser = async function') >= 0 && v52253.indexOf('await confereSenha(senhaVal, hu)') >= 0);
 ok('login que vale faz upgrade do texto puro', v52253.indexOf('await atualizarHashRegistro(user, senhaVal)') >= 0);
 ok('recuperação no app chama a rota da nuvem', app.indexOf('senhaRecuperarCNPJ') >= 0 && app.indexOf('/v1/company-pass-liberar') >= 0);
@@ -756,4 +759,31 @@ const app = fs.readFileSync('app.js', 'utf8');
 ok('referência r54 intacta no app.js', app.indexOf('async function saveUsuario') >= 0 && app.indexOf('await atualizarHashRegistro(payload,payload.senha)') >= 0);
 console.log('\nRESULTADO: senha da tela com hash provada!');
 //<<<<SECAO:test_r58_senhas_tela.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r59_setup.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r59_setup.js:INICIO>>>>
+// TESTE r59 COMERCIAL — setup assistido: base vazia abre o setup (não o login);
+// valida, cria loja + Dono com hash e grava a nuvem. Sem fábrica.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const code5900 = fs.readFileSync('ajustes_v5900_setup_comercial_patch.js', 'utf8');
+const ctx = { window: {} };
+new Function('window', code5900)(ctx.window);
+const S = ctx.window.SETUP_COMERCIAL_PURE;
+console.log('== SETUP ASSISTIDO (r59) ==');
+ok('precisaSetup: vazia = sim', S.precisaSetup({empresas:[],usuarios:[]}) === true);
+ok('precisaSetup: sem empresa = sim', S.precisaSetup({empresas:[],usuarios:[{id:'u'}]}) === true);
+ok('precisaSetup: sem usuário = sim', S.precisaSetup({empresas:[{id:'e'}],usuarios:[]}) === true);
+ok('precisaSetup: cheia = não', S.precisaSetup({empresas:[{id:'e'}],usuarios:[{id:'u'}]}) === false);
+ok('validação pega tudo que falta', S.validarSetup({}).length === 3);
+ok('validação aprova o certo', S.validarSetup({nome:'Loja X',login:'maria',senha:'1234',apiUrl:''}).length === 0);
+ok('validação barra nuvem inválida', S.validarSetup({nome:'Loja X',login:'maria',senha:'1234',apiUrl:'banana'}).length === 1);
+ok('login interceptado (base vazia abre setup)', code5900.indexOf('window.showLogin = function(){') >= 0 && code5900.indexOf('ehSetupPendente') >= 0);
+ok('setup cria Dono (não admin de fábrica)', code5900.indexOf("perfil: 'Dono'") >= 0);
+ok('setup gera hash do admin', code5900.indexOf('await atualizarHashRegistro(u, dados.senha)') >= 0);
+ok('setup não marca senha padrão', code5900.indexOf('senhaPadrao: false') >= 0);
+ok('setup grava a nuvem', code5900.indexOf('db.config.nuvem = { apiUrl:') >= 0);
+console.log('\nRESULTADO: setup assistido provado!');
+//<<<<SECAO:test_r59_setup.js:FIM>>>>
 }

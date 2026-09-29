@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 45 seções (42 geradas + 3 appends r57+r58+r58c).
+// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 46 seções (42 geradas + 4 appends r57+r58+r58c+r59).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js, test_r58c_cartao_ancora.js
+// Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js, test_r58c_cartao_ancora.js, test_r59_nuvem_config.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -3386,4 +3386,39 @@ ok('cartão ancora na seção admin (só admin vê)', v5260.indexOf("getElementB
 ok('seção admin só renderiza para admin', nuvem.indexOf('dc-admin-result') >= 0 && /isAdmin\?/.test(nuvem));
 console.log('\nRESULTADO: cartão ancorado provado!');
 //<<<<SECAO:test_r58c_cartao_ancora.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r59_nuvem_config.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r59_nuvem_config.js:INICIO>>>>
+// TESTE r59 COMERCIAL — cada instalação tem a SUA nuvem (config), e as
+// atualizações vêm sempre da OFICIAL (atrelado ao vendedor).
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const code5900 = fs.readFileSync('ajustes_v5900_setup_comercial_patch.js', 'utf8');
+const ctx = { window: {} };
+new Function('window', code5900)(ctx.window);
+const S = ctx.window.SETUP_COMERCIAL_PURE;
+console.log('== NUVEM CONFIGURÁVEL (r59) ==');
+ok('PURE do setup existe', !!S && typeof S.resolverApiUrl === 'function');
+ok('vazio = oficial', S.resolverApiUrl({}) === 'https://digicopy-sync-api.digicopyonline.workers.dev');
+ok('cliente = cliente (tira a barra do fim)', S.resolverApiUrl({nuvem:{apiUrl:'https://digicopy-x.digicopyonline.workers.dev/'}}) === 'https://digicopy-x.digicopyonline.workers.dev');
+ok('lixo = oficial', S.resolverApiUrl({nuvem:{apiUrl:'banana'}}) === S.oficial);
+const sync = fs.readFileSync('cloudflare_sync_patch.js', 'utf8');
+ok('sync resolve por chamada', sync.indexOf('fetch(apiBase()+path,opts)') >= 0);
+ok('.API acompanha (getter)', sync.indexOf("defineProperty(window.DIGICOPY_CLOUD,'API'") >= 0);
+ok('API fixa sumiu do sync', sync.indexOf("const API = 'https://") < 0);
+const o37 = fs.readFileSync('ajustes_v52237_orcamentos_aprovacao_patch.js', 'utf8');
+const o44 = fs.readFileSync('ajustes_v52244_orcamentos_autorizar_patch.js', 'utf8');
+const o55 = fs.readFileSync('ajustes_v52255_orcamento_aprovacao_venda_patch.js', 'utf8');
+const pix = fs.readFileSync('ajustes_v52219_pix_link_publico_patch.js', 'utf8');
+ok('orçamentos resolvem por chamada', o37.indexOf('apiBase()') >= 0 && o44.indexOf('apiBase()') >= 0 && o55.indexOf('apiBase()') >= 0);
+ok('orçamentos sem API fixa', o37.indexOf("var API = 'https://") < 0 && o44.indexOf("var API = 'https://") < 0 && o55.indexOf("var API = 'https://") < 0);
+ok('pix segue a nuvem configurada', pix.indexOf('window.DIGICOPY_API_URL()') >= 0);
+const v39 = fs.readFileSync('ajustes_v52239_avisos_erro_auditoria_patch.js', 'utf8');
+ok('update checa a OFICIAL', v39.indexOf('window.DIGICOPY_API_OFICIAL') >= 0 && v39.indexOf("fetch(base+caminho,{method:'GET'})") >= 0);
+ok('update manda o CNPJ', v39.indexOf("caminho+='?cnpj='") >= 0);
+ok('cartão da nuvem no painel (admin)', code5900.indexOf('v5900-nuvem-card') >= 0);
+ok('trocar nuvem desconecta', code5900.indexOf('forgetAuth') >= 0);
+console.log('\nRESULTADO: nuvem configurável provada!');
+//<<<<SECAO:test_r59_nuvem_config.js:FIM>>>>
 }

@@ -14,7 +14,7 @@ const defaultData={
   clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], orcamentos:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[], // v5.22.68: sem técnico de demonstração. Ver TECNICOS_DEMO.
-  config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
+  config:{empresa:{nome:'',cnpj:'',fone:'',email:''}}
 };
 
 // Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
@@ -313,32 +313,20 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  // AUTORITATIVO (roda em toda carga): garante a empresa única + os 2 usuários
-  // reais com as credenciais corretas, e remove usuários de demonstração.
-  //   • Kauan     → login "kauan"     senha "6132"  perfil Admin
-  //   • Denivaldo → login "denivaldo" senha "3232"  perfil Dono
+  // r59 COMERCIAL — sem NADA de fábrica: empresa e usuários nascem no SETUP
+  // (v5900, assistência cadastra). Base vazia = setup abre em vez do login.
+  // Aqui só: limpeza de demo antiga + garantias estruturais (id/empresaId).
   db.empresas = Array.isArray(db.empresas) ? db.empresas : [];
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
   let mudou = false;
 
-  let emp = db.empresas.find(e=>e.id==='emp_digicopy')
-         || db.empresas.find(e=>/digicopy/i.test(String(e.fantasia||e.nome||'')))
-         || db.empresas[0];
-  if(!emp){
-    emp = {id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
-    db.empresas.push(emp);
-    mudou = true;
-  }
-  // Só mantém UMA empresa (a real). Empresas demo/órfãs são removidas.
+  // Só mantém UMA empresa (a primeira). Sem empresa = setup pendente.
   if(db.empresas.length > 1){
-    db.empresas = [emp];
+    db.empresas = [db.empresas[0]];
     mudou = true;
   }
+  const emp = db.empresas[0] || null;
 
-  const garantidos = [
-    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132', senhaPadrao:true},
-    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232', senhaPadrao:true}
-  ];
   const demoLogins = ['admin','carlos','ana','financeiro'];
   const demoIds = ['usr_admin'];
 
@@ -365,35 +353,14 @@ function seedData(force=false){
     return true;
   });
 
-  // Garante (cria OU corrige) os 2 usuários reais.
-  garantidos.forEach(g=>{
-    const u = db.usuarios.find(x=>String(x.login||'').toLowerCase()===g.login);
-    if(!u){
-      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,senhaPadrao:!!g.senhaPadrao,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
-      mudou = true;
-    } else {
-      if(u.id !== g.id){ u.id = g.id; mudou = true; }
-      if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
-      // v7.0.1 (23/09/2026) — A SENHA NÃO É MAIS REIMPOSTA AQUI. Antes esta
-      // linha devolvia a senha de fábrica toda vez que o sistema abria: o dono
-      // trocava a senha na tela Usuários, e na próxima carga o sistema
-      // reescrevia a senha velha por cima — a troca "não pegava" e a senha
-      // antiga (que está no histórico do repositório) continuava valendo.
-      // Agora a senha que o dono escolher manda; o padrão de fábrica só é usado
-      // na PRIMEIRA vez, quando o usuário ainda não existe (bloco de cima).
-      // r58 (auditoria, achado 7): perfil/nome/ativo NÃO são mais reimpostos —
-      // a troca na tela "não pegava" porque a carga revertia. Só id/empresaId
-      // (estruturais, bloco acima) continuam garantidos; o resto quem manda é a tela.
-    }
-  });
 
   // Qualquer usuário órfão aponta pra empresa real.
-  db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
+  if(emp) db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
 
   // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
   // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
-  ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+  if(emp) ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
       db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
@@ -538,7 +505,7 @@ function doLogout(){
 // REMOVIDO v5.20.23: "Cadastrar nova empresa" (openModalEmpresa/saveNovaEmpresa) criava
 // uma SEGUNDA empresa com id aleatorio (+ usuario admin/admin123) — quebrava a empresa
 // unica e fazia dados parecerem diferentes entre os PCs. O sistema tem UMA empresa so
-// (emp_digicopy). Dados da empresa/notinha se editam nas Configuracoes ("Dados da loja").
+// (a única, criada no setup). Dados da empresa/notinha se editam nas Configuracoes ("Dados da loja").
 
 function openModalCriarUsuarioPublic(){
   const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
@@ -2578,8 +2545,7 @@ function podeMexerSenha(){
   try{
     var s=(typeof getSession==='function')?getSession():null;
     var p=String((s&&s.perfil)||'');
-    var l=String((s&&(s.login||s.usuarioNome))||'').toLowerCase();
-    return p==='Admin'||p==='Dono'||l==='kauan'||l==='denivaldo';
+    return p==='Admin'||p==='Dono';
   }catch(e){ return false; }
 }
 function avisar(m,t){ try{ if(typeof toast==='function'){ toast(m,t||'success'); return; } }catch(e){} try{ if(typeof aviso==='function') aviso(m); }catch(e2){} }
