@@ -133,10 +133,35 @@ function parteDedup(){
   ok('desvincular solta o fantasma e mantém o registro', P.orfaoDesvincular(baseO, 'contratos', 'k1') === true && baseO.contratos[0].clienteId === null);
 }
 
+// ── RUNTIME: autocura r54b (pedido dele: resolver sozinho, sem botão) ───────
+function parteAutocura(){
+  const fakeWin = {};
+  new Function('window', 'document', v5214src)(fakeWin, undefined);
+  const P = fakeWin.CLIENTES_VISIVEIS_PURE;
+  const baseO = { clientes: [{ id: 'c1' }],
+    contratos: [{ id: 'k1', clienteId: 'fantasma' }],
+    vendas: [{ id: 'v1', clienteId: 'fantasma' }],
+    os: [{ id: 'o1', clienteId: 'c1' }] };
+  const solv = P.orfaosAutoSoltaveis(baseO);
+  ok('autocura solta órfão de venda/OS, nunca de contrato', solv.length === 1 && solv[0].ent === 'vendas');
+  ok('autocura desativa repetido exato e mantém o mais antigo', (function(){
+    const b = { usuarios: [
+      { id: 'u1', login: 'caixa', nome: 'A', ativo: true, criadoEm: '2024-01-01' },
+      { id: 'u2', login: 'CAIXA', nome: 'B', ativo: true, criadoEm: '2025-01-01' }
+    ]};
+    const g = P.usuGruposDuplicados(b.usuarios, null);
+    if(g.length !== 1) return false;
+    return P.usuDesativarRepetidos(b, ['u2'], 'u1') === 1 && b.usuarios[0].ativo === true && b.usuarios[1].ativo === false;
+  })());
+  ok('autocura roda sozinha ao abrir o banco (1 vez)', v5214src.indexOf('function autoCuraDuplicadosOrfaos(){') >= 0 && v5214src.indexOf('autoCuraDuplicadosOrfaos();') >= 0 && v5214src.indexOf('__v5214_autocura_vez') >= 0);
+  ok('login ignora inativo (desativar nunca trava ninguém)', /if\(!u \|\| !u\.ativo\) return false;/.test(v52253));
+}
+
 (async () => {
   try{
     await parteCripto();
     parteDedup();
+    parteAutocura();
   }catch(e){ console.error('  ✘ ERRO: ' + (e && e.message)); process.exit(1); }
   console.log('\nRESULTADO: ' + passou + ' verificações r54 — hash, corte, prova, dedup e backups!');
 })();

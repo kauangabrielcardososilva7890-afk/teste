@@ -8243,3 +8243,15 @@ manifest (ordem mista ajustes×não-ajustes = revisão manual UMA A UMA, sem
 shim: shim mascararia mudança real de ordem e é assim que coisa quebra em
 silêncio) + baseline + check do package.json. Apagar os 139 originais só
 depois da suíte verde na nova forma.
+
+## r54b — 29/09/2026: autocura (pedido dele: resolver sozinho, sem botão)
+Regra nova (45, proposta): autocura primeiro; botão só quando a decisão é dele.
+v5214: autoCuraDuplicadosOrfaos() 1×/abertura em aposBasePronta (try blindado):
+login repetido exato → desativa os mais novos (loginFlexivel ignora inativo,
+provado no teste — ninguém trava); órfãos fora de contratos → solta o fantasma.
+Contratos órfãos e união de clientes NÃO entram (decisão dele; botões ficam).
+Tudo na auditoria + saveDB (a correção viaja na nuvem p/ os 34 PCs).
+PURE orfaosAutoSoltaveis. Teste r54 45→49. links.js: threshold do health
+5.26.5→5.28.1 (guia honesto). Mapa regen. Bundle+sync+suite 243-0-9.
+Auditor externo = OUTRO CHAT dele (outra IA com as credenciais): rotação cobre;
+não colar as senhas NOVAS em outros chats (anula a rotação).

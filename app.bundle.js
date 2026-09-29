@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: 155d680028ab8bcc
+ * scripts: 230 | sha256: 69b5c00b5467e9cc
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -31758,8 +31758,13 @@ function orfaoDesvincular(base, ent, id){
   if(r.clienteNome!==undefined) delete r.clienteNome;
   return true;
 }
+// r54b: a autocura solta sozinha os órfãos de vendas/OS/etc. — contrato nunca
+// (contrato precisa de um cliente de verdade, e isso só o dono escolhe).
+function orfaosAutoSoltaveis(base){
+  return orfaosListar(base).filter(o=>o&&o.ent!=='contratos');
+}
 
-window.CLIENTES_VISIVEIS_PURE={empresaUnica,normalizarEmpresaClientes,pertenceEmpresa,cliNormNome,cliRefsDe,cliGruposDuplicados,cliEscolherPrincipal,cliUnir,cliUnirReversivel,cliDesfazerUniao,usuNormLogin,usuGruposDuplicados,usuDesativarRepetidos,orfaosListar,orfaoDesvincular};
+window.CLIENTES_VISIVEIS_PURE={empresaUnica,normalizarEmpresaClientes,pertenceEmpresa,cliNormNome,cliRefsDe,cliGruposDuplicados,cliEscolherPrincipal,cliUnir,cliUnirReversivel,cliDesfazerUniao,usuNormLogin,usuGruposDuplicados,usuDesativarRepetidos,orfaosListar,orfaoDesvincular,orfaosAutoSoltaveis};
 
 if(typeof document==='undefined')return;
 
@@ -31782,9 +31787,44 @@ if(typeof window.renderClientes==='function'&&!window.renderClientes.__v5214){
   window.renderClientes.__v5214=true;
 }
 
+// r54b: autocura (pedido dele 29/09: resolver sozinho em vez de botão). UMA vez
+// por abertura, só o reversível e o já-quebrado — tudo com registro na auditoria:
+//  • login repetido exato → desativa os mais novos (reativar reverte; o login
+//    ignora inativo, então ninguém é travado);
+//  • órfão fora de contratos → solta o cliente fantasma (apontava para o nada;
+//    o registro continua existindo).
+// Contratos órfãos NÃO entram: contrato precisa de um cliente de verdade, e
+// isso só o dono escolhe (botão 🔗 Vincular continua lá). União de clientes
+// também não: escolher o principal é decisão dele (botão + Desfazer).
+function autoCuraDuplicadosOrfaos(){
+  if(window.__v5214_autocura_vez) return {usuarios:0, orfaos:0};
+  window.__v5214_autocura_vez=true;
+  const feito={usuarios:0, orfaos:0};
+  try{
+    if(typeof db==='undefined'||!db) return feito;
+    const emp=empresaUnica();
+    usuGruposDuplicados(db.usuarios, emp).forEach(g=>{
+      const principal=g.itens[0];
+      const n=usuDesativarRepetidos(db, g.itens.slice(1).map(u=>u.id), principal.id);
+      if(n>0){
+        feito.usuarios+=n;
+        try{ if(typeof logAction==='function') logAction('usuario','autocura-repetido',principal.id,'Autocura desativou '+n+' cadastro(s) repetido(s) do login "'+(g.login||'')+'" (principal mantido; reativar reverte)'); }catch(eLg){}
+      }
+    });
+    const soltaveis=orfaosAutoSoltaveis(db);
+    soltaveis.forEach(o=>{ if(orfaoDesvincular(db, o.ent, o.id)) feito.orfaos++; });
+    if(feito.orfaos>0){
+      try{ if(typeof logAction==='function') logAction('sistema','autocura-orfaos','-','Autocura soltou '+feito.orfaos+' registro(s) do cliente fantasma (contratos não entram)'); }catch(eLg2){}
+    }
+    if((feito.usuarios+feito.orfaos)>0 && typeof saveDB==='function') saveDB();
+  }catch(eAuto){}
+  return feito;
+}
+
 function aposBasePronta(){
   try{
     normalizarEmpresaClientes();
+    try{ autoCuraDuplicadosOrfaos(); }catch(eAuto2){}
     if(typeof seedData==='function')seedData(false);
     if(typeof getSession==='function'&&getSession()&&typeof showApp==='function'){
       const view=document.querySelector('.view:not(.hidden)');
