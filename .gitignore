@@ -44,3 +44,4 @@ Thumbs.db
 
 # motor da nuvem compilado (só para gerar o motor_para_colar.js)
 cloudflare-worker/motor_compilado/
+.tmp_secao_*.js

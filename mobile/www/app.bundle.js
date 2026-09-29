@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 230 | sha256: 741fc9476ce2b43a
+ * scripts: 230 | sha256: f129847b44a3ef6a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28900,7 +28900,7 @@ async function renderConnected(body){
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
     (isAdmin?usoBloco:'')+linhaVersaoNuvem+blocoSoNuvem+
     detalhe+(escolher?'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)+'</div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+button('Apagar dados DESTE PC','dc-wipe-local',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Se a senha do gerente nunca foi definida, primeiro use a aba <b>Recuperar administrador</b> desta tela com o segredo configurado localmente na Cloudflare; depois, no cartão de senhas, crie uma senha do gerente. Só então reconecte com CNPJ + essa senha para transformar este PC em administrador.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
@@ -28961,6 +28961,25 @@ async function renderConnected(body){
         await renderConnected(body);
       }catch(e){
         if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não foi possível zerar');
+        setBusy(btn,false);
+      }
+    };
+    // r57 — pedido dele: "zerou a nuvem, e o PC?" Apaga os dados guardados SÓ
+    // neste computador (IndexedDB + digicopy* do navegador) e recarrega. A nuvem
+    // NÃO é mexida. Dupla confirmação, sem apagar nada sozinho nunca.
+    body.querySelector('#dc-wipe-local').onclick=async()=>{
+      const ok1=await window.confirmSistema('Isso APAGA os dados guardados NESTE computador. A NUVEM não será mexida: o que já está lá continua lá. ATENÇÃO: se este PC tem dados que NUNCA foram enviados (veja os PENDENTES acima), eles se PERDEM de vez. Se precisar, faça antes uma cópia na tela Backups. Continuar?','Apagar dados deste PC');
+      if(!ok1)return;
+      const ok2=await window.confirmSistema('Último aviso: os dados deste PC serão apagados AGORA e o sistema vai recarregar. O que estava somente aqui NÃO tem volta. Confirma?','Confirmar apagar deste PC');
+      if(!ok2)return;
+      const btn=body.querySelector('#dc-wipe-local');
+      setBusy(btn,true,'Apagando...');
+      try{
+        if(!window.DIGICOPY_INDEXED_DB||typeof window.DIGICOPY_INDEXED_DB.clearLocalData!=='function')throw new Error('Motor de dados locais não carregado.');
+        await window.DIGICOPY_INDEXED_DB.clearLocalData();
+        window.location.reload();
+      }catch(e){
+        if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não foi possível apagar');
         setBusy(btn,false);
       }
     };
