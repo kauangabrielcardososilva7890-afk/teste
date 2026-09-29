@@ -1650,7 +1650,7 @@ ok('PC com motor novo + motor de nuvem antigo volta sozinho para o ritmo normal'
    /if\(st===404\|\|st===400\)\{ canalInstantaneoParado=true; \}/.test(motor));
 ok('o canal só abre com a janela à vista (não gasta à toa)',
    /if\(typeof document!=='undefined'&&document\.hidden\)return;/.test(motor));
-ok('a nuvem carimba a versao nova do motor', /WORKER_VERSION = '5\.28\.2'/.test(worker));
+ok('a nuvem carimba a versao nova do motor', /WORKER_VERSION = '5\.28\.3'/.test(worker));
 
 console.log('\nRESULTADO: ' + passou + ' verificações — recuperação em massa segura e explicada!');
 //<<<<SECAO:test_recuperar_excluidos.js:FIM>>>>
@@ -2238,7 +2238,7 @@ ok('devolve o par que fecha o cursor',
   /proximoEntity: ultimoReg \? ultimoReg\.entity : undefined/.test(worker) &&
   /proximoId: ultimoReg \? ultimoReg\.recordId : undefined/.test(worker));
 ok('motor carimbado 5.28.3 (a versão nova tem de ser publicada para valer)',
-  /WORKER_VERSION = '5\.28\.2'/.test(worker));
+  /WORKER_VERSION = '5\.28\.3'/.test(worker));
 
 console.log('-- o PC que varre a lista --');
 ok('o PC manda o cursor composto quando o motor devolve o par',
