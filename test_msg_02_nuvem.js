@@ -3453,5 +3453,17 @@ ok('painel trata devicesData null', v27R59c.indexOf('if(!devicesData)throw') >= 
 ok('painel trata data null', v27R59c.indexOf("limit=80',{method:'GET'});\n      if(!data)throw") >= 0);
 console.log('\nRESULTADO: api nula não quebra provado!');
 //<<<<SECAO:test_r59c_api_null.js:FIM>>>>
+//<<<<SECAO:test_r59d_gravacao.js:INICIO>>>>
+console.log('== GRAVAÇÃO NÃO SOME (r59d) ==');
+const appR59d = fs.readFileSync('app.js', 'utf8');
+ok('wipe não trava o clearing (finally)', idbR59b.indexOf('}finally{clearing=false;}') >= 0);
+ok('writeNow publica saúde do IDB (ok)', idbR59b.indexOf('window.__dbIDBOk=true;') >= 0);
+ok('writeNow publica saúde do IDB (falha)', idbR59b.indexOf('window.__dbIDBOk=false;') >= 0);
+ok('fila tolera entidade ruim (tick)', appR59d.indexOf('try{__gravarParteCampo(campo, q);}catch(eP){q.falhouQuota=true;}') >= 0);
+ok('dreno tolera entidade ruim', appR59d.indexOf('try{__gravarParteCampo(campo, __saveQ);}catch(eP){__saveQ.falhouQuota=true;}') >= 0);
+ok('falha dupla vai ALTO (alerta uma vez)', appR59d.indexOf('window.__avisouDisco') >= 0);
+ok('falha dupla relata à nuvem', appR59d.indexOf("RS59d('falha','gravacao local falhou: quota+idb')") >= 0);
+console.log('\nRESULTADO: gravação não some provado!');
+//<<<<SECAO:test_r59d_gravacao.js:FIM>>>>
 //<<<<SECAO:test_r59_nuvem_config.js:FIM>>>>
 }

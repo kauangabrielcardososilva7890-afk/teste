@@ -220,6 +220,12 @@ function __finalizarSaveQ(q){
   });
   try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes:q.partes})); }catch(eMan){}
   window.__dbPersistidoOk=!q.falhouQuota;
+  // r59d: FALHA DUPLA (navegador cheio + ampliado falhou) = vai ALTO: alerta + relato. Suprimir aqui foi o sumico silencioso.
+  if(q.falhouQuota && window.__dbIDBOk===false && !window.__avisouDisco){
+    window.__avisouDisco=true;
+    try{ if(typeof window.lfbAlert==='function') window.lfbAlert('O navegador recusou a gravação (espaço cheio?) e o armazenamento ampliado também falhou. Feche as outras abas do DIGICOPY e tente salvar de novo — não recarregue antes.', 'Não gravou'); }catch(eA){}
+    try{ var RS59d=(typeof window!=='undefined'&&window.DIGICOPY_CLOUD_SYNC&&typeof window.DIGICOPY_CLOUD_SYNC.relatarSaude==='function')?window.DIGICOPY_CLOUD_SYNC.relatarSaude:null; if(RS59d)RS59d('falha','gravacao local falhou: quota+idb'); }catch(eR){}
+  }
   if(q.falhouQuota && !window.__indexedDbPersistAtivo && !window.__avisouQuota){
     window.__avisouQuota=true;
     if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio e o armazenamento ampliado não iniciou. Não feche antes de exportar um backup.','error');
@@ -231,7 +237,7 @@ function __saveTick(){
   const t0=Date.now();
   while(q.keys.length && (Date.now()-t0)<25){
     const campo=q.keys.shift();
-    __gravarParteCampo(campo, q);
+    try{__gravarParteCampo(campo, q);}catch(eP){q.falhouQuota=true;} // r59d: entidade ruim nao mata a fila
   }
   if(q.keys.length){ setTimeout(__saveTick, 0); return; }
   __finalizarSaveQ(q);
@@ -242,7 +248,7 @@ function __saveTick(){
 // Drena a fila de forma SÍNCRONA (usado ao fechar a aba, antes de imprimir/recarregar)
 function __saveDBDrainSync(){
   if(!__saveQ) return;
-  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); __gravarParteCampo(campo, __saveQ); }
+  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); try{__gravarParteCampo(campo, __saveQ);}catch(eP){__saveQ.falhouQuota=true;} } // r59d
   __finalizarSaveQ(__saveQ);
   __saveQ=null;
 }

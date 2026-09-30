@@ -57,7 +57,7 @@ function signature(campo,value,manifest){
   try{return 'j:'+hashText(JSON.stringify(value));}catch(e){return 't:'+Date.now();}
 }
 async function writeNow(reason){
-  if(clearing||typeof db==='undefined'||!valid(db))return false;
+  if(clearing||typeof db==='undefined'||!valid(db)){window.__dbIDBOk=false;return false;}
   try{
     const x=await open(),keys=Object.keys(db),manifest=localManifest(),hashes={},changed=[];
     keys.forEach(campo=>{const h=signature(campo,db[campo],manifest);hashes[campo]=h;if(entityHashes[campo]!==h)changed.push(campo);});
@@ -70,9 +70,9 @@ async function writeNow(reason){
       tx.objectStore(META).put({key:KEY,savedAt,reason:reason||'save',keys,hashes});
       tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Gravação incremental cancelada'));
     });
-    entityHashes=hashes;lastSavedAt=savedAt;lastError='';window.__dbPersistidoOk=true;
+    entityHashes=hashes;lastSavedAt=savedAt;lastError='';window.__dbPersistidoOk=true;window.__dbIDBOk=true;
     return {ok:true,changed:changed.length,removed:removed.length};
-  }catch(e){lastError=e&&e.message?e.message:String(e);console.error('[DIGICOPY][IndexedDB] falha ao salvar',e);return false;}
+  }catch(e){lastError=e&&e.message?e.message:String(e);window.__dbIDBOk=false;console.error('[DIGICOPY][IndexedDB] falha ao salvar',e);return false;}
 }
 function schedule(reason){if(writeTimer)clearTimeout(writeTimer);writeTimer=setTimeout(()=>{writeTimer=null;writeNow(reason);},500);}
 async function boot(){
@@ -114,11 +114,13 @@ async function readRecoverySnapshot(name){
 }
 async function clearLocalData(){
   clearing=true;if(writeTimer)clearTimeout(writeTimer);
+  try{
   try{if(database){database.close();database=null;}}catch(e){}
   await new Promise((resolve,reject)=>{const req=indexedDB.deleteDatabase(IDB_NAME);req.onsuccess=()=>resolve(true);req.onerror=()=>reject(req.error||new Error('Falha ao apagar IndexedDB'));req.onblocked=()=>reject(new Error('Feche as outras abas do DIGICOPY e tente novamente.'));});
   try{Object.keys(localStorage).forEach(k=>{if(/^digicopy/i.test(k))localStorage.removeItem(k);});}catch(e){}
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
+  }finally{clearing=false;} // r59d: wipe bloqueado NAO trava as gravacoes (era o sumico silencioso)
 }
 // v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
 // recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode

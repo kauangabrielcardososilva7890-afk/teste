@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 231 | sha256: 32ec65730b5a60d4
+ * scripts: 231 | sha256: 6962ad40392b0aa7
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -472,6 +472,12 @@ function __finalizarSaveQ(q){
   });
   try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes:q.partes})); }catch(eMan){}
   window.__dbPersistidoOk=!q.falhouQuota;
+  // r59d: FALHA DUPLA (navegador cheio + ampliado falhou) = vai ALTO: alerta + relato. Suprimir aqui foi o sumico silencioso.
+  if(q.falhouQuota && window.__dbIDBOk===false && !window.__avisouDisco){
+    window.__avisouDisco=true;
+    try{ if(typeof window.lfbAlert==='function') window.lfbAlert('O navegador recusou a gravação (espaço cheio?) e o armazenamento ampliado também falhou. Feche as outras abas do DIGICOPY e tente salvar de novo — não recarregue antes.', 'Não gravou'); }catch(eA){}
+    try{ var RS59d=(typeof window!=='undefined'&&window.DIGICOPY_CLOUD_SYNC&&typeof window.DIGICOPY_CLOUD_SYNC.relatarSaude==='function')?window.DIGICOPY_CLOUD_SYNC.relatarSaude:null; if(RS59d)RS59d('falha','gravacao local falhou: quota+idb'); }catch(eR){}
+  }
   if(q.falhouQuota && !window.__indexedDbPersistAtivo && !window.__avisouQuota){
     window.__avisouQuota=true;
     if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio e o armazenamento ampliado não iniciou. Não feche antes de exportar um backup.','error');
@@ -483,7 +489,7 @@ function __saveTick(){
   const t0=Date.now();
   while(q.keys.length && (Date.now()-t0)<25){
     const campo=q.keys.shift();
-    __gravarParteCampo(campo, q);
+    try{__gravarParteCampo(campo, q);}catch(eP){q.falhouQuota=true;} // r59d: entidade ruim nao mata a fila
   }
   if(q.keys.length){ setTimeout(__saveTick, 0); return; }
   __finalizarSaveQ(q);
@@ -494,7 +500,7 @@ function __saveTick(){
 // Drena a fila de forma SÍNCRONA (usado ao fechar a aba, antes de imprimir/recarregar)
 function __saveDBDrainSync(){
   if(!__saveQ) return;
-  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); __gravarParteCampo(campo, __saveQ); }
+  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); try{__gravarParteCampo(campo, __saveQ);}catch(eP){__saveQ.falhouQuota=true;} } // r59d
   __finalizarSaveQ(__saveQ);
   __saveQ=null;
 }
@@ -28441,7 +28447,7 @@ function signature(campo,value,manifest){
   try{return 'j:'+hashText(JSON.stringify(value));}catch(e){return 't:'+Date.now();}
 }
 async function writeNow(reason){
-  if(clearing||typeof db==='undefined'||!valid(db))return false;
+  if(clearing||typeof db==='undefined'||!valid(db)){window.__dbIDBOk=false;return false;}
   try{
     const x=await open(),keys=Object.keys(db),manifest=localManifest(),hashes={},changed=[];
     keys.forEach(campo=>{const h=signature(campo,db[campo],manifest);hashes[campo]=h;if(entityHashes[campo]!==h)changed.push(campo);});
@@ -28454,9 +28460,9 @@ async function writeNow(reason){
       tx.objectStore(META).put({key:KEY,savedAt,reason:reason||'save',keys,hashes});
       tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Gravação incremental cancelada'));
     });
-    entityHashes=hashes;lastSavedAt=savedAt;lastError='';window.__dbPersistidoOk=true;
+    entityHashes=hashes;lastSavedAt=savedAt;lastError='';window.__dbPersistidoOk=true;window.__dbIDBOk=true;
     return {ok:true,changed:changed.length,removed:removed.length};
-  }catch(e){lastError=e&&e.message?e.message:String(e);console.error('[DIGICOPY][IndexedDB] falha ao salvar',e);return false;}
+  }catch(e){lastError=e&&e.message?e.message:String(e);window.__dbIDBOk=false;console.error('[DIGICOPY][IndexedDB] falha ao salvar',e);return false;}
 }
 function schedule(reason){if(writeTimer)clearTimeout(writeTimer);writeTimer=setTimeout(()=>{writeTimer=null;writeNow(reason);},500);}
 async function boot(){
@@ -28498,11 +28504,13 @@ async function readRecoverySnapshot(name){
 }
 async function clearLocalData(){
   clearing=true;if(writeTimer)clearTimeout(writeTimer);
+  try{
   try{if(database){database.close();database=null;}}catch(e){}
   await new Promise((resolve,reject)=>{const req=indexedDB.deleteDatabase(IDB_NAME);req.onsuccess=()=>resolve(true);req.onerror=()=>reject(req.error||new Error('Falha ao apagar IndexedDB'));req.onblocked=()=>reject(new Error('Feche as outras abas do DIGICOPY e tente novamente.'));});
   try{Object.keys(localStorage).forEach(k=>{if(/^digicopy/i.test(k))localStorage.removeItem(k);});}catch(e){}
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
+  }finally{clearing=false;} // r59d: wipe bloqueado NAO trava as gravacoes (era o sumico silencioso)
 }
 // v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
 // recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode
