@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 231 | sha256: cc17e771eb6eec93
+ * scripts: 231 | sha256: 32ec65730b5a60d4
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28717,7 +28717,8 @@ async function renderDisconnected(body){
   let health;
   try{ health=await api('/health',{method:'GET'}); }
   catch(e){ body.innerHTML=message(e.message,'error'); return; }
-  if(!health.ready){ body.innerHTML=message('A API ainda não está pronta. Banco: '+health.database+' • esquema: '+(health.schemaVersion||'pendente')+' • segurança: '+(health.setupConfigured?'ok':'pendente'),'error'); return; }
+  // r59c: api() pode resolver null (corpo nao-JSON) -> trata como nao-pronta
+  if(!health||!health.ready){ body.innerHTML=message('A API ainda não está pronta. Banco: '+health.database+' • esquema: '+(health.schemaVersion||'pendente')+' • segurança: '+(health.setupConfigured?'ok':'pendente'),'error'); return; }
   body.innerHTML=message('Nuvem pronta. Este computador ainda não foi autorizado. Nenhum dado local será enviado antes da autorização.','info')+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button id="dc-tab-first" style="padding:8px 12px;border-radius:9px;background:#e8eaf8;color:#0a1e8a;font-weight:800">Primeiro computador</button><button id="dc-tab-recover" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Recuperar administrador</button></div><div id="dc-form"></div>';
   const form=body.querySelector('#dc-form');
@@ -28734,7 +28735,7 @@ async function renderDisconnected(body){
     const deviceName=form.querySelector('#dc-name').value.trim(),secret=form.querySelector('#dc-secret').value;
     if(!deviceName||!secret){result.innerHTML=message('Preencha o nome e o segredo.','error');return;}
     setBusy(btn,true,'Ativando...');
-    try{const data=await api(path,{method:'POST',headers:{'x-setup-secret':secret},body:JSON.stringify({deviceName})});form.querySelector('#dc-secret').value='';storeAuth(data);await renderConnected(body);}
+    try{const data=await api(path,{method:'POST',headers:{'x-setup-secret':secret},body:JSON.stringify({deviceName})});if(!data)throw new Error('nuvem devolveu vazio — tenta de novo');form.querySelector('#dc-secret').value='';storeAuth(data);await renderConnected(body);}
     catch(e){result.innerHTML=message(e.message,'error');setBusy(btn,false);}
   }
   body.querySelector('#dc-tab-first').onclick=first;
@@ -28751,7 +28752,7 @@ async function renderConnected(body){
   // v6.1.5 — contagem FRESCA: o painel e o check-up mostram o que a nuvem tem
   // AGORA (antes vinha uma contagem guardada de até 10 minutos atrás e parecia
   // que a sincronização não tinha subido nada).
-  try{status=await api('/v1/status?fresh=1',{method:'GET'});}
+  try{status=await api('/v1/status?fresh=1',{method:'GET'});if(!status)throw new Error('nuvem devolveu vazio — tenta de novo');}
   catch(e){
     if(e.status===401){forgetAuth();return renderDisconnected(body);}
     // A tela da nuvem não pode ficar refém da contagem de registros. Se a conta
@@ -28867,7 +28868,7 @@ async function renderConnected(body){
     body.querySelector('#dc-list-devices').onclick=async()=>{
       adminResult.innerHTML=message('Carregando aparelhos...','info');
       try{
-        const data=await api('/v1/devices',{method:'GET'});
+        const data=await api('/v1/devices',{method:'GET'});if(!data)throw new Error('nuvem devolveu vazio — tenta de novo'); // r59c
         adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')
           /* v5.24.34 — pedido dele: excluir o lixo antigo DE VEZ (só depois de bloqueado) */
           +(x.id!==data.currentDeviceId?'<button class="dc-del-device" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#be123c;color:#fff;font-weight:800">Excluir de vez</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
@@ -28931,7 +28932,7 @@ async function renderConnected(body){
     body.querySelector('#dc-list-deleted').onclick=async()=>{
       adminResult.innerHTML=message('Carregando itens excluídos...','info');
       try{
-        const data=await api('/v1/deleted?limit=100',{method:'GET'});
+        const data=await api('/v1/deleted?limit=100',{method:'GET'});if(!data)throw new Error('nuvem devolveu vazio — tenta de novo'); // r59c
         adminResult.innerHTML=(data.records||[]).map(x=>{const label=(x.data&&(x.data.nome||x.data.descricao||x.data.numero||x.data.login))||x.recordId;return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #fecaca;background:#fffafa;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(label)+'</b><small style="display:block;color:#64748b">'+esc(x.entity)+' • versão '+esc(x.version)+'</small></div><button class="dc-restore" data-entity="'+esc(x.entity)+'" data-id="'+esc(x.recordId)+'" style="padding:6px 9px;border-radius:8px;background:#166534;color:white;font-weight:800">Restaurar</button></div>';}).join('')||message('Nenhum item excluído.','ok');
         adminResult.querySelectorAll('.dc-restore').forEach(btn=>btn.onclick=async()=>{
           const ok=await window.confirmSistema('Restaurar este registro de '+btn.dataset.entity+'?','Restaurar registro');if(!ok)return;
@@ -29970,6 +29971,7 @@ async function passeRapidoInicial(call){
   try{
     do{
       const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursor)+'&limit='+POR_PAGINA,{method:'GET'}));
+      if(!data)break; // r59c: api() resolve null quando o corpo nao e JSON — pagina vazia nao e crash
       for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
       cursor=Number(data.nextCursor)||cursor;
       paginas++;
@@ -30017,6 +30019,7 @@ async function pullAll(opcoes){
   do{
     const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     if(geracaoPull!==estadoGeracao)return changed;   // página pré-wipe: não aplica nem anda o cursor novo
+    if(data==null)throw new Error("nuvem devolveu resposta vazia (tenta de novo)"); // r59c: antes quebrava em data.changes com null
     for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
     const cursorAntes=Number(state.cursor)||0;
     state.cursor=Number(data.nextCursor)||cursorAntes;
@@ -33083,6 +33086,7 @@ async function openWatch(target,filterId){
   target.innerHTML='<div style="padding:10px;color:#1e40af">Carregando acompanhamento...</div>';
   try{
     const devicesData=await api('/v1/devices',{method:'GET'});
+    if(!devicesData)throw new Error('nuvem devolveu vazio — tenta de novo'); // r59c: null nao e crash criptico
     let events=[];
     try{
       const q=filterId?'?limit=50&deviceId='+encodeURIComponent(filterId):'?limit=50';
@@ -33093,6 +33097,7 @@ async function openWatch(target,filterId){
       const cursor=Number(status.totals&&status.totals.cursor)||0;
       const from=Math.max(0,cursor-80);
       const data=await api('/v1/changes?cursor='+from+'&limit=80',{method:'GET'});
+      if(!data)throw new Error('nuvem devolveu vazio — tenta de novo'); // r59c: null nao e crash criptico
       const names={};(devicesData.devices||[]).forEach(d=>{names[d.id]=d.name;});
       events=(data.changes||[]).slice().reverse().map(c=>({
         seq:c.seq,entity:c.entity,recordId:c.recordId,operation:c.operation,

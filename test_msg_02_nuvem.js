@@ -3437,5 +3437,21 @@ ok('worker sem fallback público', wkR59b.indexOf("|| 'digicopy'") < 0);
 ok('worker falha fechado', wkR59b.indexOf('SEM_SEGREDO') >= 0);
 ok('colar falha fechado', colaR59b.indexOf('SEM_SEGREDO') >= 0);
 console.log('\nRESULTADO: pepper fechado provado!');
+//<<<<SECAO:test_r59c_api_null.js:INICIO>>>>
+console.log('== API NULA NÃO QUEBRA (r59c) ==');
+const dsR59c = fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8');
+const v27R59c = fs.readFileSync('ajustes_v5227_nuvem_acompanhamento_patch.js', 'utf8');
+ok('contrato do api(): corpo não-JSON resolve null', sync.indexOf('let data=null; try{data=await response.json();}catch(e){}') >= 0);
+ok('passe rápido tolera data null', dsR59c.indexOf('if(!data)break; // r59c') >= 0);
+ok('loop principal falha ALTO com data null', dsR59c.indexOf('if(data==null)throw new Error(') >= 0);
+ok('setup trata health null como não-pronta', sync.indexOf('if(!health||!health.ready){') >= 0);
+ok('ativação falha ALTO com data null', sync.indexOf("JSON.stringify({deviceName})});if(!data)throw") >= 0);
+ok('contagem falha ALTO com status null', sync.indexOf("fresh=1',{method:'GET'});if(!status)throw") >= 0);
+ok('aparelhos falham ALTO com data null', sync.indexOf("/v1/devices',{method:'GET'});if(!data)throw") >= 0);
+ok('excluídos falham ALTO com data null', sync.indexOf("/v1/deleted?limit=100',{method:'GET'});if(!data)throw") >= 0);
+ok('painel trata devicesData null', v27R59c.indexOf('if(!devicesData)throw') >= 0);
+ok('painel trata data null', v27R59c.indexOf("limit=80',{method:'GET'});\n      if(!data)throw") >= 0);
+console.log('\nRESULTADO: api nula não quebra provado!');
+//<<<<SECAO:test_r59c_api_null.js:FIM>>>>
 //<<<<SECAO:test_r59_nuvem_config.js:FIM>>>>
 }

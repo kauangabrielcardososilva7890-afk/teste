@@ -992,6 +992,7 @@ async function passeRapidoInicial(call){
   try{
     do{
       const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursor)+'&limit='+POR_PAGINA,{method:'GET'}));
+      if(!data)break; // r59c: api() resolve null quando o corpo nao e JSON — pagina vazia nao e crash
       for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
       cursor=Number(data.nextCursor)||cursor;
       paginas++;
@@ -1039,6 +1040,7 @@ async function pullAll(opcoes){
   do{
     const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     if(geracaoPull!==estadoGeracao)return changed;   // página pré-wipe: não aplica nem anda o cursor novo
+    if(data==null)throw new Error("nuvem devolveu resposta vazia (tenta de novo)"); // r59c: antes quebrava em data.changes com null
     for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
     const cursorAntes=Number(state.cursor)||0;
     state.cursor=Number(data.nextCursor)||cursorAntes;

@@ -71,6 +71,7 @@ async function openWatch(target,filterId){
   target.innerHTML='<div style="padding:10px;color:#1e40af">Carregando acompanhamento...</div>';
   try{
     const devicesData=await api('/v1/devices',{method:'GET'});
+    if(!devicesData)throw new Error('nuvem devolveu vazio — tenta de novo'); // r59c: null nao e crash criptico
     let events=[];
     try{
       const q=filterId?'?limit=50&deviceId='+encodeURIComponent(filterId):'?limit=50';
@@ -81,6 +82,7 @@ async function openWatch(target,filterId){
       const cursor=Number(status.totals&&status.totals.cursor)||0;
       const from=Math.max(0,cursor-80);
       const data=await api('/v1/changes?cursor='+from+'&limit=80',{method:'GET'});
+      if(!data)throw new Error('nuvem devolveu vazio — tenta de novo'); // r59c: null nao e crash criptico
       const names={};(devicesData.devices||[]).forEach(d=>{names[d.id]=d.name;});
       events=(data.changes||[]).slice().reverse().map(c=>({
         seq:c.seq,entity:c.entity,recordId:c.recordId,operation:c.operation,
