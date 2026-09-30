@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 231 | sha256: 6962ad40392b0aa7
+ * scripts: 232 | sha256: 3390f02b983d530b
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28512,6 +28512,25 @@ async function clearLocalData(){
   return true;
   }finally{clearing=false;} // r59d: wipe bloqueado NAO trava as gravacoes (era o sumico silencioso)
 }
+// r60 v7.3.0 (30/09/2026) — APAGAR JUNTO: o botão "apagar dados deste PC" avisa
+// as outras abas pelo BroadcastChannel; cada aba limpa o próprio banco e recarrega.
+// Sem isso a 2ª aba segurava o banco aberto e o delete falhava ("feche as outras
+// abas"). Quem recebe o aviso também recarrega — e o login se cura sozinho (v5901).
+try{
+  if(typeof BroadcastChannel!=='undefined'){
+    var __wipeCanal=new BroadcastChannel('digicopy-wipe-local');
+    __wipeCanal.onmessage=function(ev){
+      if(!ev||!ev.data||ev.data.__wipe!=='digicopy') return;
+      try{ __wipeCanal.close(); }catch(e0){}
+      try{ if(window.__digicopyWipeCanal===__wipeCanal) window.__digicopyWipeCanal=null; }catch(e0b){}
+      (async function(){
+        try{ await clearLocalData(); }catch(e2){}
+        try{ window.location.reload(); }catch(e3){}
+      })();
+    };
+    window.__digicopyWipeCanal=window.__digicopyWipeCanal||__wipeCanal;
+  }
+}catch(eWipe){}
 // v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
 // recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode
 // estar numa destas fotos).
@@ -28925,6 +28944,13 @@ async function renderConnected(body){
       if(!ok2)return;
       const btn=body.querySelector('#dc-wipe-local');
       setBusy(btn,true,'Apagando...');
+      // r60 — avisa as outras abas primeiro e espera 1,5 s (elas fecham o banco
+      // e recarregam); sem isso o delete falhava com outra aba aberta (onblocked).
+      try{
+        var __wc=window.__digicopyWipeCanal||(typeof BroadcastChannel!=='undefined'?new BroadcastChannel('digicopy-wipe-local'):null);
+        if(__wc){ __wc.postMessage({__wipe:'digicopy',quando:Date.now()}); }
+      }catch(eBc){}
+      await new Promise(function(r){ setTimeout(r,1500); });
       try{
         if(!window.DIGICOPY_INDEXED_DB||typeof window.DIGICOPY_INDEXED_DB.clearLocalData!=='function')throw new Error('Motor de dados locais não carregado.');
         await window.DIGICOPY_INDEXED_DB.clearLocalData();
@@ -59970,9 +59996,8 @@ try{
 // Sites que já vêm prontos (a lista fica salva NA NUVEM, em db.config.navSites,
 // em todos os PCs dele — nada guardado na memória do navegador (regra #44 SÓ NUVEM):
 //   • NFS-e (prefeitura)  — EMISSOR DELE: sistema.sintesetecnologia.com.br (Janaúba)
-//   • NFS-e Nacional      — Emissor Nacional (gov.br/nfse), obrigatório para
-//                           ME/EPP do Simples Nacional desde 01/09/2026
 //   • WhatsApp Web
+//   (30/09/2026, pedido do dono: o Emissor Nacional saiu do menu — ele não usa.)
 //   • e quantos ele quiser: botão "＋ Site" (adicionar), ✏ (editar nome/
 //     endereço) e 🗑 (apagar), tudo gravado na nuvem na hora.
 //
@@ -59999,9 +60024,7 @@ var NAV_SITES_PADRAO=[
     // https) — por isso o main.js tem uma lista branca só para esse endereço.
     url:'http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba',
     dica:'Emissor da NFS-e de Janaúba (Sintese Tecnologia) — o mesmo que você usa hoje. A tela abre aqui dentro, sem sair do sistema.' },
-  { id:'nfse-nacional', nome:'NFS-e Nacional',
-    url:'https://www.nfse.gov.br/EmissorNacional/',
-    dica:'Emissor Nacional da NFS-e (gov.br/nfse) — obrigatório para ME/EPP do Simples Nacional desde 01/09/2026, inclusive em município com emissor próprio.' },
+  // (30/09/2026: 'nfse-nacional' removido a pedido do dono — quem tinha salvo, o filtro do navSites esconde.)
   { id:'whatsapp', nome:'WhatsApp Web',
     url:'https://web.whatsapp.com',
     dica:'WhatsApp dentro do sistema: leia o QR Code uma vez com o celular; depois ele entra sozinho neste PC.' }
@@ -60039,7 +60062,7 @@ function navSitesPadrao(){
   return NAV_SITES_PADRAO.map(function(s){ return {id:s.id,nome:s.nome,url:s.url,dica:s.dica||''}; });
 }
 
-// A lista do dono manda; sem lista salva, entram os 3 padrões.
+// A lista do dono manda; sem lista salva, entram os 2 padrões.
 // Qualquer site é normalizado na leitura (endereço velho/colado não derruba nada).
 function navSites(db){
   var salvo=(db&&db.config&&Array.isArray(db.config.navSites))?db.config.navSites:null;
@@ -60047,6 +60070,7 @@ function navSites(db){
   var usados={}, lista=[];
   salvo.forEach(function(s){
     if(!s) return;
+    if(navLimpar(s.id)==='nfse-nacional') return;
     var url=navNormalizarUrl(s.url);
     if(!url) return;
     var id=navLimpar(s.id)||navIdNovo(s.nome||'site',usados);
@@ -60112,12 +60136,7 @@ function navPassos(url){
     return ['Abra a NFS-e aqui dentro e faça o login do emissor (esta janela guarda a sessão neste PC).',
             'Emita a nota normalmente — os dados do cliente você copia da ficha dele no sistema.',
             'Para imprimir ou salvar o PDF, use Ctrl+P: a impressão sai limpa, sem cabeçalho do navegador.',
-            'Empresa do Simples também pode emitir no Emissor Nacional (aba "NFS-e Nacional") — as duas estão aqui para você comparar.'];
-  }
-  if(/nfse\.gov\.br/.test(u)){
-    return ['Entre com o certificado A1 (o mesmo da NF-e) ou com a conta gov.br.',
-            'Emita a NFS-e/DPS normalmente — o padrão nacional vale em todo o país.',
-            'Dúvida de qual usar? A aba "NFS-e (prefeitura)" é o emissor municipal que você já usa hoje.'];
+            'Precisou de outro emissor? Use o botão ＋ Site e adicione o endereço dele.'];
   }
   if(/whatsapp\.com/.test(u)){
     return ['Leia o QR Code uma vez com o celular; depois esta janela entra sozinha neste PC.',
@@ -60346,6 +60365,7 @@ function navRender(){
   navMontarNavegador(site);
   navRecarregarZoom();
   navBotoes();
+  try{ navAtualizarMenu(); }catch(e){}
 }
 
 function navBotoes(){
@@ -60448,7 +60468,7 @@ window.navegadorRemoverSite=function(id){
 window.navegadorRestaurarPadrao=function(){
   var b=banco(); if(b){ b.config=b.config||{}; b.config.navSites=navSitesPadrao(); try{ if(typeof saveDB==='function') saveDB(); }catch(e){} }
   NAV_ATUAL.id='nfse-prefeitura'; navRender();
-  tn('Lista de sites voltou ao padrão (prefeitura, NFS-e Nacional e WhatsApp).','success');
+  tn('Lista de sites voltou ao padrão (prefeitura e WhatsApp).','success');
 };
 
 // navigateTo aprende a tela (mesma regra das outras salas: Central, Orçamentos…)
@@ -60486,7 +60506,6 @@ function navInstalarMenu(){
       mod.innerHTML='<button onclick="navegadorAbrir()" title="Navegador dentro do sistema: NFS-e da prefeitura, WhatsApp Web e outros sites"><i class="ph ph-globe"></i>Navegador</button>'+
         '<div class="module-menu" id="menu-navegador">'+
           '<button onclick="navegadorAbrirSite(\'nfse-prefeitura\')"><i class="ph ph-receipt"></i>NFS-e (prefeitura)</button>'+
-          '<button onclick="navegadorAbrirSite(\'nfse-nacional\')"><i class="ph ph-stamp"></i>NFS-e Nacional</button>'+
           '<button onclick="navegadorAbrirSite(\'whatsapp\')"><i class="ph ph-whatsapp-logo"></i>WhatsApp Web</button>'+
           '<button onclick="navegadorAbrir();setTimeout(function(){var b=document.getElementById(\'nav-novo\');if(b)b.click();},60)"><i class="ph ph-plus-circle"></i>Adicionar site</button>'+
         '</div>';
@@ -60495,6 +60514,40 @@ function navInstalarMenu(){
       if(alvo&&alvo.parentNode) alvo.parentNode.insertBefore(mod,alvo);
       else toolbar.appendChild(mod);
     }
+    try{ navPonteMenu(); navAtualizarMenu(); }catch(e2){}
+  }catch(e){}
+}
+
+// 30/09/2026, pedido do dono: o submenu do Navegador mostra TODOS os sites
+// (padrões + os que ele adicionou pelo ＋ Site), igual WhatsApp/prefeitura.
+// Só mexe no DOM quando a lista mudou (assinatura) — nunca fecha o menu sozinho.
+var NAV_MENU_ASSINATURA='';
+function navEscAspas(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function navAtualizarMenu(){
+  var menu=document.getElementById('menu-navegador'); if(!menu) return;
+  var lista=null;
+  try{ lista=navSites(banco()); }catch(e){ lista=null; }
+  if(!lista||!lista.length){ try{ lista=navSitesPadrao(); }catch(e2){ return; } }
+  var ass=lista.map(function(s){ return s.id+'='+s.nome; }).join('|');
+  if(ass===NAV_MENU_ASSINATURA) return;
+  NAV_MENU_ASSINATURA=ass;
+  var h='';
+  lista.forEach(function(s){
+    var ic=(s.id==='nfse-prefeitura')?'ph-receipt':((s.id==='whatsapp')?'ph-whatsapp-logo':'ph-globe');
+    h+='<button onclick="navegadorAbrirSite(\''+navEscAspas(s.id)+'\')"><i class="ph '+ic+'"></i>'+esc(s.nome)+'</button>';
+  });
+  h+='<button onclick="navegadorAbrir();setTimeout(function(){var b=document.getElementById(\'nav-novo\');if(b)b.click();},60)"><i class="ph ph-plus-circle"></i>Adicionar site</button>';
+  menu.innerHTML=h;
+}
+
+// 30/09/2026: ponte invisível anti-fecho — o mouse indo do botão até o menu
+// passava por 5px de vazio e o submenu fechava sozinho. Só no Navegador.
+function navPonteMenu(){
+  try{
+    if(document.getElementById('nav-ponte-css')) return;
+    var st=document.createElement('style'); st.id='nav-ponte-css';
+    st.textContent='#topmod-navegador .module-menu::before{content:"";position:absolute;top:-10px;left:0;right:0;height:10px;}';
+    document.head.appendChild(st);
   }catch(e){}
 }
 
@@ -61864,15 +61917,129 @@ else v5900ligar();
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5900_setup_comercial_patch.js", e); }
 ;
 
+/* ===== ajustes_v5901_login_retry_nuvem_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// ajustes_v5901_login_retry_nuvem_patch.js — r60 v7.3.0 (30/09/2026)
+// O LOGIN QUE SE CURA SOZINHO. Por quê: PC limpo (ctrl+shift+delete) ou PC novo
+// não tem o usuário na base local — e o login falhava ("não existe neste PC"),
+// mandando o dono criar o usuário de novo em cada PC. Agora o login tenta,
+// não acha, PUXA DA NUVEM sozinho e tenta de novo — sem ir em Config.
+// Pedido do dono (print 30/09/2026: 'Usuário "kauan" não existe neste PC').
+//
+// Como funciona: embrulha window.doLoginUser (do v52253). Antes de chamar o
+// original, confere se o usuário existe no db local (MESMA comparação do
+// v52253: login, nome ou primeiro nome, com fold). Se não existe E tem token
+// da nuvem E não está no meio de outra puxada → avisa ("buscando na nuvem…"),
+// roda um ciclo do sync (tick 'login-retry', limite 15 s) e chama o original,
+// que agora encontra o usuário que acabou de chegar. O original continua
+// mandando em tudo (senha, inativo, upgrade de hash): este patch só garante
+// que a tentativa aconteça com a base atualizada. Sem token ou sem rede, o
+// comportamento é o de antes (o aviso original aparece) — nunca trava o login.
+//
+// PURE (testável em Node, sem DOM): LOGIN_RETRY_NUVEM_PURE.precisaPuxar.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if(typeof window==='undefined') return;
+  if(window.__v5901loginretry) return;
+  window.__v5901loginretry=true;
+
+  /* LOGIN_RETRY_NUVEM_PURE_START */
+  function precisaPuxar(o){
+    o=o||{};
+    return !o.achou && !!o.token && !o.tentando;
+  }
+  /* LOGIN_RETRY_NUVEM_PURE_END */
+  window.LOGIN_RETRY_NUVEM_PURE={ precisaPuxar:precisaPuxar };
+
+  var TENTANDO=false;
+
+  function temToken(){
+    try{
+      return !!(window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.token &&
+        window.DIGICOPY_CLOUD.token());
+    }catch(e){ return false; }
+  }
+
+  // Existe no PC? Mesma comparação do diagnostico do v52253 (login/nome/1º nome).
+  function achaLocal(loginVal){
+    try{
+      var dbw=null;
+      try{ dbw=(typeof db!=='undefined')?db:(window.db||null); }catch(e){ dbw=window.db||null; }
+      var usuarios=(dbw&&dbw.usuarios)||[];
+      var ff=(typeof fold==='function')?fold:function(s){ return String(s||'').toLowerCase().trim(); };
+      var alvo=ff(loginVal);
+      if(!alvo) return false;
+      for(var i=0;i<usuarios.length;i++){
+        var u=usuarios[i]; if(!u) continue;
+        var cL=ff(u.login), cN=ff(u.nome), cF=(cN.split(/\s+/)[0]||'');
+        if(alvo===cL||alvo===cN||alvo===cF) return true;
+      }
+      return false;
+    }catch(e){ return false; }
+  }
+
+  function espera(ms){ return new Promise(function(res){ setTimeout(res,ms); }); }
+
+  async function puxarDaNuvem(){
+    try{
+      var sync=window.DIGICOPY_CLOUD_SYNC;
+      if(!sync||typeof sync.tick!=='function') return false;
+      var r=await Promise.race([
+        sync.tick('login-retry'),
+        espera(15000).then(function(){ return 'tempo'; })
+      ]);
+      return r!=='tempo';
+    }catch(e){ return false; }
+  }
+
+  function instalar(){
+    try{
+      var orig=window.doLoginUser;
+      if(typeof orig!=='function'||orig.__v5901) return !!orig;
+      var embrulho=async function(){
+        try{
+          var uInput=document.getElementById('login-user');
+          var loginVal=String(uInput?(uInput.value||''):'').trim();
+          if(loginVal && precisaPuxar({ achou:achaLocal(loginVal), token:temToken(), tentando:TENTANDO })){
+            TENTANDO=true;
+            try{ if(typeof toast==='function') toast('Usuário não está neste PC — buscando na nuvem…','info'); }catch(eT){}
+            await puxarDaNuvem();
+            TENTANDO=false;
+          }
+        }catch(e){ TENTANDO=false; }
+        return orig.apply(this,arguments);
+      };
+      embrulho.__v5901=true;
+      window.doLoginUser=embrulho;
+      return true;
+    }catch(e){ return false; }
+  }
+
+  if(!instalar()){
+    var tent=0;
+    var t=setInterval(function(){
+      tent++;
+      try{ if(instalar()||tent>150) clearInterval(t); }catch(e){ clearInterval(t); }
+    },200);
+  }
+
+  // Debug/teste manual no console: loginRetryNuvem.puxarDaNuvem()
+  window.loginRetryNuvem={ instalar:instalar, puxarDaNuvem:puxarDaNuvem, precisaPuxar:precisaPuxar };
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5901_login_retry_nuvem_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 231;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 232;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 231 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 232 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

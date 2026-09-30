@@ -680,7 +680,7 @@ ok('a placa que apareceu no console é mencionada no rótulo', src.indexOf('save
 console.log('== CARIMBO 6.0.3 ==');
 ok('package.json na 6.0.3', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('manifesto já é 231 (v6.1.3 fechava a fila; v7.0.20 soma o mandar-erro, v7.0.22 o portão, v7.0.24 a função única, r59 o setup no fim)', manifest.length >= 225 && manifest[manifest.length - 24] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 23] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 22] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 21] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 20] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 19] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 18] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 17] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 16] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 15] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 14] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 13] === 'fiscal_catalogo_completo_patch.js');
+ok('manifesto já é 232 (v6.1.3 fechava a fila; v7.0.20 soma o mandar-erro, v7.0.22 o portão, v7.0.24 a função única, r59 o setup no fim; r60 o login-retry no fim)', manifest.length >= 225 && manifest[manifest.length - 25] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 24] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 23] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 22] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 21] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 20] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 19] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 18] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 17] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 16] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 15] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 14] === 'fiscal_catalogo_completo_patch.js');
 ok('worker atualizado 5.28.4 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');
@@ -1192,7 +1192,7 @@ if (false) { // ═══ test_navegador_embutido.js (inerte: só parse, nunca e
 //
 // Este teste trava:
 //   1) o módulo novo existir, com a parte pura (endereço, lista de sites) certa;
-//   2) os sites que nascem prontos (prefeitura/NFS-e, NFS-e Nacional, WhatsApp);
+//   2) os sites que nascem prontos (prefeitura/NFS-e e WhatsApp — o Nacional saiu 30/09/2026);
 //   3) a lista ficar na NUVEM (db.config.navSites) — nunca em localStorage;
 //   4) o programa do PC abrir navegador de VERDADE (webview travada em main.js);
 //   5) fora do programa do PC nunca ficar tela branca (aviso + abrir em janela);
@@ -1233,12 +1233,12 @@ ok(P.navNormalizarUrl('') === '', 'vazio continua vazio (a tela avisa, não abre
 
 console.log('\n== 3) Os sites que nascem prontos ==');
 const padrao = P.navSitesPadrao();
-ok(padrao.length === 3, 'nascem 3 sites: prefeitura, NFS-e Nacional e WhatsApp');
+ok(padrao.length === 2, 'nascem 2 sites: prefeitura e WhatsApp (Nacional saiu 30/09/2026)');
 ok(!!P.navSiteAchar(padrao, 'nfse-prefeitura'), 'tem o atalho da NFS-e da prefeitura');
-ok(!!P.navSiteAchar(padrao, 'nfse-nacional'), 'tem o Emissor Nacional (Simples Nacional é obrigado desde 01/09/2026)');
+ok(!P.navSiteAchar(padrao, 'nfse-nacional'), 'o Emissor Nacional NAO nasce mais (removido a pedido do dono)');
 ok(!!P.navSiteAchar(padrao, 'whatsapp'), 'tem o WhatsApp Web');
 ok(/^https:\/\//.test(P.navSiteAchar(padrao, 'whatsapp').url), 'o WhatsApp abre em endereço seguro (https)');
-ok(P.navSiteAchar(padrao, 'nfse-nacional').url.indexOf('nfse.gov.br') >= 0, 'o endereço do Emissor Nacional é o do gov.br');
+ok(P.navSites({ config: { navSites: [{ id: 'nfse-nacional', nome: 'Nacional', url: 'https://www.nfse.gov.br/x' }, { id: 'meu', nome: 'Meu', url: 'https://exemplo.com' }] } }).length === 1, 'quem tinha o Nacional salvo nao ve mais ele (filtro 30/09/2026)');
 ok(P.navSiteAchar(padrao, 'nfse-prefeitura').url.indexOf('sintesetecnologia.com.br') >= 0, 'a NFS-e da prefeitura abre no emissor que ELE usa (Sintese/Janaúba)');
 ok(P.navSiteAchar(padrao, 'nfse-prefeitura').url.indexOf('Param=Janauba') >= 0, 'e já com o parâmetro da cidade (Param=Janauba)');
 ok(P.navNormalizarUrl(P.navSiteAchar(padrao, 'nfse-prefeitura').url) === P.navSiteAchar(padrao, 'nfse-prefeitura').url, 'o endereço http do emissor é aceito como está (não vira busca)');
@@ -1253,10 +1253,10 @@ ok(P.navPassos('https://exemplo.com').length === 0, 'site qualquer não ganha pa
 console.log('\n== 4) A lista mora na NUVEM (nada no PC) ==');
 const dbTeste = { config: {} };
 const lista = P.navSitesSalvar(dbTeste, padrao.concat([{ id: '', nome: 'Site do contador', url: 'contador.com.br' }]));
-ok(Array.isArray(dbTeste.config.navSites) && dbTeste.config.navSites.length === 4, 'salvar grava em db.config.navSites (é isso que sobe para a nuvem)');
-ok(lista[3].url === 'https://contador.com.br', 'site novo já sai com endereço normalizado (https)');
-ok(P.navSites(dbTeste).length === 4, 'ler de volta devolve os 4 (a lista do dono manda)');
-ok(P.navSites({ config: {} }).length === 3, 'sem lista salva, voltam os 3 padrões');
+ok(Array.isArray(dbTeste.config.navSites) && dbTeste.config.navSites.length === 3, 'salvar grava em db.config.navSites (é isso que sobe para a nuvem)');
+ok(lista[2].url === 'https://contador.com.br', 'site novo já sai com endereço normalizado (https)');
+ok(P.navSites(dbTeste).length === 3, 'ler de volta devolve os 4 (a lista do dono manda)');
+ok(P.navSites({ config: {} }).length === 2, 'sem lista salva, voltam os 3 padrões');
 ok(P.navNormalizarUrl('') === '' && P.navIdNovo('', {}) === 'site', 'nome/id vazio não gera site fantasma');
 const idA = P.navIdNovo('NFS-e da Prefeitura', {});
 ok(idA === 'nfs-e-da-prefeitura', 'id do site vira texto limpo (sem acento nem espaço)');
@@ -1296,6 +1296,10 @@ ok(/ensureView\('navegador'\)/.test(modulo), 'a tela entra no mesmo lugar das ou
 ok(/navigateTo\.__v6107nav|navigateTo=function/.test(modulo), 'navigateTo aprende a tela nova (sem quebrar as antigas)');
 ok(/navegadorAbrirSite\('nfse-prefeitura'\)/.test(modulo), 'o menu abre direto na NFS-e da prefeitura');
 ok(/ph-whatsapp-logo/.test(modulo), 'o menu tem o ícone do WhatsApp');
+ok(modulo.indexOf('function navAtualizarMenu') >= 0, 'o submenu e dinamico (mostra os sites que ele adicionou)');
+ok(modulo.indexOf('NAV_MENU_ASSINATURA') >= 0, 'o submenu so redesenha quando a lista muda (nunca fecha sozinho)');
+ok(modulo.indexOf('NFS-e Nacional</button>') < 0, 'o Nacional sumiu do submenu (removido 30/09/2026)');
+ok(modulo.indexOf('nav-ponte-css') >= 0, 'tem a ponte invisivel anti-fecho no submenu do Navegador');
 ok(/navAuditoria\('site-adicionado'/.test(modulo), 'adicionar site fica registrado na Auditoria (como o fiscal)');
 ok(/nav-gest/.test(modulo) && /module-row|classic-toolbar-scroll/.test(modulo), 'o item de menu entra na barra de cima e no menu lateral');
 

@@ -383,6 +383,13 @@ async function renderConnected(body){
       if(!ok2)return;
       const btn=body.querySelector('#dc-wipe-local');
       setBusy(btn,true,'Apagando...');
+      // r60 — avisa as outras abas primeiro e espera 1,5 s (elas fecham o banco
+      // e recarregam); sem isso o delete falhava com outra aba aberta (onblocked).
+      try{
+        var __wc=window.__digicopyWipeCanal||(typeof BroadcastChannel!=='undefined'?new BroadcastChannel('digicopy-wipe-local'):null);
+        if(__wc){ __wc.postMessage({__wipe:'digicopy',quando:Date.now()}); }
+      }catch(eBc){}
+      await new Promise(function(r){ setTimeout(r,1500); });
       try{
         if(!window.DIGICOPY_INDEXED_DB||typeof window.DIGICOPY_INDEXED_DB.clearLocalData!=='function')throw new Error('Motor de dados locais não carregado.');
         await window.DIGICOPY_INDEXED_DB.clearLocalData();

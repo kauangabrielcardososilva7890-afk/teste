@@ -20,9 +20,8 @@
 // Sites que já vêm prontos (a lista fica salva NA NUVEM, em db.config.navSites,
 // em todos os PCs dele — nada guardado na memória do navegador (regra #44 SÓ NUVEM):
 //   • NFS-e (prefeitura)  — EMISSOR DELE: sistema.sintesetecnologia.com.br (Janaúba)
-//   • NFS-e Nacional      — Emissor Nacional (gov.br/nfse), obrigatório para
-//                           ME/EPP do Simples Nacional desde 01/09/2026
 //   • WhatsApp Web
+//   (30/09/2026, pedido do dono: o Emissor Nacional saiu do menu — ele não usa.)
 //   • e quantos ele quiser: botão "＋ Site" (adicionar), ✏ (editar nome/
 //     endereço) e 🗑 (apagar), tudo gravado na nuvem na hora.
 //
@@ -49,9 +48,7 @@ var NAV_SITES_PADRAO=[
     // https) — por isso o main.js tem uma lista branca só para esse endereço.
     url:'http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba',
     dica:'Emissor da NFS-e de Janaúba (Sintese Tecnologia) — o mesmo que você usa hoje. A tela abre aqui dentro, sem sair do sistema.' },
-  { id:'nfse-nacional', nome:'NFS-e Nacional',
-    url:'https://www.nfse.gov.br/EmissorNacional/',
-    dica:'Emissor Nacional da NFS-e (gov.br/nfse) — obrigatório para ME/EPP do Simples Nacional desde 01/09/2026, inclusive em município com emissor próprio.' },
+  // (30/09/2026: 'nfse-nacional' removido a pedido do dono — quem tinha salvo, o filtro do navSites esconde.)
   { id:'whatsapp', nome:'WhatsApp Web',
     url:'https://web.whatsapp.com',
     dica:'WhatsApp dentro do sistema: leia o QR Code uma vez com o celular; depois ele entra sozinho neste PC.' }
@@ -89,7 +86,7 @@ function navSitesPadrao(){
   return NAV_SITES_PADRAO.map(function(s){ return {id:s.id,nome:s.nome,url:s.url,dica:s.dica||''}; });
 }
 
-// A lista do dono manda; sem lista salva, entram os 3 padrões.
+// A lista do dono manda; sem lista salva, entram os 2 padrões.
 // Qualquer site é normalizado na leitura (endereço velho/colado não derruba nada).
 function navSites(db){
   var salvo=(db&&db.config&&Array.isArray(db.config.navSites))?db.config.navSites:null;
@@ -97,6 +94,7 @@ function navSites(db){
   var usados={}, lista=[];
   salvo.forEach(function(s){
     if(!s) return;
+    if(navLimpar(s.id)==='nfse-nacional') return;
     var url=navNormalizarUrl(s.url);
     if(!url) return;
     var id=navLimpar(s.id)||navIdNovo(s.nome||'site',usados);
@@ -162,12 +160,7 @@ function navPassos(url){
     return ['Abra a NFS-e aqui dentro e faça o login do emissor (esta janela guarda a sessão neste PC).',
             'Emita a nota normalmente — os dados do cliente você copia da ficha dele no sistema.',
             'Para imprimir ou salvar o PDF, use Ctrl+P: a impressão sai limpa, sem cabeçalho do navegador.',
-            'Empresa do Simples também pode emitir no Emissor Nacional (aba "NFS-e Nacional") — as duas estão aqui para você comparar.'];
-  }
-  if(/nfse\.gov\.br/.test(u)){
-    return ['Entre com o certificado A1 (o mesmo da NF-e) ou com a conta gov.br.',
-            'Emita a NFS-e/DPS normalmente — o padrão nacional vale em todo o país.',
-            'Dúvida de qual usar? A aba "NFS-e (prefeitura)" é o emissor municipal que você já usa hoje.'];
+            'Precisou de outro emissor? Use o botão ＋ Site e adicione o endereço dele.'];
   }
   if(/whatsapp\.com/.test(u)){
     return ['Leia o QR Code uma vez com o celular; depois esta janela entra sozinha neste PC.',
@@ -396,6 +389,7 @@ function navRender(){
   navMontarNavegador(site);
   navRecarregarZoom();
   navBotoes();
+  try{ navAtualizarMenu(); }catch(e){}
 }
 
 function navBotoes(){
@@ -498,7 +492,7 @@ window.navegadorRemoverSite=function(id){
 window.navegadorRestaurarPadrao=function(){
   var b=banco(); if(b){ b.config=b.config||{}; b.config.navSites=navSitesPadrao(); try{ if(typeof saveDB==='function') saveDB(); }catch(e){} }
   NAV_ATUAL.id='nfse-prefeitura'; navRender();
-  tn('Lista de sites voltou ao padrão (prefeitura, NFS-e Nacional e WhatsApp).','success');
+  tn('Lista de sites voltou ao padrão (prefeitura e WhatsApp).','success');
 };
 
 // navigateTo aprende a tela (mesma regra das outras salas: Central, Orçamentos…)
@@ -536,7 +530,6 @@ function navInstalarMenu(){
       mod.innerHTML='<button onclick="navegadorAbrir()" title="Navegador dentro do sistema: NFS-e da prefeitura, WhatsApp Web e outros sites"><i class="ph ph-globe"></i>Navegador</button>'+
         '<div class="module-menu" id="menu-navegador">'+
           '<button onclick="navegadorAbrirSite(\'nfse-prefeitura\')"><i class="ph ph-receipt"></i>NFS-e (prefeitura)</button>'+
-          '<button onclick="navegadorAbrirSite(\'nfse-nacional\')"><i class="ph ph-stamp"></i>NFS-e Nacional</button>'+
           '<button onclick="navegadorAbrirSite(\'whatsapp\')"><i class="ph ph-whatsapp-logo"></i>WhatsApp Web</button>'+
           '<button onclick="navegadorAbrir();setTimeout(function(){var b=document.getElementById(\'nav-novo\');if(b)b.click();},60)"><i class="ph ph-plus-circle"></i>Adicionar site</button>'+
         '</div>';
@@ -545,6 +538,40 @@ function navInstalarMenu(){
       if(alvo&&alvo.parentNode) alvo.parentNode.insertBefore(mod,alvo);
       else toolbar.appendChild(mod);
     }
+    try{ navPonteMenu(); navAtualizarMenu(); }catch(e2){}
+  }catch(e){}
+}
+
+// 30/09/2026, pedido do dono: o submenu do Navegador mostra TODOS os sites
+// (padrões + os que ele adicionou pelo ＋ Site), igual WhatsApp/prefeitura.
+// Só mexe no DOM quando a lista mudou (assinatura) — nunca fecha o menu sozinho.
+var NAV_MENU_ASSINATURA='';
+function navEscAspas(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function navAtualizarMenu(){
+  var menu=document.getElementById('menu-navegador'); if(!menu) return;
+  var lista=null;
+  try{ lista=navSites(banco()); }catch(e){ lista=null; }
+  if(!lista||!lista.length){ try{ lista=navSitesPadrao(); }catch(e2){ return; } }
+  var ass=lista.map(function(s){ return s.id+'='+s.nome; }).join('|');
+  if(ass===NAV_MENU_ASSINATURA) return;
+  NAV_MENU_ASSINATURA=ass;
+  var h='';
+  lista.forEach(function(s){
+    var ic=(s.id==='nfse-prefeitura')?'ph-receipt':((s.id==='whatsapp')?'ph-whatsapp-logo':'ph-globe');
+    h+='<button onclick="navegadorAbrirSite(\''+navEscAspas(s.id)+'\')"><i class="ph '+ic+'"></i>'+esc(s.nome)+'</button>';
+  });
+  h+='<button onclick="navegadorAbrir();setTimeout(function(){var b=document.getElementById(\'nav-novo\');if(b)b.click();},60)"><i class="ph ph-plus-circle"></i>Adicionar site</button>';
+  menu.innerHTML=h;
+}
+
+// 30/09/2026: ponte invisível anti-fecho — o mouse indo do botão até o menu
+// passava por 5px de vazio e o submenu fechava sozinho. Só no Navegador.
+function navPonteMenu(){
+  try{
+    if(document.getElementById('nav-ponte-css')) return;
+    var st=document.createElement('style'); st.id='nav-ponte-css';
+    st.textContent='#topmod-navegador .module-menu::before{content:"";position:absolute;top:-10px;left:0;right:0;height:10px;}';
+    document.head.appendChild(st);
   }catch(e){}
 }
 

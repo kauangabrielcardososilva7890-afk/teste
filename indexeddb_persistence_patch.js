@@ -122,6 +122,25 @@ async function clearLocalData(){
   return true;
   }finally{clearing=false;} // r59d: wipe bloqueado NAO trava as gravacoes (era o sumico silencioso)
 }
+// r60 v7.3.0 (30/09/2026) — APAGAR JUNTO: o botão "apagar dados deste PC" avisa
+// as outras abas pelo BroadcastChannel; cada aba limpa o próprio banco e recarrega.
+// Sem isso a 2ª aba segurava o banco aberto e o delete falhava ("feche as outras
+// abas"). Quem recebe o aviso também recarrega — e o login se cura sozinho (v5901).
+try{
+  if(typeof BroadcastChannel!=='undefined'){
+    var __wipeCanal=new BroadcastChannel('digicopy-wipe-local');
+    __wipeCanal.onmessage=function(ev){
+      if(!ev||!ev.data||ev.data.__wipe!=='digicopy') return;
+      try{ __wipeCanal.close(); }catch(e0){}
+      try{ if(window.__digicopyWipeCanal===__wipeCanal) window.__digicopyWipeCanal=null; }catch(e0b){}
+      (async function(){
+        try{ await clearLocalData(); }catch(e2){}
+        try{ window.location.reload(); }catch(e3){}
+      })();
+    };
+    window.__digicopyWipeCanal=window.__digicopyWipeCanal||__wipeCanal;
+  }
+}catch(eWipe){}
 // v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
 // recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode
 // estar numa destas fotos).

@@ -191,10 +191,14 @@ ok('nenhum Admin ATIVO no banco → nem outro login entra pelo fallback', PURE.l
 const srcLogin = fs.readFileSync('ajustes_v52253_login_tela_branca_patch.js', 'utf8');
 ok('doLoginUser usa a função corrigida (mesma do teste)', /LOGIN_TELA_BRANCA_V52253_PURE\.loginFlexivel\(loginVal, senhaVal, usuarios\)/.test(srcLogin));
 
-// A parte mais importante: 5 arquivos do bundle definem window.doLoginUser e
-// quem manda é o ÚLTIMO da ordem de carga. Se um patch novo (ou uma
+// A parte mais importante: vários arquivos do bundle definem window.doLoginUser
+// e quem manda é o ÚLTIMO da ordem de carga. Se um patch novo (ou uma
 // reordenação do manifest) passar na frente deste, a correção deixa de valer
 // EM SILÊNCIO. Esta verificação existe pra isso nunca acontecer sem avisar.
+// r60 v7.3.0 — EXCEÇÃO HONESTA: o v5901 (login que se cura sozinho) é o último
+// DE PROPÓSITO, mas ele NÃO decide login: só puxa da nuvem e ENTREGA tudo ao
+// original (v52253). As 3 verificações abaixo travam isso: o corrigido continua
+// na cadeia, o último é um dos dois, e o v5901 nunca encosta em senha.
 const manifest = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 const entradas = Array.isArray(manifest) ? manifest : (manifest.scripts || manifest.files || []);
 const arquivos = entradas.map(e => typeof e === 'string' ? e : (e.file || e.nome || e.path || ''));
@@ -202,9 +206,17 @@ const definem = arquivos.filter(f => {
   try{ return /window\.doLoginUser\s*=/.test(fs.readFileSync(f, 'utf8')); }catch(e){ return false; }
 });
 ok('existem vários patches definindo doLoginUser (por isso a ordem importa)', definem.length >= 1);
-ok('o ÚLTIMO doLoginUser do bundle é o corrigido (ajustes_v52253)',
-   definem[definem.length - 1] === 'ajustes_v52253_login_tela_branca_patch.js');
+ok('o corrigido continua na cadeia (ajustes_v52253)', definem.indexOf('ajustes_v52253_login_tela_branca_patch.js') >= 0);
+const ultimoLogin = definem[definem.length - 1];
+ok('o ÚLTIMO doLoginUser é o corrigido ou o v5901 (que delega a ele)',
+   ultimoLogin === 'ajustes_v52253_login_tela_branca_patch.js' ||
+   ultimoLogin === 'ajustes_v5901_login_retry_nuvem_patch.js');
 console.log('     (ordem encontrada: ' + definem.join(' → ') + ')');
+if(definem.indexOf('ajustes_v5901_login_retry_nuvem_patch.js') >= 0){
+  const src5901 = fs.readFileSync('ajustes_v5901_login_retry_nuvem_patch.js', 'utf8');
+  ok('v5901 ENTREGA tudo ao login corrigido (orig.apply)', src5901.indexOf('orig.apply(this,arguments)') >= 0);
+  ok('v5901 nunca encosta em senha (não decide login)', semComentarios(src5901).toLowerCase().indexOf('senha') < 0);
+}
 
 console.log('== 2) LOGIN CNPJ: não reativa usuário e não sobrescreve a senha do dono ==');
 
@@ -793,4 +805,34 @@ ok('gate lê o token do aparelho', code5900.indexOf('DIGICOPY_CLOUD') >= 0 && co
 console.log('\nRESULTADO: setup com token provado!');
 console.log('\nRESULTADO: setup assistido provado!');
 //<<<<SECAO:test_r59_setup.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r60_login_retry.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r60_login_retry.js:INICIO>>>>
+// TESTE r60 v7.3.0 — O LOGIN QUE SE CURA SOZINHO (print 30/09: 'kauan não existe
+// neste PC' depois de limpar o navegador). Prova: decisão pura certa, embrulho
+// instalado no doLoginUser, puxada com limite (nunca trava o login), no bundle.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const code = fs.readFileSync('ajustes_v5901_login_retry_nuvem_patch.js', 'utf8');
+console.log('== LOGIN QUE SE CURA SOZINHO (r60) ==');
+// decisão pura: só puxa quando (não achou) E (tem token) E (não está puxando)
+const ctx = { window: {} };
+ctx.window.doLoginUser = function(){}; // espião: instalar() embrulha na hora (sem timer)
+new Function('window', code)(ctx.window);
+const P = ctx.window.LOGIN_RETRY_NUVEM_PURE;
+ok('PURE exportada', !!P && typeof P.precisaPuxar === 'function');
+ok('não achou + token + livre = PUXA', P.precisaPuxar({achou:false,token:true,tentando:false}) === true);
+ok('achou = não puxa', P.precisaPuxar({achou:true,token:true,tentando:false}) === false);
+ok('sem token = não puxa (aviso original)', P.precisaPuxar({achou:false,token:false,tentando:false}) === false);
+ok('já puxando = não puxa de novo', P.precisaPuxar({achou:false,token:true,tentando:true}) === false);
+ok('sem args = não puxa (fail-safe)', P.precisaPuxar(null) === false);
+ok('embrulha o doLoginUser', ctx.window.doLoginUser.__v5901 === true);
+ok('avisa que está buscando na nuvem', code.indexOf('buscando na nuvem') >= 0);
+ok('puxa com ciclo do sync', code.indexOf("tick('login-retry')") >= 0);
+ok('puxada tem limite de 15 s (nunca trava o login)', code.indexOf('15000') >= 0);
+ok('compara igual ao v52253 (login/nome/1º nome)', code.indexOf('cN.split') >= 0);
+ok('está no bundle', fs.readFileSync('bundle-manifest.json','utf8').indexOf('ajustes_v5901_login_retry_nuvem_patch.js') >= 0);
+console.log('\nRESULTADO: login que se cura provado!');
+//<<<<SECAO:test_r60_login_retry.js:FIM>>>>
 }

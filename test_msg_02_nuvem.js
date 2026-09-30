@@ -3467,3 +3467,28 @@ console.log('\nRESULTADO: gravação não some provado!');
 //<<<<SECAO:test_r59d_gravacao.js:FIM>>>>
 //<<<<SECAO:test_r59_nuvem_config.js:FIM>>>>
 }
+
+if (false) { // ═══ test_r60_wipe_junto.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r60_wipe_junto.js:INICIO>>>>
+// TESTE r60 v7.3.0 — APAGAR JUNTO (30/09: o wipe falhava com 2 abas abertas).
+// Prova: o botão avisa as outras abas e espera; cada aba limpa e recarrega;
+// NUVEM intacta; sem BroadcastChannel o comportamento antigo continua valendo.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const code = fs.readFileSync('cloudflare_sync_patch.js', 'utf8');
+const idb = fs.readFileSync('indexeddb_persistence_patch.js', 'utf8');
+console.log('== APAGAR JUNTO (r60) ==');
+const ini = code.indexOf("querySelector('#dc-wipe-local').onclick");
+ok('handler do botão existe', ini >= 0);
+const fim = code.indexOf('// v5.22.74', ini);
+const h = fim > ini ? code.slice(ini, fim) : '';
+ok('botão avisa as outras abas (BroadcastChannel)', h.indexOf("BroadcastChannel('digicopy-wipe-local')") >= 0);
+ok('botão espera 1,5 s antes de apagar', h.indexOf('setTimeout(r,1500)') >= 0);
+ok('outra aba: ouve o canal', idb.indexOf("new BroadcastChannel('digicopy-wipe-local')") >= 0);
+ok('outra aba: limpa o próprio banco', idb.indexOf('await clearLocalData()') >= 0);
+ok('outra aba: recarrega depois', idb.indexOf('window.location.reload()') >= 0);
+ok('NUVEM intacta (nada de /v1/* no wipe)', h.indexOf('/v1/') < 0 && idb.indexOf('digicopy-wipe-local') >= 0);
+ok('sem BroadcastChannel não quebra (guarda typeof)', idb.indexOf("typeof BroadcastChannel!=='undefined'") >= 0);
+console.log('\nRESULTADO: apagar junto provado!');
+//<<<<SECAO:test_r60_wipe_junto.js:FIM>>>>
+}
