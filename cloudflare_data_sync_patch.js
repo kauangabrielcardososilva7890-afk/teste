@@ -335,6 +335,11 @@ function definicoes(){
   if(typeof db==='undefined'||!db)return mapa;
   for(const chave of Object.keys(db)){
     if(mapa[chave]||NAO_SINCRONIZA.has(chave))continue;
+    // r61 v7.3.1 (P0 30/09: tempestade de modais "nuvem recusou") — chave local
+    // (comeca com __) NUNCA viaja: e guarda so deste PC (__orcBloqueio,
+    // __orcExcluidos) e o motor nem aceita entidade comecando com _ (ENTITY_RE
+    // exige letra). Antes, cada ciclo enfileirava, recusava e abria um modal.
+    if(chave.indexOf('__')===0)continue;
     const valor=db[chave];
     if(Array.isArray(valor))mapa[chave]='array';
     else if(valor&&typeof valor==='object')mapa[chave]='map';
@@ -1451,6 +1456,7 @@ async function pushOutbox(){
           continue; // não entra no "remove": fica na outbox e reenvia no próximo lote
         }
         rememberConflict(item,result);
+        state.known[item.key]=true;state.hashes[item.key]=item.hash;   // r61: cedeu de vez — mesmos bytes nao voltam a fila
         limparMarcaDeExclusao(item.key);   // a nuvem não aceitou: não fica insistindo
         try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('info','Havia uma alteração mais nova na nuvem ('+(item.mutation&&item.mutation.entity)+'). Se faltar algo, refaça a última edição.',{tipo:'sync'}); }catch(e){}
         remove.add(item.mutation.mutationId);
@@ -1459,13 +1465,22 @@ async function pushOutbox(){
         // v7.0.18 — RECUSA DA NUVEM NUNCA MAIS EM SILÊNCIO (defeito provado: o item
         // era descartado sem nenhum aviso e, no SÓ NUVEM, sumia ao fechar e reabrir).
         // O registro continua na tela (está na base local); ele precisa saber que NÃO subiu.
+        // r61 v7.3.1 (P0 30/09) — mas NUNCA de modal: window.toast com 'error'
+        // vira lfbAlert (v5171) e cada item recusado abria um modal bloqueante —
+        // com a fila recusada todo ciclo, era tempestade infinita em cima do login.
+        // Agora: 1 recado no SINO (entregue pos-login se nao houver sessao) e a
+        // chave marcada como conhecida — bytes identicos nao reenchem a fila
+        // (recusa e deterministica; se o dado MUDAR, o hash muda e tenta de novo).
         try{
           const codigoErro=(result.error&&(result.error.codigo||result.error.code))||'recusado';
           const onde=(item.mutation&&item.mutation.entity)||'?';
           relatarSaude('recusado',onde+' '+codigoErro);
-          if(typeof window!=='undefined'){
-            if(typeof window.toast==='function')window.toast('A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.','error');
-            if(typeof window.notificarEvento==='function')window.notificarEvento('info','A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.',{tipo:'sync'});
+          state.known[item.key]=true;state.hashes[item.key]=item.hash;
+          if(typeof window!=='undefined'&&typeof window.notificarEvento==='function'){
+            const textoRecusa='A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.';
+            let guardado=false;
+            try{ guardado=window.notificarEvento('info',textoRecusa,{tipo:'sync'})!==false; }catch(eN){}
+            if(!guardado){ try{ enfileirarRecado('nuvem-recusou-'+onde+'-'+String(item.hash||'x'),textoRecusa,'aviso'); }catch(eR){} }
           }
         }catch(e){}
       }

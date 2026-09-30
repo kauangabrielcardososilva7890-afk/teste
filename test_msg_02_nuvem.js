@@ -3492,3 +3492,26 @@ ok('sem BroadcastChannel não quebra (guarda typeof)', idb.indexOf("typeof Broad
 console.log('\nRESULTADO: apagar junto provado!');
 //<<<<SECAO:test_r60_wipe_junto.js:FIM>>>>
 }
+
+if (false) { // ═══ test_r61_tempestade.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r61_tempestade.js:INICIO>>>>
+// TESTE r61 v7.3.1 — P0 30/09: TEMPESTADE DE MODAIS "nuvem recusou" (auditoria externa
+// no site publicado: modais em loop em cima do login, sem nem ter logado).
+// Causa: __orcBloqueio/__orcExcluidos (guardas SÓ deste PC) viajavam p/ a nuvem, o
+// motor recusava (ENTITY_RE exige letra inicial) e cada recusa abria um MODAL
+// (toast 'error' vira lfbAlert via v5171) — todo ciclo. Prova: __ nunca viaja;
+// recusa vai pro SINO (nunca modal); bytes recusados não reenchem a fila.
+const fs = require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+const sync = fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8');
+console.log('== FIM DA TEMPESTADE DE MODAIS (r61) ==');
+ok('chave local (__) nunca viaja', sync.indexOf("chave.indexOf('__')===0") >= 0);
+ok('exceções antigas intactas', sync.indexOf("'meta','__proto__','logs','notificacoes'") >= 0);
+ok('recusa NÃO chama toast-modal', sync.indexOf("window.toast('A nuvem recusou") < 0);
+ok('recusa vai pro sino direto', sync.indexOf("window.notificarEvento('info',textoRecusa") >= 0);
+ok('sem sessão: recado entrega pós-login', sync.indexOf("enfileirarRecado('nuvem-recusou-'") >= 0);
+ok('recusado/cedido marca conhecido (não reenche a fila)', sync.split('state.known[item.key]=true;state.hashes[item.key]=item.hash').length - 1 >= 2);
+ok('v7.0.18 preservado: nunca em silêncio', sync.indexOf('NUNCA MAIS EM SILÊNCIO') >= 0 && sync.indexOf("relatarSaude('recusado'") >= 0);
+console.log('\nRESULTADO: fim da tempestade provado!');
+//<<<<SECAO:test_r61_tempestade.js:FIM>>>>
+}
