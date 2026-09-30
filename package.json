@@ -21,7 +21,9 @@
     "guardar": "node guardar_repo.js",
     "guardar:check": "node guardar_repo.js --check",
     "motor": "node gerar_motor_nuvem.js",
-    "versao": "node mudar_versao.js"
+    "versao": "node mudar_versao.js",
+ "teste-auto": "node teste-auto/auditoria.js",
+ "teste-tudo": "node teste-auto/tudo.js"
   },
   "build": {
     "appId": "br.com.digicopy.erp.demo",

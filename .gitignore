@@ -45,3 +45,8 @@ Thumbs.db
 # motor da nuvem compilado (só para gerar o motor_para_colar.js)
 cloudflare-worker/motor_compilado/
 .tmp_secao_*.js
+
+# r62 — testador automático: prints e estado de rodada ficam locais
+teste-auto/prints/
+teste-auto/.estado/ultimo.json
+teste-auto/.estado/navegador.json

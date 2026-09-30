@@ -6129,3 +6129,30 @@ ok('texto limpo passa intacto', R('erro normal sem segredo') === 'erro normal se
 console.log('\nRESULTADO: redação JSON provada!');
 //<<<<SECAO:test_r58_redacao_json.js:FIM>>>>
 }
+
+if (false) { // ═══ test_r62_testador.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r62_testador.js:INICIO>>>>
+// TESTE r62 — TESTADOR AUTOMÁTICO (auditoria reprodutível + prova visual).
+// Prova: harness existe e íntegro, credenciais só por ambiente (nada hardcoded),
+// auditoria vigia o P0 no ar, e o autoteste do harness passa (sem rede, sem escrita).
+const fs = require('fs');
+const cp = require('child_process');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+console.log('== TESTADOR AUTOMÁTICO (r62) ==');
+ok('auditoria existe', fs.existsSync('teste-auto/auditoria.js'));
+ok('navegador existe', fs.existsSync('teste-auto/navegador.js'));
+ok('tudo existe', fs.existsSync('teste-auto/tudo.js'));
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ok('npm run teste-auto', pkg.scripts && pkg.scripts['teste-auto'] === 'node teste-auto/auditoria.js');
+ok('npm run teste-tudo', pkg.scripts && pkg.scripts['teste-tudo'] === 'node teste-auto/tudo.js');
+const nav = fs.readFileSync('teste-auto/navegador.js', 'utf8');
+ok('credenciais só por ambiente', nav.indexOf('process.env.TESTE_CNPJ') >= 0 && nav.indexOf('process.env.TESTE_SENHA') >= 0 && nav.indexOf('process.env.TESTE_LOGIN') >= 0);
+ok('nenhum CNPJ hardcoded (14 dígitos)', !/[0-9]{14}/.test(nav));
+const aud = fs.readFileSync('teste-auto/auditoria.js', 'utf8');
+ok('auditoria tem evolução conserta/quebra', aud.indexOf('SEGUE ABERTO') >= 0 && aud.indexOf('CONSERTADO') >= 0);
+ok('auditoria vigia o P0 no ar', aud.indexOf("window.toast('A nuvem recusou") >= 0);
+const at = cp.spawnSync(process.execPath, ['teste-auto/auditoria.js', '--autoteste'], { encoding: 'utf8' });
+ok('autoteste do harness passa', at.status === 0 && (at.stdout || '').indexOf('AUTOTESTE OK') >= 0);
+console.log('\nRESULTADO: testador automático provado!');
+//<<<<SECAO:test_r62_testador.js:FIM>>>>
+}
