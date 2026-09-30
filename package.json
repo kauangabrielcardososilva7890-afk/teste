@@ -1,6 +1,6 @@
 {
   "name": "digicopy-erp",
-  "version": "7.3.1",
+  "version": "7.3.2",
   "description": "Sistema Digicopy - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
@@ -22,8 +22,8 @@
     "guardar:check": "node guardar_repo.js --check",
     "motor": "node gerar_motor_nuvem.js",
     "versao": "node mudar_versao.js",
- "teste-auto": "node teste-auto/auditoria.js",
- "teste-tudo": "node teste-auto/tudo.js"
+    "teste-auto": "node teste-auto/auditoria.js",
+    "teste-tudo": "node teste-auto/auditoria.js --tudo"
   },
   "build": {
     "appId": "br.com.digicopy.erp.demo",

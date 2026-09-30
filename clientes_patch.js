@@ -53,7 +53,8 @@ const CLI_PURE = (function(){
     const termo = fold(q).trim();
     if(!termo) return list;
     const termoNum = soDigitos(q);
-    const testa = (valor, extraNum)=> fold(valor).includes(termo) || (!!termoNum && termoNum.length>=3 && extraNum && soDigitos(valor).includes(termoNum));
+    const TOK=(typeof window!='undefined'&&typeof window.textoOK==='function')?window.textoOK:(function(s){return s;});
+  const testa = (valor, extraNum)=> fold(TOK(valor)).includes(termo) || (!!termoNum && termoNum.length>=3 && extraNum && soDigitos(valor).includes(termoNum));
     return list.filter(c=>{
       if(!c) return false;
       if(campo && campo!=='todos'){

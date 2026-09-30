@@ -112,7 +112,9 @@
     });
 
     var campo = (document.getElementById('orc-cli-campo') || {}).value || 'todos';
-    if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
+    if(typeof window!=='undefined' && typeof window.filtraClientesCampo === 'function'){
+      list = window.filtraClientesCampo(list, q, campo);
+    } else if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
       list = window.FILTROS_BUSCA_PURE.filtraClientes(list, q, campo);
     } else {
       var low = q.toLowerCase();
@@ -128,9 +130,9 @@
     el.classList.remove('hidden');
     el.innerHTML = list.map(function(c){
       return '<button type="button" onclick="window.orcSelCliente(\'' + esc(c.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
-        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(c.nome || '') + '</b>'
-        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(c.fantasia) + ')</span>' : '') + '<br>'
-        + '<span class="text-slate-500 text-[11px]">' + esc(c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
+        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(window.textoOK?window.textoOK(c.nome || ''):c.nome || '') + '</b>'
+        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(window.textoOK?window.textoOK(c.fantasia):c.fantasia) + ')</span>' : '') + '<br>'
+        + '<span class="text-slate-500 text-[11px]">' + esc(window.textoOK?window.textoOK(c.documento || ''):c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
     }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado com esse filtro.</p>';
   }
 

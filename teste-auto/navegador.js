@@ -45,7 +45,7 @@ function servirLocal(porta) {
 
 (async () => {
   const out = { disponivel: true, quando: new Date().toISOString(), telas: [],
-    errosConsole: [], p0modal: null, versaoRodape: null, alvo: null };
+    errosConsole: [], p0modal: null, versaoRodape: null, alvo: null, falhasDigicopy: null, pure: null };
   const printsDir = path.join(__dirname, 'prints', new Date().toISOString().slice(0, 10));
   fs.mkdirSync(printsDir, { recursive: true });
   let srv = null;
@@ -65,6 +65,11 @@ function servirLocal(porta) {
     await page.goto(alvo, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForTimeout(2500);
     out.telas.push({ nome: 'conexao', print: await shot('01-conexao'), ok: true });
+    try {
+      out.falhasDigicopy = await page.evaluate(() => (window.__DIGICOPY_FALHAS || []).slice(0, 20));
+      out.pure = await page.evaluate(() => ({ filtros: !!window.FILTROS_BUSCA_PURE, cli: !!window.CLI_PURE,
+        moeda: !!window.parseMoedaBR, texto: !!window.textoOK, porta: !!window.filtraClientesCampo }));
+    } catch (e) {}
     const cnpj = process.env.TESTE_CNPJ, sc = process.env.TESTE_SENHA_CONEXAO;
     if (cnpj && sc) {
       const cCnpj = page.locator('input').first();
@@ -111,6 +116,7 @@ function servirLocal(porta) {
   fs.mkdirSync(ESTADO, { recursive: true });
   fs.writeFileSync(path.join(ESTADO, 'navegador.json'), JSON.stringify(out, null, 1));
   console.log(JSON.stringify({ disponivel: true, telas: out.telas.length,
-    p0modal: out.p0modal, errosConsole: out.errosConsole.length, versaoRodape: out.versaoRodape }));
+    p0modal: out.p0modal, errosConsole: out.errosConsole.length, versaoRodape: out.versaoRodape,
+    falhasDigicopy: (out.falhasDigicopy || []).length, pure: out.pure }));
   process.exit(0);
 })().catch(e => { console.error('navegador falhou: ' + (e && e.message)); process.exit(0); });

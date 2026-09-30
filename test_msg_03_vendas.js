@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_03_vendas.js — GERADO por migrar_testes_r57.js; 33 seções.
+// test_msg_03_vendas.js — GERADO por migrar_testes_r57.js; 34 seções.
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
 // Seções: test_pix.js, test_otim.js, test_automacoes_contratos_caixa_fiscal.js, test_automacoes_vendas_compras_cadastros.js, test_automacoes_orcamentos_clientes_auxiliares.js, test_automacoes_pix_contadores_auxiliares.js, test_automacoes_vendas_fiscal_auxiliares.js, test_automacoes_caixa_chat_auxiliares.js, test_offline_assets.js, test_ajustes_v52218.js, test_ajustes_v52237.js, test_ajustes_v52238.js, test_ajustes_v52240.js, test_ajustes_v52241.js, test_ajustes_v52243.js, test_ajustes_v52244.js, test_ajustes_v52254.js, test_ajustes_v52255.js, test_ajustes_v52256.js, test_ajustes_v52258.js, test_ajustes_v52259.js, test_ajustes_v52260.js, test_ajustes_v52261.js, test_ajustes_v52262.js, test_ajustes_v52291.js, test_ajustes_v52293.js, test_ajustes_v52295.js, test_ajustes_v6005.js, test_ajustes_v6102.js, test_camadas_protegidas.js, test_ajustes_v52412.js, test_ajustes_v52421.js, test_ajustes_v5249.js
 // ═══════════════════════════════════════════════════════════════
@@ -2013,4 +2013,37 @@ ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json com versão válida (v' + 
 if(falhas){ console.error('\n' + falhas + ' FALHA(S) v' + pkg.version); process.exit(1); }
 console.log('\nTudo certo v' + pkg.version + '!');
 //<<<<SECAO:test_ajustes_v5249.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r63_moeda.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r63_moeda.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(c, m){ if(c){ console.log('  ok - '+m); } else { falhas++; console.error('  FALHA - '+m); } }
+console.log('-- r63 P1 dinheiro: 1,00 vale 1 (auditoria 30/09) --');
+const neo = fs.readFileSync('notinha_patch.js', 'utf8');
+function bloco(s, a, b){ const i = s.indexOf(a), j = s.indexOf(b); if(i<0||j<0||j<i) return null; return s.slice(i+a.length, j); }
+const pure = bloco(neo, '/* NEONOTA_PURE_START */', '/* NEONOTA_PURE_END */');
+ok(!!pure, 'bloco NEONOTA_PURE extraível p/ teste');
+const P = new Function((pure || '') + '; return {parseMoedaBR};')();
+ok(P.parseMoedaBR('1,00') === 1, "1,00 vale 1 (nunca 100)");
+ok(P.parseMoedaBR('1') === 1, '1 vale 1');
+ok(P.parseMoedaBR('1.00') === 1, '1.00 (americano) vale 1');
+ok(P.parseMoedaBR('1.234,56') === 1234.56, '1.234,56 vale 1234.56');
+ok(P.parseMoedaBR('R$ 10,50') === 10.5, 'R$ 10,50 vale 10.5');
+ok(P.parseMoedaBR('0,99') === 0.99, '0,99 vale 0.99');
+ok(P.parseMoedaBR('-2,50') === -2.5, 'negativo preservado');
+ok(P.parseMoedaBR('') === 0 && P.parseMoedaBR('abc') === 0, 'vazio/lixo viram 0');
+ok(neo.indexOf('id="neo-prod-valor" type="text" inputmode="decimal"') >= 0, 'valor: number→text+decimal');
+ok(neo.indexOf('id="neo-prod-qtd" type="text" inputmode="decimal"') >= 0, 'qtd: number→text+decimal');
+ok(neo.indexOf('id="neo-venda-desc" type="text" inputmode="decimal"') >= 0, 'desconto: number→text+decimal');
+ok(neo.indexOf("parseFloat(document.getElementById('neo-prod-valor')") === -1, 'valor sem parseFloat cru');
+ok(neo.indexOf("parseFloat(document.getElementById('neo-prod-qtd')") === -1, 'qtd sem parseFloat cru');
+ok(neo.indexOf("parseFloat(document.getElementById('neo-venda-desc')") === -1, 'desconto sem parseFloat cru');
+ok(neo.indexOf('parseMoedaBR(this.value)') >= 0, 'blur mostra o valor interpretado');
+const bundle = fs.readFileSync('app.bundle.js', 'utf8');
+ok(bundle.indexOf('function parseMoedaBR') >= 0, 'parseMoedaBR chegou no bundle');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) r63-moeda'); process.exit(1); }
+console.log('\nRESULTADO: r63 moeda passou!');
+//<<<<SECAO:test_r63_moeda.js:FIM>>>>
 }

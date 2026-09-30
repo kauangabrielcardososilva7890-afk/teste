@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const cp = require('child_process');
 const RAIZ = path.join(__dirname, '..');
 const ESTADO = path.join(__dirname, '.estado');
 const ARGS = process.argv.slice(2);
@@ -52,6 +53,7 @@ const BLOQUEANTE = [
 const SUSPEITO = /(senha|password|passwd|pwd|token|api[_-]?key|secret)\s*[:=]\s*['"][^'"]{3,}['"]/gi;
 
 async function main() {
+  if (ARGS.includes('--tudo')) return modoTudo();
   const checks = [];
   function check(id, nome, status, detalhe) {
     checks.push({ id, nome, status, detalhe: String(detalhe || '') });
@@ -206,6 +208,51 @@ async function main() {
   for (const c of checks) console.log((c.status === 'OK' ? '✔' : (c.status === 'SEM REDE' ? '…' : '✘')) + ' [' + c.evolucao + '] ' + c.id + ': ' + c.detalhe.slice(0, 120));
   console.log(falha ? ('AUDITORIA FALHOU (' + falha + ') — ver teste-auto/RELATORIO.md') : 'AUDITORIA OK — ver teste-auto/RELATORIO.md');
   process.exit(falha ? 1 : 0);
+}
+
+
+function modoTudo() {
+  console.log('== 1/3 suite (codigo) ==');
+  const suite = cp.spawnSync(process.execPath, ['test_runner.js'], { cwd: RAIZ, encoding: 'utf8' });
+  const outSuite = (suite.stdout || '') + (suite.stderr || '');
+  const temasOk = (outSuite.match(/\u2705 test_msg_/g) || []).length;
+  const temasFalha = (outSuite.match(/\u274c test_msg_/g) || []).length;
+  console.log('suite: ' + temasOk + ' ok, ' + temasFalha + ' falha');
+  console.log('== 2/3 auditoria (repo + ar) ==');
+  const aud = cp.spawnSync(process.execPath, [__filename], { cwd: RAIZ, encoding: 'utf8' });
+  process.stdout.write(aud.stdout || '');
+  let autoChecks = [];
+  try { autoChecks = (JSON.parse(fs.readFileSync(path.join(ESTADO, 'ultimo.json'), 'utf8')).checks) || []; }
+  catch (e) { autoChecks = []; }
+  const autoFalha = autoChecks.filter(c => c.status === 'FALHOU').length;
+  console.log('== 3/3 navegador (visual) ==');
+  const nav = cp.spawnSync(process.execPath, [path.join(__dirname, 'navegador.js')], { cwd: RAIZ, encoding: 'utf8' });
+  let navRes = { disponivel: false };
+  try { navRes = JSON.parse((nav.stdout || '').trim().split('\n').pop()); } catch (e) {}
+  let navDet = null;
+  try { navDet = JSON.parse(fs.readFileSync(path.join(ESTADO, 'navegador.json'), 'utf8')); } catch (e) {}
+  const navFalha = navRes.disponivel && navDet
+    ? (navDet.p0modal ? 1 : 0) + navDet.telas.filter(t => !t.ok && !t.pulado).length : 0;
+  const L = [];
+  L.push('');
+  L.push('---');
+  L.push('');
+  L.push('## VEREDITO - suite + auditoria + visual');
+  L.push('');
+  L.push('| frente | resultado | detalhe |');
+  L.push('|---|---|---|');
+  L.push('| suite (codigo) | ' + (temasFalha ? 'FALHOU' : 'OK') + ' | ' + temasOk + ' temas ok, ' + temasFalha + ' com falha |');
+  L.push('| auditoria (repo+ar) | ' + (autoFalha ? 'FALHOU' : 'OK') + ' | ' + autoChecks.filter(c => c.status === 'OK').length + ' ok, ' + autoFalha + ' falha, ' + autoChecks.filter(c => c.status === 'SEM REDE').length + ' sem rede |');
+  L.push('| navegador (visual) | ' + (!navRes.disponivel ? 'PULADO' : (navFalha ? 'FALHOU' : 'OK')) + ' | ' +
+    (!navRes.disponivel ? (navRes.motivo || 'sem playwright') : (navDet.telas.length + ' telas, P0-modal:' + (navDet.p0modal === null ? 'n/t' : (navDet.p0modal ? 'SIM' : 'nao')) + ', erros console:' + navDet.errosConsole.length + ', falhas:' + ((navDet.falhasDigicopy || []).length) + ', rodape:' + (navDet.versaoRodape || 'n/l'))) + ' |');
+  L.push('');
+  const falhou = (temasFalha + autoFalha + navFalha) > 0;
+  L.push('**Veredito: ' + (falhou ? 'FALHOU' : 'TUDO CERTO') + '**');
+  L.push('');
+  fs.appendFileSync(path.join(__dirname, 'RELATORIO.md'), L.join('\n'));
+  console.log('');
+  console.log('Veredito: ' + (falhou ? 'FALHOU' : 'TUDO CERTO') + ' (ver teste-auto/RELATORIO.md)');
+  process.exit(falhou ? 1 : 0);
 }
 
 main().catch(e => { console.error('auditoria quebrou: ' + (e && e.message)); process.exit(2); });

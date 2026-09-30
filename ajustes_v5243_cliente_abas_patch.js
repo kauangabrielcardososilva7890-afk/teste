@@ -9,7 +9,7 @@
 // v5.24.4 (redesenho dele): abas = [Dados] e [Histórico do sistema]; dentro
 // do Histórico há sub-menus (Vendas por padrão, Financeiro, Orçamentos,
 // Chamados, Leituras). A listagem tem caixas de múltipla escolha com botões
-// Excluir / Extornar / Abrir lista de origem; o registro específico abre com
+// Excluir / Estornar / Abrir lista de origem; o registro específico abre com
 // o BOTÃO DIREITO do mouse direto no módulo de origem. (O resumo intermediário
 // da v5.24.3 foi aposentado a pedido dele.)
 //
@@ -131,7 +131,7 @@ function montarAbasCliente(id){
     '<div id="clitab-sub-holder"></div>'+
     '<div id="clitab-acoes" class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">'+
       '<button type="button" id="clitab-btn-excluir" onclick="clitabExcluir()" class="h-9 px-4 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-trash"></i> Excluir selecionados</button>'+
-      '<button type="button" id="clitab-btn-extornar" onclick="clitabExtornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Extornar selecionados</button>'+
+      '<button type="button" id="clitab-btn-estornar" onclick="clitabEstornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Estornar selecionados</button>'+
       '<button type="button" id="clitab-btn-lista" onclick="clitabAbrirLista()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]"><i class="ph ph-arrow-square-out"></i> Abrir lista de origem</button>'+
       '<button type="button" onclick="clitabAbrirClienteNaLista()" class="h-9 px-4 rounded-xl bg-white border border-[#0a1e8a] text-[#0a1e8a] font-bold text-[12px]"><i class="ph ph-users"></i> Este cliente na lista</button>'+
       '<span class="text-[11px] text-slate-400 ml-auto">Marque as caixas para agir em lote • botão direito do mouse abre o registro no módulo</span>'+
@@ -184,7 +184,7 @@ window.clitabSub=function(sub){
   st.sel[sub]=st.sel[sub]||{};
   renderSub(sub);            // v5.24.4: sempre fresco (exclusões/estornos)
   pintarSubBarra();
-  const btnExt=document.getElementById('clitab-btn-extornar');
+  const btnExt=document.getElementById('clitab-btn-estornar');
   if(btnExt) btnExt.style.display=(sub==='vendas')?'':'none';
   atualizarBotoes();
 };
@@ -256,9 +256,9 @@ function atualizarBotoes(){
   const st=window.__clitab; if(!st) return;
   const n=Object.keys(st.sel[st.sub]||{}).length;
   const be=document.getElementById('clitab-btn-excluir');
-  const bx=document.getElementById('clitab-btn-extornar');
+  const bx=document.getElementById('clitab-btn-estornar');
   if(be){ be.disabled=!n; be.innerHTML='<i class="ph ph-trash"></i> Excluir'+(n?' ('+n+')':' selecionados'); }
-  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Extornar'+(n?' ('+n+')':' selecionados'); }
+  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Estornar'+(n?' ('+n+')':' selecionados'); }
   const bl=document.getElementById('clitab-btn-lista');
   if(bl){ bl.innerHTML='<i class="ph ph-arrow-square-out"></i> '+(n?('Abrir selecionado(s) ('+n+')'):'Abrir lista de origem'); }
 }
@@ -334,13 +334,13 @@ window.clitabExcluir=function(){
   if(typeof window.confirmSistema==='function'){ window.confirmSistema(pergunta,'Excluir de vez').then(function(ok){ if(ok) executar(); }); return; }
   if(typeof confirm==='function' && confirm(pergunta)) executar();
 };
-window.clitabExtornar=function(){
+window.clitabEstornar=function(){
   const st=window.__clitab; if(!st||st.sub!=='vendas') return;
   const ids=Object.keys(st.sel.vendas||{}); if(!ids.length) return;
-  if(typeof window.confirmSistema==='function'){ window.confirmSistema('Estornar '+ids.length+' venda(s) faturada(s)? O financeiro ligado a elas é marcado como estornado.','Estornar').then(function(ok){ if(ok) window.__clitabExtornarAgora(ids); }); return; }
-  window.__clitabExtornarAgora(ids);
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema('Estornar '+ids.length+' venda(s) faturada(s)? O financeiro ligado a elas é marcado como estornado.','Estornar').then(function(ok){ if(ok) window.__clitabEstornarAgora(ids); }); return; }
+  window.__clitabEstornarAgora(ids);
 };
-window.__clitabExtornarAgora=function(ids){
+window.__clitabEstornarAgora=function(ids){
   const st=window.__clitab; if(!st) return;
   let feitas=0, puladas=0;
   ids.forEach(function(id){

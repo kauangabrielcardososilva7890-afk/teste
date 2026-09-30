@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 232 | sha256: 7a9770b0288ac206
+ * scripts: 232 | sha256: 8b14ceef1beaf868
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -4061,9 +4061,9 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const sess=getSession(); const el=document.getElementById('cv-cliente-results'); if(!el) return;
     const low=(q||'').toLowerCase();
     const list=db.clientes.filter(c=>c.empresaId===sess.empresaId && (!low || (c.nome||'').toLowerCase().includes(low) || (c.documento||'').toLowerCase().includes(low) || String(c.codigo||'').includes(low))).slice(0,12);
-    el.classList.remove('hidden'); el.innerHTML=list.map(c=>`<button type="button" onclick="cvSelectCliente('${c.id}')" class="w-full text-left px-2 py-1 hover:bg-blue-50"><b>#${c.codigo||'-'}</b> ${escapeHtml(c.nome)} <span class="text-slate-500">${escapeHtml(c.documento||'')}</span></button>`).join('')||'<div class="p-2 text-slate-500">Nenhum cliente</div>';
+    el.classList.remove('hidden'); el.innerHTML=list.map(c=>`<button type="button" onclick="cvSelectCliente('${c.id}')" class="w-full text-left px-2 py-1 hover:bg-blue-50"><b>#${c.codigo||'-'}</b> ${escapeHtml(window.textoOK?window.textoOK(c.nome):c.nome)} <span class="text-slate-500">${escapeHtml(window.textoOK?window.textoOK(c.documento||''):c.documento||'')}</span></button>`).join('')||'<div class="p-2 text-slate-500">Nenhum cliente</div>';
   };
-  window.cvSelectCliente=function(id){const c=db.clientes.find(x=>x.id===id); window.cvCliente=c; document.getElementById('cv-cli-codigo').value=c?.codigo||''; document.getElementById('cv-cliente-search').value=c?.nome||''; document.getElementById('cv-cliente-results').classList.add('hidden');};
+  window.cvSelectCliente=function(id){const c=db.clientes.find(x=>x.id===id); window.cvCliente=c; document.getElementById('cv-cli-codigo').value=c?.codigo||''; document.getElementById('cv-cliente-search').value=(window.textoOK?window.textoOK(c?.nome):c?.nome)||''; document.getElementById('cv-cliente-results').classList.add('hidden');};
   window.cvSearchProduto=function(q){
     const sess=getSession(); const el=document.getElementById('cv-prod-results'); if(!el) return;
     const low=(q||'').toLowerCase();
@@ -4127,7 +4127,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
           <input id="classic-letter-clientes" type="hidden" value="${letter}"><button onclick="document.getElementById('classic-letter-clientes').value=''; renderClientes()" class="ml-2 text-red-600">●</button><button class="ml-auto"><i class="ph ph-funnel"></i></button>
         </div>
         <div class="h-[310px] overflow-auto bg-white">
-          <table class="classic-grid-table"><thead><tr><th>Sel</th><th>Código</th><th>Nome do Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Nome Fantasia</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.clienteSelecionadoClassic='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.clienteSelecionadoClassic===c.id?'classic-row-selected':''}"><td></td><td>${c.codigo||''}</td><td>${escapeHtml(c.nome||'')}</td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(c.documento||'')}</td><td>${escapeHtml(c.fantasia||'')}</td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-8">Nenhum cliente</td></tr>'}</tbody></table>
+          <table class="classic-grid-table"><thead><tr><th>Sel</th><th>Código</th><th>Nome do Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Nome Fantasia</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.clienteSelecionadoClassic='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.clienteSelecionadoClassic===c.id?'classic-row-selected':''}"><td></td><td>${c.codigo||''}</td><td>${escapeHtml(window.textoOK?window.textoOK(c.nome||''):c.nome||'')}</td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(window.textoOK?window.textoOK(c.documento||''):c.documento||'')}</td><td>${escapeHtml(window.textoOK?window.textoOK(c.fantasia||''):c.fantasia||'')}</td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-8">Nenhum cliente</td></tr>'}</tbody></table>
         </div>
         <div class="h-[64px] bg-[#f7f7f7] border-t flex items-center justify-center gap-4"><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-globe"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-gear"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-printer"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-envelope"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-floppy-disk"></i></button><button onclick="navigateTo('dashboard')" class="ml-auto mr-4 h-10 px-5 bg-white border text-red-600"><i class="ph ph-x-circle"></i> Sair</button></div>
       </div>`;
@@ -4164,7 +4164,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
       <div class="neo-panel neo-float-in">
         <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
         <div class="p-4 border-b bg-white flex flex-wrap items-center gap-3"><input type="hidden" id="neo-tab-vendas" value="${tab}"><div class="neo-tabs"><button onclick="setNeoVendasTab('todas')" class="neo-tab ${tab==='todas'?'active':''}">Todas</button><button onclick="setNeoVendasTab('hoje')" class="neo-tab ${tab==='hoje'?'active':''}">Hoje</button><button onclick="setNeoVendasTab('abertas')" class="neo-tab ${tab==='abertas'?'active':''}">Abertas</button><button onclick="setNeoVendasTab('orcamentos')" class="neo-tab ${tab==='orcamentos'?'active':''}">Orçamentos</button></div><input id="neo-search-vendas" value="${escapeHtml(qRaw)}" oninput="renderVendas()" class="neo-input ml-auto min-w-[280px]" placeholder="Pesquisar por código, cliente, usuário..."><div class="text-right text-[12px] text-slate-500 min-w-[130px]"><b class="text-[#0a1e8a]">${list.length}</b> registros<br>${fmtMoney(total)}</div></div>
-        <div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Valor</th><th>Situação</th><th>Tipo</th><th>Usuário</th><th>Recebimento</th></tr></thead><tbody>${list.map(v=>{const c=db.clientes.find(x=>x.id===v.clienteId)||{}; return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="showVenda('${v.id}')" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td><td>${fmtDate(v.data)}</td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">Cód. ${c.codigo||'-'} • ${escapeHtml(c.documento||'')}</span></td><td><b>${fmtMoney(v.total||0)}</b></td><td><span class="neo-status ${statusVendaClass(v)}">${statusVendaLabel(v)}</span></td><td>${vendaTipoNeo(v)}</td><td>${escapeHtml((v.criadoPorNome||'-').split(' ')[0])}</td><td>${escapeHtml(v.formaPagamento||'Prazo')}</td></tr>`}).join('')||'<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada</td></tr>'}</tbody></table></div>
+        <div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Valor</th><th>Situação</th><th>Tipo</th><th>Usuário</th><th>Recebimento</th></tr></thead><tbody>${list.map(v=>{const c=db.clientes.find(x=>x.id===v.clienteId)||{}; return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="showVenda('${v.id}')" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td><td>${fmtDate(v.data)}</td><td><b>${escapeHtml(window.textoOK?window.textoOK(c.nome||''):c.nome||'')}</b><br><span class="text-[11px] text-slate-500">Cód. ${c.codigo||'-'} • ${escapeHtml(window.textoOK?window.textoOK(c.documento||''):c.documento||'')}</span></td><td><b>${fmtMoney(v.total||0)}</b></td><td><span class="neo-status ${statusVendaClass(v)}">${statusVendaLabel(v)}</span></td><td>${vendaTipoNeo(v)}</td><td>${escapeHtml((v.criadoPorNome||'-').split(' ')[0])}</td><td>${escapeHtml(v.formaPagamento||'Prazo')}</td></tr>`}).join('')||'<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada</td></tr>'}</tbody></table></div>
       </div>
     </div>`;
     const input=document.getElementById('neo-search-vendas'); if(input && document.activeElement?.id==='neo-search-vendas') input.focus();
@@ -4181,12 +4181,12 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
       <div class="neo-head"><div><h3>Nova venda / orçamento</h3><p>Fluxo simplificado: cliente, itens, condição e finalizar</p></div><div class="text-right"><p class="text-white/70 text-[11px] uppercase">Atendente</p><b>${escapeHtml(sess.usuarioNome)}</b></div></div>
       <div class="neo-grid">
         <div class="space-y-3">
-          <div class="neo-card"><label class="neo-label">Cliente</label><div class="flex gap-2"><input id="neo-cli-search" oninput="neoSearchClienteVenda(this.value)" class="neo-input flex-1" placeholder="Digite nome, código, CNPJ ou telefone"><button onclick="openModal('cliente')" class="neo-btn"><i class="ph ph-user-plus"></i>Novo</button></div><div id="neo-cli-results" class="neo-suggest hidden"></div><div id="neo-cli-selected" class="mt-3 hidden rounded-xl bg-[#f1f6ff] border border-[#dbeafe] p-3 text-[13px]"></div></div>
-          <div class="neo-card"><label class="neo-label">Produto / Serviço</label><div class="grid grid-cols-12 gap-2"><select id="neo-item-tipo" class="neo-select col-span-3"><option>Produto</option><option>Serviço</option><option>Recarga</option></select><input id="neo-prod-search" oninput="neoSearchProdutoVenda(this.value)" class="neo-input col-span-6" placeholder="Buscar produto, toner, serviço..."><input id="neo-prod-qtd" type="number" value="1" min="1" class="neo-input col-span-1"><input id="neo-prod-valor" type="number" step="0.01" class="neo-input col-span-2" placeholder="Valor"></div><div id="neo-prod-results" class="neo-suggest hidden"></div><div class="mt-3 flex justify-end"><button onclick="neoAddItemVenda()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Adicionar item</button></div></div>
+          <div class="neo-card"><label class="neo-label">Cliente</label><div class="flex gap-2"><input id="neo-cli-search" oninput="neoSearchClienteVenda(this.value)" class="neo-input flex-1" placeholder="Digite nome, código, CNPJ ou telefone"><select id="neo-cli-campo" onchange="neoSearchClienteVenda(document.getElementById('neo-cli-search').value)" class="neo-input" style="max-width:120px"><option value="todos">Tudo</option><option value="nome">Nome</option><option value="fantasia">Fantasia</option><option value="codigo">Código</option><option value="documento">CPF/CNPJ</option></select><button onclick="openModal('cliente')" class="neo-btn"><i class="ph ph-user-plus"></i>Novo</button></div><div id="neo-cli-results" class="neo-suggest hidden"></div><div id="neo-cli-selected" class="mt-3 hidden rounded-xl bg-[#f1f6ff] border border-[#dbeafe] p-3 text-[13px]"></div></div>
+          <div class="neo-card"><label class="neo-label">Produto / Serviço</label><div class="grid grid-cols-12 gap-2"><select id="neo-item-tipo" class="neo-select col-span-3"><option>Produto</option><option>Serviço</option><option>Recarga</option></select><input id="neo-prod-search" oninput="neoSearchProdutoVenda(this.value)" class="neo-input col-span-6" placeholder="Buscar produto, toner, serviço..."><input id="neo-prod-qtd" type="text" inputmode="decimal" value="1" class="neo-input col-span-1"><input id="neo-prod-valor" type="text" inputmode="decimal" class="neo-input col-span-2" placeholder="Valor" onblur="try{var v=parseMoedaBR(this.value);this.value=v?String(v).replace('.',','):'';}catch(e){}"></div><div id="neo-prod-results" class="neo-suggest hidden"></div><div class="mt-3 flex justify-end"><button onclick="neoAddItemVenda()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Adicionar item</button></div></div>
           <div class="neo-card p-0 overflow-hidden"><table class="neo-table"><thead><tr><th>Item</th><th>Qtd</th><th>Unitário</th><th>Total</th><th></th></tr></thead><tbody id="neo-venda-itens"><tr><td colspan="5" class="text-center text-slate-400 py-8">Nenhum item adicionado</td></tr></tbody></table></div>
         </div>
         <div class="space-y-3">
-          <div class="neo-card"><label class="neo-label">Resumo</label><div class="flex justify-between text-[13px]"><span>Subtotal</span><b id="neo-venda-subtotal">R$ 0,00</b></div><div class="mt-3"><label class="neo-label">Desconto R$</label><input id="neo-venda-desc" type="number" step="0.01" value="0" oninput="neoUpdateVendaTotal()" class="neo-input w-full"></div><div class="mt-4 border-t pt-3"><p class="text-[11px] uppercase font-bold text-slate-500">Total</p><div id="neo-venda-total" class="neo-total">R$ 0,00</div></div></div>
+          <div class="neo-card"><label class="neo-label">Resumo</label><div class="flex justify-between text-[13px]"><span>Subtotal</span><b id="neo-venda-subtotal">R$ 0,00</b></div><div class="mt-3"><label class="neo-label">Desconto R$</label><input id="neo-venda-desc" type="text" inputmode="decimal" value="0" oninput="neoUpdateVendaTotal()" class="neo-input w-full"></div><div class="mt-4 border-t pt-3"><p class="text-[11px] uppercase font-bold text-slate-500">Total</p><div id="neo-venda-total" class="neo-total">R$ 0,00</div></div></div>
           <div class="neo-card"><label class="neo-label">Situação</label><select id="neo-venda-status" onchange="neoTogglePagamento()" class="neo-select w-full"><option value="aguardar">Aguardar</option><option value="orcamento">Orçamento</option><option value="faturado">Faturar agora</option></select><div id="neo-pagamento-box" class="hidden mt-3"><label class="neo-label">Forma de pagamento</label><select id="neo-venda-pag" class="neo-select w-full"><option>Prazo</option><option>Dinheiro</option><option>PIX</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Boleto</option></select></div></div>
           <div class="neo-card"><button onclick="neoSalvarVenda()" class="neo-btn primary w-full justify-center !h-11"><i class="ph ph-check-circle"></i>Salvar e imprimir</button><button onclick="closeModal()" class="neo-btn w-full justify-center mt-2 !h-10"><i class="ph ph-x"></i>Cancelar</button></div>
         </div>
@@ -4194,18 +4194,41 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     </div>`;
     document.getElementById('modal-footer').innerHTML=''; document.getElementById('modal-root').classList.remove('hidden'); setTimeout(()=>document.getElementById('neo-cli-search')?.focus(),80);
   };
-  window.neoSearchClienteVenda=function(q){const sess=getSession(); const el=document.getElementById('neo-cli-results'); if(!el) return; const low=(q||'').toLowerCase(); if(!low){el.classList.add('hidden'); return;} const list=db.clientes.filter(c=>c.empresaId===sess.empresaId&&((c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low))).slice(0,10); el.classList.remove('hidden'); el.innerHTML=list.map(c=>`<button onclick="neoSelectClienteVenda('${c.id}')"><b>#${c.codigo||'-'}</b> ${escapeHtml(c.nome)}<br><span class="text-slate-500 text-[11px]">${escapeHtml(c.documento||'')} • ${escapeHtml(c.telefone||'')}</span></button>`).join('')||'<div class="p-3 text-slate-500 text-[12px]">Nenhum cliente</div>';};
-  window.neoSelectClienteVenda=function(id){const c=db.clientes.find(x=>x.id===id); window.neoVendaCliente=c; document.getElementById('neo-cli-search').value=c?.nome||''; document.getElementById('neo-cli-results').classList.add('hidden'); const box=document.getElementById('neo-cli-selected'); box.classList.remove('hidden'); box.innerHTML=`<b>${escapeHtml(c?.nome||'')}</b><br><span class="text-slate-500">Cód. ${c?.codigo||'-'} • ${escapeHtml(c?.documento||'')}</span>`;};
+  window.neoSearchClienteVenda=function(q){const sess=getSession(); const el=document.getElementById('neo-cli-results'); if(!el) return; const low=(q||'').toLowerCase(); if(!low){el.classList.add('hidden'); return;} const campo=(document.getElementById('neo-cli-campo')||{}).value||'todos';
+    const base=db.clientes.filter(c=>c&&c.empresaId===sess.empresaId);
+    let list=null;
+    if(typeof window!=='undefined'&&typeof window.filtraClientesCampo==='function'){ try{ list=window.filtraClientesCampo(base,q,campo); }catch(eFC){ list=null; } }
+    if(!list){ const lw=(q||'').toLowerCase(); list=base.filter(c=>(c.nome||'').toLowerCase().includes(lw)||(c.documento||'').toLowerCase().includes(lw)||(c.telefone||'').toLowerCase().includes(lw)||String(c.codigo||'').includes(lw)); }
+    list=list.slice(0,10); el.classList.remove('hidden'); el.innerHTML=list.map(c=>`<button onclick="neoSelectClienteVenda('${c.id}')"><b>#${c.codigo||'-'}</b> ${escapeHtml(window.textoOK?window.textoOK(c.nome):c.nome)}<br><span class="text-slate-500 text-[11px]">${escapeHtml(window.textoOK?window.textoOK(c.documento||''):c.documento||'')} • ${escapeHtml(c.telefone||'')}</span></button>`).join('')||'<div class="p-3 text-slate-500 text-[12px]">Nenhum cliente</div>';};
+  window.neoSelectClienteVenda=function(id){const c=db.clientes.find(x=>x.id===id); window.neoVendaCliente=c; document.getElementById('neo-cli-search').value=(window.textoOK?window.textoOK(c?.nome):c?.nome)||''; document.getElementById('neo-cli-results').classList.add('hidden'); const box=document.getElementById('neo-cli-selected'); box.classList.remove('hidden'); box.innerHTML=`<b>${escapeHtml(c?.nome||'')}</b><br><span class="text-slate-500">Cód. ${c?.codigo||'-'} • ${escapeHtml(c?.documento||'')}</span>`;};
   window.neoSearchProdutoVenda=function(q){const sess=getSession(); const el=document.getElementById('neo-prod-results'); if(!el) return; const low=(q||'').toLowerCase(); if(!low){el.classList.add('hidden'); return;} const list=db.produtos.filter(p=>p.empresaId===sess.empresaId&&((p.nome||'').toLowerCase().includes(low)||(p.sku||'').toLowerCase().includes(low))).slice(0,10); el.classList.remove('hidden'); el.innerHTML=list.map(p=>`<button onclick="neoSelectProdutoVenda('${p.id}')"><b>${escapeHtml(p.sku||'')}</b> ${escapeHtml(p.nome)} <span class="float-right">${fmtMoney(p.preco||0)}</span></button>`).join('')||'<div class="p-3 text-slate-500 text-[12px]">Nenhum produto</div>';};
   window.neoSelectProdutoVenda=function(id){const p=db.produtos.find(x=>x.id===id); window.neoVendaProduto=p; document.getElementById('neo-prod-search').value=p?.nome||''; document.getElementById('neo-prod-valor').value=p?.preco||0; document.getElementById('neo-prod-results').classList.add('hidden');};
-  window.neoAddItemVenda=function(){if(!window.neoVendaProduto) return toast('Selecione um produto','error'); const qtd=parseFloat(document.getElementById('neo-prod-qtd').value)||1; if(window.neoVendaProduto.categoria!=='Serviço' && window.neoVendaProduto.categoria!=='Recarga' && (window.neoVendaProduto.estoque||0)<=0) return (window.lfbAlert?window.lfbAlert('Produto sem estoque','Sem estoque') : alert('Produto sem estoque')); if(window.neoVendaProduto.categoria!=='Serviço' && window.neoVendaProduto.categoria!=='Recarga' && qtd>(window.neoVendaProduto.estoque||0)) return (window.lfbAlert?window.lfbAlert('Estoque insuficiente. Disponível: '+(window.neoVendaProduto.estoque||0),'Estoque insuficiente') : alert('Estoque insuficiente. Disponível: '+(window.neoVendaProduto.estoque||0))); const preco=parseFloat(document.getElementById('neo-prod-valor').value)||window.neoVendaProduto.preco||0; window.neoVendaItens.push({produtoId:window.neoVendaProduto.id,qtd,preco,subtotal:qtd*preco}); window.neoVendaProduto=null; document.getElementById('neo-prod-search').value=''; document.getElementById('neo-prod-valor').value=''; neoRenderItensVenda(); neoUpdateVendaTotal();};
+  /* NEONOTA_PURE_START */
+  function parseMoedaBR(v){
+    // r63 (P1 30/09: 1,00 virava 100) — entende BR, US, número e R$.
+    var s=String(v==null?'':v).trim();
+    if(!s) return 0;
+    s=s.replace(/R\$\s?/g,'').replace(/\s/g,'');
+    if(!s) return 0;
+    var neg=false;
+    if(s.charAt(0)==='-'){ neg=true; s=s.slice(1); }
+    var temP=s.indexOf('.')>=0, temV=s.indexOf(',')>=0;
+    if(temP&&temV){ s=s.replace(/\./g,'').replace(',','.'); }
+    else if(temV){ s=s.replace(',','.'); }
+    var n=parseFloat(s);
+    if(!isFinite(n)) return 0;
+    return neg?-n:n;
+  }
+  /* NEONOTA_PURE_END */
+  try{ if(typeof window!=='undefined'){ window.parseMoedaBR=window.parseMoedaBR||parseMoedaBR; } }catch(ePM){}
+  window.neoAddItemVenda=function(){if(!window.neoVendaProduto) return toast('Selecione um produto','error'); const qtd=parseMoedaBR(document.getElementById('neo-prod-qtd').value)||1; if(window.neoVendaProduto.categoria!=='Serviço' && window.neoVendaProduto.categoria!=='Recarga' && (window.neoVendaProduto.estoque||0)<=0) return (window.lfbAlert?window.lfbAlert('Produto sem estoque','Sem estoque') : alert('Produto sem estoque')); if(window.neoVendaProduto.categoria!=='Serviço' && window.neoVendaProduto.categoria!=='Recarga' && qtd>(window.neoVendaProduto.estoque||0)) return (window.lfbAlert?window.lfbAlert('Estoque insuficiente. Disponível: '+(window.neoVendaProduto.estoque||0),'Estoque insuficiente') : alert('Estoque insuficiente. Disponível: '+(window.neoVendaProduto.estoque||0))); const preco=parseMoedaBR(document.getElementById('neo-prod-valor').value)||window.neoVendaProduto.preco||0; window.neoVendaItens.push({produtoId:window.neoVendaProduto.id,qtd,preco,subtotal:qtd*preco}); window.neoVendaProduto=null; document.getElementById('neo-prod-search').value=''; document.getElementById('neo-prod-valor').value=''; neoRenderItensVenda(); neoUpdateVendaTotal();};
   window.neoRenderItensVenda=function(){const body=document.getElementById('neo-venda-itens'); body.innerHTML=(window.neoVendaItens||[]).map((it,idx)=>{const p=db.produtos.find(x=>x.id===it.produtoId)||{}; return `<tr><td><b>${escapeHtml(p.nome||'Produto')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(p.sku||'')}</span></td><td>${it.qtd}</td><td>${fmtMoney(it.preco)}</td><td><b>${fmtMoney(it.subtotal)}</b></td><td><button onclick="neoRemoveItemVenda(${idx})" class="text-red-600"><i class="ph ph-trash"></i></button></td></tr>`}).join('')||'<tr><td colspan="5" class="text-center text-slate-400 py-8">Nenhum item adicionado</td></tr>';};
   window.neoRemoveItemVenda=function(idx){window.neoVendaItens.splice(idx,1); neoRenderItensVenda(); neoUpdateVendaTotal();};
-  window.neoUpdateVendaTotal=function(){const sub=(window.neoVendaItens||[]).reduce((s,i)=>s+i.subtotal,0); const desc=parseFloat(document.getElementById('neo-venda-desc')?.value)||0; document.getElementById('neo-venda-subtotal').innerText=fmtMoney(sub); document.getElementById('neo-venda-total').innerText=fmtMoney(Math.max(0,sub-desc));};
+  window.neoUpdateVendaTotal=function(){const sub=(window.neoVendaItens||[]).reduce((s,i)=>s+i.subtotal,0); const desc=parseMoedaBR(document.getElementById('neo-venda-desc')?.value)||0; document.getElementById('neo-venda-subtotal').innerText=fmtMoney(sub); document.getElementById('neo-venda-total').innerText=fmtMoney(Math.max(0,sub-desc));};
   window.neoTogglePagamento=function(){document.getElementById('neo-pagamento-box')?.classList.toggle('hidden',document.getElementById('neo-venda-status').value!=='faturado');};
-  window.neoSalvarVenda=function(){const sess=getSession(); if(!window.neoVendaCliente) return toast('Selecione o cliente','error'); if(!window.neoVendaItens?.length) return toast('Adicione ao menos um item','error'); const desc=parseFloat(document.getElementById('neo-venda-desc').value)||0; const total=Math.max(0,window.neoVendaItens.reduce((s,i)=>s+i.subtotal,0)-desc); const status=document.getElementById('neo-venda-status').value; const pag=status==='faturado'?(document.getElementById('neo-venda-pag').value||'Prazo'):'Não faturado'; const venda={id:uid('vda'),empresaId:sess.empresaId,numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('venda',db.vendas,sess.empresaId):String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1)),clienteId:window.neoVendaCliente.id,data:new Date().toISOString(),itens:[...window.neoVendaItens],desconto:desc,total,formaPagamento:pag,status,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString()}; venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId&&x.empresaId===sess.empresaId); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque-=it.qtd;}); db.vendas.push(venda); logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)}`); if(status==='faturado') db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:venda.clienteId,descricao:`Venda ${venda.numero}`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,formaPagamento:pag}); saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Venda salva','success'); setTimeout(()=>imprimirNotinha(venda.id),250);};
+  window.neoSalvarVenda=function(){const sess=getSession(); if(!window.neoVendaCliente) return toast('Selecione o cliente','error'); if(!window.neoVendaItens?.length) return toast('Adicione ao menos um item','error'); const desc=parseMoedaBR(document.getElementById('neo-venda-desc').value)||0; const total=Math.max(0,window.neoVendaItens.reduce((s,i)=>s+i.subtotal,0)-desc); const status=document.getElementById('neo-venda-status').value; const pag=status==='faturado'?(document.getElementById('neo-venda-pag').value||'Prazo'):'Não faturado'; const venda={id:uid('vda'),empresaId:sess.empresaId,numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('venda',db.vendas,sess.empresaId):String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1)),clienteId:window.neoVendaCliente.id,data:new Date().toISOString(),itens:[...window.neoVendaItens],desconto:desc,total,formaPagamento:pag,status,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString()}; venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId&&x.empresaId===sess.empresaId); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque-=it.qtd;}); db.vendas.push(venda); logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)}`); if(status==='faturado') db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:venda.clienteId,descricao:`Venda ${venda.numero}`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,formaPagamento:pag}); saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Venda salva','success'); setTimeout(()=>imprimirNotinha(venda.id),250);};
 
-  window.renderClientes=function(){const sess=getSession(); if(!sess) return; const view=document.getElementById('view-clientes')||ensureView('clientes'); const q=document.getElementById('neo-search-clientes')?.value||''; const low=q.toLowerCase(); let list=db.clientes.filter(c=>c.empresaId===sess.empresaId&&c.status!=='inativo'); if(!window.__cliFoiFiltrado) list=[]; if(low) list=list.filter(c=>(c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low)); list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')); view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro e consulta com busca rápida</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo</button><button onclick="if(window.neoClienteSelecionado) openModal('cliente',window.neoClienteSelecionado)" class="neo-btn"><i class="ph ph-pencil"></i>Alterar</button><button onclick="if(window.neoClienteSelecionado) deleteCliente(window.neoClienteSelecionado)" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div><div class="p-4 border-b flex gap-3 flex-wrap items-center"><input id="neo-search-clientes" value="${escapeHtml(q)}" class="neo-input flex-1 min-w-[220px]" placeholder="Digite nome, CNPJ, telefone ou código — aperte Enter ou Filtrar"><button id="cli-btn-filtrar" type="button" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold"><i class="ph ph-funnel"></i> Filtrar</button><button id="cli-btn-remover-filtro" type="button" class="h-10 px-4 rounded-xl bg-white border text-[13px] font-bold"><i class="ph ph-x-circle"></i> Remover filtro</button><span class="text-[12px] text-slate-500 self-center">${window.__cliFoiFiltrado?("<b class='text-[#0a1e8a]'>"+list.length+"</b> cliente(s)"):("Escolha e aperte Filtrar — a lista só aparece depois do filtro")}</span></div><div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.neoClienteSelecionado='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.neoClienteSelecionado===c.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${c.codigo||'-'}</b></td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(c.email||'')}</span></td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(c.documento||'')}</td><td>${escapeHtml(c.cidade||'')} / ${escapeHtml(c.estado||'')}</td><td><span class="neo-status ${c.status==='ativo'?'ok':'wait'}">${escapeHtml(c.status||'ativo')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-12">Nenhum cliente encontrado</td></tr>'}</tbody></table></div></div></div>`; const input=document.getElementById('neo-search-clientes');
+  window.renderClientes=function(){const sess=getSession(); if(!sess) return; const view=document.getElementById('view-clientes')||ensureView('clientes'); const q=document.getElementById('neo-search-clientes')?.value||''; const campoCli=(document.getElementById('neo-search-clientes-campo')||{}).value||'todos'; const low=q.toLowerCase(); let list=db.clientes.filter(c=>c.empresaId===sess.empresaId&&c.status!=='inativo'); if(!window.__cliFoiFiltrado) list=[]; if(low){ let cliOk=false; try{ if(typeof window!=='undefined'&&typeof window.filtraClientesCampo==='function'){ list=window.filtraClientesCampo(list,q,campoCli); cliOk=true; } }catch(eCC){} if(!cliOk) list=list.filter(c=>(c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low)); } list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')); view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro e consulta com busca rápida</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo</button><button onclick="if(window.neoClienteSelecionado) openModal('cliente',window.neoClienteSelecionado)" class="neo-btn"><i class="ph ph-pencil"></i>Alterar</button><button onclick="if(window.neoClienteSelecionado) deleteCliente(window.neoClienteSelecionado)" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div><div class="p-4 border-b flex gap-3 flex-wrap items-center"><input id="neo-search-clientes" value="${escapeHtml(q)}" class="neo-input flex-1 min-w-[220px]" placeholder="Digite nome, CNPJ, telefone ou código — aperte Enter ou Filtrar"><select id="neo-search-clientes-campo" class="neo-input" style="max-width:130px"><option value="todos" ${campoCli==='todos'?'selected':''}>Tudo</option><option value="nome" ${campoCli==='nome'?'selected':''}>Nome</option><option value="fantasia" ${campoCli==='fantasia'?'selected':''}>Fantasia</option><option value="codigo" ${campoCli==='codigo'?'selected':''}>Código</option><option value="documento" ${campoCli==='documento'?'selected':''}>CPF/CNPJ</option></select><button id="cli-btn-filtrar" type="button" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold"><i class="ph ph-funnel"></i> Filtrar</button><button id="cli-btn-remover-filtro" type="button" class="h-10 px-4 rounded-xl bg-white border text-[13px] font-bold"><i class="ph ph-x-circle"></i> Remover filtro</button><span class="text-[12px] text-slate-500 self-center">${window.__cliFoiFiltrado?("<b class='text-[#0a1e8a]'>"+list.length+"</b> cliente(s)"):("Escolha e aperte Filtrar — a lista só aparece depois do filtro")}</span></div><div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.neoClienteSelecionado='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.neoClienteSelecionado===c.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${c.codigo||'-'}</b></td><td><b>${escapeHtml(window.textoOK?window.textoOK(c.nome||''):c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(c.email||'')}</span></td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(window.textoOK?window.textoOK(c.documento||''):c.documento||'')}</td><td>${escapeHtml(c.cidade||'')} / ${escapeHtml(c.estado||'')}</td><td><span class="neo-status ${c.status==='ativo'?'ok':'wait'}">${escapeHtml(c.status||'ativo')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-12">Nenhum cliente encontrado</td></tr>'}</tbody></table></div></div></div>`; const input=document.getElementById('neo-search-clientes');
   if(input){
     input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
     input.oninput=function(){ var f=document.getElementById('cli-btn-filtrar'); if(f) f.className='h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-bold animate-pulse'; };
@@ -7750,7 +7773,8 @@ const CLI_PURE = (function(){
     const termo = fold(q).trim();
     if(!termo) return list;
     const termoNum = soDigitos(q);
-    const testa = (valor, extraNum)=> fold(valor).includes(termo) || (!!termoNum && termoNum.length>=3 && extraNum && soDigitos(valor).includes(termoNum));
+    const TOK=(typeof window!='undefined'&&typeof window.textoOK==='function')?window.textoOK:(function(s){return s;});
+  const testa = (valor, extraNum)=> fold(TOK(valor)).includes(termo) || (!!termoNum && termoNum.length>=3 && extraNum && soDigitos(valor).includes(termoNum));
     return list.filter(c=>{
       if(!c) return false;
       if(campo && campo!=='todos'){
@@ -36337,6 +36361,7 @@ var CAMPOS_RECARGA = [
   ['todos','Pesquisar recarga'],['codigo','Código'],['nome','Descrição'],['marca','Marca']
 ];
 
+/* FILTROS_PURE_START */
 function fold(t){
   return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
@@ -36369,7 +36394,7 @@ function filtraClientes(list, q, campo){
     if(!c) return false;
     var k = campo||'todos';
     function testa(v, extraNum){
-      return fold(v).indexOf(termo)>=0 || (!!num && num.length>=3 && extraNum && soDigitos(v).indexOf(num)>=0);
+      return fold(textoOK(v)).indexOf(termo)>=0 || (!!num && num.length>=3 && extraNum && soDigitos(v).indexOf(num)>=0);
     }
     if(k && k!=='todos'){
       if(k==='email') return testa(c.email) || testa(c.email2);
@@ -36386,6 +36411,44 @@ function filtraClientes(list, q, campo){
       testa(c.contato)||testa(c.email)||testa(c.cep,true)||testa(c.whatsapp,true);
   });
 }
+function textoOK(s){
+  // r63 (P2 encoding 30/09: dado antigo em latin1 exibido como utf8).
+  // Só conserta quando tem assinatura de sujeira E o conserto limpa tudo.
+  var t=String(s==null?'':s);
+  if(t.indexOf('\u00C3')<0&&t.indexOf('\u00C2')<0) return t;
+  try{
+    var r=decodeURIComponent(escape(t));
+    if(r.indexOf('\u00C3')<0&&r.indexOf('\u00C2')<0&&r.indexOf('\uFFFD')<0) return r;
+  }catch(e){}
+  return t;
+}
+function filtraClientesCampo(list, q, campo){
+  // r63 (P1 filtro 30/09) — porta única: CLI_PURE → núcleo local → embutido.
+  // Nunca mais larga: cada caminho respeita o campo pedido.
+  try{
+    if(typeof window!=='undefined'&&window.CLI_PURE&&typeof window.CLI_PURE.filtraClientes==='function')
+      return window.CLI_PURE.filtraClientes(list,q,campo||'todos');
+  }catch(e){}
+  try{ return filtraClientes(list,q,campo||'todos'); }catch(e2){}
+  var lw=String(q==null?'':q).toLowerCase(), k=campo||'todos';
+  return (list||[]).filter(function(c){
+    if(!c) return false;
+    if(k==='codigo'){
+      var d=String(q==null?'':q).replace(/\D/g,'').replace(/^0+/,'');
+      if(!d) return true;
+      return String(c.codigo==null?'':c.codigo).replace(/\D/g,'').replace(/^0+/,'')===d
+        || String(c.codigoAntigo==null?'':c.codigoAntigo).replace(/\D/g,'').replace(/^0+/,'')===d;
+    }
+    if(k==='nome') return String(c.nome||'').toLowerCase().indexOf(lw)>=0;
+    if(k==='fantasia') return String(c.fantasia||'').toLowerCase().indexOf(lw)>=0;
+    if(k==='documento') return String(c.documento||'').toLowerCase().indexOf(lw)>=0;
+    return String(c.nome||'').toLowerCase().indexOf(lw)>=0
+      || String(c.fantasia||'').toLowerCase().indexOf(lw)>=0
+      || String(c.codigo==null?'':c.codigo).indexOf(lw)>=0
+      || String(c.documento||'').toLowerCase().indexOf(lw)>=0;
+  });
+}
+/* FILTROS_PURE_END */
 function filtraProdutos(list, q, cat){
   var termo = fold(q).trim();
   var catN = String(cat||'').trim();
@@ -36421,6 +36484,8 @@ window.FILTROS_BUSCA_PURE = {
   filtraProdutos: filtraProdutos,
   filtraRecargas: filtraRecargas
 };
+window.filtraClientesCampo=filtraClientesCampo;
+window.textoOK=textoOK;
 
 if(typeof document==='undefined') return;
 
@@ -36703,6 +36768,7 @@ setTimeout(aplicarTudo, 1400);
 
 console.log('[DIGICOPY] v5.22.19 filtros auxiliares: cliente, produto (sem recarga) e recarga+etiqueta');
 })();
+
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52219_filtros_busca_patch.js", e); }
 ;
@@ -47911,7 +47977,9 @@ try{
     });
 
     var campo = (document.getElementById('orc-cli-campo') || {}).value || 'todos';
-    if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
+    if(typeof window!=='undefined' && typeof window.filtraClientesCampo === 'function'){
+      list = window.filtraClientesCampo(list, q, campo);
+    } else if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
       list = window.FILTROS_BUSCA_PURE.filtraClientes(list, q, campo);
     } else {
       var low = q.toLowerCase();
@@ -47927,9 +47995,9 @@ try{
     el.classList.remove('hidden');
     el.innerHTML = list.map(function(c){
       return '<button type="button" onclick="window.orcSelCliente(\'' + esc(c.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
-        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(c.nome || '') + '</b>'
-        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(c.fantasia) + ')</span>' : '') + '<br>'
-        + '<span class="text-slate-500 text-[11px]">' + esc(c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
+        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(window.textoOK?window.textoOK(c.nome || ''):c.nome || '') + '</b>'
+        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(window.textoOK?window.textoOK(c.fantasia):c.fantasia) + ')</span>' : '') + '<br>'
+        + '<span class="text-slate-500 text-[11px]">' + esc(window.textoOK?window.textoOK(c.documento || ''):c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
     }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado com esse filtro.</p>';
   }
 
@@ -48422,7 +48490,9 @@ try{
     });
 
     var campo = (document.getElementById('orc-cli-campo') || {}).value || 'todos';
-    if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
+    if(typeof window!=='undefined' && typeof window.filtraClientesCampo === 'function'){
+      list = window.filtraClientesCampo(list, q, campo);
+    } else if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
       list = window.FILTROS_BUSCA_PURE.filtraClientes(list, q, campo);
     } else {
       var low = q.toLowerCase();
@@ -48438,9 +48508,9 @@ try{
     el.classList.remove('hidden');
     el.innerHTML = list.map(function(c){
       return '<button type="button" onclick="window.orcSelCliente(\'' + esc(c.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
-        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(c.nome || '') + '</b>'
-        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(c.fantasia) + ')</span>' : '') + '<br>'
-        + '<span class="text-slate-500 text-[11px]">' + esc(c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
+        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(window.textoOK?window.textoOK(c.nome || ''):c.nome || '') + '</b>'
+        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(window.textoOK?window.textoOK(c.fantasia):c.fantasia) + ')</span>' : '') + '<br>'
+        + '<span class="text-slate-500 text-[11px]">' + esc(window.textoOK?window.textoOK(c.documento || ''):c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
     }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado com esse filtro.</p>';
   }
 
@@ -51358,7 +51428,7 @@ try{
 //   2.1 Atalho "Nova venda" removido do menu (index.html).
 //   2.2 Extorno ESTE ARQUIVO: window.estornarVenda (o botão do detalhe chamava
 //       uma função que não existia — botão morto) + estornarVendasSelecionadas
-//       (lote, mesma caixa de seleção do Excluir) + botão "↩ Extornar" na barra.
+//       (lote, mesma caixa de seleção do Excluir) + botão "↩ Estornar" na barra.
 //       Modo escolhido pelo dono: marca "Extornada" (fica no histórico), desfaz
 //       o financeiro (contas a receber da venda), NÃO mexe no estoque (o
 //       faturamento também não mexia — ele baixa quando a venda nasce).
@@ -51432,12 +51502,12 @@ function renderDepois(){
 }
 
 function aviso(txt, titulo){
-  if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Extornar'); return; }
+  if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Estornar'); return; }
   if(typeof toast==='function'){ toast(txt, 'info'); return; }
   if(typeof alert==='function') alert(txt);
 }
 function confirma(txt, titulo, cb){
-  if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Extornar venda').then(cb); return; }
+  if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Estornar venda').then(cb); return; }
   cb(typeof confirm==='function' ? confirm(txt) : true);
 }
 
@@ -51445,14 +51515,14 @@ function confirma(txt, titulo, cb){
 // estornarVenda(...), mas a função não existia em lugar nenhum: botão morto.
 window.estornarVenda = function(id){
   var v = acharVenda(id);
-  if(!v){ aviso('Venda não encontrada.', 'Extornar'); return; }
+  if(!v){ aviso('Venda não encontrada.', 'Estornar'); return; }
   if(!ehFaturada(v.status)){
-    aviso(low(v.status)==='estornada' ? 'Esta venda já está extornada.' : 'Só dá para extornar venda FATURADA (esta ainda está como "'+(v.status||'orçamento')+'").', 'Extornar');
+    aviso(low(v.status)==='estornada' ? 'Esta venda já está extornada.' : 'Só dá para estornar venda FATURADA (esta ainda está como "'+(v.status||'orçamento')+'").', 'Estornar');
     return;
   }
   var titulos = (DB().contasReceber || []).filter(function(c){ return c && c.vendaId===v.id; });
   var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
-  confirma('Extornar a venda ' + (v.numero||'') + '?\n\n• As contas a receber dela ficam marcadas como EXTORNADO no Financeiro (' + titulos.length + ' título(s)' + (pagos ? ', sendo ' + pagos + ' já pago(s) — confira o caixa' : '') + '); continuam visíveis com a tarja, fora das somas.\n• Ela fica marcada como "Extornada" no histórico — clicar nela reabre a aba da venda com os dados, ajusta e fatura de novo.\n• Depois disso, o botão Excluir passa a permitir apagar, se você quiser.', 'Extornar venda', function(ok){
+  confirma('Estornar a venda ' + (v.numero||'') + '?\n\n• As contas a receber dela ficam marcadas como EXTORNADO no Financeiro (' + titulos.length + ' título(s)' + (pagos ? ', sendo ' + pagos + ' já pago(s) — confira o caixa' : '') + '); continuam visíveis com a tarja, fora das somas.\n• Ela fica marcada como "Extornada" no histórico — clicar nela reabre a aba da venda com os dados, ajusta e fatura de novo.\n• Depois disso, o botão Excluir passa a permitir apagar, se você quiser.', 'Estornar venda', function(ok){
     if(!ok) return;
     estornarUmaVenda(v);
     renderDepois();
@@ -51472,11 +51542,11 @@ window.estornarVendasSelecionadas = function(){
     var selId = window.neoVendaSelecionada || window.vendaSelecionadaId;
     if(selId){ var unica = acharVenda(selId); if(unica) alvos = [unica]; }
   }
-  if(!alvos.length){ aviso('Selecione uma venda na tabela ou marque as caixas de seleção para extornar.', 'Extornar vendas'); return; }
+  if(!alvos.length){ aviso('Selecione uma venda na tabela ou marque as caixas de seleção para estornar.', 'Estornar vendas'); return; }
   var faturadas = alvos.filter(function(x){ return ehFaturada(x.status); });
-  if(!faturadas.length){ aviso('Só vendas FATURADAS podem ser extornadas. Você selecionou ' + alvos.length + ' venda(s), nenhuma faturada.', 'Extornar vendas'); return; }
+  if(!faturadas.length){ aviso('Só vendas FATURADAS podem ser extornadas. Você selecionou ' + alvos.length + ' venda(s), nenhuma faturada.', 'Estornar vendas'); return; }
   var puladas = alvos.length - faturadas.length;
-  confirma('Extornar ' + faturadas.length + ' venda(s) faturada(s)?\n\n• As contas a receber delas ficam marcadas como EXTORNADO no Financeiro (as já pagas/à vista também — confira o caixa depois); continuam visíveis com a tarja, fora das somas.\n• Ficam marcadas como "Extornada" no histórico — clicar nelas reabre a aba da venda com os dados.\n• Depois disso, o Excluir passa a permitir apagar, se você quiser.' + (puladas ? '\n\n(' + puladas + ' selecionada(s) não faturada(s) serão ignoradas.)' : ''), 'Extornar vendas', function(ok){
+  confirma('Estornar ' + faturadas.length + ' venda(s) faturada(s)?\n\n• As contas a receber delas ficam marcadas como EXTORNADO no Financeiro (as já pagas/à vista também — confira o caixa depois); continuam visíveis com a tarja, fora das somas.\n• Ficam marcadas como "Extornada" no histórico — clicar nelas reabre a aba da venda com os dados.\n• Depois disso, o Excluir passa a permitir apagar, se você quiser.' + (puladas ? '\n\n(' + puladas + ' selecionada(s) não faturada(s) serão ignoradas.)' : ''), 'Estornar vendas', function(ok){
     if(!ok) return;
     var n = 0, tit = 0, pagos = 0;
     faturadas.forEach(function(v){
@@ -51489,9 +51559,9 @@ window.estornarVendasSelecionadas = function(){
   });
 };
 
-// Botão "Extornar" na MESMA barra de ações das notinhas (ao lado do Excluir,
+// Botão "Estornar" na MESMA barra de ações das notinhas (ao lado do Excluir,
 // que é injetado como #btn-excluir-venda-unificado na .neo-actions).
-function garantirBotaoExtornar(){
+function garantirBotaoEstornar(){
   try{
     if(typeof document==='undefined') return;
     var view = document.getElementById('view-vendas');
@@ -51502,7 +51572,7 @@ function garantirBotaoExtornar(){
     var btn = document.createElement('button');
     btn.id = 'btn-estornar-venda';
     btn.className = 'neo-btn';
-    btn.innerHTML = '<i class="ph ph-arrow-u-up-left"></i>Extornar';
+    btn.innerHTML = '<i class="ph ph-arrow-u-up-left"></i>Estornar';
     btn.onclick = window.estornarVendasSelecionadas;
     var exc = actions.querySelector('#btn-excluir-venda-unificado');
     if(exc) actions.insertBefore(btn, exc); else actions.appendChild(btn);
@@ -51512,14 +51582,14 @@ if(typeof window!=='undefined' && typeof window.renderVendas==='function' && !wi
   var _renderVendasAntes = window.renderVendas;
   window.renderVendas = function(){
     var r = _renderVendasAntes.apply(this, arguments);
-    try{ setTimeout(garantirBotaoExtornar, 60); }catch(e){}
+    try{ setTimeout(garantirBotaoEstornar, 60); }catch(e){}
     return r;
   };
   window.renderVendas.__v5240ext = true;
 }
 if(typeof document!=='undefined'){
-  setTimeout(garantirBotaoExtornar, 1600);
-  setInterval(garantirBotaoExtornar, 3000);
+  setTimeout(garantirBotaoEstornar, 1600);
+  setInterval(garantirBotaoEstornar, 3000);
 }
 
 // ── 4.2 ORÇAMENTO NÃO ENCONTRADO NESTE PC ───────────────────────────────────
@@ -51576,7 +51646,7 @@ if(typeof document!=='undefined' && typeof console!=='undefined' && console.log)
 // v5.24.4 (redesenho dele): abas = [Dados] e [Histórico do sistema]; dentro
 // do Histórico há sub-menus (Vendas por padrão, Financeiro, Orçamentos,
 // Chamados, Leituras). A listagem tem caixas de múltipla escolha com botões
-// Excluir / Extornar / Abrir lista de origem; o registro específico abre com
+// Excluir / Estornar / Abrir lista de origem; o registro específico abre com
 // o BOTÃO DIREITO do mouse direto no módulo de origem. (O resumo intermediário
 // da v5.24.3 foi aposentado a pedido dele.)
 //
@@ -51698,7 +51768,7 @@ function montarAbasCliente(id){
     '<div id="clitab-sub-holder"></div>'+
     '<div id="clitab-acoes" class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">'+
       '<button type="button" id="clitab-btn-excluir" onclick="clitabExcluir()" class="h-9 px-4 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-trash"></i> Excluir selecionados</button>'+
-      '<button type="button" id="clitab-btn-extornar" onclick="clitabExtornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Extornar selecionados</button>'+
+      '<button type="button" id="clitab-btn-estornar" onclick="clitabEstornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Estornar selecionados</button>'+
       '<button type="button" id="clitab-btn-lista" onclick="clitabAbrirLista()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]"><i class="ph ph-arrow-square-out"></i> Abrir lista de origem</button>'+
       '<button type="button" onclick="clitabAbrirClienteNaLista()" class="h-9 px-4 rounded-xl bg-white border border-[#0a1e8a] text-[#0a1e8a] font-bold text-[12px]"><i class="ph ph-users"></i> Este cliente na lista</button>'+
       '<span class="text-[11px] text-slate-400 ml-auto">Marque as caixas para agir em lote • botão direito do mouse abre o registro no módulo</span>'+
@@ -51751,7 +51821,7 @@ window.clitabSub=function(sub){
   st.sel[sub]=st.sel[sub]||{};
   renderSub(sub);            // v5.24.4: sempre fresco (exclusões/estornos)
   pintarSubBarra();
-  const btnExt=document.getElementById('clitab-btn-extornar');
+  const btnExt=document.getElementById('clitab-btn-estornar');
   if(btnExt) btnExt.style.display=(sub==='vendas')?'':'none';
   atualizarBotoes();
 };
@@ -51823,9 +51893,9 @@ function atualizarBotoes(){
   const st=window.__clitab; if(!st) return;
   const n=Object.keys(st.sel[st.sub]||{}).length;
   const be=document.getElementById('clitab-btn-excluir');
-  const bx=document.getElementById('clitab-btn-extornar');
+  const bx=document.getElementById('clitab-btn-estornar');
   if(be){ be.disabled=!n; be.innerHTML='<i class="ph ph-trash"></i> Excluir'+(n?' ('+n+')':' selecionados'); }
-  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Extornar'+(n?' ('+n+')':' selecionados'); }
+  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Estornar'+(n?' ('+n+')':' selecionados'); }
   const bl=document.getElementById('clitab-btn-lista');
   if(bl){ bl.innerHTML='<i class="ph ph-arrow-square-out"></i> '+(n?('Abrir selecionado(s) ('+n+')'):'Abrir lista de origem'); }
 }
@@ -51901,13 +51971,13 @@ window.clitabExcluir=function(){
   if(typeof window.confirmSistema==='function'){ window.confirmSistema(pergunta,'Excluir de vez').then(function(ok){ if(ok) executar(); }); return; }
   if(typeof confirm==='function' && confirm(pergunta)) executar();
 };
-window.clitabExtornar=function(){
+window.clitabEstornar=function(){
   const st=window.__clitab; if(!st||st.sub!=='vendas') return;
   const ids=Object.keys(st.sel.vendas||{}); if(!ids.length) return;
-  if(typeof window.confirmSistema==='function'){ window.confirmSistema('Estornar '+ids.length+' venda(s) faturada(s)? O financeiro ligado a elas é marcado como estornado.','Estornar').then(function(ok){ if(ok) window.__clitabExtornarAgora(ids); }); return; }
-  window.__clitabExtornarAgora(ids);
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema('Estornar '+ids.length+' venda(s) faturada(s)? O financeiro ligado a elas é marcado como estornado.','Estornar').then(function(ok){ if(ok) window.__clitabEstornarAgora(ids); }); return; }
+  window.__clitabEstornarAgora(ids);
 };
-window.__clitabExtornarAgora=function(ids){
+window.__clitabEstornarAgora=function(ids){
   const st=window.__clitab; if(!st) return;
   let feitas=0, puladas=0;
   ids.forEach(function(id){
@@ -52437,7 +52507,7 @@ try{
 // certo na edição pós-estorno.
 //
 // Relato dele (caminho exato): contrato → leituras → novo → novo lançamento →
-// salvar → faturar → extornar → lápis → muda o contador → salvar → a lista
+// salvar → faturar → estornar → lápis → muda o contador → salvar → a lista
 // mostra o ANTERIOR como o contador que foi faturado (não o anterior de
 // verdade). Causa raiz (cadeia factual, sem achismo):
 //   salvarLancamentoContador calcula anterior = p.contadores[key] VIVO; após o

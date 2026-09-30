@@ -23,6 +23,7 @@ var CAMPOS_RECARGA = [
   ['todos','Pesquisar recarga'],['codigo','Código'],['nome','Descrição'],['marca','Marca']
 ];
 
+/* FILTROS_PURE_START */
 function fold(t){
   return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
@@ -55,7 +56,7 @@ function filtraClientes(list, q, campo){
     if(!c) return false;
     var k = campo||'todos';
     function testa(v, extraNum){
-      return fold(v).indexOf(termo)>=0 || (!!num && num.length>=3 && extraNum && soDigitos(v).indexOf(num)>=0);
+      return fold(textoOK(v)).indexOf(termo)>=0 || (!!num && num.length>=3 && extraNum && soDigitos(v).indexOf(num)>=0);
     }
     if(k && k!=='todos'){
       if(k==='email') return testa(c.email) || testa(c.email2);
@@ -72,6 +73,44 @@ function filtraClientes(list, q, campo){
       testa(c.contato)||testa(c.email)||testa(c.cep,true)||testa(c.whatsapp,true);
   });
 }
+function textoOK(s){
+  // r63 (P2 encoding 30/09: dado antigo em latin1 exibido como utf8).
+  // Só conserta quando tem assinatura de sujeira E o conserto limpa tudo.
+  var t=String(s==null?'':s);
+  if(t.indexOf('\u00C3')<0&&t.indexOf('\u00C2')<0) return t;
+  try{
+    var r=decodeURIComponent(escape(t));
+    if(r.indexOf('\u00C3')<0&&r.indexOf('\u00C2')<0&&r.indexOf('\uFFFD')<0) return r;
+  }catch(e){}
+  return t;
+}
+function filtraClientesCampo(list, q, campo){
+  // r63 (P1 filtro 30/09) — porta única: CLI_PURE → núcleo local → embutido.
+  // Nunca mais larga: cada caminho respeita o campo pedido.
+  try{
+    if(typeof window!=='undefined'&&window.CLI_PURE&&typeof window.CLI_PURE.filtraClientes==='function')
+      return window.CLI_PURE.filtraClientes(list,q,campo||'todos');
+  }catch(e){}
+  try{ return filtraClientes(list,q,campo||'todos'); }catch(e2){}
+  var lw=String(q==null?'':q).toLowerCase(), k=campo||'todos';
+  return (list||[]).filter(function(c){
+    if(!c) return false;
+    if(k==='codigo'){
+      var d=String(q==null?'':q).replace(/\D/g,'').replace(/^0+/,'');
+      if(!d) return true;
+      return String(c.codigo==null?'':c.codigo).replace(/\D/g,'').replace(/^0+/,'')===d
+        || String(c.codigoAntigo==null?'':c.codigoAntigo).replace(/\D/g,'').replace(/^0+/,'')===d;
+    }
+    if(k==='nome') return String(c.nome||'').toLowerCase().indexOf(lw)>=0;
+    if(k==='fantasia') return String(c.fantasia||'').toLowerCase().indexOf(lw)>=0;
+    if(k==='documento') return String(c.documento||'').toLowerCase().indexOf(lw)>=0;
+    return String(c.nome||'').toLowerCase().indexOf(lw)>=0
+      || String(c.fantasia||'').toLowerCase().indexOf(lw)>=0
+      || String(c.codigo==null?'':c.codigo).indexOf(lw)>=0
+      || String(c.documento||'').toLowerCase().indexOf(lw)>=0;
+  });
+}
+/* FILTROS_PURE_END */
 function filtraProdutos(list, q, cat){
   var termo = fold(q).trim();
   var catN = String(cat||'').trim();
@@ -107,6 +146,8 @@ window.FILTROS_BUSCA_PURE = {
   filtraProdutos: filtraProdutos,
   filtraRecargas: filtraRecargas
 };
+window.filtraClientesCampo=filtraClientesCampo;
+window.textoOK=textoOK;
 
 if(typeof document==='undefined') return;
 
@@ -389,3 +430,4 @@ setTimeout(aplicarTudo, 1400);
 
 console.log('[DIGICOPY] v5.22.19 filtros auxiliares: cliente, produto (sem recarga) e recarga+etiqueta');
 })();
+

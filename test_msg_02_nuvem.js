@@ -2954,7 +2954,7 @@ if (false) { // ═══ test_ajustes_v5240.js (inerte: só parse, nunca execut
 //<<<<SECAO:test_ajustes_v5240.js:INICIO>>>>
 // Teste v5.24.0 — relatório grande do dono:
 //  1.2 tela Backup sem o botão local duplicado; 1.3 manual numerado no worker;
-//  2.1 atalho "Nova venda" fora do menu; 2.2 Extornar (individual + lote);
+//  2.1 atalho "Nova venda" fora do menu; 2.2 Estornar (individual + lote);
 //  3.x anti-perda (varredura off, conflito com reenvio, reconciliação segura,
 //      reset só com backup); 4.1 cliente sem id vira cadastro novo;
 //  4.2 orçamento com retry de nuvem; 5.1 "Importar clientes" removido.
@@ -3034,17 +3034,17 @@ console.log('-- item 2.1: atalho "Nova venda" removido --');
 ok(indexHtml.indexOf("if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')") < 0, 'index.html sem o atalho');
 ok(indexMob.indexOf("if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')") < 0, 'mobile/www/index.html sem o atalho');
 
-// 5) item 2.2: Extornar individual + lote
-console.log('-- item 2.2: botão Extornar (lote) + estornarVenda (individual) --');
+// 5) item 2.2: Estornar individual + lote
+console.log('-- item 2.2: botão Estornar (lote) + estornarVenda (individual) --');
 ok(patch5240.indexOf('window.estornarVenda = function') >= 0, 'estornarVenda individual existe de verdade (botão do detalhe era morto)');
 ok(patch5240.indexOf('window.estornarVendasSelecionadas = function') >= 0, 'estorno em lote existe');
-ok(patch5240.indexOf('btn-estornar-venda') >= 0 && patch5240.indexOf('btn-excluir-venda-unificado') >= 0, 'botão Extornar entra na mesma barra do Excluir');
+ok(patch5240.indexOf('btn-estornar-venda') >= 0 && patch5240.indexOf('btn-excluir-venda-unificado') >= 0, 'botão Estornar entra na mesma barra do Excluir');
 ok(patch5240.indexOf('venda-check-lote') >= 0, 'usa a mesma caixa de seleção do Excluir');
 ok(patch5240.indexOf("v.status = 'estornada';") >= 0 && patch5240.indexOf('v.formaPagamento = ') >= 0 && patch5240.indexOf('v.parcelas = [];') >= 0, 'marca "Extornada" no histórico e limpa o faturamento');
 ok(patch5240.indexOf('c.vendaId === v.id') >= 0 && patch5240.indexOf('contasReceber') >= 0, 'desfaz as contas a receber da venda (financeiro)');
 ok(patch5240.indexOf('p.estoque') < 0, 'NÃO mexe no estoque (faturar também não mexia)');
 seguroEmAmbos('window.estornarVendasSelecionadas = function', 'estorno em lote presente');
-seguroEmAmbos('btn-estornar-venda', 'botão Extornar presente');
+seguroEmAmbos('btn-estornar-venda', 'botão Estornar presente');
 
 // 6) item 3.1: anti-perda de dados
 console.log('-- item 3.1/3.2: travas anti-perda de dados --');

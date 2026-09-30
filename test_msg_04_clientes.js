@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 26 seções.
+// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 27 seções.
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
 // Seções: test_clientes.js, test_loc.js, test_contratos_refino.js, test_contratos_final.js, test_rtf_template.js, test_contratos_visitas.js, test_automacoes_locacao_visitas.js, test_contratos_leituras_definitivo.js, test_fluxo_contrato_leitura_corrigido.js, test_leitura_busca_fluxo.js, test_leitura_detalhada_departamentos.js, test_leitura_impressao_compacta_produtos.js, test_sistema_clientes_loja.js, test_ajustes_v5214.js, test_ajustes_v52236.js, test_ajustes_v52245.js, test_ajustes_v52281.js, test_ajustes_v52435.js, test_ajustes_v52436.js, test_ajustes_v5250.js, test_contrato_impressora_nao_some.js, test_ajustes_v52410.js, test_ajustes_v52411.js, test_ajustes_v52422.js, test_ajustes_v5247.js, test_unificar_contratos_r49.js
 // ═══════════════════════════════════════════════════════════════
@@ -1348,4 +1348,59 @@ ok('bundles com a conta oficial', b1.includes('window.maquinasContrato') && b2.i
 
 console.log('\nRESULTADO: unificar contratos r49 passou!');
 //<<<<SECAO:test_unificar_contratos_r49.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r63_filtro.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r63_filtro.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(c, m){ if(c){ console.log('  ok - '+m); } else { falhas++; console.error('  FALHA - '+m); } }
+console.log('-- r63 P1 filtro: campo escolhido é respeitado (auditoria 30/09) --');
+function bloco(s, a, b){ const i = s.indexOf(a), j = s.indexOf(b); if(i<0||j<0||j<i) return null; return s.slice(i+a.length, j); }
+const v19 = fs.readFileSync('ajustes_v52219_filtros_busca_patch.js', 'utf8');
+const pure = bloco(v19, '/* FILTROS_PURE_START */', '/* FILTROS_PURE_END */');
+ok(!!pure, 'bloco FILTROS_PURE extraível p/ teste');
+const P = new Function((pure || '') + '; return {filtraClientes, filtraClientesCampo, textoOK};')();
+const cliSrc = fs.readFileSync('clientes_patch.js', 'utf8');
+const ini = cliSrc.indexOf('const CLI_PURE = (function(){');
+const fim = cliSrc.indexOf('})();', ini) + 5;
+const C = new Function(cliSrc.slice(ini, fim) + '; return CLI_PURE;')();
+const L = [
+  { codigo: 1, nome: 'Balcão teste', fantasia: '', documento: '111' },
+  { codigo: 10, nome: 'Dez', fantasia: '', documento: '222' },
+  { codigo: 21, nome: 'Vinte e um', fantasia: 'Loja XP', documento: '333' },
+  { codigo: 'B2', nome: 'Bee', fantasia: '', documento: '444' }
+];
+const cods = r => JSON.stringify(r.map(c => c.codigo));
+ok(cods(C.filtraClientes(L, '1', 'codigo')) === '[1]', 'CLI_PURE: código 1 acha só o 1');
+ok(cods(P.filtraClientes(L, '1', 'codigo')) === '[1]', 'v52219: código 1 acha só o 1');
+ok(cods(P.filtraClientesCampo(L, '1', 'codigo')) === '[1]', 'porta única: código 1 acha só o 1');
+ok(P.filtraClientesCampo(L, 'balc', 'nome').length === 1, 'nome parcial acha Balcão (sem acento)');
+ok(P.filtraClientesCampo(L, 'xp', 'fantasia').length === 1, 'fantasia xp acha a Loja XP');
+ok(P.filtraClientesCampo(L, 'xp', 'nome').length === 0, 'campo nome NÃO vaza p/ fantasia');
+ok(P.filtraClientesCampo(L, '222', 'documento').length === 1, 'documento 222 acha o Dez');
+ok(P.filtraClientesCampo(L, '222', 'nome').length === 0, 'campo nome NÃO vaza p/ documento');
+ok(C.filtraClientes([{ codigo: 99, codigoAntigo: '0077' }], '77', 'codigo').length === 1, 'código antigo 0077 acha com 77');
+console.log('-- r63 P2 encoding: dado antigo consertado na exibição --');
+const sujo = Buffer.from('Balcão', 'utf8').toString('latin1');
+ok(sujo !== 'Balcão', 'sanidade: Buffer gera mojibake (' + sujo + ')');
+ok(P.textoOK(sujo) === 'Balcão', 'textoOK desfaz o mojibake');
+ok(P.textoOK('José') === 'José' && P.textoOK('') === '' && P.textoOK('100%') === '100%', 'texto limpo passa intacto');
+console.log('-- r63 fiação: todo mundo chama a porta única --');
+const neo = fs.readFileSync('notinha_patch.js', 'utf8');
+ok(neo.indexOf('id="neo-cli-campo"') >= 0, 'Nova venda tem seletor de campo');
+ok(neo.indexOf('id="neo-search-clientes-campo"') >= 0, 'tela Clientes tem seletor de campo');
+ok(neo.indexOf('window.filtraClientesCampo(base,q,campo)') >= 0, 'Nova venda usa a porta única');
+ok(neo.indexOf('window.filtraClientesCampo(list,q,campoCli)') >= 0, 'tela Clientes usa a porta única');
+const o59 = fs.readFileSync('ajustes_v52259_orcamento_filtros_item_patch.js', 'utf8');
+const o60 = fs.readFileSync('ajustes_v52260_orcamento_trava_venda_atalho_patch.js', 'utf8');
+ok(o59.indexOf('window.filtraClientesCampo(list, q, campo)') >= 0, 'orçamento v52259 usa a porta única');
+ok(o60.indexOf('window.filtraClientesCampo(list, q, campo)') >= 0, 'orçamento v52260 usa a porta única');
+ok(cliSrc.indexOf('fold(TOK(valor))') >= 0, 'CLI_PURE conserta o texto antes de comparar');
+const bundle = fs.readFileSync('app.bundle.js', 'utf8');
+ok(bundle.indexOf('function filtraClientesCampo') >= 0, 'porta única chegou no bundle');
+ok(bundle.indexOf('function textoOK') >= 0, 'textoOK chegou no bundle');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) r63-filtro'); process.exit(1); }
+console.log('\nRESULTADO: r63 filtro passou!');
+//<<<<SECAO:test_r63_filtro.js:FIM>>>>
 }

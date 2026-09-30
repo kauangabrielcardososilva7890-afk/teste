@@ -7,7 +7,7 @@
 //   2.1 Atalho "Nova venda" removido do menu (index.html).
 //   2.2 Extorno ESTE ARQUIVO: window.estornarVenda (o botão do detalhe chamava
 //       uma função que não existia — botão morto) + estornarVendasSelecionadas
-//       (lote, mesma caixa de seleção do Excluir) + botão "↩ Extornar" na barra.
+//       (lote, mesma caixa de seleção do Excluir) + botão "↩ Estornar" na barra.
 //       Modo escolhido pelo dono: marca "Extornada" (fica no histórico), desfaz
 //       o financeiro (contas a receber da venda), NÃO mexe no estoque (o
 //       faturamento também não mexia — ele baixa quando a venda nasce).
@@ -81,12 +81,12 @@ function renderDepois(){
 }
 
 function aviso(txt, titulo){
-  if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Extornar'); return; }
+  if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Estornar'); return; }
   if(typeof toast==='function'){ toast(txt, 'info'); return; }
   if(typeof alert==='function') alert(txt);
 }
 function confirma(txt, titulo, cb){
-  if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Extornar venda').then(cb); return; }
+  if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Estornar venda').then(cb); return; }
   cb(typeof confirm==='function' ? confirm(txt) : true);
 }
 
@@ -94,14 +94,14 @@ function confirma(txt, titulo, cb){
 // estornarVenda(...), mas a função não existia em lugar nenhum: botão morto.
 window.estornarVenda = function(id){
   var v = acharVenda(id);
-  if(!v){ aviso('Venda não encontrada.', 'Extornar'); return; }
+  if(!v){ aviso('Venda não encontrada.', 'Estornar'); return; }
   if(!ehFaturada(v.status)){
-    aviso(low(v.status)==='estornada' ? 'Esta venda já está extornada.' : 'Só dá para extornar venda FATURADA (esta ainda está como "'+(v.status||'orçamento')+'").', 'Extornar');
+    aviso(low(v.status)==='estornada' ? 'Esta venda já está extornada.' : 'Só dá para estornar venda FATURADA (esta ainda está como "'+(v.status||'orçamento')+'").', 'Estornar');
     return;
   }
   var titulos = (DB().contasReceber || []).filter(function(c){ return c && c.vendaId===v.id; });
   var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
-  confirma('Extornar a venda ' + (v.numero||'') + '?\n\n• As contas a receber dela ficam marcadas como EXTORNADO no Financeiro (' + titulos.length + ' título(s)' + (pagos ? ', sendo ' + pagos + ' já pago(s) — confira o caixa' : '') + '); continuam visíveis com a tarja, fora das somas.\n• Ela fica marcada como "Extornada" no histórico — clicar nela reabre a aba da venda com os dados, ajusta e fatura de novo.\n• Depois disso, o botão Excluir passa a permitir apagar, se você quiser.', 'Extornar venda', function(ok){
+  confirma('Estornar a venda ' + (v.numero||'') + '?\n\n• As contas a receber dela ficam marcadas como EXTORNADO no Financeiro (' + titulos.length + ' título(s)' + (pagos ? ', sendo ' + pagos + ' já pago(s) — confira o caixa' : '') + '); continuam visíveis com a tarja, fora das somas.\n• Ela fica marcada como "Extornada" no histórico — clicar nela reabre a aba da venda com os dados, ajusta e fatura de novo.\n• Depois disso, o botão Excluir passa a permitir apagar, se você quiser.', 'Estornar venda', function(ok){
     if(!ok) return;
     estornarUmaVenda(v);
     renderDepois();
@@ -121,11 +121,11 @@ window.estornarVendasSelecionadas = function(){
     var selId = window.neoVendaSelecionada || window.vendaSelecionadaId;
     if(selId){ var unica = acharVenda(selId); if(unica) alvos = [unica]; }
   }
-  if(!alvos.length){ aviso('Selecione uma venda na tabela ou marque as caixas de seleção para extornar.', 'Extornar vendas'); return; }
+  if(!alvos.length){ aviso('Selecione uma venda na tabela ou marque as caixas de seleção para estornar.', 'Estornar vendas'); return; }
   var faturadas = alvos.filter(function(x){ return ehFaturada(x.status); });
-  if(!faturadas.length){ aviso('Só vendas FATURADAS podem ser extornadas. Você selecionou ' + alvos.length + ' venda(s), nenhuma faturada.', 'Extornar vendas'); return; }
+  if(!faturadas.length){ aviso('Só vendas FATURADAS podem ser extornadas. Você selecionou ' + alvos.length + ' venda(s), nenhuma faturada.', 'Estornar vendas'); return; }
   var puladas = alvos.length - faturadas.length;
-  confirma('Extornar ' + faturadas.length + ' venda(s) faturada(s)?\n\n• As contas a receber delas ficam marcadas como EXTORNADO no Financeiro (as já pagas/à vista também — confira o caixa depois); continuam visíveis com a tarja, fora das somas.\n• Ficam marcadas como "Extornada" no histórico — clicar nelas reabre a aba da venda com os dados.\n• Depois disso, o Excluir passa a permitir apagar, se você quiser.' + (puladas ? '\n\n(' + puladas + ' selecionada(s) não faturada(s) serão ignoradas.)' : ''), 'Extornar vendas', function(ok){
+  confirma('Estornar ' + faturadas.length + ' venda(s) faturada(s)?\n\n• As contas a receber delas ficam marcadas como EXTORNADO no Financeiro (as já pagas/à vista também — confira o caixa depois); continuam visíveis com a tarja, fora das somas.\n• Ficam marcadas como "Extornada" no histórico — clicar nelas reabre a aba da venda com os dados.\n• Depois disso, o Excluir passa a permitir apagar, se você quiser.' + (puladas ? '\n\n(' + puladas + ' selecionada(s) não faturada(s) serão ignoradas.)' : ''), 'Estornar vendas', function(ok){
     if(!ok) return;
     var n = 0, tit = 0, pagos = 0;
     faturadas.forEach(function(v){
@@ -138,9 +138,9 @@ window.estornarVendasSelecionadas = function(){
   });
 };
 
-// Botão "Extornar" na MESMA barra de ações das notinhas (ao lado do Excluir,
+// Botão "Estornar" na MESMA barra de ações das notinhas (ao lado do Excluir,
 // que é injetado como #btn-excluir-venda-unificado na .neo-actions).
-function garantirBotaoExtornar(){
+function garantirBotaoEstornar(){
   try{
     if(typeof document==='undefined') return;
     var view = document.getElementById('view-vendas');
@@ -151,7 +151,7 @@ function garantirBotaoExtornar(){
     var btn = document.createElement('button');
     btn.id = 'btn-estornar-venda';
     btn.className = 'neo-btn';
-    btn.innerHTML = '<i class="ph ph-arrow-u-up-left"></i>Extornar';
+    btn.innerHTML = '<i class="ph ph-arrow-u-up-left"></i>Estornar';
     btn.onclick = window.estornarVendasSelecionadas;
     var exc = actions.querySelector('#btn-excluir-venda-unificado');
     if(exc) actions.insertBefore(btn, exc); else actions.appendChild(btn);
@@ -161,14 +161,14 @@ if(typeof window!=='undefined' && typeof window.renderVendas==='function' && !wi
   var _renderVendasAntes = window.renderVendas;
   window.renderVendas = function(){
     var r = _renderVendasAntes.apply(this, arguments);
-    try{ setTimeout(garantirBotaoExtornar, 60); }catch(e){}
+    try{ setTimeout(garantirBotaoEstornar, 60); }catch(e){}
     return r;
   };
   window.renderVendas.__v5240ext = true;
 }
 if(typeof document!=='undefined'){
-  setTimeout(garantirBotaoExtornar, 1600);
-  setInterval(garantirBotaoExtornar, 3000);
+  setTimeout(garantirBotaoEstornar, 1600);
+  setInterval(garantirBotaoEstornar, 3000);
 }
 
 // ── 4.2 ORÇAMENTO NÃO ENCONTRADO NESTE PC ───────────────────────────────────

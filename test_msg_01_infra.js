@@ -5485,7 +5485,7 @@ if (false) { // ═══ test_ajustes_v5243.js (inerte: só parse, nunca execut
 //       falha E a tela confirma "Cliente vinculado".
 //  5.2.1/5.2.2) novo desenho do dono: abas Dados | Histórico do sistema;
 //       dentro do Histórico, sub-menus (padrão Vendas); listagem com caixas
-//       de múltipla escolha + botões Excluir/Extornar/Abrir lista de origem;
+//       de múltipla escolha + botões Excluir/Estornar/Abrir lista de origem;
 //       registro específico = botão DIREITO. Resumo antigo morreu.
 const fs = require('fs');
 let falhas = 0;
@@ -5531,8 +5531,8 @@ ok(patch.indexOf("['vendas','Vendas'") >= 0 && patch.indexOf("['financeiro','Fin
 ok(patch.indexOf("window.clitabSub(st.sub||'vendas')") >= 0, 'Histórico abre por padrão em VENDAS');
 ok(patch.indexOf("foot.style.display=(aba==='dados')?'':'none'") >= 0, 'botão Salvar some fora da aba Dados');
 ok(patch.indexOf('class="clitab-sel') >= 0 && patch.indexOf('clitabToggleSel') >= 0, 'linhas com caixa de múltipla escolha');
-ok(patch.indexOf('clitab-btn-excluir') >= 0 && patch.indexOf('clitab-btn-extornar') >= 0 && patch.indexOf('clitab-btn-lista') >= 0, 'botões Excluir / Extornar / Abrir lista de origem');
-ok(patch.indexOf("btnExt.style.display=(sub==='vendas')?'':'none'") >= 0, 'Extornar só aparece na listagem de vendas');
+ok(patch.indexOf('clitab-btn-excluir') >= 0 && patch.indexOf('clitab-btn-estornar') >= 0 && patch.indexOf('clitab-btn-lista') >= 0, 'botões Excluir / Estornar / Abrir lista de origem');
+ok(patch.indexOf("btnExt.style.display=(sub==='vendas')?'':'none'") >= 0, 'Estornar só aparece na listagem de vendas');
 ok(patch.indexOf('faturad|finalizad|conclu|pago') >= 0, 'excluir venda pula faturadas (regra: estornar antes)');
 ok(patch.indexOf("db.orcamentos=(banco.orcamentos||[]).filter(function(x){return x.id!==id;})") >= 0, 'orçamento excluído DE VEZ (v5.24.34: sem marca-fantasma)');
 ok(patch.indexOf('oncontextmenu') >= 0 && patch.indexOf('clitabAbrirRegistro') >= 0, 'botão DIREITO abre o registro no módulo de origem');
@@ -5550,7 +5550,7 @@ console.log('-- integridade: manifest, bundles e versões --');
 ok(manifest.includes('ajustes_v5243_cliente_abas_patch.js'), 'manifest tem o patch das abas');
 const nScripts = Number((bundle.match(/\* scripts: (\d+) \| sha256:/) || [])[1] || 0);
 ok(nScripts === manifest.length && nScripts > 200, 'header do bundle bate com o manifest (' + nScripts + ' scripts)');
-ok(bundle.indexOf('clitab-btn-extornar') >= 0 && bundleM.indexOf('clitab-btn-extornar') >= 0, 'novo desenho presente nos 2 bundles');
+ok(bundle.indexOf('clitab-btn-estornar') >= 0 && bundleM.indexOf('clitab-btn-estornar') >= 0, 'novo desenho presente nos 2 bundles');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0 && indexHtml.indexOf('app.bundle.js?v=' + pkg.version) >= 0, 'index.html na v' + pkg.version);
 ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + pkg.version + "'") >= 0, 'mobile/www/index.html na v' + pkg.version);
@@ -6141,10 +6141,10 @@ function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1
 console.log('== TESTADOR AUTOMÁTICO (r62) ==');
 ok('auditoria existe', fs.existsSync('teste-auto/auditoria.js'));
 ok('navegador existe', fs.existsSync('teste-auto/navegador.js'));
-ok('tudo existe', fs.existsSync('teste-auto/tudo.js'));
+ok('modo tudo embutido (--tudo)', fs.readFileSync('teste-auto/auditoria.js','utf8').indexOf("'--tudo'") >= 0);
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 ok('npm run teste-auto', pkg.scripts && pkg.scripts['teste-auto'] === 'node teste-auto/auditoria.js');
-ok('npm run teste-tudo', pkg.scripts && pkg.scripts['teste-tudo'] === 'node teste-auto/tudo.js');
+ok('npm run teste-tudo', pkg.scripts && pkg.scripts['teste-tudo'] === 'node teste-auto/auditoria.js --tudo');
 const nav = fs.readFileSync('teste-auto/navegador.js', 'utf8');
 ok('credenciais só por ambiente', nav.indexOf('process.env.TESTE_CNPJ') >= 0 && nav.indexOf('process.env.TESTE_SENHA') >= 0 && nav.indexOf('process.env.TESTE_LOGIN') >= 0);
 ok('nenhum CNPJ hardcoded (14 dígitos)', !/[0-9]{14}/.test(nav));

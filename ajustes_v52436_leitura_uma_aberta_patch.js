@@ -3,7 +3,7 @@
 // certo na edição pós-estorno.
 //
 // Relato dele (caminho exato): contrato → leituras → novo → novo lançamento →
-// salvar → faturar → extornar → lápis → muda o contador → salvar → a lista
+// salvar → faturar → estornar → lápis → muda o contador → salvar → a lista
 // mostra o ANTERIOR como o contador que foi faturado (não o anterior de
 // verdade). Causa raiz (cadeia factual, sem achismo):
 //   salvarLancamentoContador calcula anterior = p.contadores[key] VIVO; após o
