@@ -167,7 +167,7 @@ window.novaVenda = function(){
           </div>
           <div id="vos-cli-results" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-[240px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>
         </div>
-        <button onclick="openModal('cliente')" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold flex items-center gap-1 shrink-0"><i class="ph ph-user-plus"></i> Novo cliente</button>
+        <select id="vos-cli-campo" onchange="vosVendaSearchClienteDeb(document.getElementById('vos-cli-search').value)" class="h-[44px] px-2 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[12px] font-bold text-[#0a1e8a] shrink-0"><option value="todos">Tudo</option><option value="nome">Nome</option><option value="fantasia">Fantasia</option><option value="codigo">Código</option><option value="documento">CPF/CNPJ</option></select><button onclick="openModal('cliente')" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold flex items-center gap-1 shrink-0"><i class="ph ph-user-plus"></i> Novo cliente</button>
       </div>
       <div id="vos-cli-selecionado" class="hidden mt-2 rounded-xl bg-white border border-[#0a1e8a]/20 p-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -386,7 +386,7 @@ window.vosVendaSelectCliente = function(id){
   document.getElementById('vos-cli-search').value = '';
   document.getElementById('vos-cli-selecionado').classList.remove('hidden');
   document.getElementById('vos-cli-avatar').innerText = initials(c.nome);
-  document.getElementById('vos-cli-nome').innerText = (c.codigo?`#${c.codigo} — `:'') + (c.nome||'');
+  document.getElementById('vos-cli-nome').innerText = (c.codigo?`#${c.codigo} — `:'') + (window.textoOK?window.textoOK(c.nome||''):c.nome||'');
   document.getElementById('vos-cli-detalhes').innerText = `${c.documento||''} • ${c.telefone||''} • ${c.endereco||''} • ${c.cidade||''}/${c.estado||''}`;
 };
 window.vosVendaClearCliente = function(){

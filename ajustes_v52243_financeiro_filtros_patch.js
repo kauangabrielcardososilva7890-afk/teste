@@ -69,7 +69,17 @@ function filtraLancamentos(list, opts){
       var nome = String(cli.nome||c.clienteNomeAntigo||c.fornecedor||'').toLowerCase();
       return nome.indexOf(q.toLowerCase())>=0;
     }
-    if(campo==='cod_venda') return codigoNorm(c.vendaNumero||c.numeroVenda||'')===codigoNorm(q) || codigoNorm(c.vendaId||'')===codigoNorm(q);
+    if(campo==='cod_venda'){
+      if(codigoNorm(c.vendaNumero||c.numeroVenda||'')===codigoNorm(q)) return true;
+      if(codigoNorm(q) && codigoNorm(c.vendaId||'')===codigoNorm(q)) return true;
+      try{
+        if(c.vendaId && typeof db!=='undefined' && db.vendas){
+          var vv=db.vendas.find(function(x){ return x&&x.id===c.vendaId; });
+          if(vv && codigoNorm(vv.numero||'')===codigoNorm(q)) return true;
+        }
+      }catch(eVn){}
+      return false;
+    }
     if(campo==='cod_parcela') return codigoNorm(c.numeroParcela||c.parcela||c.nroParcela||'')===codigoNorm(q);
     if(campo==='cod_cliente') return codigoNorm(cli.codigo||cli.codigoAntigo||c.codClienteAntigo||'')===codigoNorm(q);
     if(campo==='por_valor') return valorIgual(c.valor, q);

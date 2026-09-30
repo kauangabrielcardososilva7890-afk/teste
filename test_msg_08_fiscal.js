@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_08_fiscal.js — GERADO por migrar_testes_r57.js; 16 seções.
+// test_msg_08_fiscal.js — GERADO por migrar_testes_r57.js; 17 seções.
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
 // Seções: test_automacoes_fiscal_cartuchos.js, test_ajustes_v5220.js, test_ajustes_v5221.js, test_ajustes_v5228.js, test_ajustes_v5229.js, test_ajustes_v52210.js, test_ajustes_v52229.js, test_ajustes_v52426.js, test_ajustes_v6000.js, test_ajustes_v6006.js, test_ajustes_v60011.js, test_ajustes_v60013.js, test_ajustes_v60014.js, test_ajustes_v6100.js, test_ajustes_v6101.js, test_falta_emitir.js
 // ═══════════════════════════════════════════════════════════════
@@ -1050,4 +1050,19 @@ ok(naSuite('test_falta_emitir.js'), 'o próprio teste está na suíte');
 console.log('\nRESULTADO: ' + (falhas === 0 ? 'a conferência da NF-e está de pé!' : falhas + ' falha(s)'));
 if (falhas) process.exitCode = 1;
 //<<<<SECAO:test_falta_emitir.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r64_fiscal.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r64_fiscal.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(c, m){ if(c){ console.log('  ok - '+m); } else { falhas++; console.error('  FALHA - '+m); } }
+console.log('-- r64 P2 fiscal: um botão por destino (auditoria 30/09) --');
+const fe = fs.readFileSync('ajustes_v6108_falta_emitir_patch.js', 'utf8');
+ok(fe.indexOf("var ultBtn=''") >= 0, 'rastreia o destino do botão anterior');
+ok(fe.indexOf('i.onde!==ultBtn') >= 0, 'repete destino = esconde o botão');
+ok(fe.indexOf("(!mostraBtn?'':'<button type=") >= 0, 'botão só quando mostraBtn');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) r64-fiscal'); process.exit(1); }
+console.log('\nRESULTADO: r64 fiscal passou!');
+//<<<<SECAO:test_r64_fiscal.js:FIM>>>>
 }

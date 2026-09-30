@@ -230,5 +230,6 @@
   "ajustes_v7022_salvar_alteracao_patch.js",
   "ajustes_v52437_contrato_unificar_patch.js",
   "ajustes_v5900_setup_comercial_patch.js",
-  "ajustes_v5901_login_retry_nuvem_patch.js"
+  "ajustes_v5901_login_retry_nuvem_patch.js",
+  "ajustes_v52266_versao_nova_banner_patch.js"
 ]

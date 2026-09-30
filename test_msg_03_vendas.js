@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_03_vendas.js — GERADO por migrar_testes_r57.js; 34 seções.
+// test_msg_03_vendas.js — GERADO por migrar_testes_r57.js; 35 seções.
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
 // Seções: test_pix.js, test_otim.js, test_automacoes_contratos_caixa_fiscal.js, test_automacoes_vendas_compras_cadastros.js, test_automacoes_orcamentos_clientes_auxiliares.js, test_automacoes_pix_contadores_auxiliares.js, test_automacoes_vendas_fiscal_auxiliares.js, test_automacoes_caixa_chat_auxiliares.js, test_offline_assets.js, test_ajustes_v52218.js, test_ajustes_v52237.js, test_ajustes_v52238.js, test_ajustes_v52240.js, test_ajustes_v52241.js, test_ajustes_v52243.js, test_ajustes_v52244.js, test_ajustes_v52254.js, test_ajustes_v52255.js, test_ajustes_v52256.js, test_ajustes_v52258.js, test_ajustes_v52259.js, test_ajustes_v52260.js, test_ajustes_v52261.js, test_ajustes_v52262.js, test_ajustes_v52291.js, test_ajustes_v52293.js, test_ajustes_v52295.js, test_ajustes_v6005.js, test_ajustes_v6102.js, test_camadas_protegidas.js, test_ajustes_v52412.js, test_ajustes_v52421.js, test_ajustes_v5249.js
 // ═══════════════════════════════════════════════════════════════
@@ -878,6 +878,13 @@ ok('patches no bundle', ['ajustes_v52243_orcamentos_status_patch.js','ajustes_v5
 ok('versão no patch', /v5.22.43/.test(orc) && /v5.22.43/.test(fin) && /^\d+\.\d+\.\d+/.test(pkg.version) && /app\.bundle\.js\?v=\d+\.\d+\.\d+/.test(html));
 ok('APK quieto', !/mobile\//.test(orc+sort+rem+fin+menu+geral));
 ok('sem nome pessoal novo', !/kauan/i.test((orc+rem+fin+menu+geral).replace(/__KAUAN_REFINO_STATE__/g,'')));
+ok('cod_venda acha pelo carimbo 83', F.filtraLancamentos([{ref:{status:'aberto',vendaNumero:83}}],{campo:'cod_venda',q:'83',modo:'todos'}).length===1);
+ok('cod_venda 8 não pega 83', F.filtraLancamentos([{ref:{status:'aberto',vendaNumero:83}}],{campo:'cod_venda',q:'8',modo:'todos'}).length===0);
+ok('cod_venda acha numeroVenda', F.filtraLancamentos([{ref:{status:'aberto',numeroVenda:'83'}}],{campo:'cod_venda',q:'83',modo:'todos'}).length===1);
+global.db={vendas:[{id:'v83',numero:83}]};
+ok('cod_venda acha pelo vínculo (dado antigo)', F.filtraLancamentos([{ref:{status:'aberto',vendaId:'v83'}}],{campo:'cod_venda',q:'83',modo:'todos'}).length===1);
+delete global.db;
+ok('faturar carimba vendaNumero', /vendaNumero:v\.numero/.test(fs.readFileSync('app.js','utf8')));
 console.log('\nRESULTADO: v5.22.43 passou!');
 //<<<<SECAO:test_ajustes_v52243.js:FIM>>>>
 }
@@ -1478,7 +1485,7 @@ ok(g.indexOf('window.__orcResumoUltimaBaixa') >= 0, 'exposição do resumo da ú
 ok(g.indexOf('renderOrcamentos') >= 0 && g.indexOf('__v52293') >= 0, 'amarra o retrato na listagem VISÍVEL (a última que existir)');
 
 const m = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 39, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12 e, por último, a ribbon fiscal bonita v6.0.13 e a navegação+escuro v6.1.3, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0, e o login-retry v5.90.1 fecha a fila);');
+ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 40, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12 e, por último, a ribbon fiscal bonita v6.0.13 e a navegação+escuro v6.1.3, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0, e o login-retry v5.90.1 fecha a fila);');
 
 const v237 = fs.readFileSync('ajustes_v52237_orcamentos_menu_patch.js', 'utf8');
 ok(v237.indexOf('__orcResumoUltimaBaixa') >= 0, 'aviso "não achei" mostra a última baixa');
@@ -1538,7 +1545,7 @@ ok(p.indexOf("window.__V52295_PURE") >= 0, 'marca de diagnóstico/teste presente
 
 // regressão: bundle contém o patch por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 38] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0, e o login-retry v5.90.1 fecha a fila)');
+ok(man[man.length - 39] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0, e o login-retry v5.90.1 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('__vosVendaPendente') >= 0, 'lógica presente no app.bundle.js');
 
@@ -2046,4 +2053,23 @@ ok(bundle.indexOf('function parseMoedaBR') >= 0, 'parseMoedaBR chegou no bundle'
 if(falhas){ console.error('\n' + falhas + ' FALHA(S) r63-moeda'); process.exit(1); }
 console.log('\nRESULTADO: r63 moeda passou!');
 //<<<<SECAO:test_r63_moeda.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r64_produto.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r64_produto.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(c, m){ if(c){ console.log('  ok - '+m); } else { falhas++; console.error('  FALHA - '+m); } }
+console.log('-- r64 P1 dinheiro produto: 12,50 vale 12,50 (auditoria 30/09) --');
+const app = fs.readFileSync('app.js', 'utf8');
+ok(app.indexOf('id="f-prd-custo" type="text" inputmode="decimal"') >= 0, 'custo: number→text+decimal');
+ok(app.indexOf('id="f-prd-preco" type="text" inputmode="decimal"') >= 0, 'preço: number→text+decimal');
+ok(app.indexOf("parseFloat(document.getElementById('f-prd-custo').value)||0, preco:parseFloat") === -1, 'salvar sem parseFloat cru');
+ok(app.indexOf("parseMoedaBR(document.getElementById('f-prd-preco').value)") >= 0, 'salvar usa parseMoedaBR (preço)');
+ok(app.indexOf("parseMoedaBR(document.getElementById('f-prd-custo').value)") >= 0, 'salvar usa parseMoedaBR (custo)');
+const bundle = fs.readFileSync('app.bundle.js', 'utf8');
+ok(bundle.indexOf('id="f-prd-preco" type="text"') >= 0, 'produto novo chegou no bundle');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) r64-produto'); process.exit(1); }
+console.log('\nRESULTADO: r64 produto passou!');
+//<<<<SECAO:test_r64_produto.js:FIM>>>>
 }

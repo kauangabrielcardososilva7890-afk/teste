@@ -562,6 +562,15 @@ if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCli
     const low = (q||'').toLowerCase().trim();
     if(!low){ el.classList.add('hidden'); el.innerHTML=''; return; }
     const base = (typeof db!=='undefined' && db.clientes)||[];
+    var campoVos='todos';
+    try{ campoVos=(document.getElementById('vos-cli-campo')||{}).value||'todos'; }catch(eCv){}
+    var list=null;
+    try{
+      if(typeof window.filtraClientesCampo==='function'){
+        list=window.filtraClientesCampo(base.filter(function(c){ return c&&c.empresaId===sessf.empresaId; }), q, campoVos);
+      }
+    }catch(ePf){ list=null; }
+    if(!list){
     if(window.__vosCliIdxBase !== base){
       window.__vosCliIdxBase = base;
       window.__vosCliIdxFresco = base.map(function(c){
@@ -569,15 +578,17 @@ if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCli
         return { c:c, hay:[c.codigo,c.nome,c.fantasia,c.documento,(typeof onlyDigits==='function'?onlyDigits(c.documento):doc.replace(/\D/g,'')),c.endereco,c.telefone,c.cidade,c.estado].filter(function(x){return x!=null&&x!=='';}).join(' ').toLowerCase() };
       });
     }
-    const list = window.__vosCliIdxFresco
+    list = window.__vosCliIdxFresco
       .filter(function(x){ return x.c.empresaId===sessf.empresaId && x.hay.indexOf(low)>=0; })
       .map(function(x){ return x.c; }).slice(0,15);
+    }
+    list=(list||[]).slice(0,15);
     window.__vosUltBusca = {};
     el.innerHTML = list.map(function(c){
       window.__vosUltBusca[c.id]=c;
       return '<button type="button" onclick="vosVendaSelectCliente(\''+String(c.id).replace(/'/g,'')+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0 flex justify-between gap-2">'
-        +'<span><b class="text-[#0a1e8a]">#'+_esc(c.codigo||'-')+'</b> <b>'+_esc(c.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+_esc(c.documento||'')+' • '+_esc(c.telefone||'')+' • '+_esc(c.endereco||'')+'</span></span>'
-        +'<span class="text-[10px] text-slate-400 shrink-0">'+_esc(c.cidade||'')+'/'+_esc(c.estado||'')+'</span></button>';
+        +'<span><b class="text-[#0a1e8a]">#'+_esc(c.codigo||'-')+'</b> <b>'+_esc(window.textoOK?window.textoOK(c.nome||''):c.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+_esc(window.textoOK?window.textoOK(c.documento||''):c.documento||'')+' • '+_esc(c.telefone||'')+' • '+_esc(c.endereco||'')+'</span></span>'
+        +'<span class="text-[10px] text-slate-400 shrink-0">'+_esc(window.textoOK?window.textoOK(c.cidade||''):c.cidade||'')+'/'+_esc(c.estado||'')+'</span></button>';
     }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado — cadastre em "+ Novo cliente"</p>';
     el.classList.remove('hidden');
   };

@@ -100,13 +100,16 @@ function fePintar(){
       caixa.style.cssText='margin-top:12px;background:#fff;border:1px solid #c9ceef;border-radius:14px;padding:12px 14px';
       v.insertBefore(caixa, v.firstChild ? v.firstChild.nextSibling : null);
     }
+    var ultBtn='';
     var linhas=an.itens.map(function(i){
+      var mostraBtn=(i.ok!==true && i.onde!==ultBtn);
+      if(i.ok!==true) ultBtn=i.onde;
       var marca=i.ok===true?'✅':(i.ok===null?'⏳':'⚠️');
       var cor=i.ok===true?'#166534':(i.ok===null?'#334155':'#b45309');
       return '<div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:12.5px">'+
         '<span>'+marca+'</span>'+
         '<span style="flex:1;color:'+cor+'"><b>'+feEsc(i.rotulo)+'</b> — '+feEsc(i.detalhe)+'</span>'+
-        (i.ok===true?'':'<button type="button" data-fe-ir="'+feEsc(i.onde)+'" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #c9ceef;background:#e8eaf8;color:#0a1e8a;font-weight:700;font-size:11.5px;cursor:pointer">'+feEsc(i.acao)+'</button>')+
+        (!mostraBtn?'':'<button type="button" data-fe-ir="'+feEsc(i.onde)+'" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #c9ceef;background:#e8eaf8;color:#0a1e8a;font-weight:700;font-size:11.5px;cursor:pointer">'+feEsc(i.acao)+'</button>')+
       '</div>';
     }).join('');
     caixa.innerHTML='<p style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0a1e8a">FALTA POUCO PARA A NOTA VALER DE VERDADE'+

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 46 seções (42 geradas + 4 appends r57+r58+r58c+r59).
+// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 47 seções (42 geradas + 4 appends r57+r58+r58c+r59).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
 // Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js, test_r58c_cartao_ancora.js, test_r59_nuvem_config.js
 // ═══════════════════════════════════════════════════════════════
@@ -3514,4 +3514,21 @@ ok('recusado/cedido marca conhecido (não reenche a fila)', sync.split('state.kn
 ok('v7.0.18 preservado: nunca em silêncio', sync.indexOf('NUNCA MAIS EM SILÊNCIO') >= 0 && sync.indexOf("relatarSaude('recusado'") >= 0);
 console.log('\nRESULTADO: fim da tempestade provado!');
 //<<<<SECAO:test_r61_tempestade.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r64_divergencia.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r64_divergencia.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(c, m){ if(c){ console.log('  ok - '+m); } else { falhas++; console.error('  FALHA - '+m); } }
+console.log('-- r64 P1 nuvem: retrato fresco antes de acusar (auditoria 30/09) --');
+const nv = fs.readFileSync('ajustes_v7015_nuvem_explica_patch.js', 'utf8');
+ok(nv.indexOf('retratoCache = null; // r64') >= 0, 'caso 5 zera o cache do retrato local');
+const iCache = nv.indexOf('retratoCache = null; // r64');
+const iFalta = nv.indexOf('listasFaltando(retrato()');
+ok(iCache >= 0 && iFalta > iCache && (iFalta - iCache) < 200, 'retrato refeito logo depois, antes de comparar');
+ok(nv.indexOf('!(inf.outbox > 0)') >= 0, 'segue exigindo fila vazia (sem alarme falso)');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) r64-divergencia'); process.exit(1); }
+console.log('\nRESULTADO: r64 divergencia passou!');
+//<<<<SECAO:test_r64_divergencia.js:FIM>>>>
 }

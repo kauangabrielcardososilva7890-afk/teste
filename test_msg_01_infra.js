@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_01_infra.js — GERADO por migrar_testes_r57.js; 89 seções (88 geradas + 1 append r58).
+// test_msg_01_infra.js — GERADO por migrar_testes_r57.js; 90 seções (88 geradas + 1 append r58).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
 // Seções: test_vos.js, test_perf.js, test_extras.js, test_fluxos_operacionais.js, test_automacoes_triggers.js, test_automacoes_finais_locacao_auxiliares.js, test_otimizacao_profunda.js, test_automacoes_procedures_operacionais.js, test_correcoes_uso_diario.js, test_ajustes_pos_final.js, test_ajustes_v52023.js, test_ajustes_v52024.js, test_um_arquivo_por_modulo.js, test_app_bundle.js, test_electron_security.js, test_ajustes_v5215.js, test_ajustes_v5223.js, test_ajustes_v5224.js, test_ajustes_v52211.js, test_ajustes_v52214.js, test_ajustes_v52219.js, test_ajustes_v52220.js, test_ajustes_v52223.js, test_ajustes_v52224.js, test_ajustes_v52225.js, test_ajustes_v52226.js, test_ajustes_v52227.js, test_ajustes_v52232.js, test_ajustes_v52234.js, test_ajustes_v52247.js, test_ajustes_v52248.js, test_ajustes_v52250.js, test_ajustes_v52251.js, test_ajustes_v52252.js, test_ajustes_v52263.js, test_ajustes_v52264.js, test_ajustes_v52265.js, test_ajustes_v52267.js, test_ajustes_v52268.js, test_ajustes_v52273.js, test_ajustes_v52279.js, test_ajustes_v52282.js, test_ajustes_v52284.js, test_ajustes_v52285.js, test_ajustes_v52286.js, test_ajustes_v52287.js, test_ajustes_v52288.js, test_ajustes_v52289.js, test_ajustes_v52290.js, test_ajustes_v52294.js, test_ajustes_v52296.js, test_ajustes_v52423.js, test_ajustes_v52424.js, test_ajustes_v52427.js, test_ajustes_v52428.js, test_ajustes_v5260.js, test_ajustes_v5262.js, test_ajustes_v5263.js, test_ajustes_v5264.js, test_ajustes_v5265.js, test_ajustes_v5266.js, test_ajustes_v6001.js, test_ajustes_v5248.js, test_ponte_electron.js, test_versao_visual.js, test_ajustes_v6105.js, test_ajustes_v6106.js, test_importar_referencias.js, test_ajustes_v5183.js, test_ajustes_v5185.js, test_ajustes_v5186.js, test_ajustes_v5187.js, test_ajustes_v5189.js, test_ajustes_v5191.js, test_ajustes_v5192.js, test_ajustes_v5193.js, test_ajustes_v5196.js, test_ajustes_v51916.js, test_ajustes_v51920.js, test_linhas_tabela_clique.js, test_faixa_botoes_r46.js, test_ajustes_v5184.js, test_ajustes_v52413.js, test_ajustes_v52414.js, test_ajustes_v5243.js, test_ajustes_v5245.js, test_portao_escrita.js, test_salvar_alteracao.js, test_r58_redacao_json.js
 // ═══════════════════════════════════════════════════════════════
@@ -2839,7 +2839,7 @@ ok(contador.indexOf("request.method === 'OPTIONS'") >= 0, 'contador responde pre
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 37] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 36] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 35] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 34] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 33] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 32] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 31] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 30] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 29] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 28] === 'painel_gerente_patch.js' && man[man.length - 27] === 'fiscal_guard_patch.js' && man[man.length - 26] === 'nf_transmissao_patch.js' && man[man.length - 25] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (18º a partir do fim (v7.0.20 soma o mandar-erro no fim; r60 soma o login-retry no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
+ok(man[man.length - 38] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 37] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 36] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 35] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 34] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 33] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 32] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 31] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 30] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 29] === 'painel_gerente_patch.js' && man[man.length - 28] === 'fiscal_guard_patch.js' && man[man.length - 27] === 'nf_transmissao_patch.js' && man[man.length - 26] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (18º a partir do fim (v7.0.20 soma o mandar-erro no fim; r60 soma o login-retry no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
@@ -3755,7 +3755,7 @@ ok('botão no nav-gest (Painel Gerente, primeiro da gestão)', src.indexOf("nav-
 ok('botão na tool bar clássica (topmod-painel-gerente)', src.indexOf('topmod-painel-gerente') >= 0);
 ok('navigateTo envolvido (core intocado) e render chama no view novo', src.indexOf('window.navigateTo=function(view)') >= 0 && src.indexOf('_navPG.apply') >= 0);
 ok('reinstala a cada 2s se o menu for redesenhado (padrão escola)', src.indexOf('setInterval(') >= 0 && src.indexOf('pgInstalarMenu') >= 0);
-ok('painel na 205, fila fecha com navegação fiscal firme + escuro íntegro v6.1.3 (v7.0.24: +1 no fim, função única; r59: +1 no fim, setup; r60: +1 no fim, login-retry)', manifest[manifest.length - 28] === 'painel_gerente_patch.js' && manifest[manifest.length - 27] === 'fiscal_guard_patch.js' && manifest[manifest.length - 26] === 'nf_transmissao_patch.js' && manifest[manifest.length - 25] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 24] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 23] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 22] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 21] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 20] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 19] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 18] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 17] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 16] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 15] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 14] === 'fiscal_catalogo_completo_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
+ok('painel na 205, fila fecha com navegação fiscal firme + escuro íntegro v6.1.3 (v7.0.24: +1 no fim, função única; r59: +1 no fim, setup; r60: +1 no fim, login-retry; r64: +1 no fim, banner)', manifest[manifest.length - 29] === 'painel_gerente_patch.js' && manifest[manifest.length - 28] === 'fiscal_guard_patch.js' && manifest[manifest.length - 27] === 'nf_transmissao_patch.js' && manifest[manifest.length - 26] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 25] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 24] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 23] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 22] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 21] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 20] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 19] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 18] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 17] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 16] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 15] === 'fiscal_catalogo_completo_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
 ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasReceber|parque|contratos|clientes)\.push/.test(src) && src.indexOf('db.save(') < 0);
 
 console.log('== CARIMBO 6.0.9 ==');
@@ -6155,4 +6155,35 @@ const at = cp.spawnSync(process.execPath, ['teste-auto/auditoria.js', '--autotes
 ok('autoteste do harness passa', at.status === 0 && (at.stdout || '').indexOf('AUTOTESTE OK') >= 0);
 console.log('\nRESULTADO: testador automático provado!');
 //<<<<SECAO:test_r62_testador.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r64_versao.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r64_versao.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(c, m){ if(c){ console.log('  ok - '+m); } else { falhas++; console.error('  FALHA - '+m); } }
+console.log('-- r64 banner versão nova (pedido do dono 30/09) --');
+const ARQ = 'ajustes_v52266_versao_nova_banner_patch.js';
+ok(fs.existsSync(ARQ), 'patch do banner existe');
+const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
+ok(man.indexOf(ARQ) >= 0, 'banner está no manifest');
+const src = fs.readFileSync(ARQ, 'utf8');
+function bloco(s, a, b){ const i = s.indexOf(a), j = s.indexOf(b); if(i<0||j<0||j<i) return null; return s.slice(i+a.length, j); }
+const pure = bloco(src, '/* VERSAONOVA_PURE_START */', '/* VERSAONOVA_PURE_END */');
+ok(!!pure, 'bloco VERSAONOVA_PURE extraível');
+const P = new Function((pure || '') + '; return {versaoNova, extraiVersao};')();
+ok(P.versaoNova('7.3.2', '7.3.3') === true, '7.3.3 avisa quem está na 7.3.2');
+ok(P.versaoNova('7.3.3', '7.3.3') === false, 'mesma versão não avisa');
+ok(P.versaoNova('7.3.2', '') === false, 'sem resposta não avisa');
+ok(P.extraiVersao("window.DIGICOPY_APP_VERSION = '7.3.3';") === '7.3.3', 'lê a versão do index');
+ok(P.extraiVersao('<html>sem nada</html>') === '', 'index estranho não quebra');
+ok(src.indexOf("fetch('index.html'") >= 0, 'confere o index publicado');
+ok(src.indexOf('versao-nova-banner') >= 0, 'banner tem id próprio');
+ok(src.indexOf('Recarregar agora') >= 0, 'banner tem botão recarregar');
+ok(src.indexOf('__DIGICOPY_VERSAO_NOVA') >= 0, 'expõe estado p/ teste visual');
+const bundle = fs.readFileSync('app.bundle.js', 'utf8');
+ok(bundle.indexOf('versao-nova-banner') >= 0, 'banner chegou no bundle');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) r64-versao'); process.exit(1); }
+console.log('\nRESULTADO: r64 versao passou!');
+//<<<<SECAO:test_r64_versao.js:FIM>>>>
 }

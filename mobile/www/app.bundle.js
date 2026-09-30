@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 232 | sha256: 8b14ceef1beaf868
+ * scripts: 233 | sha256: a5b177121d6913e0
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1402,7 +1402,7 @@ function renderModalProduto(id){
   const proximoCod = db._seq.produto[sess.empresaId||'global'];
   const skuAuto = isEdit ? (p?.sku||'') : String(proximoCod);
   document.getElementById('modal-title').innerText=isEdit?'Editar produto':'Novo produto';
-  document.getElementById('modal-body').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Código</label><input id="f-prd-sku" value="${skuAuto}" ${isEdit?'':'readonly'} class="mt-1 w-full h-11 px-3 rounded-xl border ${isEdit?'':'bg-slate-100'}"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Categoria</label><select id="f-prd-cat" class="mt-1 w-full h-11 px-3 rounded-xl border"><option>Suprimento</option><option>Peça</option><option>Impressora</option><option>Serviço</option></select></div><div class="md:col-span-2"><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="f-prd-nome" value="${p?p.nome||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Fabricante</label><input id="f-prd-fab" value="${p?p.fabricante||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Estoque</label><input id="f-prd-est" type="number" value="${p?p.estoque||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Mínimo</label><input id="f-prd-min" type="number" value="${p?p.estoqueMin||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Custo</label><input id="f-prd-custo" type="number" step="0.01" value="${p?p.custo||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Preço venda</label><input id="f-prd-preco" type="number" step="0.01" value="${p?p.preco||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>`;
+  document.getElementById('modal-body').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Código</label><input id="f-prd-sku" value="${skuAuto}" ${isEdit?'':'readonly'} class="mt-1 w-full h-11 px-3 rounded-xl border ${isEdit?'':'bg-slate-100'}"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Categoria</label><select id="f-prd-cat" class="mt-1 w-full h-11 px-3 rounded-xl border"><option>Suprimento</option><option>Peça</option><option>Impressora</option><option>Serviço</option></select></div><div class="md:col-span-2"><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="f-prd-nome" value="${p?p.nome||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Fabricante</label><input id="f-prd-fab" value="${p?p.fabricante||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Estoque</label><input id="f-prd-est" type="number" value="${p?p.estoque||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Mínimo</label><input id="f-prd-min" type="number" value="${p?p.estoqueMin||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Custo</label><input id="f-prd-custo" type="text" inputmode="decimal" onblur="try{var f=(typeof parseMoedaBR==='function')?parseMoedaBR:parseFloat;var v=f(this.value)||0;this.value=v?String(v).replace('.',','):'';}catch(e){}" value="${p?p.custo||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Preço venda</label><input id="f-prd-preco" type="text" inputmode="decimal" onblur="try{var f=(typeof parseMoedaBR==='function')?parseMoedaBR:parseFloat;var v=f(this.value)||0;this.value=v?String(v).replace('.',','):'';}catch(e){}" value="${p?p.preco||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>`;
   if(p) document.getElementById('f-prd-cat').value=p.categoria||'Suprimento';
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveProduto()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button>`;
 }
@@ -1419,7 +1419,7 @@ function saveProduto(){
     }
   }
   const sess=getSession(); const id=window.modalContext?.id;
-  const payload={empresaId:sess.empresaId, sku:document.getElementById('f-prd-sku').value.trim(), nome:document.getElementById('f-prd-nome').value.trim(), categoria:document.getElementById('f-prd-cat').value, fabricante:document.getElementById('f-prd-fab').value.trim(), estoque:Math.max(0,parseInt(document.getElementById('f-prd-est').value)||0), estoqueMin:parseInt(document.getElementById('f-prd-min').value)||0, custo:parseFloat(document.getElementById('f-prd-custo').value)||0, preco:parseFloat(document.getElementById('f-prd-preco').value)||0, local:'', status:'ativo'};
+  const payload={empresaId:sess.empresaId, sku:document.getElementById('f-prd-sku').value.trim(), nome:document.getElementById('f-prd-nome').value.trim(), categoria:document.getElementById('f-prd-cat').value, fabricante:document.getElementById('f-prd-fab').value.trim(), estoque:Math.max(0,parseInt(document.getElementById('f-prd-est').value)||0), estoqueMin:parseInt(document.getElementById('f-prd-min').value)||0, custo:((typeof parseMoedaBR==='function')?parseMoedaBR(document.getElementById('f-prd-custo').value):parseFloat(document.getElementById('f-prd-custo').value))||0, preco:((typeof parseMoedaBR==='function')?parseMoedaBR(document.getElementById('f-prd-preco').value):parseFloat(document.getElementById('f-prd-preco').value))||0, local:'', status:'ativo'};
   if(!payload.nome) return toast('Nome obrigatório','error');
   if(id){const ex=db.produtos.find(p=>p.id===id && p.empresaId===sess.empresaId); Object.assign(ex,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome}); logAction('produto','editar',id,`${payload.nome}`);}
   else{const novo={id:uid('prd'),...payload, criadoEm:new Date().toISOString(), criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}; db.produtos.push(novo); logAction('produto','criar',novo.id,`${novo.nome} sku ${novo.sku}`);}
@@ -1548,7 +1548,7 @@ function renderVendas(){
 }
 function showVenda(id){const v=db.vendas.find(x=>x.id===id); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); const isPix=v.formaPagamento&&/pix/i.test(v.formaPagamento); let botoes=''; if(v.status==='orcamento'||v.status==='aprovado'){botoes=`<button onclick="faturarVenda('${v.id}')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]">Faturar venda</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button>`;}else if(v.status==='faturado'){botoes=`<button onclick="estornarVenda('${v.id}')" class="h-11 rounded-xl bg-amber-500 text-white font-semibold text-[13px]">Estornar</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button>`;}else if(v.status==='estornada'){botoes=`<span class="text-[13px] text-amber-700 font-bold col-span-2 text-center py-2">Venda estornada</span>`;} const pixHtml=isPix?'<div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800">WhatsApp QR Code: +55 38 99109-8698</div>':''; document.getElementById('venda-detail').innerHTML=`<div class="flex justify-between"><div><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><h3 class="font-bold text-[16px] mt-1">${cli?.nome}</h3><p class="text-[12px] text-slate-500">por ${v.criadoPorNome||'-'} \u2022 ${fmtDateTime(v.data)} \u2022 ${v.formaPagamento}</p></div><span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase border bg-slate-50">${v.status}</span></div>${pixHtml}<div class="mt-6 space-y-2">${v.itens.map(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<div class="flex justify-between items-center p-3 rounded-xl border bg-slate-50/70"><div><p class="font-semibold text-[13px]">${p?.nome||it.descricao||'Produto removido'}</p><p class="text-[11px] text-slate-500">${it.qtd} x ${fmtMoney(it.preco)}</p></div><b class="text-[13px]">${fmtMoney(it.subtotal)}</b></div>`}).join('')}</div><div class="mt-6 border-t pt-4 space-y-2 text-[13px]"><div class="flex justify-between font-bold text-[16px] pt-2 border-t"><span>Total</span><span>${fmtMoney(v.total)}</span></div><p class="text-[11px] text-slate-500">Criado por ${v.criadoPorNome||'-'} em ${fmtDateTime(v.data||v.criadoEm)}</p></div><div class="mt-6 grid grid-cols-2 gap-2">${botoes}</div>`;}
 
-function faturarVenda(id){const sess=getSession(); const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!v) return; if(v.status==='faturado') return toast('Já faturado','error'); v.status='faturado'; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',criadoEm:new Date().toISOString(),clienteId:v.clienteId,descricao:`Venda ${v.numero}`,valor:v.total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:v.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); logAction('venda','faturar',id,`Faturada venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderFinanceiro(); showVenda(id); renderAuditoria(); toast('Venda faturada','success');}
+function faturarVenda(id){const sess=getSession(); const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!v) return; if(v.status==='faturado') return toast('Já faturado','error'); v.status='faturado'; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',criadoEm:new Date().toISOString(),clienteId:v.clienteId,descricao:`Venda ${v.numero}`,vendaNumero:v.numero,valor:v.total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:v.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); logAction('venda','faturar',id,`Faturada venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderFinanceiro(); showVenda(id); renderAuditoria(); toast('Venda faturada','success');}
 function deleteVenda(id){const sess=getSession(); if(confirm('Excluir venda? Estoque estornado.')){const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(v){v.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId); if(p) p.estoque+=it.qtd;}); db.vendas=db.vendas.filter(x=>!(x.id===id && x.empresaId===sess.empresaId)); logAction('venda','excluir',id,`Excluída venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderProdutos(); document.getElementById('venda-detail').innerHTML='<div class="text-center py-20 text-slate-400 text-[13px]">Venda excluída</div>'; toast('Venda excluída','success'); renderAuditoria();}}}
 
 function setFinTab(tab){document.querySelectorAll('.fin-tab').forEach(b=>{b.classList.remove('bg-[#0a1e8a]','text-white'); b.classList.add('bg-white','border','border-slate-200');}); document.querySelector(`[data-fintab="${tab}"]`).classList.add('bg-[#0a1e8a]','text-white'); document.querySelector(`[data-fintab="${tab}"]`).classList.remove('bg-white','border'); document.querySelectorAll('.fin-panel').forEach(p=>p.classList.add('hidden')); document.getElementById('fin-'+tab).classList.remove('hidden'); if(tab==='visao') renderFluxoChart();}
@@ -5456,7 +5456,7 @@ window.novaVenda = function(){
           </div>
           <div id="vos-cli-results" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-[240px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>
         </div>
-        <button onclick="openModal('cliente')" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold flex items-center gap-1 shrink-0"><i class="ph ph-user-plus"></i> Novo cliente</button>
+        <select id="vos-cli-campo" onchange="vosVendaSearchClienteDeb(document.getElementById('vos-cli-search').value)" class="h-[44px] px-2 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[12px] font-bold text-[#0a1e8a] shrink-0"><option value="todos">Tudo</option><option value="nome">Nome</option><option value="fantasia">Fantasia</option><option value="codigo">Código</option><option value="documento">CPF/CNPJ</option></select><button onclick="openModal('cliente')" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold flex items-center gap-1 shrink-0"><i class="ph ph-user-plus"></i> Novo cliente</button>
       </div>
       <div id="vos-cli-selecionado" class="hidden mt-2 rounded-xl bg-white border border-[#0a1e8a]/20 p-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -5675,7 +5675,7 @@ window.vosVendaSelectCliente = function(id){
   document.getElementById('vos-cli-search').value = '';
   document.getElementById('vos-cli-selecionado').classList.remove('hidden');
   document.getElementById('vos-cli-avatar').innerText = initials(c.nome);
-  document.getElementById('vos-cli-nome').innerText = (c.codigo?`#${c.codigo} — `:'') + (c.nome||'');
+  document.getElementById('vos-cli-nome').innerText = (c.codigo?`#${c.codigo} — `:'') + (window.textoOK?window.textoOK(c.nome||''):c.nome||'');
   document.getElementById('vos-cli-detalhes').innerText = `${c.documento||''} • ${c.telefone||''} • ${c.endereco||''} • ${c.cidade||''}/${c.estado||''}`;
 };
 window.vosVendaClearCliente = function(){
@@ -43103,7 +43103,17 @@ function filtraLancamentos(list, opts){
       var nome = String(cli.nome||c.clienteNomeAntigo||c.fornecedor||'').toLowerCase();
       return nome.indexOf(q.toLowerCase())>=0;
     }
-    if(campo==='cod_venda') return codigoNorm(c.vendaNumero||c.numeroVenda||'')===codigoNorm(q) || codigoNorm(c.vendaId||'')===codigoNorm(q);
+    if(campo==='cod_venda'){
+      if(codigoNorm(c.vendaNumero||c.numeroVenda||'')===codigoNorm(q)) return true;
+      if(codigoNorm(q) && codigoNorm(c.vendaId||'')===codigoNorm(q)) return true;
+      try{
+        if(c.vendaId && typeof db!=='undefined' && db.vendas){
+          var vv=db.vendas.find(function(x){ return x&&x.id===c.vendaId; });
+          if(vv && codigoNorm(vv.numero||'')===codigoNorm(q)) return true;
+        }
+      }catch(eVn){}
+      return false;
+    }
     if(campo==='cod_parcela') return codigoNorm(c.numeroParcela||c.parcela||c.nroParcela||'')===codigoNorm(q);
     if(campo==='cod_cliente') return codigoNorm(cli.codigo||cli.codigoAntigo||c.codClienteAntigo||'')===codigoNorm(q);
     if(campo==='por_valor') return valorIgual(c.valor, q);
@@ -52199,6 +52209,15 @@ if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCli
     const low = (q||'').toLowerCase().trim();
     if(!low){ el.classList.add('hidden'); el.innerHTML=''; return; }
     const base = (typeof db!=='undefined' && db.clientes)||[];
+    var campoVos='todos';
+    try{ campoVos=(document.getElementById('vos-cli-campo')||{}).value||'todos'; }catch(eCv){}
+    var list=null;
+    try{
+      if(typeof window.filtraClientesCampo==='function'){
+        list=window.filtraClientesCampo(base.filter(function(c){ return c&&c.empresaId===sessf.empresaId; }), q, campoVos);
+      }
+    }catch(ePf){ list=null; }
+    if(!list){
     if(window.__vosCliIdxBase !== base){
       window.__vosCliIdxBase = base;
       window.__vosCliIdxFresco = base.map(function(c){
@@ -52206,15 +52225,17 @@ if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCli
         return { c:c, hay:[c.codigo,c.nome,c.fantasia,c.documento,(typeof onlyDigits==='function'?onlyDigits(c.documento):doc.replace(/\D/g,'')),c.endereco,c.telefone,c.cidade,c.estado].filter(function(x){return x!=null&&x!=='';}).join(' ').toLowerCase() };
       });
     }
-    const list = window.__vosCliIdxFresco
+    list = window.__vosCliIdxFresco
       .filter(function(x){ return x.c.empresaId===sessf.empresaId && x.hay.indexOf(low)>=0; })
       .map(function(x){ return x.c; }).slice(0,15);
+    }
+    list=(list||[]).slice(0,15);
     window.__vosUltBusca = {};
     el.innerHTML = list.map(function(c){
       window.__vosUltBusca[c.id]=c;
       return '<button type="button" onclick="vosVendaSelectCliente(\''+String(c.id).replace(/'/g,'')+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0 flex justify-between gap-2">'
-        +'<span><b class="text-[#0a1e8a]">#'+_esc(c.codigo||'-')+'</b> <b>'+_esc(c.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+_esc(c.documento||'')+' • '+_esc(c.telefone||'')+' • '+_esc(c.endereco||'')+'</span></span>'
-        +'<span class="text-[10px] text-slate-400 shrink-0">'+_esc(c.cidade||'')+'/'+_esc(c.estado||'')+'</span></button>';
+        +'<span><b class="text-[#0a1e8a]">#'+_esc(c.codigo||'-')+'</b> <b>'+_esc(window.textoOK?window.textoOK(c.nome||''):c.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+_esc(window.textoOK?window.textoOK(c.documento||''):c.documento||'')+' • '+_esc(c.telefone||'')+' • '+_esc(c.endereco||'')+'</span></span>'
+        +'<span class="text-[10px] text-slate-400 shrink-0">'+_esc(window.textoOK?window.textoOK(c.cidade||''):c.cidade||'')+'/'+_esc(c.estado||'')+'</span></button>';
     }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado — cadastre em "+ Novo cliente"</p>';
     el.classList.remove('hidden');
   };
@@ -61020,13 +61041,16 @@ function fePintar(){
       caixa.style.cssText='margin-top:12px;background:#fff;border:1px solid #c9ceef;border-radius:14px;padding:12px 14px';
       v.insertBefore(caixa, v.firstChild ? v.firstChild.nextSibling : null);
     }
+    var ultBtn='';
     var linhas=an.itens.map(function(i){
+      var mostraBtn=(i.ok!==true && i.onde!==ultBtn);
+      if(i.ok!==true) ultBtn=i.onde;
       var marca=i.ok===true?'✅':(i.ok===null?'⏳':'⚠️');
       var cor=i.ok===true?'#166534':(i.ok===null?'#334155':'#b45309');
       return '<div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:12.5px">'+
         '<span>'+marca+'</span>'+
         '<span style="flex:1;color:'+cor+'"><b>'+feEsc(i.rotulo)+'</b> — '+feEsc(i.detalhe)+'</span>'+
-        (i.ok===true?'':'<button type="button" data-fe-ir="'+feEsc(i.onde)+'" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #c9ceef;background:#e8eaf8;color:#0a1e8a;font-weight:700;font-size:11.5px;cursor:pointer">'+feEsc(i.acao)+'</button>')+
+        (!mostraBtn?'':'<button type="button" data-fe-ir="'+feEsc(i.onde)+'" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #c9ceef;background:#e8eaf8;color:#0a1e8a;font-weight:700;font-size:11.5px;cursor:pointer">'+feEsc(i.acao)+'</button>')+
       '</div>';
     }).join('');
     caixa.innerHTML='<p style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0a1e8a">FALTA POUCO PARA A NOTA VALER DE VERDADE'+
@@ -61316,6 +61340,7 @@ try{
       //    PC que ainda vai subir) e sem nada segurado aqui.
       if (inf.authorized && !(inf.outbox > 0) && !((inf.heldLocalOnly || []).length)) {
         const nuvem = await contarNuvem();
+        retratoCache = null; // r64: o cache de 1min acusava divergência logo após salvar
         const faltando = listasFaltando(retrato() || {}, nuvem);
         if (faltando.length) {
           const trecho = faltando.slice(0, 3).map(function(f){ return f.lista + ': ' + f.aqui + ' aqui × ' + f.nuvem + ' na nuvem'; }).join(' · ');
@@ -62116,15 +62141,110 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5901_login_retry_nuvem_patch.js", e); }
 ;
 
+/* ===== ajustes_v52266_versao_nova_banner_patch.js ===== */
+try{
+// ════════════════════════════════════════════════════
+// v5.22.66 — Banner "tem versão nova" (r64, pedido do dono 30/09).
+// O testador testa enquanto o sistema atualiza: quem fica com a página
+// aberta numa versão velha vê um aviso no topo com a versão nova e um
+// botão Recarregar. Silencioso quando: sem rede, mesma versão, erro.
+// ════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+/* VERSAONOVA_PURE_START */
+function versaoNova(atual, nova){
+  var a=String(atual==null?'':atual).trim(), n=String(nova==null?'':nova).trim();
+  if(!a || !n || a===n) return false;
+  return true;
+}
+function extraiVersao(html){
+  var m=/DIGICOPY_APP_VERSION\s*=\s*['"]([^'"]+)['"]/.exec(String(html==null?'':html));
+  return m?m[1]:'';
+}
+/* VERSAONOVA_PURE_END */
+
+try{ if(typeof window!=='undefined'){ window.versaoNovaUteis=window.versaoNovaUteis||{ versaoNova:versaoNova, extraiVersao:extraiVersao }; } }catch(ePU){}
+if(typeof window==='undefined' || typeof document==='undefined') return;
+
+var ATUAL=String(window.DIGICOPY_APP_VERSION||'');
+var SNOOZE='__digicopy_ver_snooze_ate';
+var ULTIMA=0;
+
+function snoozed(){
+  try{
+    var ate=Number(window.localStorage?window.localStorage.getItem(SNOOZE):0)||0;
+    return Date.now()<ate;
+  }catch(e){ return false; }
+}
+function snooze(min){
+  try{ if(window.localStorage) window.localStorage.setItem(SNOOZE, String(Date.now()+min*60000)); }catch(e){}
+}
+function esconder(){
+  try{
+    var b=document.getElementById('versao-nova-banner');
+    if(b && b.parentNode) b.parentNode.removeChild(b);
+  }catch(e){}
+  try{ window.__DIGICOPY_VERSAO_NOVA=null; }catch(e2){}
+}
+function mostrar(nova){
+  try{ window.__DIGICOPY_VERSAO_NOVA={ atual:ATUAL, nova:nova }; }catch(e){}
+  var b=document.getElementById('versao-nova-banner');
+  if(!b){
+    b=document.createElement('div');
+    b.id='versao-nova-banner';
+    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#b45309;color:#fff;font-size:13px;font-weight:700;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.25)';
+    document.body.appendChild(b);
+  }
+  b.innerHTML='';
+  var t=document.createElement('span');
+  t.textContent='Tem versão nova ('+nova+') — você está na '+ATUAL+'. Recarregue para testar o novo.';
+  var rec=document.createElement('button');
+  rec.textContent='Recarregar agora';
+  rec.style.cssText='background:#fff;color:#92400e;border:0;border-radius:8px;padding:6px 12px;font-weight:800;cursor:pointer';
+  rec.onclick=function(){ try{ window.location.reload(); }catch(e){} };
+  var x=document.createElement('button');
+  x.textContent='X';
+  x.title='Avisar depois (30 min)';
+  x.style.cssText='background:transparent;color:#fff;border:1px solid #fff;border-radius:8px;padding:6px 10px;font-weight:800;cursor:pointer';
+  x.onclick=function(){ snooze(30); esconder(); };
+  b.appendChild(t); b.appendChild(rec); b.appendChild(x);
+}
+async function conferir(){
+  if(!ATUAL || snoozed()) return;
+  if(Date.now()-ULTIMA<60000) return;
+  ULTIMA=Date.now();
+  try{
+    var r=await fetch('index.html',{ cache:'no-store' });
+    if(!r || !r.ok) return;
+    var html=await r.text();
+    var nova=extraiVersao(html);
+    if(versaoNova(ATUAL,nova)) mostrar(nova);
+    else esconder();
+  }catch(e){}
+}
+
+try{
+  setTimeout(conferir, 15000);
+  setInterval(conferir, 5*60*1000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) conferir(); });
+  window.addEventListener('focus', conferir);
+}catch(e){}
+
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52266_versao_nova_banner_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 232;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 233;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 232 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 233 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

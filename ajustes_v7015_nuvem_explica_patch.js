@@ -232,6 +232,7 @@
       //    PC que ainda vai subir) e sem nada segurado aqui.
       if (inf.authorized && !(inf.outbox > 0) && !((inf.heldLocalOnly || []).length)) {
         const nuvem = await contarNuvem();
+        retratoCache = null; // r64: o cache de 1min acusava divergência logo após salvar
         const faltando = listasFaltando(retrato() || {}, nuvem);
         if (faltando.length) {
           const trecho = faltando.slice(0, 3).map(function(f){ return f.lista + ': ' + f.aqui + ' aqui × ' + f.nuvem + ' na nuvem'; }).join(' · ');
