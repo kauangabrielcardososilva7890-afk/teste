@@ -3426,6 +3426,7 @@ const idbR59b = fs.readFileSync('indexeddb_persistence_patch.js', 'utf8');
 ok('open serializado (uma tentativa por vez)', idbR59b.indexOf('openPromise') >= 0);
 ok('conn guardada antes do close', idbR59b.indexOf('var conn=req.result') >= 0 && idbR59b.indexOf('conn.close()') >= 0);
 ok('só zera se for a atual', idbR59b.indexOf('if(database===conn)database=null') >= 0);
+ok('throw síncrono não envenena (rejeita e libera)', idbR59b.indexOf('catch(e){ openPromise=null; return reject(e); }') >= 0);
 ok('close de null sumiu', idbR59b.indexOf('x.close()') < 0);
 console.log('\nRESULTADO: abertura serializada provada!');
 //<<<<SECAO:test_r59b_idb_abertura.js:FIM>>>>

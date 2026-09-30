@@ -18,7 +18,7 @@ function open(){
   if(openPromise)return openPromise; // r59b: uma abertura por vez (duas em voo órfãs travavam o apagar)
   openPromise=new Promise((resolve,reject)=>{
     if(!window.indexedDB){openPromise=null;return reject(new Error('IndexedDB não disponível'));}
-    const req=indexedDB.open(IDB_NAME,2);
+    var req=null; try{ req=indexedDB.open(IDB_NAME,2); }catch(e){ openPromise=null; return reject(e); } // r59b-audit: throw síncrono não envenena as próximas aberturas
     req.onupgradeneeded=()=>{
       const x=req.result;
       if(!x.objectStoreNames.contains(SNAPSHOTS))x.createObjectStore(SNAPSHOTS,{keyPath:'key'});

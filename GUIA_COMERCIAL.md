@@ -57,7 +57,9 @@ aparece (só se apagarem os dados do PC — aí é só refazer com a assistênci
 a base vazia abre o **login**, não o setup (o modo SÓ NUVEM recarrega os
 dados da nuvem). Canto raro: se o token do aparelho foi revogado na nuvem
 E a base local foi apagada, o login abre sem usuários — nesse caso limpe
-os dados do site no navegador (apaga o token) e refaça o setup.
+os dados do site no navegador (apaga o token) e refaça o setup. Corrida
+curta: com a base vazia, os usuários chegam da nuvem em ~2–4 s — se o
+primeiro login disser "inválido", espere um pouco e tente de novo.
 
 ## 4. Conectar o primeiro PC
 
