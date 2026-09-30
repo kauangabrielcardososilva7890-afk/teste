@@ -19,7 +19,7 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.3   (igual ao src/index.js)
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.4   (igual ao src/index.js)
  * GERADO EM: 2026-09-29 03:39 UTC
  * sha256 do código (sem este cabeçalho):
  *   99da78f046b2c601af9c7b41142120fb698df9d363e54da923673029136d611b
@@ -35,7 +35,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.28.3";
+var WORKER_VERSION = "5.28.4";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -1175,7 +1175,8 @@ function cnpjValido(cnpj) {
 }
 __name(cnpjValido, "cnpjValido");
 async function senhaHash(env, cnpj, senha) {
-  const pepper = env && env.SETUP_SECRET || "digicopy";
+  if(!env || !env.SETUP_SECRET) throw new ApiError(500, "SEM_SEGREDO", "Motor sem SETUP_SECRET: defina o segredo na Cloudflare e publique de novo.");
+  const pepper = env.SETUP_SECRET;
   return sha256(pepper + "|" + soDigitos(cnpj) + "|" + String(senha || ""));
 }
 __name(senhaHash, "senhaHash");

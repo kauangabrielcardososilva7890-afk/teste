@@ -40,7 +40,7 @@ console.log('  ' + SITE + '/RELATORIO_DE_TESTE_NF.html');
 console.log('• Relatório de problemas (caminhos em caixas, "+" infinito):');
 console.log('  ' + SITE + '/RELATORIO_DE_PROBLEMAS.html');
 console.log('• Motor da nuvem para colar no painel (botão de copiar):');
-console.log('• Saúde da nuvem (tem que mostrar o Worker 5.28.3 ou mais novo):');
+console.log('• Saúde da nuvem (tem que mostrar o Worker 5.28.4 ou mais novo):');
 console.log('  ' + HEALTH + worker);
 console.log('• Baixar tudo (ZIP da branch do GitHub) — repositório PRIVADO, exige login:');
 console.log('  ' + ZIP);

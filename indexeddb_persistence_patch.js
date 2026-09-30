@@ -10,13 +10,14 @@ const SNAPSHOTS='snapshots';
 const ENTITIES='entities';
 const META='meta';
 const KEY='main';
-let database=null,writeTimer=null,lastSavedAt=0,lastError='',clearing=false,entityHashes={};
+let database=null,openPromise=null,writeTimer=null,lastSavedAt=0,lastError='',clearing=false,entityHashes={};
 window.__indexedDbPersistAtivo=true;
 
 function open(){
   if(database)return Promise.resolve(database);
-  return new Promise((resolve,reject)=>{
-    if(!window.indexedDB)return reject(new Error('IndexedDB não disponível'));
+  if(openPromise)return openPromise; // r59b: uma abertura por vez (duas em voo órfãs travavam o apagar)
+  openPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){openPromise=null;return reject(new Error('IndexedDB não disponível'));}
     const req=indexedDB.open(IDB_NAME,2);
     req.onupgradeneeded=()=>{
       const x=req.result;
@@ -24,9 +25,12 @@ function open(){
       if(!x.objectStoreNames.contains(ENTITIES))x.createObjectStore(ENTITIES,{keyPath:'key'});
       if(!x.objectStoreNames.contains(META))x.createObjectStore(META,{keyPath:'key'});
     };
-    req.onsuccess=()=>{database=req.result;database.onversionchange=()=>{database.close();database=null;};resolve(database);};
-    req.onerror=()=>reject(req.error||new Error('Falha abrindo IndexedDB'));
+    // r59b: o versionchange fecha a PRÓPRIA conexão (não a da vez) e só zera se for a atual —
+    // antes, conexão órfã fechava a errada e o segundo disparo quebrava em null.close().
+    req.onsuccess=()=>{database=req.result;var conn=req.result;conn.onversionchange=()=>{try{conn.close();}catch(e){} if(database===conn)database=null;};openPromise=null;resolve(database);};
+    req.onerror=()=>{openPromise=null;reject(req.error||new Error('Falha abrindo IndexedDB'));};
   });
+  return openPromise;
 }
 function getSnapshot(key){return open().then(x=>new Promise((resolve,reject)=>{const r=x.transaction(SNAPSHOTS,'readonly').objectStore(SNAPSHOTS).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);}));}
 function putSnapshot(snapshot){return open().then(x=>new Promise((resolve,reject)=>{const tx=x.transaction(SNAPSHOTS,'readwrite');tx.objectStore(SNAPSHOTS).put(snapshot);tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Snapshot cancelado'));}));}

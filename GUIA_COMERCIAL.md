@@ -53,6 +53,12 @@ Na primeira abertura (base vazia), em vez do login abre o **setup**:
 Concluir → o sistema recarrega e abre o login normal. O setup nunca mais
 aparece (só se apagarem os dados do PC — aí é só refazer com a assistência).
 
+**r59b — aparelho já conectado:** se o navegador já foi conectado na nuvem,
+a base vazia abre o **login**, não o setup (o modo SÓ NUVEM recarrega os
+dados da nuvem). Canto raro: se o token do aparelho foi revogado na nuvem
+E a base local foi apagada, o login abre sem usuários — nesse caso limpe
+os dados do site no navegador (apaga o token) e refaça o setup.
+
 ## 4. Conectar o primeiro PC
 
 No painel **Nuvem** → **Primeiro computador**: nome do PC + o **segredo de

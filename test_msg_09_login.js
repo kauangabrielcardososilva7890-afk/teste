@@ -627,13 +627,13 @@ ok('botão Desfazer existe na janela', v5214src.indexOf('clientesDuplicadosDesfa
 ok('usuários repetidos: detector + tela + botão', v5214src.indexOf('usuGruposDuplicados') >= 0 && v5214src.indexOf('usuariosDuplicadosAbrir') >= 0 && v5214src.indexOf('btn-usuarios-duplicados') >= 0);
 ok('órfãos: lista + desvincular na janela', v5214src.indexOf('orfaosListar(db)') >= 0 && v5214src.indexOf('clientesOrfaoDesvincular') >= 0);
 
-// ── P5 + worker 5.28.3 + motor ──────────────────────────────────────────────
-console.log('== r54/P5: backups + worker 5.28.3 + motor regenerado ==');
+// ── P5 + worker 5.28.4 + motor ──────────────────────────────────────────────
+console.log('== r54/P5: backups + worker 5.28.4 + motor regenerado ==');
 ok('lista de backups aguenta data vazia/inválida', worker.indexOf('x.gerado_em == null || isNaN(Number(x.gerado_em))') >= 0);
 ok('login vazio na prova vira 403, não 500 (S7)', worker.indexOf("String(cleanText(request.headers.get('x-digicopy-usuario-login')") >= 0);
-ok('worker carimbado 5.28.3', worker.indexOf("const WORKER_VERSION = '5.28.3'") >= 0);
+ok('worker carimbado 5.28.4', worker.indexOf("const WORKER_VERSION = '5.28.4'") >= 0);
 const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
-ok('motor regenerado com a 5.28.3', motor.indexOf('5.28.3') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
+ok('motor regenerado com a 5.28.4', motor.indexOf('5.28.4') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
 
 // ── RUNTIME: cripto pura (PBKDF2 de verdade, com o subtle do node) ──────────
 console.log('== r54/runtime: PBKDF2, prova com salt e tira-segredos de verdade ==');
@@ -784,6 +784,13 @@ ok('setup cria Dono (não admin de fábrica)', code5900.indexOf("perfil: 'Dono'"
 ok('setup gera hash do admin', code5900.indexOf('await atualizarHashRegistro(u, dados.senha)') >= 0);
 ok('setup não marca senha padrão', code5900.indexOf('senhaPadrao: false') >= 0);
 ok('setup grava a nuvem', code5900.indexOf('db.config.nuvem = { apiUrl:') >= 0);
+console.log('== SETUP COM TOKEN (r59b) ==');
+ok('precisaSetup aceita token', S.precisaSetup.length >= 2);
+ok('precisaSetup: vazia COM token = não (SÓ NUVEM recarregado vai ao login)', S.precisaSetup({empresas:[],usuarios:[]}, true) === false);
+ok('precisaSetup: vazia SEM token = sim', S.precisaSetup({empresas:[],usuarios:[]}, false) === true);
+ok('precisaSetup: sem args = sim (fail-safe)', S.precisaSetup(null) === true);
+ok('gate lê o token do aparelho', code5900.indexOf('DIGICOPY_CLOUD') >= 0 && code5900.indexOf('digicopy_cloud_device_token_v1') >= 0);
+console.log('\nRESULTADO: setup com token provado!');
 console.log('\nRESULTADO: setup assistido provado!');
 //<<<<SECAO:test_r59_setup.js:FIM>>>>
 }

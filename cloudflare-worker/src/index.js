@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.28.3';
+const WORKER_VERSION = '5.28.4';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -1275,7 +1275,10 @@ async function garantirTabelaAppVersao(env){
 function soDigitos(v){ return String(v == null ? '' : v).replace(/\D+/g, ''); }
 function cnpjValido(cnpj){ return /^\d{14}$/.test(cnpj); }
 async function senhaHash(env, cnpj, senha){
-  const pepper = (env && env.SETUP_SECRET) || 'digicopy';
+  // r59b: sem segredo, sem hash — falhar FECHADO. O fallback público ('digicopy')
+  // deixaria a senha de conexão/gerente adivinhável numa nuvem mal provisionada.
+  if(!env || !env.SETUP_SECRET) throw new ApiError(500, 'SEM_SEGREDO', 'Motor sem SETUP_SECRET: defina o segredo na Cloudflare e publique de novo.');
+  const pepper = env.SETUP_SECRET;
   return sha256(pepper + '|' + soDigitos(cnpj) + '|' + String(senha || ''));
 }
 async function lerSegredos(env){

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 231 | sha256: 823d6d888fd5ed34
+ * scripts: 231 | sha256: ee05ac01abe7429e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28394,13 +28394,14 @@ const SNAPSHOTS='snapshots';
 const ENTITIES='entities';
 const META='meta';
 const KEY='main';
-let database=null,writeTimer=null,lastSavedAt=0,lastError='',clearing=false,entityHashes={};
+let database=null,openPromise=null,writeTimer=null,lastSavedAt=0,lastError='',clearing=false,entityHashes={};
 window.__indexedDbPersistAtivo=true;
 
 function open(){
   if(database)return Promise.resolve(database);
-  return new Promise((resolve,reject)=>{
-    if(!window.indexedDB)return reject(new Error('IndexedDB não disponível'));
+  if(openPromise)return openPromise; // r59b: uma abertura por vez (duas em voo órfãs travavam o apagar)
+  openPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){openPromise=null;return reject(new Error('IndexedDB não disponível'));}
     const req=indexedDB.open(IDB_NAME,2);
     req.onupgradeneeded=()=>{
       const x=req.result;
@@ -28408,9 +28409,12 @@ function open(){
       if(!x.objectStoreNames.contains(ENTITIES))x.createObjectStore(ENTITIES,{keyPath:'key'});
       if(!x.objectStoreNames.contains(META))x.createObjectStore(META,{keyPath:'key'});
     };
-    req.onsuccess=()=>{database=req.result;database.onversionchange=()=>{database.close();database=null;};resolve(database);};
-    req.onerror=()=>reject(req.error||new Error('Falha abrindo IndexedDB'));
+    // r59b: o versionchange fecha a PRÓPRIA conexão (não a da vez) e só zera se for a atual —
+    // antes, conexão órfã fechava a errada e o segundo disparo quebrava em null.close().
+    req.onsuccess=()=>{database=req.result;var conn=req.result;conn.onversionchange=()=>{try{conn.close();}catch(e){} if(database===conn)database=null;};openPromise=null;resolve(database);};
+    req.onerror=()=>{openPromise=null;reject(req.error||new Error('Falha abrindo IndexedDB'));};
   });
+  return openPromise;
 }
 function getSnapshot(key){return open().then(x=>new Promise((resolve,reject)=>{const r=x.transaction(SNAPSHOTS,'readonly').objectStore(SNAPSHOTS).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);}));}
 function putSnapshot(snapshot){return open().then(x=>new Promise((resolve,reject)=>{const tx=x.transaction(SNAPSHOTS,'readwrite');tx.objectStore(SNAPSHOTS).put(snapshot);tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Snapshot cancelado'));}));}
@@ -61636,12 +61640,16 @@ function resolverApiUrl(cfg){
   if(!/^https?:\/\/.+\..+/i.test(u)) return API_OFICIAL;
   return u;
 }
-function precisaSetup(dbLike){
+function precisaSetup(dbLike, temToken){
   try{
     if(!dbLike) return true;
-    if(!Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0) return true;
-    if(!Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0) return true;
-    return false;
+    var vazia = !Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0 ||
+                !Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0;
+    if(!vazia) return false;
+    // r59b: SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
+    // segundos) — mostra o LOGIN, não o setup. Setup é só sem nuvem nenhuma.
+    if(temToken) return false;
+    return true;
   }catch(e){ return true; }
 }
 function validarSetup(d){
@@ -61671,8 +61679,16 @@ function esc(s){
   });
 }
 function ehSetupPendente(){
-  try{ return precisaSetup(typeof db !== 'undefined' ? db : null); }
-  catch(e){ return false; }
+  try{
+    var dbv = (typeof db !== 'undefined') ? db : null;
+    var tok = '';
+    try{
+      var C = (typeof window !== 'undefined') ? window.DIGICOPY_CLOUD : null;
+      if(C && typeof C.token === 'function') tok = C.token() || '';
+      else if(typeof localStorage !== 'undefined') tok = localStorage.getItem('digicopy_cloud_device_token_v1') || '';
+    }catch(e){}
+    return precisaSetup(dbv, !!tok);
+  }catch(e){ return false; }
 }
 function soDig(v){ return String(v == null ? '' : v).replace(/\D/g, ''); }
 

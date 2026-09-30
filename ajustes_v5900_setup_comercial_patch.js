@@ -20,12 +20,16 @@ function resolverApiUrl(cfg){
   if(!/^https?:\/\/.+\..+/i.test(u)) return API_OFICIAL;
   return u;
 }
-function precisaSetup(dbLike){
+function precisaSetup(dbLike, temToken){
   try{
     if(!dbLike) return true;
-    if(!Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0) return true;
-    if(!Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0) return true;
-    return false;
+    var vazia = !Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0 ||
+                !Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0;
+    if(!vazia) return false;
+    // r59b: SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
+    // segundos) — mostra o LOGIN, não o setup. Setup é só sem nuvem nenhuma.
+    if(temToken) return false;
+    return true;
   }catch(e){ return true; }
 }
 function validarSetup(d){
@@ -55,8 +59,16 @@ function esc(s){
   });
 }
 function ehSetupPendente(){
-  try{ return precisaSetup(typeof db !== 'undefined' ? db : null); }
-  catch(e){ return false; }
+  try{
+    var dbv = (typeof db !== 'undefined') ? db : null;
+    var tok = '';
+    try{
+      var C = (typeof window !== 'undefined') ? window.DIGICOPY_CLOUD : null;
+      if(C && typeof C.token === 'function') tok = C.token() || '';
+      else if(typeof localStorage !== 'undefined') tok = localStorage.getItem('digicopy_cloud_device_token_v1') || '';
+    }catch(e){}
+    return precisaSetup(dbv, !!tok);
+  }catch(e){ return false; }
 }
 function soDig(v){ return String(v == null ? '' : v).replace(/\D/g, ''); }
 

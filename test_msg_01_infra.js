@@ -2822,7 +2822,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.28.3'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.28.3 = foto da nuvem (abertura instantânea); v5.26.1 = site profissional (visual+rodapé novo))');
+ok(worker.indexOf("const WORKER_VERSION = '5.28.4'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.28.4 = foto da nuvem (abertura instantânea); v5.26.1 = site profissional (visual+rodapé novo))');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
@@ -2953,7 +2953,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('aviso-update-ca
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index: versão 5.25.0');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'index: rodapé v6.0.9');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6');
-ok(wk.includes("'5.28.3'"), 'worker carimbado 5.28.3 (gerente entra como PC admin; 5.26.5 = visual profissional do site; 5.26.0 = motor do CNPJ+gerente) (visual profissional do site; o 5.26.0 foi o motor do CNPJ+gerente)')
+ok(wk.includes("'5.28.4'"), 'worker carimbado 5.28.4 (gerente entra como PC admin; 5.26.5 = visual profissional do site; 5.26.0 = motor do CNPJ+gerente) (visual profissional do site; o 5.26.0 foi o motor do CNPJ+gerente)')
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (sininho de atualização + publicador na config).');
@@ -3007,7 +3007,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'),
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9 (re-ancorado)');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9 (re-ancorado)');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6 (re-ancorado)');
-ok(wk.includes("'5.28.3'"), 'worker carimbado 5.28.3 (re-ancorado)');
+ok(wk.includes("'5.28.4'"), 'worker carimbado 5.28.4 (re-ancorado)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (site próprio de atualizações + histórico na nuvem).');
@@ -3256,7 +3256,7 @@ ok('worker: imagens servidas em /img/ só de versão viva', wk.indexOf("url.path
 ok('worker: /dl/ EXIGE sessão OU slug igual ao da versão OU gerente/admin', wk.indexOf('slugQ === essa.slug') >= 0 && wk.indexOf('sessaoDl') >= 0 && new RegExp('Área restrita: entre em /atualizacoes').test(wk));
 ok('worker: action remover-imagem (tira do tutorial e do R2)', wk.indexOf("'remover-imagem'") >= 0 && wk.indexOf('R2.delete(keyX)') >= 0);
 ok('worker: tutorial renderiza grid de imagens + zoom ao clicar (.zi + lightbox)', wk.indexOf('class="zi"') >= 0 && wk.indexOf('lbz') >= 0);
-ok('worker: versão do motor carimbada 5.28.3', wk.indexOf("WORKER_VERSION = '5.28.3'") >= 0);
+ok('worker: versão do motor carimbada 5.28.4', wk.indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 
 console.log('== APP: sininho destinatário-aware + link secreto + abas/cartões ==');
 ok('patch: guard único (__v5260cn) e PURE exportado', patch.indexOf('__v5260cn') >= 0 && patch.indexOf('window.CNPJ_V5260_PURE') >= 0);
@@ -3374,7 +3374,7 @@ ok('PURA sessaoDoDiaExpirada: login de hoje = válida; de ontem = expira',
   (sandbox.localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({loginAt:'2026-09-01T10:00:00'})), P.sessaoDoDiaExpirada() === true));
 
 console.log('== WORKER: /v1/check-pass + erros específicos do gerente ==');
-ok('worker carimbado 5.28.3', wk.indexOf("WORKER_VERSION = '5.28.3'") >= 0);
+ok('worker carimbado 5.28.4', wk.indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 ok('rota POST /v1/check-pass existe', wk.indexOf("'/v1/check-pass'") >= 0 && wk.indexOf("request.method === 'POST' && url.pathname === '/v1/check-pass'") >= 0);
 ok('check-pass NÃO cria nada (sem INSERT nesse trecho)', (function(){ const t = wk.split("'/v1/check-pass'")[1].split("'/v1/enroll-cnpj'")[0]; return t.indexOf('INSERT') < 0 && t.indexOf('INSERT INTO devices') < 0 && t.indexOf('randomToken') < 0; })());
 ok('check-pass diz quando a senha ainda não foi definida (senhaDefinida:false)', wk.indexOf('senhaDefinida: false') >= 0 && wk.indexOf('Senhas de conexão (CNPJ) e do Gerente') >= 0);
@@ -3484,7 +3484,7 @@ console.log('== CONTEXT: carimbos e trilha (v5.26.3→v5.26.5) ==');
 ok('gerente package 5.26.3', gPkg.version === '5.26.3');
 ok('app (package.json) na 6.0.9 (escola: ralo fechado)', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker 5.28.3 (re-ancorado: motor do orçamento público)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
+ok('worker 5.28.4 (re-ancorado: motor do orçamento público)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 ok('manifesto hoje tem 216; posições 202/203 históricas intactas (login-nuvem, data grande); hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila', manifest.length >= 225 && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('bundle contém o patch com a máscara nova', bundle.indexOf('__v5262ln') >= 0 && bundle.indexOf('$1.$2.$3/$4-$5') >= 0);
 ok('mobile sincronizado com o bundle', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
@@ -3578,7 +3578,7 @@ console.log('== CARIMBO (app agora em 6.0.6 após a escola; worker e gerente int
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
-ok('worker 5.28.3 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
+ok('worker 5.28.4 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
@@ -3660,7 +3660,7 @@ console.log('== CARIMBO 6.0.9 (app; worker e gerente intactos) ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('script check valida o buscador_escola', pkg.scripts.check.indexOf('buscador_escola_patch.js') >= 0);
-ok('worker 5.28.3 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
+ok('worker 5.28.4 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
@@ -3761,7 +3761,7 @@ ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasRece
 console.log('== CARIMBO 6.0.9 ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker 5.28.3 (re-ancorado)', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0);
+ok('worker 5.28.4 (re-ancorado)', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 ok('guard ativo (anti dupla-instalação)', src.indexOf('__v5266pg') >= 0);
 
@@ -3892,7 +3892,7 @@ ok('patch na 207 (autocura 208; perfis 209; permissões 210; menu fiscal v6.0.6 
 ok('motor no bundle gerado', bundle.indexOf('MOTOR FISCAL v6.0.1') >= 0);
 ok('package.json na 6.0.1', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.1', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker atualizado 5.28.3 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
+ok('worker atualizado 5.28.4 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.1 (MOTOR FISCAL COMPLETO: transmissão SEFAZ-MG, DANFE A4, cancelamento, inutilização, QR NFC-e — tudo em homologação primeiro, provedor de provas nos retornos reais).');
 //<<<<SECAO:test_ajustes_v6001.js:FIM>>>>
@@ -3943,7 +3943,7 @@ ok(cmd.indexOf('digicopy-erp') >= 0 && cmd.indexOf('FROM changes') >= 0 && cmd.i
 const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
 ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
 ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
-ok(worker.indexOf("const WORKER_VERSION = '5.28.3'") >= 0, 'worker carimbado (re-ancorado v5.28.3 = foto da nuvem; o carimbo original era 5.24.34)');
+ok(worker.indexOf("const WORKER_VERSION = '5.28.4'") >= 0, 'worker carimbado (re-ancorado v5.28.4 = foto da nuvem; o carimbo original era 5.24.34)');
 ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0, 'index.html carimbado (re-ancorado v6.0.9)');
 ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.9)');
 ok(pkg.version === VERSAO_APP, 'package.json carimbado (re-ancorado v6.0.9)');
@@ -4468,7 +4468,7 @@ ok('tem a PARTE I com o navegador embutido (novo de 22/09 nº5; só no programa 
 // que está no package.json (mvp.version), que é justamente o que este teste quer
 // garantir: relatório e guia falando da MESMA versão que o sistema publica.
 ok('o relatório é da versão publicada agora (v' + mvp.version + ')',
-  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.28.3') >= 0);
+  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.28.4') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 
