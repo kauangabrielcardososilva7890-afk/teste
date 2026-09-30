@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: a5b177121d6913e0
+ * scripts: 233 | sha256: 04253aa90bd602e4
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -18439,7 +18439,18 @@ const oldNova=window.novaVenda; if(typeof oldNova==='function') window.novaVenda
 // v5.22.84 — impressão livre: a venda imprime em qualquer situação (salva,
 // aberta, faturada, orçamento), no formato Vendas ou Ordem de Serviço.
 // A trava antiga ("Fature a notinha antes de imprimir") foi removida a pedido.
-window.estornarVendaParaEditar=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return; if(!confirm('Estornar esta notinha para permitir edição?')) return; v.status='estornada'; v.estornada=true; (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }}); salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success'); if(typeof renderVendas==='function') renderVendas(); };
+  window.estornarVendaParaEditar=function(id){
+    const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return;
+    const concluir=function(ok){
+      if(!ok) return;
+      v.status='estornada'; v.estornada=true;
+      (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }});
+      salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success');
+      if(typeof renderVendas==='function') renderVendas();
+    };
+    if(typeof window.confirmSistema==='function') window.confirmSistema('Estornar esta notinha para permitir edição?','Estornar venda').then(concluir);
+    else if(typeof toast==='function') toast('A confirmação do sistema não está disponível; a venda não foi estornada.','error');
+  };
 
 // ── bloqueio visual para faturados ────────────────────────────────────────
 document.addEventListener('focusin',ev=>{ const root=document.getElementById('modal-root'); if(!root||root.classList.contains('hidden')) return; const vendaId=window.__vosForm&&window.__vosForm.vendaId; const v=vendaId&&(db.vendas||[]).find(x=>x.id===vendaId); if(v&&['faturado','finalizada'].includes(low(v.status))&&ev.target.matches('input,textarea,select')){ ev.target.blur(); toast('Venda faturada: estorne para alterar.','info'); } });
@@ -51514,11 +51525,11 @@ function renderDepois(){
 function aviso(txt, titulo){
   if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Estornar'); return; }
   if(typeof toast==='function'){ toast(txt, 'info'); return; }
-  if(typeof alert==='function') alert(txt);
 }
 function confirma(txt, titulo, cb){
   if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Estornar venda').then(cb); return; }
-  cb(typeof confirm==='function' ? confirm(txt) : true);
+  if(typeof toast==='function') toast('A confirmação do sistema não está disponível; a operação não foi executada.','error');
+  cb(false);
 }
 
 // Individual — o botão "Estornar" do detalhe da venda já CHAMAVA

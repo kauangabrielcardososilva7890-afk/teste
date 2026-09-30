@@ -83,11 +83,11 @@ function renderDepois(){
 function aviso(txt, titulo){
   if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Estornar'); return; }
   if(typeof toast==='function'){ toast(txt, 'info'); return; }
-  if(typeof alert==='function') alert(txt);
 }
 function confirma(txt, titulo, cb){
   if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Estornar venda').then(cb); return; }
-  cb(typeof confirm==='function' ? confirm(txt) : true);
+  if(typeof toast==='function') toast('A confirmação do sistema não está disponível; a operação não foi executada.','error');
+  cb(false);
 }
 
 // Individual — o botão "Estornar" do detalhe da venda já CHAMAVA

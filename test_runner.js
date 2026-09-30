@@ -25,6 +25,7 @@ const tests=[
   "test_msg_09_login.js",
   "test_msg_10_relatorios.js",
   "test_msg_11_jsdom.js",
+  "test_regressao_dialogos.js",
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não
