@@ -5,11 +5,27 @@
 'use strict';
 
 function soNumeros(v){ return String(v==null?'':v).replace(/\D/g,''); }
+function valorPrecoRecarga(value){
+  var texto=String(value==null?'':value).trim();
+  var valor=texto===''?0:Number(texto.replace(',','.'));
+  return {ok:Number.isFinite(valor)&&valor>=0,valor:valor};
+}
+function recargaDaEmpresa(lista,id,empresaId){
+  if(!id||!empresaId) return null;
+  return (lista||[]).find(function(r){ return r&&String(r.id)===String(id)&&r.empresaId===empresaId; })||null;
+}
+function codigoRecargaDuplicado(lista,empresaId,codigo,ignorarId){
+  var alvo=soNumeros(codigo);
+  if(!empresaId||!alvo) return false;
+  return (lista||[]).some(function(r){
+    return r&&r.empresaId===empresaId&&String(r.id)!==String(ignorarId||'')&&soNumeros(r.codigo)===alvo;
+  });
+}
 function proximoCodigoRecarga(lista, empresaId){
   var max=0;
   (lista||[]).forEach(function(r){
     if(!r) return;
-    if(empresaId && r.empresaId && r.empresaId!==empresaId) return;
+    if(!empresaId || r.empresaId!==empresaId) return;
     var n=parseInt(soNumeros(r.codigo),10)||0;
     if(n>max) max=n;
   });
@@ -21,7 +37,7 @@ function filtrarRecargas(lista, empresaId, q){
   var low=String(q||'').toLowerCase().trim();
   return (lista||[]).filter(function(r){
     if(!r || r.status==='inativo' || r.status==='excluido') return false;
-    if(empresaId && r.empresaId && r.empresaId!==empresaId) return false;
+    if(!empresaId || r.empresaId!==empresaId) return false;
     if(!low) return true;
     return [r.codigo, r.nome, r.marca].some(function(x){ return String(x||'').toLowerCase().includes(low); });
   });
@@ -32,7 +48,10 @@ window.RECARGAS_PURE = {
   proximoCodigoRecarga: proximoCodigoRecarga,
   ehTipoRecarga: ehTipoRecarga,
   recargaPodeVenderSemEstoque: recargaPodeVenderSemEstoque,
-  filtrarRecargas: filtrarRecargas
+  filtrarRecargas: filtrarRecargas,
+  valorPrecoRecarga: valorPrecoRecarga,
+  recargaDaEmpresa: recargaDaEmpresa,
+  codigoRecargaDuplicado: codigoRecargaDuplicado
 };
 
 if(typeof document==='undefined') return;
@@ -68,8 +87,23 @@ window.abrirAbaRecargas = function(){
 
 window.aplicarBuscaRecargas = function(){
   var el = document.getElementById('search-recargas');
+  var ativo = document.activeElement;
+  var view = document.getElementById('view-produtos');
+  var restaurarFoco = !!(el && (ativo===el || (view && view.contains(ativo) && ativo.getAttribute && ativo.getAttribute('title')==='Pesquisar')));
+  var pos = restaurarFoco ? {
+    inicio: el.selectionStart==null?el.value.length:el.selectionStart,
+    fim: el.selectionEnd==null?el.value.length:el.selectionEnd,
+    direcao: el.selectionDirection||'none'
+  } : null;
   window.__recargasBusca = el ? el.value : '';
   window.renderRecargas();
+  if(pos){
+    var novo=document.getElementById('search-recargas');
+    if(novo){
+      novo.focus();
+      try{novo.setSelectionRange(pos.inicio,pos.fim,pos.direcao);}catch(e){}
+    }
+  }
 };
 window.recargasSort = function(col){
   var st = window.__recargasSort;
@@ -129,7 +163,7 @@ window.renderRecargas = function(){
 window.abrirModalRecarga = function(id){
   var s = sess(); if(!s) return;
   var isEdit = !!id;
-  var r = isEdit ? store().find(function(x){ return x.id===id && (!x.empresaId || x.empresaId===s.empresaId); }) : {
+  var r = isEdit ? recargaDaEmpresa(store(),id,s.empresaId) : {
     codigo: proximoCodigoRecarga(store(), s.empresaId), nome:'', marca:'', preco:0
   };
   if(!r){ aviso('Recarga não encontrada','Recargas'); return; }
@@ -143,7 +177,7 @@ window.abrirModalRecarga = function(id){
     '<div class="md:col-span-2"><label class="block font-bold text-slate-600 mb-1">Descrição *</label><input id="rc-nome" value="'+esc(r.nome||'')+'" class="w-full h-10 px-3 rounded-xl border font-semibold" placeholder="Ex.: Recarga HP 85A"></div></div>'+
     '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">'+
     '<div><label class="block font-bold text-slate-600 mb-1">Marca</label><input id="rc-marca" value="'+esc(r.marca||'')+'" class="w-full h-10 px-3 rounded-xl border"></div>'+
-    '<div><label class="block font-bold text-slate-600 mb-1">Valor venda R$</label><input id="rc-preco" type="number" step="0.01" value="'+(r.preco||0)+'" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"></div></div>'+
+    '<div><label class="block font-bold text-slate-600 mb-1">Valor venda R$</label><input id="rc-preco" type="number" min="0" step="0.01" value="'+(r.preco||0)+'" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"></div></div>'+
     '<p class="text-[12px] text-slate-500">Sem estoque. Sempre disponível na venda Recarga de toner.</p></div>';
   document.getElementById('modal-footer').innerHTML =
     '<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
@@ -156,22 +190,29 @@ window.abrirModalRecarga = function(id){
 };
 
 window.salvarRecarga = function(id){
-  var s = sess(); if(!s) return;
+  var s = sess(); if(!s||!s.empresaId) return;
+  var ex = id ? recargaDaEmpresa(store(),id,s.empresaId) : null;
+  if(id&&!ex){ aviso('Recarga não encontrada nesta empresa','Recargas'); return; }
   var nome = String((document.getElementById('rc-nome')||{}).value||'').trim();
   if(!nome){ aviso('Informe a descrição da recarga.','Recargas'); return; }
   var codigo = soNumeros((document.getElementById('rc-cod')||{}).value) || proximoCodigoRecarga(store(), s.empresaId);
+  var preco = valorPrecoRecarga((document.getElementById('rc-preco')||{}).value);
+  if(!preco.ok){ aviso('O valor de venda deve ser um número igual ou maior que zero.','Recargas'); return; }
+  var codigoMudou = !ex || soNumeros(ex.codigo)!==codigo;
+  if(codigoMudou && codigoRecargaDuplicado(store(),s.empresaId,codigo,id)){
+    aviso('Já existe uma recarga com este código nesta empresa.','Recargas');
+    return;
+  }
   var payload = {
     empresaId: s.empresaId,
     codigo: codigo,
     nome: nome,
     marca: String((document.getElementById('rc-marca')||{}).value||'').trim(),
-    preco: parseFloat((document.getElementById('rc-preco')||{}).value)||0,
+    preco: preco.valor,
     status: 'ativo',
     semEstoque: true
   };
   if(id){
-    var ex = store().find(function(x){ return x.id===id; });
-    if(!ex){ aviso('Recarga não encontrada','Recargas'); return; }
     Object.assign(ex, payload, { atualizadoEm: new Date().toISOString(), atualizadoPorNome: s.usuarioNome });
     if(typeof logAction==='function') logAction('recarga','editar',id,'Recarga '+payload.nome+' alterada por '+s.usuarioNome);
   } else {
@@ -191,19 +232,37 @@ window.salvarRecarga = function(id){
 };
 
 window.excluirRecarga = function(id){
-  var s = sess(); if(!s) return;
-  var r = store().find(function(x){ return x.id===id; });
-  if(!r) return;
+  var s = sess(); if(!s||!s.empresaId) return Promise.resolve(false);
+  var r = recargaDaEmpresa(store(),id,s.empresaId);
+  if(!r){ aviso('Recarga não encontrada nesta empresa','Recargas'); return Promise.resolve(false); }
+  if(typeof window.confirmSistema!=='function'){
+    aviso('A confirmação do sistema não está disponível. A recarga foi mantida.','Recargas');
+    return Promise.resolve(false);
+  }
   var msg = 'Excluir a recarga '+ (r.codigo||'') +' — '+(r.nome||'')+'?';
   var okFn = function(){
-    db.recargas = store().filter(function(x){ return x.id!==id; });
+    var sessaoAtual=sess();
+    if(!sessaoAtual||sessaoAtual.empresaId!==s.empresaId){ aviso('A empresa da sessão mudou. A recarga foi mantida.','Recargas'); return false; }
+    var atual=recargaDaEmpresa(store(),id,s.empresaId);
+    if(!atual){ aviso('Recarga não encontrada nesta empresa','Recargas'); return false; }
+    db.recargas = store().filter(function(x){ return !(String(x.id)===String(id)&&x.empresaId===s.empresaId); });
     if(typeof logAction==='function') logAction('recarga','excluir',id,'Recarga excluída por '+s.usuarioNome);
     if(typeof saveDB==='function') saveDB();
     window.renderRecargas();
     if(typeof toast==='function') toast('Recarga excluída','success');
+    return true;
   };
-  if(typeof window.confirmSistema==='function') window.confirmSistema(msg,'Excluir recarga').then(function(ok){ if(ok) okFn(); });
-  else okFn();
+  var confirmacao;
+  try{ confirmacao=window.confirmSistema(msg,'Excluir recarga'); }
+  catch(e){ aviso('Não foi possível confirmar a exclusão. A recarga foi mantida.','Recargas'); return Promise.resolve(false); }
+  return Promise.resolve(confirmacao).then(function(ok){
+    if(ok===true) return okFn();
+    if(ok!==false) aviso('Não foi possível confirmar a exclusão. A recarga foi mantida.','Recargas');
+    return false;
+  },function(){
+    aviso('Não foi possível confirmar a exclusão. A recarga foi mantida.','Recargas');
+    return false;
+  });
 };
 
 if(typeof window.renderProdutos==='function' && !window.renderProdutos.__v52214rec){

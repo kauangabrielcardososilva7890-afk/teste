@@ -255,6 +255,33 @@ function normalizarNCM(value){
   return `${dig.slice(0, 4)}.${dig.slice(4, 6)}.${dig.slice(6)}`;
 }
 
+function numeroCampoProduto(value){
+  const texto = String(value == null ? '' : value).trim();
+  return texto === '' ? 0 : Number(texto.replace(',', '.'));
+}
+
+function validarNumerosProdutoOperacional(campos, estoqueInfinito){
+  const valores = campos || {};
+  const regras = [
+    { chave:'estoque', nome:'O estoque atual', inteiro:true, ignorar:!!estoqueInfinito },
+    { chave:'estoqueMin', nome:'O estoque mínimo', inteiro:true },
+    { chave:'estoqueIdeal', nome:'O estoque ideal', inteiro:true },
+    { chave:'custo', nome:'O custo', inteiro:false },
+    { chave:'preco', nome:'O valor de venda', inteiro:false }
+  ];
+  for(const regra of regras){
+    if(regra.ignorar) continue;
+    const valor = numeroCampoProduto(valores[regra.chave]);
+    if(!Number.isFinite(valor) || valor < 0){
+      return { ok:false, message:regra.nome+' deve ser um número igual ou maior que zero.' };
+    }
+    if(regra.inteiro && !Number.isSafeInteger(valor)){
+      return { ok:false, message:regra.nome+' deve ser um número inteiro igual ou maior que zero.' };
+    }
+  }
+  return { ok:true, message:'' };
+}
+
 function adaptarProdutosMigrados(dbRef, empresaId){
   let alterou = false;
   (dbRef.produtos || []).forEach(p => {
@@ -265,7 +292,11 @@ function adaptarProdutosMigrados(dbRef, empresaId){
       if(Object.prototype.hasOwnProperty.call(p, k)){ delete p[k]; alterou = true; }
     });
     if(p.status === undefined || p.status === ''){ p.status = 'ativo'; alterou = true; }
-    p.controleEstoque = true;
+    const controleEstoqueEsperado = !p.estoqueInfinito;
+    if(p.controleEstoque !== controleEstoqueEsperado){
+      p.controleEstoque = controleEstoqueEsperado;
+      alterou = true;
+    }
   });
   return alterou;
 }
@@ -279,6 +310,7 @@ window.FLUXOS_PURE = {
   calcularLeituraOperacional,
   chamadoVencido,
   normalizarNCM,
+  validarNumerosProdutoOperacional,
   adaptarProdutosMigrados
 };
 
@@ -292,6 +324,7 @@ const STATE = window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {
   chamados: { q: '', status: 'abertos', sort: 'codigo' },
   listaLeitura: { q: '', data: '' }
 });
+let produtoBuscaFocoPendente = null;
 
 function ensureModalSize(size){
   const box = document.getElementById('modal-box');
@@ -425,7 +458,16 @@ function produtoCategoriaOptions(selected){
 }
 
 window.aplicarBuscaProdutosOperacional = function(){
-  STATE.prod.q = document.getElementById('search-produtos')?.value || '';
+  const campoBusca = document.getElementById('search-produtos');
+  const ativo = document.activeElement;
+  const view = document.getElementById('view-produtos');
+  const buscaAtiva = !!(campoBusca && (ativo === campoBusca || (view && view.contains(ativo) && ativo.getAttribute && ativo.getAttribute('title') === 'Pesquisar')));
+  produtoBuscaFocoPendente = buscaAtiva ? {
+    inicio: campoBusca.selectionStart == null ? campoBusca.value.length : campoBusca.selectionStart,
+    fim: campoBusca.selectionEnd == null ? campoBusca.value.length : campoBusca.selectionEnd,
+    direcao: campoBusca.selectionDirection || 'none'
+  } : null;
+  STATE.prod.q = campoBusca?.value || '';
   STATE.prod.cat = document.getElementById('filter-prod-cat')?.value || '';
   STATE.prod.baixo = !!document.getElementById('filter-prod-baixo')?.checked;
   STATE.prod.todos = false;
@@ -573,6 +615,15 @@ window.renderProdutos = function(){
       </div>
     </div>`;
   bindBuscaEnter('search-produtos', 'aplicarBuscaProdutosOperacional');
+  if(produtoBuscaFocoPendente){
+    const pos = produtoBuscaFocoPendente;
+    produtoBuscaFocoPendente = null;
+    const campo = document.getElementById('search-produtos');
+    if(campo){
+      campo.focus();
+      try{ campo.setSelectionRange(pos.inicio, pos.fim, pos.direcao); }catch(e){}
+    }
+  }
 };
 
 window.renderModalProduto = function(id){
@@ -601,7 +652,7 @@ window.renderModalProduto = function(id){
         <div><label class="block font-bold text-slate-600 mb-1">Descrição do Produto *</label><input id="kp-prd-nome" value="${html(p.nome || p.descricao || '')}" class="w-full h-10 px-3 rounded-xl border font-semibold" placeholder="Ex.: TONER HP 85A PRETO"></div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div><label class="block font-bold text-slate-600 mb-1">Fabricante / Marca</label><input id="kp-prd-fab" value="${html(p.fabricante || p.marca || '')}" class="w-full h-10 px-3 rounded-xl border"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Valor Venda R$ (auxiliar)</label><input id="kp-prd-preco" type="number" step="0.01" value="${toNumber(p.preco, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"><p class="text-[11px] text-slate-400 mt-1">Vai como sugestão na venda, mas pode ser alterado na hora.</p></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Valor Venda R$ (auxiliar)</label><input id="kp-prd-preco" type="number" min="0" step="0.01" value="${toNumber(p.preco, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"><p class="text-[11px] text-slate-400 mt-1">Vai como sugestão na venda, mas pode ser alterado na hora.</p></div>
         </div>
       </div>
 
@@ -609,12 +660,12 @@ window.renderModalProduto = function(id){
         <label class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-[12px] text-blue-900 font-semibold cursor-pointer"><input id="kp-prd-infinito" type="checkbox" ${p.estoqueInfinito?'checked':''} onchange="alternarEstoqueOperacional()" class="w-4 h-4 accent-[#0a1e8a]"><span><i class="ph ph-infinity"></i> Não controlar estoque — estoque infinito</span></label>
         <div class="rounded-xl bg-slate-50 border p-3 text-[12px] text-slate-600 font-medium">Produto infinito não sofre baixa nem alerta de estoque.</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">Estoque Atual</label><input id="kp-prd-est" type="number" value="${toNumber(p.estoque, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Estoque Mínimo</label><input id="kp-prd-min" type="number" value="${toNumber(p.estoqueMin, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Estoque Ideal</label><input id="kp-prd-ideal" type="number" value="${toNumber(p.estoqueIdeal, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Estoque Atual</label><input id="kp-prd-est" type="number" min="0" step="1" value="${toNumber(p.estoque, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Estoque Mínimo</label><input id="kp-prd-min" type="number" min="0" step="1" value="${toNumber(p.estoqueMin, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Estoque Ideal</label><input id="kp-prd-ideal" type="number" min="0" step="1" value="${toNumber(p.estoqueIdeal, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">Custo Total R$</label><input id="kp-prd-custo" type="number" step="0.01" value="${toNumber(p.custo, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Custo Total R$</label><input id="kp-prd-custo" type="number" min="0" step="0.01" value="${toNumber(p.custo, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
           
         </div>
       </div>
@@ -664,6 +715,16 @@ window.salvarProdutoOperacional = function(id){
   if(!nome) return toastMsg('Informe a descrição do produto', 'error');
   const catNova = document.getElementById('kp-prd-cat-nova')?.value?.trim();
   const categoria = categoriaUnificada(catNova || document.getElementById('kp-prd-cat')?.value || 'Produto');
+  const estoqueInfinito = !!document.getElementById('kp-prd-infinito')?.checked;
+  const camposNumericos = {
+    estoque: document.getElementById('kp-prd-est')?.value,
+    estoqueMin: document.getElementById('kp-prd-min')?.value,
+    estoqueIdeal: document.getElementById('kp-prd-ideal')?.value,
+    custo: document.getElementById('kp-prd-custo')?.value,
+    preco: document.getElementById('kp-prd-preco')?.value
+  };
+  const validacaoNumerica = validarNumerosProdutoOperacional(camposNumericos, estoqueInfinito);
+  if(!validacaoNumerica.ok) return toastMsg(validacaoNumerica.message, 'error');
   const payload = {
     empresaId: sess.empresaId,
     sku: (id ? (document.getElementById('kp-prd-sku')?.value?.trim() || uidSafe('prd')) : consumirCodigoProduto(sess.empresaId)),
@@ -671,16 +732,16 @@ window.salvarProdutoOperacional = function(id){
     descricao: nome,
     categoria,
     fabricante: document.getElementById('kp-prd-fab')?.value?.trim() || '',
-    estoqueInfinito: !!document.getElementById('kp-prd-infinito')?.checked,
-    estoque: document.getElementById('kp-prd-infinito')?.checked ? 0 : toInt(document.getElementById('kp-prd-est')?.value, 0),
-    estoqueMin: toInt(document.getElementById('kp-prd-min')?.value, 0),
-    estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
-    custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
-    preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
+    estoqueInfinito,
+    estoque: estoqueInfinito ? 0 : numeroCampoProduto(camposNumericos.estoque),
+    estoqueMin: numeroCampoProduto(camposNumericos.estoqueMin),
+    estoqueIdeal: numeroCampoProduto(camposNumericos.estoqueIdeal),
+    custo: numeroCampoProduto(camposNumericos.custo),
+    preco: numeroCampoProduto(camposNumericos.preco),
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
-    controleEstoque: !document.getElementById('kp-prd-infinito')?.checked
+    controleEstoque: !estoqueInfinito
   };
   ['tipoCadastro', 'tipoProduto', 'promocao', 'precoPromocao', 'varejo', 'precoVarejo'].forEach(k => delete payload[k]);
   if(id){

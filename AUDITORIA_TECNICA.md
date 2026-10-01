@@ -3139,3 +3139,72 @@ Cada correção desta rodada tem uma trava que **só pode negar**, nunca apagar 
 - **Site/app:** o site (`teste-60f.pages.dev`) publica sozinho a cada push da branch; na conferência
   imediata ele ainda servia o build anterior (`sha256 51730a9ef2b9649a`, rodada 28) — o do 7.0.17 é
   `bd50bd1865033995`. O atraso é da publicação automática, não de erro.
+
+
+## §44 — PR #33 — auditoria do menu Produtos/Recargas (01/10/2026)
+
+### 44.1 Escopo e linha de base, antes da edição
+
+**Pedido:** continuar o PR #33, auditar primeiro um único menu — Produtos, incluindo a aba Recargas — e seguir as regras permanentes. Checkout limpo em `fix/dialogos-nativos-733`, HEAD `61798f6`, base atual `arena/01a0d9c3-teste`; nenhum dado da produção foi consultado ou alterado.
+
+| Verificação anterior às mudanças | Resultado observado |
+|---|---|
+| `npm test` | 11 passaram, 0 falharam; 1 teste não rodou por falta de `jsdom` |
+| `npm run check` | Bundle coerente: 233 scripts, sha256 `04253aa90bd602e4` |
+| `npm run sync:check` | `v7.3.3`, 233 no bundle, 0 scripts soltos, 13 entradas em `build.files` |
+| Interface | aberta no navegador isolado do Sandbox; gravações/sincronização reais substituídas por spies; fixtures `QA-PROD-PR33` em memória |
+
+**Cobertura observada na UI:** Produtos — mostrar todos, estoque baixo, categoria, busca, ordenação, formulário/abas, categoria customizada, código numérico, NCM, quantidade infinita, renderização segura de texto e seleção/exclusão. Recargas — busca por código/marca com lupa e Enter, ordenação numérica por código/preço, descrição obrigatória, criação, edição, preço, sem-estoque e exclusão/cancelamento. O markup de teste foi escapado, não executado.
+
+### 44.2 Achados comprovados antes de corrigir
+
+1. **ALTO — Cadastro de produto aceita valores impossíveis.** `fluxos_operacionais_patch.js:661-701` converte estoque, mínimo e ideal com `toInt` e custo/preço com `toNumber`, sem impor não negatividade ou integralidade. Reprodução no modal da branch: estoque `-1`, mínimo `-2`, ideal `-3`, custo `-5` e venda `-7` foram gravados sem aviso num produto QA. Fração de estoque também pode ser truncada pelo `toInt` em vez de ser explicada ao usuário.
+2. **ALTO — Exclusão de produto ignora a empresa da sessão.** A lista mostra apenas produtos da empresa, mas `ajustes_v51916_patch.js:34-67` resolve IDs sem `empresaId` e remove por ID. Com o modal normal de confirmação confirmado, tanto o botão em lote quanto `deleteProduto(id)` removeram o fixture `qa-other` da empresa `OUTRA`. O teste selecionou o botão real da tela e um checkbox artificial; nenhuma gravação saiu do Sandbox.
+3. **ALTO — Recargas permite editar ou apagar outra empresa por ID.** Em `ajustes_v52214_recargas_patch.js:158-205`, a edição e a exclusão procuram apenas `id`. `abrirModalRecarga` até rejeita o mesmo fixture estrangeiro, mas a rota direta de salvar alterou nome/preço e moveu seu `empresaId` para a empresa QA; a rota de exclusão apagou o fixture com confirmação positiva normal.
+4. **MÉDIO — Recargas aceita preço negativo e códigos duplicados.** O save aceita preço `-5`; também gravou o código `1` embora já houvesse outra recarga de código `1` na mesma empresa. São dados ambíguos para a busca/uso operacional.
+5. **MÉDIO — Exclusão de recarga falha aberta.** `ajustes_v52214_recargas_patch.js:193-207` chama a exclusão sem confirmação quando `window.confirmSistema` está ausente. A reprodução com fixture QA o removeu imediatamente. O comportamento seguro é manter o registro e informar que não foi possível confirmar.
+6. **BAIXO — Busca perde foco e cursor após consultar.** Após Enter, o texto de busca permanece, mas a renderização substitui o input: `document.activeElement` torna-se `BODY` e o cursor volta a zero, tanto em Produtos quanto em Recargas. Isso contraria a regra 13 (preservar texto, foco e seleção).
+
+### 44.3 Decisão de implementação (autorizada pelo pedido atual)
+
+- Corrigir somente os módulos ativos do menu Produtos/Recargas: validar campos numéricos antes de gravar; exigir correspondência exata de `empresaId` no executor individual/em lote e em edição/exclusão de recargas; impedir duplicidade de código por empresa; falhar fechado quando a confirmação não existe; manter o retorno assíncrono para o guardião de exclusões da sincronização; e restaurar foco/cursor após busca acionada pelo input/botão de pesquisa.
+- Acrescentar testes de regressão às seções do arquivo de testes já existente para Estoque/Produtos; depois repetir os cenários reais no browser com fixtures em memória.
+- **Fora do escopo:** telas de Vendas, demais menus, mobile/APK, base de produção, Worker, merge e deploy de produção. Nenhum fixture QA deve persistir. Não foi fornecido arquivo de catálogo/produtos real; esta rodada testa a interface e os fluxos genéricos, não a importação de um catálogo específico.
+- Antes da publicação no PR, conferir o destino: `package.json > digicopy.branch` aponta para a base `arena/01a0d9c3-teste`, enquanto a branch do PR é `fix/dialogos-nativos-733`; não usar `npm run guardar` sem evitar que ele empurre acidentalmente para a base.
+
+
+## §45 — PR #33 — estado contraditório no modo estoque infinito (01/10/2026)
+### 45.1 Prova antes da edição
+- Ambiente: branch do PR `fix/dialogos-nativos-733`, app v7.3.4; interface aberta no navegador isolado do Sandbox. Sessão e registros usados eram sintéticos (`qa-pr33-company`); `saveDB` foi substituído por spy em memória e `fetch` bloqueado. Uma tentativa de buscar somente `/index.html` no próprio host Sandbox foi interceptada; nenhuma chamada foi enviada a um serviço externo.
+- Código: `fluxos_operacionais_patch.js:740` grava `controleEstoque: !estoqueInfinito` ao salvar. Porém, `adaptarProdutosMigrados()` na própria fonte (`:285-297`), executada novamente ao renderizar Produtos, força `p.controleEstoque = true` incondicionalmente.
+- Reprodução pelo formulário real: criei `QA Serviço Infinito` marcando “Não controlar estoque — estoque infinito”. Depois do salvamento e da renderização, o registro ficou com `estoqueInfinito=true`, `estoque=0` **e** `controleEstoque=true`. O campo contradiz o modo solicitado e o valor escrito pelo salvador. Nenhuma gravação persistente ocorreu.
+- O grep das fontes não encontrou outro consumidor atual de `controleEstoque` além do módulo de Produtos e do cadastro automático de equipamento; por isso o impacto observado é incoerência do modelo/contrato do produto, sem afirmar falha de baixa em vendas, que está fora do escopo.
+### 45.2 Decisão de implementação (dentro do escopo autorizado)
+- Ajustar o adaptador para derivar o valor esperado do estado `estoqueInfinito`, marcar a migração como alterada somente quando o valor realmente mudar e manter registros de outras empresas intocados.
+- Acrescentar regressão pura de empresa, idempotência e alinhamento dos dois modos ao teste já existente `test_menu_produtos_recargas.js`; repetir o cadastro infinito no navegador após o rebuild.
+- Fora do escopo continuam Vendas, outros menus, Worker, mobile/APK como funcionalidade, produção, merge e deploy. O bump/build do app será repetido pelas regras vigentes após a correção.
+
+
+### 45.3 Correção e verificação
+O adaptador agora define `controleEstoque` como o inverso de `estoqueInfinito` e marca `alterou=true` apenas quando precisa corrigir o registro; a segunda passagem é idempotente e o filtro por empresa permanece estrito. A regressão foi incorporada ao teste temático de Produtos. No browser local v7.3.6, o formulário real salvou “QA Final Infinito” com `estoqueInfinito=true`, `estoque=0` e `controleEstoque=false`. NCM, origem fiscal do catálogo completo, estoque normal, campos desativados no modo infinito e a migração com tenant/idempotência também passaram em QA. Fixtures restauradas; `saveDB` foi spy e ocorreram **zero fetch externos**.
+
+## §46 — PR #33 — confirmação duplicada ao excluir produto (01/10/2026)
+### 46.1 Prova antes da edição
+- No browser isolado v7.3.5, com o `confirmSistema` substituído por resposta sintética e `saveDB` interceptado, uma chamada real a `window.deleteProduto('qa-equal')` gerou **duas** confirmações: o wrapper genérico de `popup_sistema_patch.js` (“Excluir produto?”) e, em seguida, o executor seguro de `ajustes_v51916_patch.js` (“Excluir produto ‘QA Igual Mínimo’?”). Só o registro QA em memória foi removido; o ID de outra empresa permaneceu intacto.
+- O executor próprio já consulta a empresa da sessão, verifica se o provedor de confirmação existe e chama `confirmSistema` antes de excluir. O wrapper posterior repete essa confirmação e, quando o provedor é artificialmente ausente, lança `TypeError` antes de chegar à guarda interna; não exclui, mas não falha de modo gracioso.
+### 46.2 Decisão de implementação (escopo Produtos)
+- Marcar o executor de Produto como dono da própria confirmação e fazer o wrapper atrasado pular **somente** `deleteProduto` quando esse marcador existir. Se a camada segura de Produtos não carregar, o wrapper genérico continua como fallback.
+- Acrescentar regressão para o marcador/skip e repetir no browser: uma confirmação no caminho normal, zero exclusão se não houver confirmador, e nenhum efeito em ID de outra empresa. Não alterar os demais wrappers de exclusão.
+
+### 46.3 Correção e verificação
+`ajustes_v51916_patch.js` agora expõe no objeto puro o marcador `deleteProdutoConfirmaInternamente`; o wrapper tardio respeita o marcador **somente** para `deleteProduto`, preservando o fallback genérico se a camada segura não estiver presente. Os demais wrappers não foram alterados. No browser v7.3.6: exclusão individual solicitou exatamente uma confirmação; ID de outra empresa foi rejeitado sem prompt; falta do confirmador manteve o produto sem lançar exceção; lote vazio não pediu confirmação; cancelar manteve o alvo; confirmar removeu apenas o ID próprio mesmo com checkbox estrangeiro artificial; lote sem confirmador também falhou fechado. Todos os dados foram fixtures em memória.
+
+### 46.4 Validação consolidada da rodada
+| Verificação | Resultado |
+|---|---|
+| `npm test` | **11 passaram, 0 falharam; 1 não rodou** por falta da dependência `jsdom` |
+| `npm run check` | **Bundle OK**: 233 scripts, sha256 `a592fa8ee31f096c` |
+| `npm run sync:check` | **Sync OK**: v7.3.6, 233 no bundle, 0 soltos, 13 entradas em `build.files` |
+| Browser QA | Produtos e Recargas testados em ambiente isolado; cadastro, busca, foco/cursor, ordenação numérica, validações, CRUD, confirmações e limites de empresa cobertos; fetch bloqueado, saves interceptados e fixtures limpas |
+
+Nenhum deploy, merge, Worker ou banco real foi tocado. A cópia `mobile/www` foi apenas sincronizada mecanicamente pelas regras de build, sem trabalho de funcionalidade/APK. O script de versão continua alertando que `package.json > digicopy.branch` aponta para `arena/01a0d9c3-teste` enquanto esta branch é `fix/dialogos-nativos-733`; a publicação será feita por push explícito para a branch do PR, não por `npm run guardar`.
