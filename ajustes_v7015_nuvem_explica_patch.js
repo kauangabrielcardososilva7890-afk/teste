@@ -16,6 +16,7 @@
 //      não volta até fechar a aba — listas vazias, nenhuma explicação.
 //   2. PAUSADA: a sincronização pausada (escolha inicial / limite do dia) não
 //      baixa nada. O check-up avisa, mas só quem abre o check-up vê.
+  //   4. SEM TOKEN COM ESCRITA LOCAL (r67): grava no navegador e nada sobe.
 //   3. CURSOR ADIANTADO: o PC guarda "até onde leu" o diário da nuvem; se esse
 //      número ficou na frente (nuvem zerada/recuperada), o que foi criado em
 //      outro PC fica invisível AQUI. O conserto existe desde a v6.1.4 ("Baixar
@@ -196,6 +197,31 @@
           [{ rotulo: 'Conectar agora', id: 'v7015-bt-conectar', acao: irConectar },
            { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck1', transparente: true, acao: irCheckup }], '#9a3412');
         return;
+      }
+
+      // 1b) GRAVOU AQUI, MAS NADA SOBE — r67, estado que o QA externo (01/10/2026)
+      //     pegou SEM NENHUM AVISO na tela: sem token do aparelho o tick() devolve
+      //     cedo (cloudflare_data_sync_patch.js:1570) e a fila da nuvem nem é tocada
+      //     (:2415) — o saveDB grava no navegador, o sistema abre, os menus funcionam
+      //     e o dado fica preso neste PC. Não é o caso 1 (ali o portão está na frente
+      //     e o SÓ NUVEM esvazia as listas); aqui a tela está normal e muda. Por isso
+      //     só acusa quando HÁ o que subir: fila presa, registros segurados só aqui,
+      //     ou escrita local neste carregamento (diário do portão v7.0.22).
+      if (!inf.authorized) {
+        const naFila = Number(inf.outbox || 0) + ((inf.heldLocalOnly || []).length || 0);
+        let gravouAqui = 0;
+        try {
+          const pt = window.DIGICOPY_PORTAO;
+          if (pt && typeof pt.total === 'function') gravouAqui = Number(pt.total()) || 0;
+        } catch (e) {}
+        if (naFila > 0 || gravouAqui > 0) {
+          mostrar('Este computador <b>não está conectado à nuvem</b> — o que é gravado aqui fica <b>só neste navegador</b> e não aparece em outro PC' +
+            (naFila > 0 ? ' (' + naFila + ' registro(s) esperando o envio)' : '') +
+            '. Conecte uma vez e sobe sozinho, nada se perde.',
+            [{ rotulo: 'Conectar agora', id: 'v7015-bt-subir', acao: irConectar },
+             { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck1b', transparente: true, acao: irCheckup }], '#9a3412');
+          return;
+        }
       }
 
       // 2) PAUSADA — enquanto estiver pausada este PC não baixa nada.

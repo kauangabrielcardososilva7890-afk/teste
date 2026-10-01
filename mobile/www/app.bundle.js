@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: c5d909a40abc31d1
+ * scripts: 233 | sha256: 3a9168816046145a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -61449,6 +61449,7 @@ try{
 //      não volta até fechar a aba — listas vazias, nenhuma explicação.
 //   2. PAUSADA: a sincronização pausada (escolha inicial / limite do dia) não
 //      baixa nada. O check-up avisa, mas só quem abre o check-up vê.
+  //   4. SEM TOKEN COM ESCRITA LOCAL (r67): grava no navegador e nada sobe.
 //   3. CURSOR ADIANTADO: o PC guarda "até onde leu" o diário da nuvem; se esse
 //      número ficou na frente (nuvem zerada/recuperada), o que foi criado em
 //      outro PC fica invisível AQUI. O conserto existe desde a v6.1.4 ("Baixar
@@ -61631,6 +61632,31 @@ try{
         return;
       }
 
+      // 1b) GRAVOU AQUI, MAS NADA SOBE — r67, estado que o QA externo (01/10/2026)
+      //     pegou SEM NENHUM AVISO na tela: sem token do aparelho o tick() devolve
+      //     cedo (cloudflare_data_sync_patch.js:1570) e a fila da nuvem nem é tocada
+      //     (:2415) — o saveDB grava no navegador, o sistema abre, os menus funcionam
+      //     e o dado fica preso neste PC. Não é o caso 1 (ali o portão está na frente
+      //     e o SÓ NUVEM esvazia as listas); aqui a tela está normal e muda. Por isso
+      //     só acusa quando HÁ o que subir: fila presa, registros segurados só aqui,
+      //     ou escrita local neste carregamento (diário do portão v7.0.22).
+      if (!inf.authorized) {
+        const naFila = Number(inf.outbox || 0) + ((inf.heldLocalOnly || []).length || 0);
+        let gravouAqui = 0;
+        try {
+          const pt = window.DIGICOPY_PORTAO;
+          if (pt && typeof pt.total === 'function') gravouAqui = Number(pt.total()) || 0;
+        } catch (e) {}
+        if (naFila > 0 || gravouAqui > 0) {
+          mostrar('Este computador <b>não está conectado à nuvem</b> — o que é gravado aqui fica <b>só neste navegador</b> e não aparece em outro PC' +
+            (naFila > 0 ? ' (' + naFila + ' registro(s) esperando o envio)' : '') +
+            '. Conecte uma vez e sobe sozinho, nada se perde.',
+            [{ rotulo: 'Conectar agora', id: 'v7015-bt-subir', acao: irConectar },
+             { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck1b', transparente: true, acao: irCheckup }], '#9a3412');
+          return;
+        }
+      }
+
       // 2) PAUSADA — enquanto estiver pausada este PC não baixa nada.
       if (inf.paused) {
         mostrar('A sincronização está <b>pausada</b>' + (inf.pauseReason ? ' (' + String(inf.pauseReason) + ')' : '') + ' — este computador não está baixando os dados da nuvem.',
@@ -61759,6 +61785,27 @@ try{
     var linhas=['DIGICOPY — o que quebrou (para mandar à manutenção)',
       'app: v'+versao+' | tela: '+telaAtual()+' | quando: '+quando,
       erros.length?('erros (últimos '+erros.length+'):'):'(nenhum erro registrado — está estranho mas não quebrou nada)'];
+    // r67 — o estado da nuvem vai no TOPO do pacote: foi assim que a verificação de
+    // fora (01/10/2026) distinguiu "salvou e perdeu" de "este PC está desconectado e
+    // o envio nem começa". Só números e texto curto, tudo pelo redigir() — nenhuma
+    // credencial sai daqui (regra da casa: nem token, nem CNPJ, nem senha).
+    try{
+      var S=window.DIGICOPY_CLOUD_SYNC;
+      if(S&&typeof S.info==='function'){
+        var ni=S.info()||{};
+        var partes=[
+          'conectado='+(ni.authorized?'sim':'NAO'),
+          'pausado='+(ni.paused?('sim'+(ni.pauseReason?' ('+String(ni.pauseReason).slice(0,24)+')':'')):'nao'),
+          'fila='+Number(ni.outbox||0),
+          'so-aqui='+((ni.heldLocalOnly||[]).length||0),
+          'cursor='+Number(ni.cursor||0),
+          'ultimoOk='+(Number(ni.lastOk)?new Date(Number(ni.lastOk)).toLocaleString('pt-BR'):'nunca')
+        ];
+        if(ni.lastError) partes.push('ultimoErro='+String(ni.lastError).slice(0,90));
+        if(ni.limiteAte&&Number(ni.limiteAte)>Date.now()) partes.push('freioAte='+new Date(Number(ni.limiteAte)).toLocaleTimeString('pt-BR'));
+        linhas.push(redigir('nuvem: '+partes.join(' | ')));
+      }
+    }catch(e){}
     for(var i=0;i<erros.length;i++) linhas.push(redigir(erros[i]));
     // v7.0.22 (ideia E, bloco 1): o diário do portão de escrita vai junto — quando um
     // dado some, o pacote mostra as últimas gravações (quando | onde | por onde).

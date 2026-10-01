@@ -5291,7 +5291,7 @@ ok('mandar-erro vivo no patch próprio', ler('ajustes_v7020_mandar_erro_patch.js
 
 console.log('== r46: avisos abrem a nuvem (trazer saiu na r47) ==');
 ok('restaurar item-a-item continua (dentro de Ver excluídos)', ler('cloudflare_sync_patch.js').includes('dc-restore'));
-ok('avisos renomeados (5× Abrir a Nuvem)', (fx.match(/rotulo: 'Abrir a Nuvem'/g) || []).length === 5);
+ok('avisos renomeados (6× Abrir a Nuvem — r67 somou o "gravou mas nada sobe")', (fx.match(/rotulo: 'Abrir a Nuvem'/g) || []).length === 6);
 ok('aviso abre a janela da nuvem', /function irCheckup\(\)\{[^}]*abrirCloudflareNuvem/s.test(fx));
 
 console.log('== r46: bundles limpos (rodar npm run bundle antes de entregar) ==');

@@ -49,6 +49,27 @@
     var linhas=['DIGICOPY — o que quebrou (para mandar à manutenção)',
       'app: v'+versao+' | tela: '+telaAtual()+' | quando: '+quando,
       erros.length?('erros (últimos '+erros.length+'):'):'(nenhum erro registrado — está estranho mas não quebrou nada)'];
+    // r67 — o estado da nuvem vai no TOPO do pacote: foi assim que a verificação de
+    // fora (01/10/2026) distinguiu "salvou e perdeu" de "este PC está desconectado e
+    // o envio nem começa". Só números e texto curto, tudo pelo redigir() — nenhuma
+    // credencial sai daqui (regra da casa: nem token, nem CNPJ, nem senha).
+    try{
+      var S=window.DIGICOPY_CLOUD_SYNC;
+      if(S&&typeof S.info==='function'){
+        var ni=S.info()||{};
+        var partes=[
+          'conectado='+(ni.authorized?'sim':'NAO'),
+          'pausado='+(ni.paused?('sim'+(ni.pauseReason?' ('+String(ni.pauseReason).slice(0,24)+')':'')):'nao'),
+          'fila='+Number(ni.outbox||0),
+          'so-aqui='+((ni.heldLocalOnly||[]).length||0),
+          'cursor='+Number(ni.cursor||0),
+          'ultimoOk='+(Number(ni.lastOk)?new Date(Number(ni.lastOk)).toLocaleString('pt-BR'):'nunca')
+        ];
+        if(ni.lastError) partes.push('ultimoErro='+String(ni.lastError).slice(0,90));
+        if(ni.limiteAte&&Number(ni.limiteAte)>Date.now()) partes.push('freioAte='+new Date(Number(ni.limiteAte)).toLocaleTimeString('pt-BR'));
+        linhas.push(redigir('nuvem: '+partes.join(' | ')));
+      }
+    }catch(e){}
     for(var i=0;i<erros.length;i++) linhas.push(redigir(erros[i]));
     // v7.0.22 (ideia E, bloco 1): o diário do portão de escrita vai junto — quando um
     // dado some, o pacote mostra as últimas gravações (quando | onde | por onde).

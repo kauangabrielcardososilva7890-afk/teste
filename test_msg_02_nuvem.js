@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 47 seções (42 geradas + 4 appends r57+r58+r58c+r59).
+// test_msg_02_nuvem.js — GERADO por migrar_testes_r57.js; 53 seções (geradas + append por rodada — r67 soma a nuvem que fala sozinha)s r57+r58+r58c+r59).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js, test_r58c_cartao_ancora.js, test_r59_nuvem_config.js
+// Seções: test_r67_nuvem_sem_token_fala.js, test_persist.js, test_nuvem_antiga_removida.js, test_sync_quota_guard.js, test_cloudflare_sync.js, test_cloudflare_data_sync.js, test_indexeddb_persistence.js, test_build_sync.js, test_ajustes_v5226.js, test_ajustes_v5227.js, test_ajustes_v52212.js, test_ajustes_v52228.js, test_ajustes_v52233.js, test_ajustes_v52246.js, test_ajustes_v52257.js, test_ajustes_v52269.js, test_ajustes_v52270.js, test_ajustes_v52271.js, test_ajustes_v52272.js, test_ajustes_v52274.js, test_ajustes_v52275.js, test_ajustes_v52276.js, test_ajustes_v52277.js, test_ajustes_v52278.js, test_ajustes_v52280.js, test_ajustes_v52292.js, test_ajustes_v6004.js, test_exe_so_nuvem.js, test_sync_tela_ao_vivo.js, test_recuperar_excluidos.js, test_tela_nao_seca.js, test_nuvem_rapida.js, test_exclusao_nao_volta.js, test_recuperacao_completa.js, test_recuperacao_nao_ressuscita.js, test_worker_publico.js, checar_cota_nuvem.js, test_ajustes_v5240.js, test_ajustes_v52415.js, test_ajustes_v52419.js, test_ajustes_v52420.js, test_zerar_deadlock_r50.js, test_r56_zerar_aparelhos.js, test_r57_wipe_local.js, test_r58_revogar_sessoes.js, test_r58c_cartao_ancora.js, test_r59_nuvem_config.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -3531,4 +3531,99 @@ ok(nv.indexOf('!(inf.outbox > 0)') >= 0, 'segue exigindo fila vazia (sem alarme 
 if(falhas){ console.error('\n' + falhas + ' FALHA(S) r64-divergencia'); process.exit(1); }
 console.log('\nRESULTADO: r64 divergencia passou!');
 //<<<<SECAO:test_r64_divergencia.js:FIM>>>>
+}
+
+
+if (false) { // ═══ test_r67_nuvem_sem_token_fala.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r67_nuvem_sem_token_fala.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(cond, msg){ if(cond) console.log('  ok - '+msg); else { falhas++; console.error('  FALHA - '+msg); } }
+
+const fonte = fs.readFileSync(__dirname + '/ajustes_v7015_nuvem_explica_patch.js', 'utf8');
+const pacote = fs.readFileSync(__dirname + '/ajustes_v7020_mandar_erro_patch.js', 'utf8');
+
+// ── 1) estrutural: o caso novo existe e está ANTES da pausa ────────────────
+const i1b = fonte.indexOf('1b) GRAVOU AQUI');
+const iPausada = fonte.indexOf('// 2) PAUSADA');
+ok(i1b > 0, 'caso 1b (gravou aqui, nada sobe) existe');
+ok(i1b < iPausada && iPausada > 0, '1b vem antes da pausa (senão a pausa engoliria o aviso)');
+ok(/if \(!inf\.authorized\) \{[\s\S]{0,900}?if \(naFila > 0 \|\| gravouAqui > 0\)/.test(fonte), '1b só dispara sem token E com algo pendente (sem ruído em quem só consulta)');
+ok(/heldLocalOnly/.test(fonte.slice(i1b, iPausada)) && /Number\(inf\.outbox \|\| 0\)/.test(fonte.slice(i1b, iPausada)), 'conta a fila presa e o que está só neste PC');
+ok(/DIGICOPY_PORTAO/.test(fonte.slice(i1b, iPausada)) && /\.total\(\)/.test(fonte.slice(i1b, iPausada)), 'lê o diário do portão de escrita (houve gravação neste carregamento?)');
+ok(/não está conectado à nuvem<\/b>[\s\S]{0,120}só neste navegador/.test(fonte), 'a frase diz onde o dado ficou (não é "erro da nuvem")');
+ok(/nada se perde\./.test(fonte.slice(i1b, iPausada)), 'avisa que nada se perde (o dado está gravado no navegador)');
+ok(/id: 'v7015-bt-subir'/.test(fonte.slice(i1b, iPausada)) && /id: 'v7015-bt-ck1b'/.test(fonte.slice(i1b, iPausada)), 'tem os dois botões: conectar e abrir a Nuvem');
+ok(/QA externo/.test(fonte) && /1570/.test(fonte) && /2415/.test(fonte), 'o comentário cita a prova de fora (tick 1570 / fila 2415)');
+
+// 1b. o pacote do "mandar erro" passa a levar o estado da nuvem no topo
+ok(/linhas\.push\(redigir\('nuvem: '\+/.test(pacote) || /redigir\('nuvem: '/.test(pacote), 'pacote do mandar-erro ganha a linha "nuvem:"');
+ok(/conectado='/.test(pacote) && /fila='/.test(pacote) && /so-aqui='/.test(pacote), 'leva conectado / fila / só-aqui (os números que o QA teve que cavar)');
+ok(/ultimoErro='/.test(pacote) && /freioAte=/.test(pacote), 'leva o último erro e o freio do plano, quando existem');
+ok(pacote.indexOf("linhas.push(redigir('nuvem: '") < pacote.indexOf("for(var i=0;i<erros.length;i++)"), 'a linha da nuvem vem antes dos erros (é a primeira coisa que a manutenção lê)');
+ok(/ultimoErro='\+String\(ni\.lastError\)\.slice\(0,90\)/.test(pacote) && /linhas\.push\(redigir\('nuvem: '/.test(pacote), 'último erro entra cortado e o pacote inteiro passa pelo redigir (sem token fora)');
+
+// ── 2) funcional: a faixa aparece / não aparece quando tem que ser ────────
+function novoMundo(inf, totalPortao) {
+  const el = (id) => ({ id, style: {}, classList: { add(){}, remove(){}, contains: () => false }, setAttribute(){}, appendChild(){}, remove(){}, innerHTML: '', textContent: '', onclick: null, type: '' });
+  const criados = [];
+  const win = {
+    DIGICOPY_CLOUD_SYNC: { info: () => inf, estadoDetalhado: () => ({ porListaLocal: {} }), modoSoNuvem: () => false, tick: async () => false },
+    DIGICOPY_PORTAO: { total: () => totalPortao, ultimas: () => [] },
+    v5262AbrirPortao(){ win.__abriu = (win.__abriu || 0) + 1; },
+    toast(){},
+  };
+  const doc = {
+    getElementById: (id) => (id === 'v7015-faixa' ? (win.__faixa || null) : null),
+    createElement: (t) => { const e = el(t); criados.push(e); return e; },
+    body: { appendChild(e){ win.__faixa = e; } },
+    querySelector: () => null, querySelectorAll: () => [],
+    addEventListener(){},
+  };
+  const rel = { setTimeout: globalThis.setTimeout, setInterval: globalThis.setInterval };
+  globalThis.setTimeout = () => 0; globalThis.setInterval = () => 0;
+  try { new Function('window', 'document', fonte)(win, doc); } finally { globalThis.setTimeout = rel.setTimeout; globalThis.setInterval = rel.setInterval; }
+  win.__doc = doc;
+  return win;
+}
+
+(async function(){
+  // (a) sem token e sem nada gravado aqui: fica quieto
+  let w = novoMundo({ authorized: false, outbox: 0, heldLocalOnly: [], cursor: 0 }, 0);
+  await w.v7015ConferirNuvem();
+  ok(!w.__faixa, 'sem token e sem escrita local: nenhuma faixa (não vira alarme permanente)');
+
+  // (b) sem token, mas gravou neste PC: avisa
+  w = novoMundo({ authorized: false, outbox: 0, heldLocalOnly: [], cursor: 0 }, 3);
+  await w.v7015ConferirNuvem();
+  ok(!!w.__faixa && /só neste navegador/.test(w.__faixa.innerHTML), 'gravou sem token: a faixa aparece e diz onde o dado está');
+  ok(/não está conectado à nuvem/.test(w.__faixa.innerHTML), 'a faixa nomeia a causa (conexão), não um erro genérico');
+
+  // (c) com registros segurados: conta quantos
+  w = novoMundo({ authorized: false, outbox: 0, heldLocalOnly: ['a', 'b'], cursor: 7 }, 0);
+  await w.v7015ConferirNuvem();
+  ok(!!w.__faixa && /\(2 registro\(s\) esperando o envio\)/.test(w.__faixa.innerHTML), 'mostra quantos registros estão esperando');
+
+  // (d) conectado: o caso 1b não fala (e o 5 não alarmia com fila)
+  w = novoMundo({ authorized: true, outbox: 4, heldLocalOnly: [], cursor: 9 }, 5);
+  await w.v7015ConferirNuvem();
+  ok(!w.__faixa, 'conectado com fila: 1b fica calado (é o envio em curso, não problema)');
+
+  // (e) o botão "Conectar agora" abre o portão de verdade
+  w = novoMundo({ authorized: false, outbox: 0, heldLocalOnly: [], cursor: 0 }, 1);
+  await w.v7015ConferirNuvem();
+  const faixa = w.__faixa;
+  ok(!!faixa, 'faixa montada para o teste do botão');
+  // reproduz o clique: o patch guarda a acao no botao criado
+  ok(/v5262AbrirPortao/.test(fonte.slice(fonte.indexOf('function irConectar'), fonte.indexOf('function irResolver'))), 'o botão conectar chama o portão de primeira conexão (não um link solto)');
+
+  // (f) o bundle publicado carrega o caso novo
+  const bundle = fs.readFileSync(__dirname + '/app.bundle.js', 'utf8');
+  ok(bundle.includes('1b) GRAVOU AQUI') || bundle.includes('não está conectado à nuvem</b> — o que é gravado aqui'), 'bundle reconstruído contém o caso 1b');
+  ok(bundle.includes("redigir('nuvem: '") || bundle.includes("linhas.push(redigir('nuvem: '"), 'bundle reconstruído contém a linha "nuvem:" do pacote');
+
+  if (falhas) { console.error('\n' + falhas + ' FALHA(S) — nuvem muda fala (r67)'); process.exit(1); }
+  console.log('\nRESULTADO: estado "sem token com escrita local" deixou de ser mudo, e o mandar-erro leva a nuvem no topo');
+})();
+//<<<<SECAO:test_r67_nuvem_sem_token_fala.js:FIM>>>>
 }

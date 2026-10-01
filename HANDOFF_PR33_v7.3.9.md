@@ -110,3 +110,15 @@ Ordem dele: *"já faça tudo o que está pendente, menos os outros sistemas tipo
 | **Celular / comercial** | **Fora por ordem dele.** Só o `mobile/sync-www.js` mecânico (cópia do bundle no `www`) para a cópia não ficar divergindo; nada de APK, toque no Cadastros, ou loja de apps. |
 
 Estado do build publicado nesta rodada: **v7.3.10**, `app.bundle.js` sha256 `c5d909a40abc31d1`, 233 scripts, manifest sem mudança de contagem, `sync:check` OK, suíte 11 ✅ / 0 ❌. Commit desta rodada = gatilho do build de produção do Pages (a regra aprendida na r65 está registrada acima: trocar a Production branch não republica sozinho).
+
+
+## Reforço r67 — v7.3.11 (01/10/2026, depois das 19:40Z): o relatório do QA externo virou código
+
+Conferi o relatório dele ponto a ponto (tudo verídico, inclusive as citações de linha; duas frases dele já envelheceram porque a r66 tinha saído 15 minutos antes — ver §56.1). Do que era acionável, apliquei dois pontos, sem tocar no mecanismo de sincronização:
+
+- **o estado mudo que ele achou agora fala**: `ajustes_v7015_nuvem_explica_patch.js` caso 1b — sem token do aparelho **e** com escrita local pendente, a faixa diz "fica só neste navegador e não aparece em outro PC (N esperando o envio)" com "Conectar agora". Sem escrita pendente, fica calada.
+- **o "mandar erro" passa a levar a nuvem no topo**: `ajustes_v7020_mandar_erro_patch.js` acrescenta `nuvem: conectado=… | fila=… | so-aqui=… | cursor=… | ultimoOk=… | ultimoErro=… | freioAte=…`, tudo pelo `redigir()` (nenhuma credencial sai). Isso é o que faltava para o print dele responder sozinho a pergunta "salvou e perdeu, ou o PC está desconectado?".
+- **a pergunta em aberto dele foi respondida estaticamente**: não existe handler de negócio que grave no `db` e esqueça de persistir — os 27 suspeitos da varredura são ajudantes de migração salvos pelo agregador (prova nas linhas citadas da §56.1).
+- Novo teste: `test_r67_nuvem_sem_token_fala.js` em `test_msg_02_nuvem.js` (23 asserções). Contagem de avisos do `test_faixa_botoes_r46.js`: 5 → 6.
+- Estado do build: **v7.3.11**, bundle sha `617d53cac6cc`, suíte 11 ✅ / 0 ❌ / 1 pulada (`jsdom` — sem egress de rede no sandbox; no PC dele: `npm install && node test_msg_11_jsdom.js`). O push desta rodada é o gatilho do build do Pages.
+- Continua **fora por ordem dele**: celular/APK e a frente comercial. Continua **com o dono**: ligar o corte 🔒 Texto-puro (código e teste prontos desde a r54; é operação, não pendência) e os prints das telas que ainda cortam informação para o resto do redesenho.

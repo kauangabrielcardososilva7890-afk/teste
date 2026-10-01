@@ -3389,3 +3389,46 @@ só depois que a senha de cada usuário for trocada no app novo (a reescrita gra
 | `node test_runner.js` | **11 grupos passaram, 0 falharam**, 1 pulado (falta `jsdom`) |
 | `node mapa_camadas.js` | 1089 nomes globais, 2057 escritas, 291 repetidos — `MAPA_CAMADAS.md` atualizado junto |
 | `node auditar_mortos.js` | órfãos de teste: 0 |
+
+
+## §56 — Rodada 67 (01/10/2026): o relatório do QA externo lido até o fim, e o que saiu dele (v7.3.11)
+
+Ele pediu para aplicar do relatório externo *"o que o senhor achar melhor"*. Primeiro a conferência, depois o que virou código.
+
+### 56.1 O que o relatório afirmava e foi checado (tudo bateu)
+
+| Alegação do QA externo | Prova rodada aqui | Bate |
+|---|---|---|
+| Bundle servido no principal era `?v=7.3.9-36c2da9d6340` com SHA `36c2da9d63405e2f…` | `git show af4b5382:index.html` + `git show af4b5382:app.bundle.js \| sha256sum` | ✅ |
+| Head da branch `af4b5382`; única diferença do head do PR #34 (`9e3a06a`) é o `HANDOFF_PR33_v7.3.9.md` | `git diff --stat 9e3a06a..af4b5382` → 1 arquivo, +33; `git diff 9e3a06a..ac15daa8` → vazio | ✅ |
+| `saveDB()` é fila assíncrona e **retorna `undefined`** — retorno não é confirmação de gravação | `app.js:175-188` (sem `return`; `setTimeout(__saveTick,0)`) | ✅ |
+| Sem autorização o motor **nem tenta**: `tick()` devolve cedo | `cloudflare_data_sync_patch.js:1570` `if(state.paused\|\|busy\|\|!authorized())return false;` | ✅ |
+| Enfileira na nuvem só quando `authorized()`; SÓ NUVEM com aparelho autorizado pula a gravação local de propósito | `:2410-2415` | ✅ |
+| Portão de primeira conexão e `POST /v1/check-pass` | `ajustes_v5262…:13-23` e `:221-240` | ✅ |
+| "Não sei distinguir um handler que esquece de chamar `saveDB()`" | varredura própria: 251 arquivos, corpo de função por balanceamento → 82 candidatas que mutam `db.*` sem salvar; filtradas por call-site → 27; **conferidas uma a uma, são ajudantes de migração cujo salvador é o agregador** (`automacoes_compras_recebimentos_contadores_patch.js:404-407` `if(total) salvar();`; `automacoes_locacao_visitas_patch.js:188` `if(total \|\| sig) salvar();`) | ✅ nenhuma perda provada |
+
+Envelheceram (e só por 15 minutos): "principal serve 7.3.9" e "nenhuma mudança posterior no código do app" — a r66 (`1d76e53`, 19:32Z) já tinha saído com código novo.
+
+### 56.2 O que virou código nesta rodada
+
+O achado central do QA é um **estado mudo**: sem token do aparelho, o `saveDB()` grava no navegador, o `tick()` não roda, a fila da nuvem nem é tocada — e a tela continua normal. O relatório teve que cavar isso por dentro (`authorized=false, outbox=0, lastError vazio`). Ninguém no balcão faz isso. Então:
+
+1. **`ajustes_v7015_nuvem_explica_patch.js` ganhou o caso 1b — "gravou aqui, mas nada sobe".** Dispara só com `!authorized` **e** coisa pendente (`outbox`, `heldLocalOnly` ou o diário de escritas do portão `DIGICOPY_PORTAO.total()`), para não virar alarme permanente em PC que só consulta. Texto: *"Este computador não está conectado à nuvem — o que é gravado aqui fica só neste navegador e não aparece em outro PC (N registro(s) esperando o envio). Conecte uma vez e sobe sozinho, nada se perde."* com **Conectar agora** (mesmo `v5262AbrirPortao` do portão) e **Abrir a Nuvem**. Fica antes da pausa, senão a pausa engoliria o aviso.
+2. **`ajustes_v7020_mandar_erro_patch.js` passou a levar o estado da nuvem no topo do pacote** — `nuvem: conectado=NAO | pausado=nao | fila=0 | so-aqui=2 | cursor=7 | ultimoOk=nunca | ultimoErro=… | freioAte=21:00`. Tudo número/texto curto passando pelo `redigir()` já existente (mesma trava anti-credencial): assim o print que o dono manda **já responde** a pergunta que separa "salvou e perdeu" de "este PC está desconectado", sem ninguém precisar de DevTools.
+3. Regressão nova: `test_msg_02_nuvem.js` → seção `test_r67_nuvem_sem_token_fala.js` (23 asserções: estrutural + 5 mundos falsos dirigindo `v7015ConferirNuvem()` — calado sem escrita, fala com escrita, conta os segurados, calado quando conectado, e o bundle carregando os dois trechos). O `test_faixa_botoes_r46.js` contava 5 botões "Abrir a Nuvem"; passou a 6 (mesma ação, mesmo rótulo) com o motivo escrito na asserção.
+
+### 56.3 O que o relatório NÃO sustenta (registrado para ninguém ir por esse caminho)
+
+- **"falta de conexão explica o dado que não salva no seu PC"** — a conclusão dele vale para o browser isolado do QA; `authorized=false` lá é o normal daquela origem. Ele mesmo escreveu o limite. Não é diagnóstico do balcão.
+- **"persistência local passou, então o handler está certo"** — a prova cobriu o pipeline central com um sentinela sintético; nenhum formulário de negócio foi exercitado. Continua em aberto até o dono dizer a tela.
+- A recomendação implícita de "confiar no retorno do `saveDB()`" segue valendo o contrário: ele **nunca** retorna confirmação; a fonte da verdade local é `window.__dbPersistidoOk` (e o `saveDBAgora()` quando se precisa de synchronismo ao fechar/imprimir).
+
+### 56.4 Provas da rodada
+
+| Verificação | Resultado |
+|---|---|
+| `node --check` nos 2 patches + 2 temas de teste | OK |
+| `node build_bundle.js` / `node sync_build.js --check` | 233 scripts, sha `617d53cac6cc`; Sync OK v7.3.11, 0 soltos |
+| `node test_runner.js` | 11 grupos passaram, 0 falharam, 1 pulado (`jsdom`) |
+| `node mapa_camadas.js` | 1.089 nomes / 291 repetidos — sem alteração de base |
+| `mobile/sync-www.js` | 4 arquivos, 0 referências quebradas (só o pacote mecânico; celular fora de escopo por ordem dele) |
