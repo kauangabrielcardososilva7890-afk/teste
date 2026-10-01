@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: e8ad73a6382555fd
+ * scripts: 233 | sha256: cd7a3a88520205e3
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -835,6 +835,18 @@ function toggleSidebar(forceClose=false){
   if(forceClose===true||!isClosed){sb.classList.add('-translate-x-full'); ov.classList.add('hidden');}
   else{sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden');}
 }
+function reporMenusDinamicos(catsOrdem){
+  const grupos=Array.isArray(catsOrdem)?catsOrdem:(window.__migCategorias||[]);
+  const destinos={locacao:'menu-outsourcing',movimentacao:'menu-outsourcing',financeiro:'menu-financeiro',produtos:'menu-cadastros',cadastros:'menu-cadastros',fiscal:'menu-cadastros',sistema:'menu-config',outros:'menu-cadastros'};
+  const rotulos={locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'};
+  Object.entries(rotulos).forEach(([id,label])=>{
+    const menu=document.getElementById(destinos[id]); if(!menu) return;
+    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
+    const grupo=grupos.find(g=>g.cat.id===id); if(!grupo) return;
+    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
+    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.dataset.nav=item.id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
+  });
+}
 function buildNav(){
   const sess=getSession();
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
@@ -873,19 +885,7 @@ function buildNav(){
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
   
   // Distribui módulos migrados diretamente nas áreas principais, sem uma aba separada.
-  const destinos={
-    locacao:'menu-outsourcing', movimentacao:'menu-outsourcing',
-    financeiro:'menu-financeiro', produtos:'menu-cadastros',
-    cadastros:'menu-cadastros', fiscal:'menu-cadastros',
-    sistema:'menu-config', outros:'menu-cadastros'
-  };
-  Object.entries({locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'}).forEach(([id,label])=>{
-    const menu=document.getElementById(destinos[id]); if(!menu) return;
-    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
-    const grupo=catsOrdem.find(g=>g.cat.id===id); if(!grupo) return;
-    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
-    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
-  });
+  reporMenusDinamicos(catsOrdem);
   const obsolete=document.getElementById('topmod-migrados'); if(obsolete) obsolete.remove();
 
   // Renderizar seção de módulos dinâmicos se houver
@@ -35481,6 +35481,9 @@ window.pintarMenus = function(){
   if(status) html += status.outerHTML;
   row.innerHTML = html;
   try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
+  // row.innerHTML recria a faixa e remove links migrados; restaurar só os
+  // submenus do topo, sem rebuild da navegação lateral.
+  try{ if(typeof window.reporMenusDinamicos==='function') window.reporMenusDinamicos(window.__migCategorias); }catch(e){}
 };
 
 window.uiMenuMover = function(btn, dir){
@@ -43645,6 +43648,8 @@ function rotasDoModulo(mod){
     if(pai) partes.push(pai.getAttribute('onclick') || '');
     mod.querySelectorAll(':scope > .module-menu > button, :scope > .module-menu a').forEach(function(item){
       partes.push(item.getAttribute('onclick') || item.getAttribute('href') || '');
+      var destino = item.getAttribute('data-nav');
+      if(destino) partes.push("navigateTo('"+destino+"')");
     });
   }catch(e){
     // :scope não existe em alguns WebViews antigos; ainda assim nunca use o

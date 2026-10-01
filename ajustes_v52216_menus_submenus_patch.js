@@ -226,6 +226,9 @@ window.pintarMenus = function(){
   if(status) html += status.outerHTML;
   row.innerHTML = html;
   try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
+  // row.innerHTML recria a faixa e remove links migrados; restaurar só os
+  // submenus do topo, sem rebuild da navegação lateral.
+  try{ if(typeof window.reporMenusDinamicos==='function') window.reporMenusDinamicos(window.__migCategorias); }catch(e){}
 };
 
 window.uiMenuMover = function(btn, dir){
