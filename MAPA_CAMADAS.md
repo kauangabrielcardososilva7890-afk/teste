@@ -57,7 +57,7 @@
 | `buildNav` | 7 | ajustes_v5250_leitura_overhaul_patch.js:343 (função, no carregamento) |
 | `conferirNfe` | 7 | fiscal_guard_patch.js:185 (função, no carregamento) |
 | `DIGICOPY_LOGO` | 7 | ajustes_v5189_patch.js:246 (valor, no carregamento) |
-| `doLoginUser` | 7 | ajustes_v52253_login_tela_branca_patch.js:162 (função, no carregamento) |
+| `doLoginUser` | 7 | ajustes_v52253_login_tela_branca_patch.js:176 (função, no carregamento) |
 | `imprimirNotinha` | 7 | ajustes_v52245_venda_salvar_print_patch.js:76 (função, no carregamento) |
 | `pintarMenus` | 7 | ajustes_v52243_menu_versao_boleto_patch.js:100 (função, no carregamento) |
 | `renderModalContrato` | 7 | fluxo_contrato_leitura_corrigido_patch.js:75 (função, no carregamento) |
@@ -173,9 +173,9 @@
 - sobrepõe: ajustes_v5172_patch.js:282 — valor, em uso
 - sobrepõe: ajustes_v5175_patch.js:242 — valor, em uso
 - sobrepõe: ajustes_v5175_patch.js:310 — valor, em uso
-- sobrepõe: ajustes_v5196_patch.js:160 — valor, em uso
-- sobrepõe: ajustes_v5196_patch.js:272 — valor, em uso
-- sobrepõe: ajustes_v5196_patch.js:285 — valor, em uso
+- sobrepõe: ajustes_v5196_patch.js:159 — valor, em uso
+- sobrepõe: ajustes_v5196_patch.js:280 — valor, em uso
+- sobrepõe: ajustes_v5196_patch.js:293 — valor, em uso
 - sobrepõe: ajustes_v52237_orcamentos_menu_patch.js:445 — valor, em uso
 - sobrepõe: ajustes_v52258_orcamento_os_revalidar_patch.js:642 — valor, em uso
 - sobrepõe: ajustes_v52259_orcamento_filtros_item_patch.js:382 — valor, em uso
@@ -616,7 +616,7 @@
 - sobrepõe: app.js:2707 — função, no carregamento
 - sobrepõe: app.js:1115 — função de topo, no carregamento
 - sobrepõe: notinha_patch.js:380 — função, no carregamento
-- sobrepõe: ajustes_v5196_patch.js:104 — função, no carregamento
+- sobrepõe: ajustes_v5196_patch.js:103 — função, no carregamento
 - sobrepõe: ajustes_v5214_clientes_visiveis_patch.js:553 — função, no carregamento
 - sobrepõe: ajustes_v52221_nfe_permissao_patch.js:70 — função, no carregamento
 - sobrepõe: permissoes_estorno_venda_patch.js:366 — alias, no carregamento
@@ -710,7 +710,7 @@
 - sobrepõe: login_dados_automaticos_patch.js:161 — função, no carregamento
 - sobrepõe: sistema_clientes_loja_patch.js:147 — função, no carregamento
 - sobrepõe: ajustes_v5186_patch.js:376 — função, no carregamento
-- **GANHA →** ajustes_v52253_login_tela_branca_patch.js:162 — função, no carregamento
+- **GANHA →** ajustes_v52253_login_tela_branca_patch.js:176 — função, no carregamento
 - sobrepõe: ajustes_v5901_login_retry_nuvem_patch.js:93 — alias, em uso
 
 ### `imprimirNotinha` — 7 escritas
@@ -778,7 +778,7 @@
 - sobrepõe: app.js:175 — função de topo, no carregamento
 - sobrepõe: performance_patch.js:77 — função, no carregamento
 - sobrepõe: indexeddb_persistence_patch.js:159 — função, no carregamento
-- sobrepõe: cloudflare_data_sync_patch.js:2407 — função, no carregamento
+- sobrepõe: cloudflare_data_sync_patch.js:2415 — função, no carregamento
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:431 — alias, em uso
 - **GANHA →** ajustes_v7021_portao_escrita_patch.js:59 — função, no carregamento
@@ -833,7 +833,7 @@
 
 - sobrepõe: performance_patch.js:84 — função, no carregamento
 - sobrepõe: indexeddb_persistence_patch.js:161 — função, no carregamento
-- sobrepõe: cloudflare_data_sync_patch.js:2422 — função, no carregamento
+- sobrepõe: cloudflare_data_sync_patch.js:2430 — função, no carregamento
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:426 — função, em uso
 - sobrepõe: ajustes_v5243_cliente_abas_patch.js:432 — alias, em uso
 - **GANHA →** ajustes_v7021_portao_escrita_patch.js:68 — função, no carregamento
@@ -1511,7 +1511,7 @@
 ### `renderModalUsuario` — 3 escritas
 
 - sobrepõe: app.js:999 — função de topo, no carregamento
-- sobrepõe: ajustes_v5196_patch.js:163 — função, no carregamento
+- sobrepõe: ajustes_v5196_patch.js:162 — função, no carregamento
 - **GANHA →** permissoes_estorno_venda_patch.js:148 — alias, no carregamento
 
 ### `salvarEditorAtalhos` — 3 escritas
@@ -1523,7 +1523,7 @@
 ### `saveUsuario` — 3 escritas
 
 - sobrepõe: app.js:1007 — função de topo, no carregamento
-- sobrepõe: ajustes_v5196_patch.js:262 — função, no carregamento
+- sobrepõe: ajustes_v5196_patch.js:270 — função, no carregamento
 - **GANHA →** permissoes_estorno_venda_patch.js:188 — alias, no carregamento
 
 ### `seedData` — 3 escritas
@@ -1980,7 +1980,7 @@
 ### `openModalCriarUsuario` — 2 escritas
 
 - sobrepõe: app.js:1006 — função de topo, no carregamento
-- **GANHA →** ajustes_v5196_patch.js:157 — função, no carregamento
+- **GANHA →** ajustes_v5196_patch.js:156 — função, no carregamento
 
 ### `openModalProdutoFromVenda` — 2 escritas
 

@@ -4,7 +4,7 @@
 // • Sair de venda em andamento pergunta se deseja salvar
 // • Rodapé de dados da loja em impressões HTML, sem repetir no rodapé da venda
 // • Chamados com faixas de seção destacadas
-// • Usuários editáveis com perfil restrito a Kauan/Denivaldo
+// • Usuários editáveis com perfil restrito a Admin/Dono
 // • Assistente local de ajuda do Sistema Digicopy
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){

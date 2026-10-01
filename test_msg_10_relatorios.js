@@ -146,10 +146,21 @@ for(const f of alvos){
 }
 ok('permissão sem nome de gente: ' + (sujos.join('; ') || 'limpo'), sujos.length === 0);
 
-console.log('\n== 4) A MIGRAÇÃO ANTIGA DO DENIVALDO RODA UMA VEZ SÓ ==');
-ok('existe (compatibilidade com base antiga)', /login\.toLowerCase\(\) === 'denivaldo'/.test(rel));
-ok('tem a marca de "já rodou" (nunca mais mexe depois disso)', /!deni\.senhaMigradaV701/.test(rel));
-ok('a marca é gravada antes de qualquer troca', /deni\.senhaMigradaV701 = new Date\(\)\.toISOString\(\);[\s\S]{0,80}?if\(deni\.senha ===/.test(rel));
+console.log('\n== 4) A MIGRAÇÃO DE SENHA ESCRITA NO BUNDLE MORREU (r69) ==');
+// Isto aqui mudou de lado de propósito. Antes a seção cobrava que o bloco
+// existisse ("roda uma vez só"). Só que o bloco é código PÚBLICO: ele dizia qual
+// login de verdade tinha qual senha, e trocava a senha dessa pessoa no boot sem
+// ninguém pedir. Não existia proteção nenhuma ali — as duas senhas estavam
+// escritas para qualquer um ler no bundle. Em r69 o bloco saiu e a regra passa a
+// ser a contrária: NADA de credencial de gente real no que o navegador baixa.
+// A troca de senha é na tela, por quem tem permissão, e a prova de login é
+// hash+salt (v5.24.38 no app.js). NAO RESTAURAR este bloco.
+ok('patch_relatorio.js não menciona a pessoa', !/denivaldo/i.test(rel));
+ok('patch_relatorio.js não conhece senha nenhuma', !/3232|'1234'/.test(rel));
+ok('e o bloco de boot que mexia na senha de alguém não voltou', !/senhaMigradaV701/.test(rel));
+const comCredencial = fs.readdirSync('.').filter(f => /^patch_|^ajustes_/.test(f) && f.endsWith('.js'))
+  .filter(f => /deni\.senha === '1234'|senha === '3232'|Senha Denivaldo/.test(fs.readFileSync(f, 'utf8')));
+ok('nenhum patch ressuscita credencial de pessoa no código servido', comCredencial.length === 0);
 
 console.log('\nRESULTADO: ' + passou + ' verificações — base nova nasce no setup, sem fábrica.');
 //<<<<SECAO:test_senha_do_dono_manda.js:FIM>>>>

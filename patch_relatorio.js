@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.0 — Relatório completo do usuário
-// 1. Login: campos vazios, mensagens de erro, logo nova, Denivaldo 3232
+// 1. Login: campos vazios, mensagens de erro, logo nova
 // 2. Produtos: código automático, estoque mínimo
 // 3. Geral: deletar (não ocultar) itens removidos
 // ═══════════════════════════════════════════════════════════════════════════
@@ -38,22 +38,13 @@ setTimeout(()=>{
 
 // Login: mensagens de erro corrigidas direto no app.js
 
-// Senha Denivaldo = 3232
-setTimeout(()=>{
-  if(typeof db !== 'undefined' && db.usuarios){
-    const deni = db.usuarios.find(u => u.login && u.login.toLowerCase() === 'denivaldo');
-    // v7.0.1 (23/09/2026) — migração de UMA vez só. Ela troca a senha antiga
-    // (a de 4 dígitos que este arquivo conhecia) pela atual; a marca abaixo
-    // garante que ela nunca mais mexe na senha do Denivaldo depois disso — se
-    // ele trocar a senha na tela (inclusive para um número parecido), o sistema
-    // não desfaz mais a escolha dele.
-    if(deni && !deni.senhaMigradaV701){
-      deni.senhaMigradaV701 = new Date().toISOString();
-      if(deni.senha === '1234'){ deni.senha = '3232'; }
-      if(typeof saveDB === 'function') saveDB();
-    }
-  }
-}, 500);
+// v7.3.13 (r69) — REMOVIDO de proposito. Este arquivo trazia, dentro do bundle
+// publico, um bloco que conhecia a senha de um usuario real de verdade e, num PC
+// zerado, trocava a senha antiga dele por outra, sem ninguem pedir. Duas coisas
+// erradas ao mesmo tempo: (1) a frase era uma credencial publicada — quem le o
+// bundle le a senha; (2) reescrever a senha de outra pessoa no boot nao e
+// migracao, e porta. A prova de login hoje e hash+salt (v5.24.38 no app.js) e a
+// troca de senha e feita na tela, por quem tem permissao. NAO RESTAURAR.
 
 console.log('[DIGICOPY] patch_relatorio v5.0.0 carregado');
 })();

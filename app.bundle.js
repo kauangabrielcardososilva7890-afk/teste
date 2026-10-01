@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: 4887f5859c608d45
+ * scripts: 233 | sha256: fabe343b504d530d
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1202,7 +1202,7 @@ function initTemplates(){
 
   document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Backup do sistema</button><button onclick="abrirTelaBackup()" class="w-full h-11 mt-2 rounded-xl bg-white border text-[13px] font-semibold">📥 Restaurar a partir de um arquivo</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
-  document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários e permissões</h3><p class="text-[13px] text-slate-500 mt-1">Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">Perfis:</b> Admin e Dono têm permissão total.</p><p><b class="text-white">Funcionários:</b> editam apenas o próprio cadastro.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
+  document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários e permissões</h3><p class="text-[13px] text-slate-500 mt-1">Admin e Dono têm permissão total; os demais entram como Funcionários.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">Perfis:</b> Admin e Dono têm permissão total.</p><p><b class="text-white">Funcionários:</b> editam apenas o próprio cadastro.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
   document.getElementById('view-auditoria').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Auditoria - Logs do sistema</h3><p class="text-[13px] text-slate-500 mt-1">Mostra quem fez cada ação (venda, leitura, contrato, OS, etc.) por usuário logado.</p></div><div class="flex gap-2"><select id="filter-aud-entidade" onchange="renderAuditoria()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todas entidades</option><option value="cliente">Clientes</option><option value="produto">Produtos</option><option value="equipamento">Equipamentos</option><option value="contrato">Contratos</option><option value="leitura">Leituras</option><option value="os">OS</option><option value="venda">Vendas</option><option value="financeiro">Financeiro</option><option value="auth">Login/Logout</option><option value="usuario">Usuários</option></select><input id="search-auditoria" oninput="renderAuditoria()" placeholder="Buscar usuário, ação..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Data/Hora</th><th class="px-5 py-3">Usuário / Perfil / CNPJ</th><th class="px-5 py-3">Entidade / Ação</th><th class="px-5 py-3">ID</th><th class="px-5 py-3">Detalhes</th></tr></thead><tbody id="tbody-auditoria" class="divide-y"></tbody></table></div></div>`;
 }
@@ -19803,7 +19803,7 @@ try{
 // • Sair de venda em andamento pergunta se deseja salvar
 // • Rodapé de dados da loja em impressões HTML, sem repetir no rodapé da venda
 // • Chamados com faixas de seção destacadas
-// • Usuários editáveis com perfil restrito a Kauan/Denivaldo
+// • Usuários editáveis com perfil restrito a Admin/Dono
 // • Assistente local de ajuda do Sistema Digicopy
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
@@ -20743,7 +20743,7 @@ try{
 try{
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.0 — Relatório completo do usuário
-// 1. Login: campos vazios, mensagens de erro, logo nova, Denivaldo 3232
+// 1. Login: campos vazios, mensagens de erro, logo nova
 // 2. Produtos: código automático, estoque mínimo
 // 3. Geral: deletar (não ocultar) itens removidos
 // ═══════════════════════════════════════════════════════════════════════════
@@ -20781,22 +20781,13 @@ setTimeout(()=>{
 
 // Login: mensagens de erro corrigidas direto no app.js
 
-// Senha Denivaldo = 3232
-setTimeout(()=>{
-  if(typeof db !== 'undefined' && db.usuarios){
-    const deni = db.usuarios.find(u => u.login && u.login.toLowerCase() === 'denivaldo');
-    // v7.0.1 (23/09/2026) — migração de UMA vez só. Ela troca a senha antiga
-    // (a de 4 dígitos que este arquivo conhecia) pela atual; a marca abaixo
-    // garante que ela nunca mais mexe na senha do Denivaldo depois disso — se
-    // ele trocar a senha na tela (inclusive para um número parecido), o sistema
-    // não desfaz mais a escolha dele.
-    if(deni && !deni.senhaMigradaV701){
-      deni.senhaMigradaV701 = new Date().toISOString();
-      if(deni.senha === '1234'){ deni.senha = '3232'; }
-      if(typeof saveDB === 'function') saveDB();
-    }
-  }
-}, 500);
+// v7.3.13 (r69) — REMOVIDO de proposito. Este arquivo trazia, dentro do bundle
+// publico, um bloco que conhecia a senha de um usuario real de verdade e, num PC
+// zerado, trocava a senha antiga dele por outra, sem ninguem pedir. Duas coisas
+// erradas ao mesmo tempo: (1) a frase era uma credencial publicada — quem le o
+// bundle le a senha; (2) reescrever a senha de outra pessoa no boot nao e
+// migracao, e porta. A prova de login hoje e hash+salt (v5.24.38 no app.js) e a
+// troca de senha e feita na tela, por quem tem permissao. NAO RESTAURAR.
 
 console.log('[DIGICOPY] patch_relatorio v5.0.0 carregado');
 })();
@@ -27470,8 +27461,7 @@ try{
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.6 — Usuários e permissões (hierarquia) + técnicos
 // • 0  — Remove TODO o fluxo de "senha CNPJ" da criação/edição de usuário.
-// • 1/2— Cada um edita só o SEU usuário. Editar outros: só Admin (Kauan) e
-//        Dono (Denivaldo).
+// • 1/2— Cada um edita só o SEU usuário. Editar outros: só Admin ou Dono.
 // • 3  — Ao criar usuário, perfil é sempre "Funcionário" (Admin/Dono ocultos).
 //        A troca de perfil só aparece para Admin/Dono editando outro usuário.
 // • 4  — "Cadastrar para escolher em vendas/chamados" vira cadastro de TÉCNICO
@@ -27526,7 +27516,7 @@ function tecnicosLista(){
   return Array.isArray(db.tecnicos) ? db.tecnicos : [];
 }
 
-// Excluir usuário — só Admin (Kauan) e Dono (Denivaldo). Com proteções:
+// Excluir usuário — só Admin ou Dono. Com proteções:
 // não exclui a si mesmo; não exclui o último Admin/Dono.
 window.excluirUsuario = function(id){
   const s = sess(); if(!s) return;
@@ -27605,7 +27595,7 @@ window.renderUsuarios = function(){
 
   view.innerHTML = `<div class="neo-shell"><div class="neo-panel neo-float-in">
     <div class="neo-head">
-      <div><h3>Usuários e permissões</h3><p>Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div>
+      <div><h3>Usuários e permissões</h3><p>Admin e Dono têm permissão total; os demais entram como Funcionários.</p></div>
       <div class="neo-actions">
         <button onclick="openModalCriarUsuario()" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo usuário</button>
         <button onclick="openModalNovoTecnico()" class="neo-btn"><i class="ph ph-plus-circle"></i>Novo técnico</button>
@@ -27714,12 +27704,21 @@ window.saveUsuarioFinal = async function(id){
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
   // v5.24.34 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
-  // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
-  // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
-  // por onde "salvei e o login não entra" escapava em silêncio.
-  var provaLogin = (db.usuarios || []).some(function(x){ return x && fold(x.login) === login && txt(x.senha) === senha && x.ativo; });
-  if(provaLogin){
+  // LÁ de verdade, do jeito exato que o login vai procurar. Se não estiver, Grita
+  // em vez de fingir que salvou — era o buraco por onde "salvei e o login não
+  // entra" escapava em silêncio.
+  // v7.3.13 (r69) — dois consertos na propria prova:
+  //   1) ela exigia x.ativo. Salvar alguem como INATIVO gravava certinho e a tela
+  //      gritava "NAO ficou gravado" — alarme falso, o pior tipo: ensina a pessoa a
+  //      desconfiar de gravação boa. Agora compara o status escolhido no formulario.
+  //   2) ela so aceitava a senha em texto. Cadastro que ficou so com hash (o Corte
+  //      do texto puro faz isso de proposito) parecia falha. Com hash+salt presente,
+  //      o registro vale como gravado tambem.
+  var gravou = (db.usuarios || []).some(function(x){ return x && fold(x.login) === fold(login) && !!x.ativo === ativo && (txt(x.senha) === senha || (txt(x.senhaHash) && txt(x.senhaSalt))); });
+  if(gravou && ativo){
     toastMsg('Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.', 'success');
+  } else if(gravou){
+    toastMsg('Usuário salvo como INATIVO: ficou gravado, mas não consegue entrar. Ative aqui quando for usar.', 'success');
   } else if(typeof window.lfbAlert === 'function'){
     window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
   } else {
@@ -30809,6 +30808,14 @@ function indicator(ok,text){
 // Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
 async function tickSohLeitura(reason){
   if(typeof document==='undefined'||document.hidden)return false;
+  // v7.3.13 (r69) — sem token do aparelho não há o que puxar: sai antes de marcar
+  // busy/lastTick e antes de sujar o lastError com "API Cloudflare não carregada".
+  // O pedido nunca saía daqui mesmo (api() é nulo sem token e o pullAll já
+  // esbarra nele), mas cada troca de tela consumia o estado como se houvesse
+  // tentativa — e um lastError de PC nunca-conectado abafa o erro de verdade de
+  // antes. Quem explica o estado para o usuário é a faixa do v7015 (caso 1b),
+  // não um resíduo de exceção. O heartbeat já filtra isso no tick().
+  if(!authorized())return false;
   busy=true;lastTick=Date.now();
   const geracao=estadoGeracao;
   try{
@@ -45706,9 +45713,20 @@ try{
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function fold(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  // Uma regra so de "quem e este usuario" (login, nome completo ou primeiro
+  // nome), para o caminho do texto e o do hash nunca discordarem.
+  function mesmoUsuario(digitado, u){
+    var d = fold(digitado);
+    if(!d || !u) return false;
+    var uL = fold(u.login), uN = fold(u.nome), uP = uN.split(/\s+/)[0];
+    return (d === uL || d === uN || d === uP);
+  }
+  function temHash(u){ return !!(u && txt(u.senhaHash) && txt(u.senhaSalt)); }
 
   var LOGIN_TELA_BRANCA_V52253_PURE = {
     VERSAO: VERSAO,
+    mesmoUsuario: mesmoUsuario,
+    temHash: temHash,
     bootInstantaneo: true,
     antiTelaBranca: true,
     loginFlexivel: function(digitadoLogin, digitadoSenha, usuarios){
@@ -45718,12 +45736,15 @@ try{
       var list = Array.isArray(usuarios) ? usuarios : [];
       var found = list.find(function(u){
         if(!u || !u.ativo) return false;
-        var uL = fold(u.login);
-        var uN = fold(u.nome);
-        var uP = uN.split(/\s+/)[0];
-        var matchLogin = (dL === uL || dL === uN || dL === uP);
-        var matchSenha = (txt(u.senha) === dS);
-        return matchLogin && matchSenha;
+        if(!mesmoUsuario(dL, u)) return false;
+        // v7.3.13 (r69) — cadastro que JA TEM hash+salt: o hash e a fonte da verdade
+        // e o campo legado `senha` nao autentica mais por aqui. Antes o texto era
+        // comparado primeiro no call site e o hash so era olhado se o texto falhasse
+        // — o contrario do que o bloco de senhas do app.js promete ("login confere
+        // hash primeiro, texto puro so na transicao"). Na transicao continua valendo:
+        // registro sem hash entra pelo texto, e o proprio login grava o hash em seguida.
+        if(temHash(u)) return false;
+        return txt(u.senha) === dS;
       });
       if(found) return found;
       // Fallback para admin inicial — AUDITORIA 23/09/2026: era uma PORTA DOS
@@ -45873,13 +45894,14 @@ try{
           try{ await atualizarHashRegistro(user, senhaVal); }catch(eUp){}
         }
         // v7.1.0-r54 (P1): texto não achou (pós-Corte não tem texto) → tenta o hash+salt.
+        // v7.3.13 (r69): este laco virou o caminho de quem tem hash, entao ele usa a MESMA
+        // regra de identidade do loginFlexivel — senao quem entra pelo nome (ou pelo primeiro
+        // nome) ficava de fora agora que o texto legado nao vale mais nesses cadastros.
         if(!user && typeof confereSenha === 'function'){
-          var ffH = (typeof fold === 'function') ? fold : function(s){ return String(s || '').toLowerCase().trim(); };
-          var fLH = ffH(loginVal);
           for(var hi = 0; hi < usuarios.length; hi++){
             var hu = usuarios[hi];
             if(!hu || !hu.ativo || !hu.senhaHash) continue;
-            if(ffH(hu.login) !== fLH) continue;
+            if(!LOGIN_TELA_BRANCA_V52253_PURE.mesmoUsuario(loginVal, hu)) continue;
             try{ if(await confereSenha(senhaVal, hu)){ user = hu; break; } }catch(eH){}
           }
         }
@@ -50891,7 +50913,7 @@ function traduzErro(e){
   if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
     return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
   if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
-    return 'Seu USUÁRIO não tem cargo Admin no sistema. O que vale é o usuário (não o aparelho): entre com um usuário de cargo Admin (ex.: Kauan) em qualquer computador para ver, baixar ou apagar backups.';
+    return 'Seu USUÁRIO não tem cargo Admin no sistema. O que vale é o usuário (não o aparelho): entre com um usuário de cargo Admin em qualquer computador para ver, baixar ou apagar backups.';
   return e && e.message || String(e);
 }
 
@@ -51206,7 +51228,7 @@ async function abrir(painelBody){
     card.innerHTML =
       '<div class="bk-card" style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:14px;margin-top:8px">' +
         '<b style="color:#b91c1c">🔒 Backups da nuvem: só usuário com cargo Admin</b>' +
-        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com um usuário de cargo Admin (ex.: Kauan) — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
+        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com um usuário de cargo Admin — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
       '</div>';
     return;
   }

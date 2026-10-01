@@ -134,3 +134,20 @@ Segundo relatório do QA externo, verificado claim por claim contra `b4690fd` (o
 - **Classe varrida**: só 2 arquivos desenham caixa de busca a partir de estado espelhado; a tela de Produtos já zerava `STATE.prod.q` antes de renderizar (o padrão), Contratos era o único fora. `ajustes_consolidados.js` tem o texto antigo mas não está no bundle (não executa). Consolidação num estado único = dívida registrada, não feita de propósito (mexeria na ordem do manifest, fiscalizada entrada por entrada).
 - Estado: v7.3.12, suíte 11 ✅ / 0 ❌ / 1 pulada (`jsdom`). Push desta rodada = gatilho do build do Pages.
 - Continua **com o dono**: ligar o corte 🔒 Texto-puro (código pronto desde a r54) e os prints das telas que cortam informação. Continua **fora por ordem dele**: celular/APK e frente comercial.
+
+
+## Reforço r69 — v7.3.13 (01/10/2026, madrugada): terceiro relatório (login/Nuvem/Usuários) + a credencial que ninguém tinha apontado
+
+Conferência: as citações dele sobre o que **já existia** bateram (index `btn-nuvem`, `loginFlexivel`, diagnóstico partido, `senhaPadrao`, a tela de Usuários, a prova de gravação exigindo `x.ativo`, `tickSohLeitura` sem `authorized()`). As **edições** dele não são verificáveis: ele escreveu numa cópia com 235 scripts (aqui são 233), com arquivos que não existem no repo, e a branch `work/r67-auth-cloud-ui` nunca foi enviada. Uma frase dele já era velha: a busca de Contratos não estava "só em diagnóstico" — saiu consertada na r68 (v7.3.12).
+
+O que entrei e já está publicado:
+- **login por hash de verdade**: com `senhaHash`+`senhaSalt`, o campo legado `senha` não autentica mais; sem hash, entra pelo texto e se auto-cura. Identidade (login/nome/primeiro nome) virou `mesmoUsuario`, usada pelos dois caminhos — senão quem entra pelo nome ficava de fora.
+- **prova de gravação de Usuários honesta**: respeita o status escolhido (salvar INATIVO não grita mais "não ficou gravado") e aceita registro só com hash; gravação perdida continua gritando.
+- **`tickSohLeitura` com guarda de autorização**: sem token não marca busy/lastTick nem suja `lastError` (o `nuvem:` do 📩 fica limpo).
+- **A parte feia que ele não viu**: `patch_relatorio.js`, no bundle público, trazia `// Senha Denivaldo = 3232` e um bloco de boot que reescrevia a senha de `denivaldo` de `1234` para `3232`. Bloco removido, comentário removido, e o teste que cobrava a migração (tema 10, seção 4) foi **invertido** para cobrar que não volte. ⚠️ **Ação do dono, não minha**: os dois valores ficaram publicados e continuam no histórico público do git para sempre — a senha desse login tem que ser trocada no app (e vale trocar as outras que já foram citadas em conversa).
+- Também saíram da tela os nomes de quem é Admin/Dono (subtítulo de Usuários em `app.js` + `v5196`, e o "(ex.: Kauan)" do cadeado do Backup em dois lugares).
+- Teste novo `test_r69_hash_vence_texto_e_prova_honesta.js` no tema 09 (24 asserções, 4 delas dirigindo `saveUsuarioFinal` num DOM de mentirinha).
+- **Declinado**: o modal de diagnóstico da Nuvem, o `patch_notes_local.js` e o rótulo/ícone novo — recursos, não defeitos; e adicionar arquivo mexe na ordem do manifest, que é fiscalizada. Se o dono quiser o ponto verde clicável com resumo, faço como patch no fim da ordem, com teste.
+- Dica adotada dele, só orientação ao dono: rodar o teste de UI sem sujar dependência → `npm install --no-save --package-lock=false --ignore-scripts jsdom && node test_msg_11_jsdom.js`.
+- Estado: v7.3.13, suíte 11 ✅ / 0 ❌ / 1 pulada (jsdom). Push desta rodada = gatilho do Pages.
+- Continua **com o dono**: trocar a senha daquele login (item acima) e ligar o corte 🔒 Texto-puro quando todos os PCs estiverem na versão nova e as senhas trocadas; os prints das telas que cortam informação (o guia para quem testa está em `HANDOFF_TESTE_TELAS_CORTE.md`). Continua **fora por ordem dele**: celular/APK e frente comercial.

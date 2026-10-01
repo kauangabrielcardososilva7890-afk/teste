@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.6 — Usuários e permissões (hierarquia) + técnicos
 // • 0  — Remove TODO o fluxo de "senha CNPJ" da criação/edição de usuário.
-// • 1/2— Cada um edita só o SEU usuário. Editar outros: só Admin (Kauan) e
-//        Dono (Denivaldo).
+// • 1/2— Cada um edita só o SEU usuário. Editar outros: só Admin ou Dono.
 // • 3  — Ao criar usuário, perfil é sempre "Funcionário" (Admin/Dono ocultos).
 //        A troca de perfil só aparece para Admin/Dono editando outro usuário.
 // • 4  — "Cadastrar para escolher em vendas/chamados" vira cadastro de TÉCNICO
@@ -57,7 +56,7 @@ function tecnicosLista(){
   return Array.isArray(db.tecnicos) ? db.tecnicos : [];
 }
 
-// Excluir usuário — só Admin (Kauan) e Dono (Denivaldo). Com proteções:
+// Excluir usuário — só Admin ou Dono. Com proteções:
 // não exclui a si mesmo; não exclui o último Admin/Dono.
 window.excluirUsuario = function(id){
   const s = sess(); if(!s) return;
@@ -136,7 +135,7 @@ window.renderUsuarios = function(){
 
   view.innerHTML = `<div class="neo-shell"><div class="neo-panel neo-float-in">
     <div class="neo-head">
-      <div><h3>Usuários e permissões</h3><p>Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div>
+      <div><h3>Usuários e permissões</h3><p>Admin e Dono têm permissão total; os demais entram como Funcionários.</p></div>
       <div class="neo-actions">
         <button onclick="openModalCriarUsuario()" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo usuário</button>
         <button onclick="openModalNovoTecnico()" class="neo-btn"><i class="ph ph-plus-circle"></i>Novo técnico</button>
@@ -245,12 +244,21 @@ window.saveUsuarioFinal = async function(id){
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
   // v5.24.34 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
-  // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
-  // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
-  // por onde "salvei e o login não entra" escapava em silêncio.
-  var provaLogin = (db.usuarios || []).some(function(x){ return x && fold(x.login) === login && txt(x.senha) === senha && x.ativo; });
-  if(provaLogin){
+  // LÁ de verdade, do jeito exato que o login vai procurar. Se não estiver, Grita
+  // em vez de fingir que salvou — era o buraco por onde "salvei e o login não
+  // entra" escapava em silêncio.
+  // v7.3.13 (r69) — dois consertos na propria prova:
+  //   1) ela exigia x.ativo. Salvar alguem como INATIVO gravava certinho e a tela
+  //      gritava "NAO ficou gravado" — alarme falso, o pior tipo: ensina a pessoa a
+  //      desconfiar de gravação boa. Agora compara o status escolhido no formulario.
+  //   2) ela so aceitava a senha em texto. Cadastro que ficou so com hash (o Corte
+  //      do texto puro faz isso de proposito) parecia falha. Com hash+salt presente,
+  //      o registro vale como gravado tambem.
+  var gravou = (db.usuarios || []).some(function(x){ return x && fold(x.login) === fold(login) && !!x.ativo === ativo && (txt(x.senha) === senha || (txt(x.senhaHash) && txt(x.senhaSalt))); });
+  if(gravou && ativo){
     toastMsg('Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.', 'success');
+  } else if(gravou){
+    toastMsg('Usuário salvo como INATIVO: ficou gravado, mas não consegue entrar. Ative aqui quando for usar.', 'success');
   } else if(typeof window.lfbAlert === 'function'){
     window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
   } else {

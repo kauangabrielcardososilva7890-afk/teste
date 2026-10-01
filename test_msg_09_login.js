@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_09_login.js — GERADO por migrar_testes_r57.js; 7 seções (5 geradas + 2 appends r58+r59).
+// test_msg_09_login.js — GERADO por migrar_testes_r57.js; 9 seções (geradas + append por rodada — r69 é o login por hash e a prova de gravação honesta).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_login_dados_automaticos.js, test_ajustes_v52253.js, test_login_sem_backdoor.js, test_reclamacoes_do_dono.js, test_r54_senhas_dedup.js, test_r58_senhas_tela.js, test_r59_setup.js
+// Seções: test_r69_hash_vence_texto_e_prova_honesta.js, test_login_dados_automaticos.js, test_ajustes_v52253.js, test_login_sem_backdoor.js, test_reclamacoes_do_dono.js, test_r54_senhas_dedup.js, test_r58_senhas_tela.js, test_r59_setup.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -835,4 +835,151 @@ ok('compara igual ao v52253 (login/nome/1º nome)', code.indexOf('cN.split') >= 
 ok('está no bundle', fs.readFileSync('bundle-manifest.json','utf8').indexOf('ajustes_v5901_login_retry_nuvem_patch.js') >= 0);
 console.log('\nRESULTADO: login que se cura provado!');
 //<<<<SECAO:test_r60_login_retry.js:FIM>>>>
+}
+
+
+if (false) { // ═══ test_r69_hash_vence_texto_e_prova_honesta.js (bloco extraído e rodado pelo runner do tema)
+//<<<<SECAO:test_r69_hash_vence_texto_e_prova_honesta.js:INICIO>>>>
+// test_r69_hash_vence_texto_e_prova_honesta.js — duas coisas que o relatório do
+// QA externo (r67 dele) tocou de leve e que aqui viram conserto + trava:
+//   A) LOGIN: o campo legado `senha` era comparado ANTES do hash. Cadastro com
+//      hash+salt deixava uma senha antiga (ou vazia) autenticar, contra o que o
+//      bloco de senhas do app.js promete ("confere hash primeiro, texto puro só
+//      na transição"). Agora: tem hash+salt → prova o hash; não tem → texto, e o
+//      próprio login grava o hash em seguida.
+//   B) USUÁRIOS: a "prova de gravação" depois de salvar exigia `x.ativo`, então
+//      gravar alguém como INATIVO gritava "O usuário NÃO ficou gravado" com o
+//      registro salvo certinho. Alarme falso é pior que silêncio: ensina a pessoa
+//      a desconfiar de gravação boa. Agora a prova compara o status ESCOLHIDO.
+//   C) PRIVACIDADE no bundle público: a tela de Usuários dizia "Admin (Kauan) e
+//      Dono (Denivaldo)", o cadeado do Backup citava o nome de um funcionário, e
+//      `patch_relatorio.js` trazia a senha de uma pessoa escrita em comentário e
+//      um bloco que reescrevia a senha dela no boot. Nada disso devia ser público.
+const fs = require('fs');
+const vm = require('vm');
+let falhas = 0;
+const ok = (nome, cond) => { if (cond) console.log('  ok - ' + nome); else { console.error('  FALHA - ' + nome); falhas++; } };
+const ler = (a) => fs.readFileSync(a, 'utf8');
+
+// ── A) o validador puro, pela exportação do próprio patch ──────────────────
+const SRC_LOGIN = ler('ajustes_v52253_login_tela_branca_patch.js');
+const winFake = { addEventListener() { }, removeEventListener() { }, setTimeout, clearTimeout, console };
+winFake.window = winFake;
+try { new Function('window', 'document', SRC_LOGIN)(winFake, undefined); } catch (e) { /* o PURE já foi exportado */ }
+const PURE = winFake.LOGIN_TELA_BRANCA_V52253_PURE;
+ok('o patch exporta o validador e os dois critérios novos', !!(PURE && typeof PURE.loginFlexivel === 'function' && typeof PURE.mesmoUsuario === 'function' && typeof PURE.temHash === 'function'));
+
+const comHash = { id: 'u1', login: 'qa.financeiro', nome: 'QA Financeiro', perfil: 'Funcionário', ativo: true, senha: 'SENHA-ANTIGA-VAZANDO', senhaHash: 'abc123', senhaSalt: 'salt1' };
+const semHash = { id: 'u2', login: 'qa.novato', nome: 'QA Novato', perfil: 'Funcionário', ativo: true, senha: 'senha-nova-1' };
+
+ok('cadastro com hash+salt: a senha em texto NÃO autentica mais', PURE.loginFlexivel('qa.financeiro', 'SENHA-ANTIGA-VAZANDO', [comHash]) === null);
+ok('registro sem hash continua entrando (a transição não quebra)', (PURE.loginFlexivel('qa.novato', 'senha-nova-1', [semHash]) || {}).id === 'u2');
+ok('temHash só é true com hash E salt', PURE.temHash(comHash) === true && PURE.temHash(semHash) === false && PURE.temHash({ senhaHash: 'x' }) === false);
+ok('mesmoUsuario vale por login, nome completo ou primeiro nome',
+  PURE.mesmoUsuario('qa.financeiro', comHash) && PURE.mesmoUsuario('QA Financeiro', comHash) && PURE.mesmoUsuario('qa', comHash) && !PURE.mesmoUsuario('outra pessoa', comHash));
+ok('o laço do hash usa essa mesma regra (login pelo nome não fica de fora)',
+  SRC_LOGIN.includes('LOGIN_TELA_BRANCA_V52253_PURE.mesmoUsuario(loginVal, hu)') && !SRC_LOGIN.includes('ffH(hu.login) !== fLH'));
+ok('e continua atualizando o hash de quem entrou pelo texto (auto-cura)',
+  /if\(user && !user\.senhaHash && typeof atualizarHashRegistro === 'function'\)/.test(SRC_LOGIN));
+
+// ── B) a prova de gravação, dirigida de verdade no patch de Usuários ───────
+function arena(opts) {
+  opts = opts || {};
+  const porId = new Map();
+  const avisos = [];
+  function El(id, v) {
+    const e = { id: id || '', value: v == null ? '' : v, innerHTML: '', innerText: '', textContent: '', classList: { contains: () => false, add() { }, remove() { } }, appendChild() { }, querySelector: () => null, querySelectorAll: () => [] };
+    if (id) porId.set(id, e);
+    return e;
+  }
+  const document = { createElement: () => El('', ''), getElementById: (id) => porId.get(id) || null, querySelectorAll: () => [], addEventListener() { }, body: El('body') };
+  const db = { usuarios: [], tecnicos: [], auditoria: [] };
+  const win = {};
+  const ctx = {
+    window: win, document, db,
+    sess: () => ({ usuarioId: 'usr_dono', perfil: 'Admin', empresaId: 'E1' }),
+    getSession: () => ({ usuarioId: 'usr_dono', perfil: 'Admin', empresaId: 'E1' }),
+    temPermissaoTotal: () => true, podeEditarUsuario: () => true,
+    perfilEfetivo: (u) => (u && u.perfil) || 'Funcionário',
+    toast: (m) => { avisos.push(String(m)); }, toastMsg: (m) => { avisos.push(String(m)); },
+    saveDB: () => { if (opts.perderGravacao) db.usuarios.length = 0; },
+    renderUsuarios: () => { }, closeModal: () => { }, logAction: () => { },
+    uidSafe: (p) => p + '_' + (db.usuarios.length + 1),
+    atualizarHashRegistro: async (reg, senha) => { reg.senhaSalt = 'salt-fake'; reg.senhaHash = 'hash-de-' + senha; if (opts.hashLimpaTexto) reg.senha = ''; return true; },
+    fold: (v) => String(v == null ? '' : v).toLowerCase().trim(),
+    txt: (v) => String(v == null ? '' : v).trim(),
+    console: { log() { }, warn() { }, error() { } },
+    setTimeout: (fn) => { try { if (typeof fn === 'function') fn(); } catch (e) { } return 0; },
+    setInterval: () => 0, clearTimeout: () => { },
+    localStorage: { getItem: () => null, setItem: () => { } },
+  };
+  for (const k of ['esc', 'aviso', 'confirmSistema', 'openModal', 'showModal', 'uid']) if (!(k in ctx)) ctx[k] = () => '';
+  const cx = vm.createContext(ctx);
+  let erroCarga = null;
+  try { vm.runInContext(ler('ajustes_v5196_patch.js'), cx, { filename: 'v5196.js' }); } catch (e) { erroCarga = e.message; }
+  return {
+    win, db, avisos, erroCarga,
+    formulario: (c) => {
+      porId.set('u-nome', El('u-nome', c.nome)); porId.set('u-login', El('u-login', c.login));
+      porId.set('u-senha', El('u-senha', c.senha)); porId.set('u-ativo', El('u-ativo', c.ativo ? 'true' : 'false'));
+      porId.set('u-perfil', El('u-perfil', c.perfil || 'Funcionário'));
+    },
+  };
+}
+
+(async () => {
+  let a = arena();
+  ok('o patch de Usuários carrega no harness sem erro', a.erroCarga === null);
+  a.formulario({ nome: 'QA Financeiro', login: 'qa.financeiro', senha: 'senha-forte-1', ativo: true });
+  await a.win.saveUsuarioFinal();
+  ok('salvar ATIVO anuncia o login pra testar', /Login pra testar: qa\.financeiro/.test(a.avisos[a.avisos.length - 1] || ''));
+
+  a = arena();
+  a.formulario({ nome: 'QA Inativo', login: 'qa.inativo', senha: 'senha-forte-2', ativo: false });
+  await a.win.saveUsuarioFinal();
+  const msgInativo = a.avisos[a.avisos.length - 1] || '';
+  ok('salvar INATIVO não grita mais "não ficou gravado"', !/NÃO ficou gravado/i.test(msgInativo));
+  ok('e explica que o login ficou desativado', /salvo como INATIVO/.test(msgInativo) && /não consegue entrar/.test(msgInativo));
+  ok('o registro está lá, inativo, com hash gravado', a.db.usuarios.length === 1 && a.db.usuarios[0].ativo === false && !!a.db.usuarios[0].senhaHash);
+
+  a = arena({ perderGravacao: true });
+  a.formulario({ nome: 'QA Perdido', login: 'qa.perdido', senha: 'senha-forte-3', ativo: true });
+  await a.win.saveUsuarioFinal();
+  ok('gravação perdida CONTINUA gritando (a prova não foi castrada)', /NÃO ficou gravado/.test(a.avisos[a.avisos.length - 1] || ''));
+
+  a = arena({ hashLimpaTexto: true });
+  a.db.usuarios.push({ id: 'usr_velho', empresaId: 'E1', login: 'qa.hash', nome: 'QA Hash', senha: '1234', ativo: true, perfil: 'Funcionário' });
+  a.formulario({ nome: 'QA Hash', login: 'qa.hash', senha: 'senha-forte-4', ativo: true });
+  await a.win.saveUsuarioFinal('usr_velho');
+  ok('registro que fica só com hash não vira alarme falso', !/NÃO ficou gravado/.test(a.avisos[a.avisos.length - 1] || ''));
+
+  // ── C) privacidade: o bundle é público ──────────────────────────────────
+  const SRC_SYNC = ler('cloudflare_data_sync_patch.js');
+  const guard = SRC_SYNC.slice(SRC_SYNC.indexOf('async function tickSohLeitura'), SRC_SYNC.indexOf('async function puxarAoAbrirTela'));
+  ok('leitura ao abrir tela não finge tentativa sem token', /if\(!authorized\(\)\)return false;/.test(guard));
+  ok('e continua deixando o tick() decidir o resto', /if\(state\.paused\|\|busy\|\|!authorized\(\)\)return false;/.test(SRC_SYNC));
+
+  const SRC_REL = ler('patch_relatorio.js');
+  const SRC_BK = ler('ajustes_v52296_backups_nuvem_patch.js');
+  const SRC_V5196 = ler('ajustes_v5196_patch.js');
+  const SRC_APP = ler('app.js');
+  const semNome = (src) => !/Kauan|Denivaldo/.test(src);
+  ok('a tela de Usuários não cita nome de pessoa (nem em comentário servido)',
+    semNome(SRC_V5196) && semNome(SRC_APP) && semNome(ler('ajustes_pos_final_patch.js')));
+  ok('o subtítulo neutro entrou nas duas telas', /Admin e Dono têm permissão total; os demais entram como Funcionários\./.test(SRC_V5196) && /Admin e Dono têm permissão total; os demais entram como Funcionários\./.test(SRC_APP));
+  ok('o cadeado do Backup não cita funcionário por nome', !/Kauan|Denivaldo/.test(SRC_BK));
+  ok('patch_relatorio não publica senha de ninguém', !/3232/.test(SRC_REL) && !/'1234'/.test(SRC_REL));
+  ok('e o bloco que reescrevia a senha no boot saiu', !/deni\.senha = '3232'/.test(SRC_REL) && /NAO RESTAURAR/.test(SRC_REL));
+
+  for (const b of ['app.bundle.js', 'mobile/www/app.bundle.js']) {
+    const src = ler(b);
+    ok('bundle com o hash valendo mais que o texto legado: ' + b, /if\(temHash\(u\)\) return false;/.test(src));
+    ok('bundle com a prova de gravação honesta: ' + b, /!!x\.ativo === ativo/.test(src));
+    ok('bundle sem senha e sem nome de pessoa publicada: ' + b, !/3232/.test(src) && !/Kauan/.test(src) && !/Denivaldo/.test(src));
+  }
+
+  console.log('\nRESULTADO: ' + (falhas ? falhas + ' FALHA(S)' : 'ok — hash manda no login, a prova de gravação diz a verdade e o bundle não expõe mais as pessoas'));
+  process.exit(falhas ? 1 : 0);
+})();
+//<<<<SECAO:test_r69_hash_vence_texto_e_prova_honesta.js:FIM>>>>
 }

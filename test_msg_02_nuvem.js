@@ -3090,7 +3090,7 @@ ok(worker.indexOf("'access-control-allow-headers': 'authorization, content-type,
 ok(patchBk.indexOf("if(cargo==='admin') return true;") >= 0 && patchBk.indexOf("||cargo==='dono'") < 0 && patchBk.indexOf("||cargo2==='dono'") < 0, 'trava do app: cargo Dono NÃO abre mais backup (só Admin)');
 ok(patchBk.indexOf('function aplicarVisibilidadeMenusNuvemBackup') >= 0 && patchBk.indexOf("getElementById('btn-nuvem')") >= 0 && patchBk.indexOf("getElementById('btn-backup-top')") >= 0 && patchBk.indexOf('button[onclick="exportBackup()"]') >= 0, 'helper esconde os menus Nuvem, Backup e o ícone de download para não-Admin');
 ok(patchBk.indexOf('__v5242') >= 0 && patchBk.indexOf('O menu Nuvem é só para usuário com cargo Admin') >= 0, 'tela da Nuvem travada por cargo (defesa em profundidade)');
-ok(patchBk.indexOf('Entre no sistema com um usuário de cargo Admin (ex.: Kauan)') >= 0 && patchBk.indexOf('ou Denivaldo (Dono)') < 0, 'cadeado do Backup não cita mais o Dono');
+ok(patchBk.indexOf('Entre no sistema com um usuário de cargo Admin — em QUALQUER computador') >= 0 && patchBk.indexOf('Kauan') < 0 && patchBk.indexOf('Denivaldo') < 0, 'cadeado do Backup não cita nome de pessoa (r69: Admin/Dono bastam)');
 seguroEmAmbos('aplicarVisibilidadeMenusNuvemBackup', 'visibilidade dos menus nos 2 bundles');
 
 if(falhas){ console.error('\n' + falhas + ' FALHA(S) v' + pkg.version); process.exit(1); }

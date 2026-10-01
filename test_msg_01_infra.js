@@ -5438,11 +5438,16 @@ function ok(cond, msg) {
 
 const v5196 = fs.readFileSync('ajustes_v5196_patch.js', 'utf8');
 ok(v5196.includes('v5.24.34'), 'v5196: carimbo da prova de gravação');
-ok(v5196.includes('provaLogin'), 'v5196: verifica o registro salvo (provaLogin)');
+ok(/var gravou = \(db\.usuarios \|\| \[\]\)\.some/.test(v5196), 'v5196: verifica o registro salvo (prova de gravação, r69: "gravou")');
 ok(v5196.includes('Login pra testar: '), 'v5196: sucesso CONFIRMA o login exato pra ele');
 ok(v5196.includes('O usuário NÃO ficou gravado como deveria'), 'v5196: falha silenciosa agora Grita (lfbAlert)');
-ok(v5196.includes('fold(x.login) === login && txt(x.senha) === senha && x.ativo'),
-   'v5196: prova compara do MESMO jeito que o login procura (login+senha+ativo)');
+// r69: a prova exigia x.ativo, então salvar alguém como INATIVO gritava "não ficou
+// gravado" com o registro salvo. Ela continua comparando do jeito que o login
+// procura, mas com o status ESCOLHIDO no formulário — e um cadastro que ficou só
+// com hash (o Corte do texto puro faz isso) conta como gravado.
+ok(/fold\(x\.login\) === fold\(login\) && !!x\.ativo === ativo && \(txt\(x\.senha\) === senha \|\| \(txt\(x\.senhaHash\) && txt\(x\.senhaSalt\)\)\)/.test(v5196),
+   'v5196: prova compara login + status escolhido + (texto OU hash)');
+ok(v5196.includes('salvo como INATIVO'), 'v5196: inativo tem mensagem própria, sem alarme falso');
 
 const v52253 = fs.readFileSync('ajustes_v52253_login_tela_branca_patch.js', 'utf8');
 ok(v52253.includes('v5.24.34'), 'v52253: carimbo do diagnóstico partido');
@@ -5455,9 +5460,9 @@ ok(!/toast\('Usuário ou senha incorreto'/.test(v52253),
    'login: erro genérico antigo saiu do caminho do doLoginUser');
 
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
-ok(bundle.includes('provaLogin'), 'bundle: prova de gravação presente');
+ok(/!!x\.ativo === ativo/.test(bundle), 'bundle: prova de gravação presente');
 ok(bundle.includes('não existe neste PC'), 'bundle: diagnóstico partido presente');
-ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('provaLogin'), 'bundle do CELULAR igual');
+ok(/!!x\.ativo === ativo/.test(fs.readFileSync('mobile/www/app.bundle.js', 'utf8')), 'bundle do CELULAR igual');
 
 const idx = fs.readFileSync('index.html', 'utf8');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));

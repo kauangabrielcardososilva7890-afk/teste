@@ -13,9 +13,20 @@
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function fold(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  // Uma regra so de "quem e este usuario" (login, nome completo ou primeiro
+  // nome), para o caminho do texto e o do hash nunca discordarem.
+  function mesmoUsuario(digitado, u){
+    var d = fold(digitado);
+    if(!d || !u) return false;
+    var uL = fold(u.login), uN = fold(u.nome), uP = uN.split(/\s+/)[0];
+    return (d === uL || d === uN || d === uP);
+  }
+  function temHash(u){ return !!(u && txt(u.senhaHash) && txt(u.senhaSalt)); }
 
   var LOGIN_TELA_BRANCA_V52253_PURE = {
     VERSAO: VERSAO,
+    mesmoUsuario: mesmoUsuario,
+    temHash: temHash,
     bootInstantaneo: true,
     antiTelaBranca: true,
     loginFlexivel: function(digitadoLogin, digitadoSenha, usuarios){
@@ -25,12 +36,15 @@
       var list = Array.isArray(usuarios) ? usuarios : [];
       var found = list.find(function(u){
         if(!u || !u.ativo) return false;
-        var uL = fold(u.login);
-        var uN = fold(u.nome);
-        var uP = uN.split(/\s+/)[0];
-        var matchLogin = (dL === uL || dL === uN || dL === uP);
-        var matchSenha = (txt(u.senha) === dS);
-        return matchLogin && matchSenha;
+        if(!mesmoUsuario(dL, u)) return false;
+        // v7.3.13 (r69) — cadastro que JA TEM hash+salt: o hash e a fonte da verdade
+        // e o campo legado `senha` nao autentica mais por aqui. Antes o texto era
+        // comparado primeiro no call site e o hash so era olhado se o texto falhasse
+        // — o contrario do que o bloco de senhas do app.js promete ("login confere
+        // hash primeiro, texto puro so na transicao"). Na transicao continua valendo:
+        // registro sem hash entra pelo texto, e o proprio login grava o hash em seguida.
+        if(temHash(u)) return false;
+        return txt(u.senha) === dS;
       });
       if(found) return found;
       // Fallback para admin inicial — AUDITORIA 23/09/2026: era uma PORTA DOS
@@ -180,13 +194,14 @@
           try{ await atualizarHashRegistro(user, senhaVal); }catch(eUp){}
         }
         // v7.1.0-r54 (P1): texto não achou (pós-Corte não tem texto) → tenta o hash+salt.
+        // v7.3.13 (r69): este laco virou o caminho de quem tem hash, entao ele usa a MESMA
+        // regra de identidade do loginFlexivel — senao quem entra pelo nome (ou pelo primeiro
+        // nome) ficava de fora agora que o texto legado nao vale mais nesses cadastros.
         if(!user && typeof confereSenha === 'function'){
-          var ffH = (typeof fold === 'function') ? fold : function(s){ return String(s || '').toLowerCase().trim(); };
-          var fLH = ffH(loginVal);
           for(var hi = 0; hi < usuarios.length; hi++){
             var hu = usuarios[hi];
             if(!hu || !hu.ativo || !hu.senhaHash) continue;
-            if(ffH(hu.login) !== fLH) continue;
+            if(!LOGIN_TELA_BRANCA_V52253_PURE.mesmoUsuario(loginVal, hu)) continue;
             try{ if(await confereSenha(senhaVal, hu)){ user = hu; break; } }catch(eH){}
           }
         }

@@ -8363,3 +8363,26 @@ estado espelhado; Produtos já zerava STATE.prod.q (padrão), Contratos era o
 único fora; ajustes_consolidados.js tem o texto velho mas não está no bundle.
 Consolidar num estado único = dívida registrada (mexeria na ordem do manifest).
 7.3.12 via npm run versao + 4 guias + mapa + mobile sync. Suite 11-0-1.
+
+## r69 — 01/10/2026 (madrugada): login por hash, prova de gravação honesta e a senha publicada (v7.3.13)
+Terceiro relatório externo da noite (login, Nuvem, Usuários). Ele escreveu na
+própria cópia (235 scripts vs meus 233, branch nao enviada): as edicoes dele sao
+inverificaveis, as citacoes do que ja existia bateram todas. Apliquei 4 coisas:
+(1) loginFlexivel nao aceita mais o campo legado quando o cadastro tem hash+salt
+ — estava ao contrario do contrato do app.js; identidade virou mesmoUsuario
+ (login/nome/primeiro nome) usada pelos dois caminhos; (2) a PROVA DE GRAVACAO de
+ Usuarios exigia x.ativo, entao salvar INATIVO gritava "NAO ficou gravado" com o
+ registro salvo — agora compara o status escolhido e aceita registro so com hash,
+ e gravacao perdida continua gritando; (3) tickSohLeitura com if(!authorized())
+ return false (sem token nao suja busy/lastTick/lastError; o pedido mesmo ja nao
+ saia); (4) ACHAR o que ele nao viu: patch_relatorio.js trazia no bundle publico
+ "// Senha Denivaldo = 3232" e um bloco de boot que trocava a senha de denivaldo
+ de 1234 para 3232. Bloco e comentario fora; o teste que cobrava a migracao
+ (tema 10 secao 4) foi INVERTIDO para cobrar que nao volte. Tambem sairam da
+ tela os nomes de quem e Admin/Dono (subtitulo de Usuarios em app.js + v5196, e
+ o "(ex.: Kauan)" do cadeado do Backup). Acao dele, nao minha: os dois valores
+ ficam no historico publico do git — trocar a senha desse login.
+Declinei os arquivos novos dele (modal de diagnostico, patch_notes_local, rotulo
+da Nuvem): recurso, nao defeito; e new file mexe no manifest fiscalizado. Teste
+novo test_r69_hash_vence_texto_e_prova_honesta.js (tema 09, 24 assercoes, 4
+dirigindo saveUsuarioFinal num vm com DOM de mentirinha). Suite 11-0-1.

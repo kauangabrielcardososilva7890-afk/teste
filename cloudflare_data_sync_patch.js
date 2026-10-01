@@ -1538,6 +1538,14 @@ function indicator(ok,text){
 // Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
 async function tickSohLeitura(reason){
   if(typeof document==='undefined'||document.hidden)return false;
+  // v7.3.13 (r69) — sem token do aparelho não há o que puxar: sai antes de marcar
+  // busy/lastTick e antes de sujar o lastError com "API Cloudflare não carregada".
+  // O pedido nunca saía daqui mesmo (api() é nulo sem token e o pullAll já
+  // esbarra nele), mas cada troca de tela consumia o estado como se houvesse
+  // tentativa — e um lastError de PC nunca-conectado abafa o erro de verdade de
+  // antes. Quem explica o estado para o usuário é a faixa do v7015 (caso 1b),
+  // não um resíduo de exceção. O heartbeat já filtra isso no tick().
+  if(!authorized())return false;
   busy=true;lastTick=Date.now();
   const geracao=estadoGeracao;
   try{

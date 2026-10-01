@@ -54,7 +54,7 @@ function traduzErro(e){
   if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
     return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
   if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
-    return 'Seu USUÁRIO não tem cargo Admin no sistema. O que vale é o usuário (não o aparelho): entre com um usuário de cargo Admin (ex.: Kauan) em qualquer computador para ver, baixar ou apagar backups.';
+    return 'Seu USUÁRIO não tem cargo Admin no sistema. O que vale é o usuário (não o aparelho): entre com um usuário de cargo Admin em qualquer computador para ver, baixar ou apagar backups.';
   return e && e.message || String(e);
 }
 
@@ -369,7 +369,7 @@ async function abrir(painelBody){
     card.innerHTML =
       '<div class="bk-card" style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:14px;margin-top:8px">' +
         '<b style="color:#b91c1c">🔒 Backups da nuvem: só usuário com cargo Admin</b>' +
-        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com um usuário de cargo Admin (ex.: Kauan) — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
+        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com um usuário de cargo Admin — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
       '</div>';
     return;
   }

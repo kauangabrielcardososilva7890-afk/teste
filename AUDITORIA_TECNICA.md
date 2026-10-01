@@ -3497,3 +3497,60 @@ No app inteiro, só **dois** arquivos desenham a caixa de busca a partir de esta
 | `node build_bundle.js` / `sync_build.js --check` | 233 scripts; Sync OK v7.3.12, 0 soltos; bundle `app.bundle.js` e `mobile/www/app.bundle.js` contêm o par canônico (asserção no teste) |
 | `node test_runner.js` | 11 grupos passaram, 0 falharam, 1 pulado (`jsdom`) |
 | `mobile/sync-www.js` | 4 arquivos, 0 referências quebradas |
+
+
+## §58 — Rodada 69 (01/10/2026, madrugada): o terceiro relatório (login, Nuvem, Usuários) e o que ele não viu (v7.3.13)
+
+Terceiro relatório externo da noite. Diferente dos dois anteriores, este **traz código escrito** — na branch local `work/r67-auth-cloud-ui`, com **bundle de 235 scripts** e SHA `cce6f1d8…`. O meu repo tem **233** scripts; os dois a mais são arquivos que **não existem aqui** (`ajustes_v52267_diagnostico_nuvem_patch.js`, `patch_notes_local.js`), e o `e2e/cloudflare-panel.spec.js` que ele cita nas linhas 103-164 tem **36 linhas** no meu repo. Conclusão objetiva: ele trabalhou numa cópia com material próprio, **nada commitado nem enviado**. Então: as *edições* dele não são verificáveis daqui; as *citações do que já existia* são — e foram conferidas.
+
+### 58.1 Claim por claim
+
+| Alegação dele | Checado aqui | Bate |
+|---|---|---|
+| `index.html`: `btn-nuvem` com título "Configurar e verificar a nuvem DIGICOPY" e `btn-backup-top| `index.html:200-201` | ✅ |
+| Estado do login: `loginFlexivel` puro, `fold` compartilhado, diagnóstico partido em "não existe / INATIVO / senha" | `ajustes_v52253…:21-38` e `:194-205` | ✅ |
+| Modal de troca obrigatória ligado a `senhaPadrao`, e a autoalteração limpando a flag | `:247-254` e `ajustes_v5196…:243` | ✅ |
+| Tela de Usuários limitada ao `empresaId` da sessão, perfil só para Admin/Dono, novo usuário nasce Funcionário | `ajustes_v5196…:104-152`, `:163-197`, `:220-226` | ✅ |
+| A prova de gravação (v5.24.34) exigia **`x.ativo`** → salvar como INATIVO dava alarme falso | `ajustes_v5196…:251` (`&& x.ativo`) — **bug real, no meu código** | ✅ |
+| `tickSohLeitura` e `puxarAoAbrirTela` não exigiam autorização | `cloudflare_data_sync_patch.js:1539`/`:1560` — sem `authorized()` | ✅ (com a ressalva da §58.3) |
+| `reporTexto`/`diagnóstico`/`notas de versão`/`aria-label`/"Nuvem" | **não existem aqui** — eram o material novo da cópia dele | ⚠️ não aplicável |
+| Suíte com 13 temas, E2E Playwright com login+CRUD sintético, jsdom instalado com `--no-save --package-lock=false --ignore-scripts` | aqui são 11 temas; e2e sem spec dessas linhas. O **truque do jsdom** é bom e vira orientação ao dono | ⚠️ |
+| "Nenhuma credencial real usada; rede interceptada; nada de commit/push/deploy/PR" | coerente com o estado do repo (branch dele não existe no remoto) | ✅ |
+| "O relatório do bug da busca em Contratos continua só diagnóstico; não mexi na busca" | **falso por omissão**: eu já tinha consertado aquilo na r68 (`d1a3ee8`, v7.3.12) — o snapshot dele parou no 7.3.11 | ⚠️ |
+
+### 58.2 O que ele NÃO viu, e era o mais grave da noite
+
+`patch_relatorio.js` — arquivo **dentro do bundle público** — tinha:
+
+- o comentário `// Senha Denivaldo = 3232`;
+- e um bloco de boot que procurava `login.toLowerCase() === 'denivaldo'` e, se a senha dele fosse `1234`, **reescrevia para `3232`** sem ninguém pedir.
+
+Ou seja: par login↔senha de uma pessoa real, publicado para quem ler o bundle, e uma troca de senha de terceiro acontecendo sozinha no carregamento da página. A rodada anterior (`test_msg_10_relatorios.js`, seção "SEED LIMPO") tinha ido até a borda disso — removeu a *fábrica* de usuários e a citação nos seeds — e ainda assim deixou o bloco de boot de pé, cobrado por três asserções ("a migração roda uma vez só"). **Inverti a decisão**: o bloco saiu, o comentário saiu, e a seção 4 daquele teste agora cobra o contrário (que ele **não** volte), com o motivo escrito no teste. Registro honesto do custo: um PC que nunca rodou a migração continua com a senha que estiver no registro dele — que é a senha da pessoa, não a que o código escolhia. E os dois valores ficam para sempre no histórico do git, que é público: **a senha daquele login tem que ser trocada**, independentemente de qualquer patch.
+
+Junto disso, a mesma vassourada no que a tela mostrava:
+
+- subtítulo de **Usuários e permissões** (`ajustes_v5196…:139` e `app.js:953`): `"Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total…"` → agora `"Admin e Dono têm permissão total; os demais entram como Funcionários."`;
+- cadeado do Backup (`ajustes_v52296…:57` e `:372`): caía o "(ex.: Kauan)" dos dois lados;
+- comentários de cabeçalho de `ajustes_v5196…` e `ajustes_pos_final_patch.js`, que também iam no bundle.
+
+### 58.3 As quatro mudanças que eu apliquei
+
+1. **Login: hash manda, texto só na transição** (`ajustes_v52253…`). `loginFlexivel` comparava **só o texto** e o laço de hash só rodava se o texto falhasse — o contrário do contrato documentado no bloco de senhas (`app.js:2449`). Agora um cadastro com `senhaHash`+`senhaSalt` **não autentica mais pelo campo legado** (`if(temHash(u)) return false;`), registro sem hash continua entrando e se auto-curando. Para não perder o "entrar pelo nome", extraí a regra de identidade para `mesmoUsuario` (login, nome completo ou primeiro nome) e passei o laço assíncrono do hash a usar **a mesma função** — dois caminhos, um critério.
+2. **Prova de gravação honesta** (`ajustes_v5196…`): compara o **status escolhido no formulário** (`!!x.ativo === ativo`) e aceita registro que ficou só com hash. Salvar inativo passa a dizer *"salvo como INATIVO: ficou gravado, mas não consegue entrar"*; e **gravação perdida continua gritando** — o teste cobre os dois lados, para ninguém "consertar" cortando o alarme.
+3. **Leitura ao abrir tela sem token** (`cloudflare_data_sync_patch.js`): `tickSohLeitura` ganha `if(!authorized())return false;`. Ressalva aos fatos: o pedido **nunca saiu** daqui (sem token, `api()` é nulo e o `pullAll` esbarra nele na linha 1021), mas cada troca de tela marcava `busy`/`lastTick` e sujava `lastError` com "API Cloudflare não carregada" — abafando o erro anterior no `nuvem:` do 📩 (r67). Agora o PC não-conectado não finge tentativa; quem fala com o usuário é a faixa.
+4. **Teste novo** `test_r69_hash_vence_texto_e_prova_honesta.js` (tema 09, 9 seções): 6 asserções no validador puro pela exportação `LOGIN_TELA_BRANCA_V52253_PURE`, 4 **dirigindo `window.saveUsuarioFinal` de verdade** num `vm` com DOM de mentirinha (ativo, inativo, gravação perdida, só-hash) — o mesmo formato do teste da r68 — mais privacidade e os dois bundles. E 4 asserções do `test_ajustes_v52414.js` (tema 01) foram reescritas para a forma nova, com o motivo no comentário.
+
+### 58.4 O que declinei, e por quê
+
+Os três arquivos novos da cópia dele (diagnóstico da Nuvem em modal, `patch_notes_local.js*, rótulo/ícone acessível no indicador): são **recursos**, não defeitos, e o repo já tem quem faça esse trabalho — a tela da Nuvem, a faixa `v7015` (casos 1, 1b, 2, 3, 4, 5) e o pacote `v7020`. Adicionar arquivos move o `bundle-manifest.json`, cuja ordem é fiscalizada entrada por entrada pelo `test_msg_04_clientes.js`; não se paga dívida de UX ampliando superfície de carga. Se o dono quiser o "ponto verde clicável abre um resumo", isso é pedido novo e eu faço como patch no fim da ordem, com teste.
+
+### 58.5 Provas da rodada
+
+| Verificação | Resultado |
+|---|---|
+| `node --check` nos 5 arquivos alterados + 3 temas de teste | OK |
+| `node test_msg_09_login.js` / `test_msg_01_infra.js` / `test_msg_10_relatorios.js` | TEMA OK 9 / 91 / 7 seções |
+| `node build_bundle.js` + `sync_build.js --check` | 233 scripts, Sync OK v7.3.13, 0 soltos; os dois bundles carregam as mudanças (asserido) |
+| `node test_runner.js` | 11 grupos passaram, 0 falharam, 1 pulado (`jsdom`) |
+| `node mapa_camadas.js` / `mobile/sync-www.js` | regenerated; 4 arquivos, 0 referências quebradas |
+| Para o dono rodar o teste de UI sem sujar o package.json | `npm install --no-save --package-lock=false --ignore-scripts jsdom && node test_msg_11_jsdom.js` |
