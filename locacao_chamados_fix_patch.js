@@ -170,6 +170,17 @@ function listaChamadosFiltrada(opts){
   return list.sort((a,b)=>new Date(b.dataAbertura||0)-new Date(a.dataAbertura||0));
 }
 
+/* LC_CHAM_STATUS_PURE_START */
+function filtrarChamadosPorStatus(lista,status){
+  const estado=String(status==null?'abertos':status).trim().toLowerCase();
+  const itens=Array.isArray(lista)?lista:[];
+  if(!estado) return itens.slice();
+  if(estado==='abertos') return itens.filter(o=>!['concluido','cancelado','fechado'].includes(String(o.status||'').trim().toLowerCase()));
+  return itens.filter(o=>String(o.status||'').trim().toLowerCase()===estado);
+}
+/* LC_CHAM_STATUS_PURE_END */
+window.LC_CHAM_STATUS_PURE={filtrarChamadosPorStatus};
+
 function htmlFiltrosChamado(prefix, contratoId){
   const F = window.__lcChamFiltro;
   const origem = contratoId ? '' : `<select id="${prefix}-origem" onchange="window.__lcChamFiltro.origem=this.value; ${prefix==='lcg'?'abrirHistoricoChamadosGeral()':'abrirChamadosContrato(\''+contratoId+'\')'}" class="h-10 px-2 rounded-xl border text-[12px]"><option value="todos" ${F.origem==='todos'?'selected':''}>Todos</option><option value="contrato" ${F.origem==='contrato'?'selected':''}>Chamados de contrato</option><option value="avulso" ${F.origem==='avulso'?'selected':''}>Chamados fora de contrato</option></select>`;
@@ -187,9 +198,18 @@ function htmlFiltrosChamado(prefix, contratoId){
   </div>`;
 }
 
+/* LC_CHAM_STATUS_LABEL_PURE_START */
+function apresentacaoStatusChamado(status){
+  const st=String(status||'aberto').trim().toLowerCase();
+  const labels={aberto:'Aberto',concluido:'Finalizado',cancelado:'Cancelado',fechado:'Fechado',excluido:'Excluído',estornado:'Estornado'};
+  const tone=st==='concluido'?'ok':(['cancelado','fechado','excluido','estornado'].includes(st)?'info':'wait');
+  return {label:labels[st]||(st?st.charAt(0).toUpperCase()+st.slice(1):'Aberto'),tone};
+}
+/* LC_CHAM_STATUS_LABEL_PURE_END */
+
 function linhaChamado(o, contratoId){
   const cli = (db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const fin = o.status==='concluido';
+  const statusUi=apresentacaoStatusChamado(o.status);
   const deContrato = chamadoDeContrato(o);
   const click = contratoId
     ? `openModalChamadoCompleto('${o.id}','${contratoId}')`
@@ -201,7 +221,7 @@ function linhaChamado(o, contratoId){
     <td class="px-3 py-2">${esc(o.descricao||'')}</td>
     <td class="px-3 py-2">${esc(o.modelo||o.serie||'')}</td>
     <td class="px-3 py-2">${esc(o.tecnico||'')}</td>
-    <td class="px-3 py-2"><span class="neo-status ${fin?'ok':'wait'}">${fin?'Finalizado':'Aberto'}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
+    <td class="px-3 py-2"><span class="neo-status ${statusUi.tone}">${esc(statusUi.label)}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
     <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
       <button onclick="window.imprimirChamadoAgoraV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-[#0a1e8a] hover:bg-blue-50" title="Imprimir direto, sem abrir o chamado"><i class="ph ph-printer"></i></button>
       <button onclick="window.excluirChamadoV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50" title="Excluir chamado"><i class="ph ph-trash"></i></button>
@@ -288,7 +308,9 @@ window.abrirChamadosContrato = function(contratoId){
   setTimeout(()=>{
     const body = document.getElementById('modal-body');
     if(!body) return;
-    const list = listaChamadosFiltrada({ contratoId });
+    const statusSelect=document.getElementById('kr-ch-status');
+    const status=statusSelect?statusSelect.value:'abertos';
+    const list = filtrarChamadosPorStatus(listaChamadosFiltrada({ contratoId }),status);
     const extra = document.getElementById('lc-filtros-ctr');
     if(!extra){
       const wrap = document.createElement('div');
@@ -378,6 +400,22 @@ function atualizarColorPorImpressora(equipId){
   }
 }
 
+/* LC_EDIT_COLOR_PURE_START */
+function valorContadorColorEditado(os){
+  if(!os || os.contadorColor===null || os.contadorColor===undefined || String(os.contadorColor).trim()==='') return null;
+  return String(os.contadorColor);
+}
+function contadorColorParaSalvar(campo, osExistente){
+  if(campo && !campo.disabled){
+    const raw=String(campo.value??'').trim();
+    if(raw==='') return null;
+    const parsed=Number(raw.replace(',','.'));
+    return Number.isFinite(parsed)?parsed:null;
+  }
+  return osExistente && osExistente.contadorColor!==null && osExistente.contadorColor!==undefined ? osExistente.contadorColor : null;
+}
+/* LC_EDIT_COLOR_PURE_END */
+
 const _auto = window.autoPreencherDadosChamado;
 if(typeof _auto==='function'){
   window.autoPreencherDadosChamado = function(equipId){
@@ -398,14 +436,16 @@ if(typeof _openCham==='function'){
     setTimeout(()=>{
       injetarCamposChamado(true);
       const o = osId && (db.os||[]).find(x=>x.id===osId);
+      const colorAtualSalvo=o?valorContadorColorEditado(o):null;
       if(o){
         const da = document.getElementById('lc-data-atend'); if(da) da.value = dia(o.dataAtendimento||'');
         const pc = document.getElementById('lc-pecas'); if(pc) pc.value = o.pecasTexto || (Array.isArray(o.pecas)?o.pecas.map(p=>p.descricao).join(', '):'') || '';
-        const ca = document.getElementById('lc-cont-color-atu'); if(ca && o.contadorColor!=null) ca.value = o.contadorColor;
+        const ca = document.getElementById('lc-cont-color-atu'); if(ca && colorAtualSalvo!==null) ca.value = colorAtualSalvo;
       }
       if(o && o.equipamentoId) atualizarColorPorImpressora(o.equipamentoId);
       const eqSel = document.getElementById('ko-equip')?.value;
       if(eqSel) atualizarColorPorImpressora(eqSel);
+      if(colorAtualSalvo!==null){ const ca=document.getElementById('lc-cont-color-atu'); if(ca) ca.value=colorAtualSalvo; }
       marcarDirtyChamado();
     }, 80);
     setTimeout(()=>injetarCamposChamado(true), 200);
@@ -462,10 +502,13 @@ function validarFinalizar(contrato){
 }
 
 function coletarExtrasChamado(){
+  const colorEl=document.getElementById('lc-cont-color-atu');
+  const editId=window.modalContext&&window.modalContext.id;
+  const osExistente=editId&&(db.os||[]).find(x=>x.id===editId);
   return {
     dataAtendimento: document.getElementById('lc-data-atend')?.value || '',
     pecasTexto: document.getElementById('lc-pecas')?.value || '',
-    contadorColor: document.getElementById('lc-cont-color-atu')?.disabled ? null : n(document.getElementById('lc-cont-color-atu')?.value, null),
+    contadorColor: contadorColorParaSalvar(colorEl,osExistente),
     contadorColorAntigo: n(document.getElementById('lc-cont-color-ant')?.value, 0)
   };
 }
@@ -684,4 +727,3 @@ if(typeof _lei2==='function' && !_lei2.__lcTodos){
 
 console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.17.0');
 })();
-

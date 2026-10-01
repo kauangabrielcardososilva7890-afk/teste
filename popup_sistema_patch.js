@@ -94,6 +94,7 @@
     Object.entries(delMap).forEach(([name, gen])=>{
       if(window[name]){
         const orig = window[name];
+        if(name==='deleteProduto' && window.AJUSTES_V51916_PURE && window.AJUSTES_V51916_PURE.deleteProdutoConfirmaInternamente) return;
         window[name] = function(...args){
           const msg = typeof gen==='function'? gen(...args) : gen;
           confirmSistema(msg, 'Excluir').then(ok=>{ if(ok){ allowLegacyConfirmOnce(); orig.apply(this,args); } });

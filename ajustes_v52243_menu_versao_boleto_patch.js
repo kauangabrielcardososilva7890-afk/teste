@@ -49,6 +49,8 @@ function rotasDoModulo(mod){
     if(pai) partes.push(pai.getAttribute('onclick') || '');
     mod.querySelectorAll(':scope > .module-menu > button, :scope > .module-menu a').forEach(function(item){
       partes.push(item.getAttribute('onclick') || item.getAttribute('href') || '');
+      var destino = item.getAttribute('data-nav');
+      if(destino) partes.push("navigateTo('"+destino+"')");
     });
   }catch(e){
     // :scope não existe em alguns WebViews antigos; ainda assim nunca use o

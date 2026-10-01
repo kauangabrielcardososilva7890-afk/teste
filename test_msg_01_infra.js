@@ -1008,7 +1008,7 @@ ok('historico_sort stopImmediatePropagation', /stopImmediatePropagation/.test(hs
 
 console.log('== RECARGAS ==');
 ok('código só números', R.soNumeros('AB12-3')==='123');
-ok('próximo código', R.proximoCodigoRecarga([{codigo:'7'},{codigo:'12'}],'e1')==='13');
+ok('próximo código', R.proximoCodigoRecarga([{empresaId:'e1',codigo:'7'},{empresaId:'e1',codigo:'12'}],'e1')==='13');
 ok('tipo recarga', R.ehTipoRecarga('Recarga de toner') && !R.ehTipoRecarga('Produto'));
 ok('sem estoque', R.recargaPodeVenderSemEstoque()===true);
 const lista=R.filtrarRecargas([
@@ -5099,7 +5099,7 @@ const win = {
   vosCarregarVendaNaTela: function(){ globalThis.__telaPrincipal = true; }
 };
 const db = {
-  produtos: [{ id: 'p1', nome: 'Toner' }],
+  produtos: [{ id: 'p1', empresaId: 'e1', nome: 'Toner' }],
   contratos: [{ id: 'c1', numero: 'CT-1', status: 'ativo' }],
   parque: [],
   vendas: [{ id: 'v1', status: 'faturado' }]

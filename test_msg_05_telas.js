@@ -166,6 +166,8 @@ function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}c
 
 const men=fs.readFileSync('ajustes_v52213_menus_atalhos_patch.js','utf8');
 const sub=fs.readFileSync('ajustes_v52216_menus_submenus_patch.js','utf8');
+const app=fs.readFileSync('app.js','utf8');
+const activeMenu=fs.readFileSync('ajustes_v52243_menu_versao_boleto_patch.js','utf8');
 const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const html=fs.readFileSync('index.html','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
@@ -223,6 +225,11 @@ ok('some a faixa branca', /branco\.remove/.test(sub) || /ui-atalhos-inicio[\s\S]
 ok('editor de menus existe', /abrirEditorMenus/.test(sub));
 ok('hooks no 5.22.13', /window\.pintarMenus/.test(men) && /window\.pintarAtalhos/.test(men));
 ok('uiMenuMover usa o botão', /closest\('\[data-mid\]'\)/.test(sub));
+const painter=sub.slice(sub.indexOf('window.pintarMenus = function(){'),sub.indexOf('window.uiMenuMover'));
+ok('repaint repõe cadastros migrados sem rebuild lateral',painter.indexOf('row.innerHTML = html;')>=0 && painter.indexOf('window.reporMenusDinamicos(')>painter.indexOf('row.innerHTML = html;') && !painter.includes('window.buildNav()') && /function reporMenusDinamicos/.test(app));
+ok('buildNav distribui cadastros migrados no submenu Cadastros',/cadastros:'menu-cadastros'/.test(app));
+ok('links migrados publicam data-nav para destacar o menu pai',/b\.dataset\.nav=item\.id/.test(app));
+ok('marcador de menu lê a rota data-nav do submenu',/getAttribute\('data-nav'\)/.test(activeMenu));
 
 ok('patch no bundle', manifest.includes('ajustes_v52216_menus_submenus_patch.js'));
 ok('versão app 5.x-6.x', /^\d+\.\d+\./.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: a5b177121d6913e0
+ * scripts: 233 | sha256: e8ad73a6382555fd
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -10396,6 +10396,33 @@ function normalizarNCM(value){
   return `${dig.slice(0, 4)}.${dig.slice(4, 6)}.${dig.slice(6)}`;
 }
 
+function numeroCampoProduto(value){
+  const texto = String(value == null ? '' : value).trim();
+  return texto === '' ? 0 : Number(texto.replace(',', '.'));
+}
+
+function validarNumerosProdutoOperacional(campos, estoqueInfinito){
+  const valores = campos || {};
+  const regras = [
+    { chave:'estoque', nome:'O estoque atual', inteiro:true, ignorar:!!estoqueInfinito },
+    { chave:'estoqueMin', nome:'O estoque mínimo', inteiro:true },
+    { chave:'estoqueIdeal', nome:'O estoque ideal', inteiro:true },
+    { chave:'custo', nome:'O custo', inteiro:false },
+    { chave:'preco', nome:'O valor de venda', inteiro:false }
+  ];
+  for(const regra of regras){
+    if(regra.ignorar) continue;
+    const valor = numeroCampoProduto(valores[regra.chave]);
+    if(!Number.isFinite(valor) || valor < 0){
+      return { ok:false, message:regra.nome+' deve ser um número igual ou maior que zero.' };
+    }
+    if(regra.inteiro && !Number.isSafeInteger(valor)){
+      return { ok:false, message:regra.nome+' deve ser um número inteiro igual ou maior que zero.' };
+    }
+  }
+  return { ok:true, message:'' };
+}
+
 function adaptarProdutosMigrados(dbRef, empresaId){
   let alterou = false;
   (dbRef.produtos || []).forEach(p => {
@@ -10406,7 +10433,11 @@ function adaptarProdutosMigrados(dbRef, empresaId){
       if(Object.prototype.hasOwnProperty.call(p, k)){ delete p[k]; alterou = true; }
     });
     if(p.status === undefined || p.status === ''){ p.status = 'ativo'; alterou = true; }
-    p.controleEstoque = true;
+    const controleEstoqueEsperado = !p.estoqueInfinito;
+    if(p.controleEstoque !== controleEstoqueEsperado){
+      p.controleEstoque = controleEstoqueEsperado;
+      alterou = true;
+    }
   });
   return alterou;
 }
@@ -10420,6 +10451,7 @@ window.FLUXOS_PURE = {
   calcularLeituraOperacional,
   chamadoVencido,
   normalizarNCM,
+  validarNumerosProdutoOperacional,
   adaptarProdutosMigrados
 };
 
@@ -10433,6 +10465,7 @@ const STATE = window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {
   chamados: { q: '', status: 'abertos', sort: 'codigo' },
   listaLeitura: { q: '', data: '' }
 });
+let produtoBuscaFocoPendente = null;
 
 function ensureModalSize(size){
   const box = document.getElementById('modal-box');
@@ -10566,7 +10599,16 @@ function produtoCategoriaOptions(selected){
 }
 
 window.aplicarBuscaProdutosOperacional = function(){
-  STATE.prod.q = document.getElementById('search-produtos')?.value || '';
+  const campoBusca = document.getElementById('search-produtos');
+  const ativo = document.activeElement;
+  const view = document.getElementById('view-produtos');
+  const buscaAtiva = !!(campoBusca && (ativo === campoBusca || (view && view.contains(ativo) && ativo.getAttribute && ativo.getAttribute('title') === 'Pesquisar')));
+  produtoBuscaFocoPendente = buscaAtiva ? {
+    inicio: campoBusca.selectionStart == null ? campoBusca.value.length : campoBusca.selectionStart,
+    fim: campoBusca.selectionEnd == null ? campoBusca.value.length : campoBusca.selectionEnd,
+    direcao: campoBusca.selectionDirection || 'none'
+  } : null;
+  STATE.prod.q = campoBusca?.value || '';
   STATE.prod.cat = document.getElementById('filter-prod-cat')?.value || '';
   STATE.prod.baixo = !!document.getElementById('filter-prod-baixo')?.checked;
   STATE.prod.todos = false;
@@ -10714,6 +10756,15 @@ window.renderProdutos = function(){
       </div>
     </div>`;
   bindBuscaEnter('search-produtos', 'aplicarBuscaProdutosOperacional');
+  if(produtoBuscaFocoPendente){
+    const pos = produtoBuscaFocoPendente;
+    produtoBuscaFocoPendente = null;
+    const campo = document.getElementById('search-produtos');
+    if(campo){
+      campo.focus();
+      try{ campo.setSelectionRange(pos.inicio, pos.fim, pos.direcao); }catch(e){}
+    }
+  }
 };
 
 window.renderModalProduto = function(id){
@@ -10742,7 +10793,7 @@ window.renderModalProduto = function(id){
         <div><label class="block font-bold text-slate-600 mb-1">Descrição do Produto *</label><input id="kp-prd-nome" value="${html(p.nome || p.descricao || '')}" class="w-full h-10 px-3 rounded-xl border font-semibold" placeholder="Ex.: TONER HP 85A PRETO"></div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div><label class="block font-bold text-slate-600 mb-1">Fabricante / Marca</label><input id="kp-prd-fab" value="${html(p.fabricante || p.marca || '')}" class="w-full h-10 px-3 rounded-xl border"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Valor Venda R$ (auxiliar)</label><input id="kp-prd-preco" type="number" step="0.01" value="${toNumber(p.preco, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"><p class="text-[11px] text-slate-400 mt-1">Vai como sugestão na venda, mas pode ser alterado na hora.</p></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Valor Venda R$ (auxiliar)</label><input id="kp-prd-preco" type="number" min="0" step="0.01" value="${toNumber(p.preco, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"><p class="text-[11px] text-slate-400 mt-1">Vai como sugestão na venda, mas pode ser alterado na hora.</p></div>
         </div>
       </div>
 
@@ -10750,12 +10801,12 @@ window.renderModalProduto = function(id){
         <label class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-[12px] text-blue-900 font-semibold cursor-pointer"><input id="kp-prd-infinito" type="checkbox" ${p.estoqueInfinito?'checked':''} onchange="alternarEstoqueOperacional()" class="w-4 h-4 accent-[#0a1e8a]"><span><i class="ph ph-infinity"></i> Não controlar estoque — estoque infinito</span></label>
         <div class="rounded-xl bg-slate-50 border p-3 text-[12px] text-slate-600 font-medium">Produto infinito não sofre baixa nem alerta de estoque.</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">Estoque Atual</label><input id="kp-prd-est" type="number" value="${toNumber(p.estoque, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Estoque Mínimo</label><input id="kp-prd-min" type="number" value="${toNumber(p.estoqueMin, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Estoque Ideal</label><input id="kp-prd-ideal" type="number" value="${toNumber(p.estoqueIdeal, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Estoque Atual</label><input id="kp-prd-est" type="number" min="0" step="1" value="${toNumber(p.estoque, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Estoque Mínimo</label><input id="kp-prd-min" type="number" min="0" step="1" value="${toNumber(p.estoqueMin, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Estoque Ideal</label><input id="kp-prd-ideal" type="number" min="0" step="1" value="${toNumber(p.estoqueIdeal, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">Custo Total R$</label><input id="kp-prd-custo" type="number" step="0.01" value="${toNumber(p.custo, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Custo Total R$</label><input id="kp-prd-custo" type="number" min="0" step="0.01" value="${toNumber(p.custo, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
           
         </div>
       </div>
@@ -10805,6 +10856,16 @@ window.salvarProdutoOperacional = function(id){
   if(!nome) return toastMsg('Informe a descrição do produto', 'error');
   const catNova = document.getElementById('kp-prd-cat-nova')?.value?.trim();
   const categoria = categoriaUnificada(catNova || document.getElementById('kp-prd-cat')?.value || 'Produto');
+  const estoqueInfinito = !!document.getElementById('kp-prd-infinito')?.checked;
+  const camposNumericos = {
+    estoque: document.getElementById('kp-prd-est')?.value,
+    estoqueMin: document.getElementById('kp-prd-min')?.value,
+    estoqueIdeal: document.getElementById('kp-prd-ideal')?.value,
+    custo: document.getElementById('kp-prd-custo')?.value,
+    preco: document.getElementById('kp-prd-preco')?.value
+  };
+  const validacaoNumerica = validarNumerosProdutoOperacional(camposNumericos, estoqueInfinito);
+  if(!validacaoNumerica.ok) return toastMsg(validacaoNumerica.message, 'error');
   const payload = {
     empresaId: sess.empresaId,
     sku: (id ? (document.getElementById('kp-prd-sku')?.value?.trim() || uidSafe('prd')) : consumirCodigoProduto(sess.empresaId)),
@@ -10812,16 +10873,16 @@ window.salvarProdutoOperacional = function(id){
     descricao: nome,
     categoria,
     fabricante: document.getElementById('kp-prd-fab')?.value?.trim() || '',
-    estoqueInfinito: !!document.getElementById('kp-prd-infinito')?.checked,
-    estoque: document.getElementById('kp-prd-infinito')?.checked ? 0 : toInt(document.getElementById('kp-prd-est')?.value, 0),
-    estoqueMin: toInt(document.getElementById('kp-prd-min')?.value, 0),
-    estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
-    custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
-    preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
+    estoqueInfinito,
+    estoque: estoqueInfinito ? 0 : numeroCampoProduto(camposNumericos.estoque),
+    estoqueMin: numeroCampoProduto(camposNumericos.estoqueMin),
+    estoqueIdeal: numeroCampoProduto(camposNumericos.estoqueIdeal),
+    custo: numeroCampoProduto(camposNumericos.custo),
+    preco: numeroCampoProduto(camposNumericos.preco),
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
-    controleEstoque: !document.getElementById('kp-prd-infinito')?.checked
+    controleEstoque: !estoqueInfinito
   };
   ['tipoCadastro', 'tipoProduto', 'promocao', 'precoPromocao', 'varejo', 'precoVarejo'].forEach(k => delete payload[k]);
   if(id){
@@ -12211,7 +12272,7 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   salvar(); aviso('Chamado salvo', 'success'); if(c) abrirChamadosContrato(c.id); else { closeK(); if(typeof renderOs === 'function') renderOs(); } if(typeof renderProdutos === 'function') renderProdutos();
 };
 function thChamado(col, label, cId){ return `<th onclick="chamadosSortRefino('${col}','${cId}')" class="px-4 py-3 cursor-pointer hover:text-[#0a1e8a]">${label}${STATE.chamadoSort===col?' ▲':''}</th>`; }
-window.aplicarBuscaChamadosRefino = function(cId){ STATE.chamadoBusca = document.getElementById('kr-ch-busca')?.value || ''; STATE.chamadoStatus = document.getElementById('kr-ch-status')?.value || 'abertos'; abrirChamadosContrato(cId); };
+window.aplicarBuscaChamadosRefino = function(cId){ STATE.chamadoBusca = document.getElementById('kr-ch-busca')?.value || ''; const filtro=document.getElementById('kr-ch-status'); STATE.chamadoStatus = filtro ? filtro.value : 'abertos'; abrirChamadosContrato(cId); };
 window.chamadosSortRefino = function(col,cId){ STATE.chamadoSort = col; abrirChamadosContrato(cId); };
 window.abrirChamadosContrato = function(contratoId){
   const c = getCtr(contratoId); if(!c) return;
@@ -18439,7 +18500,18 @@ const oldNova=window.novaVenda; if(typeof oldNova==='function') window.novaVenda
 // v5.22.84 — impressão livre: a venda imprime em qualquer situação (salva,
 // aberta, faturada, orçamento), no formato Vendas ou Ordem de Serviço.
 // A trava antiga ("Fature a notinha antes de imprimir") foi removida a pedido.
-window.estornarVendaParaEditar=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return; if(!confirm('Estornar esta notinha para permitir edição?')) return; v.status='estornada'; v.estornada=true; (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }}); salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success'); if(typeof renderVendas==='function') renderVendas(); };
+  window.estornarVendaParaEditar=function(id){
+    const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return;
+    const concluir=function(ok){
+      if(!ok) return;
+      v.status='estornada'; v.estornada=true;
+      (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }});
+      salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success');
+      if(typeof renderVendas==='function') renderVendas();
+    };
+    if(typeof window.confirmSistema==='function') window.confirmSistema('Estornar esta notinha para permitir edição?','Estornar venda').then(concluir);
+    else if(typeof toast==='function') toast('A confirmação do sistema não está disponível; a venda não foi estornada.','error');
+  };
 
 // ── bloqueio visual para faturados ────────────────────────────────────────
 document.addEventListener('focusin',ev=>{ const root=document.getElementById('modal-root'); if(!root||root.classList.contains('hidden')) return; const vendaId=window.__vosForm&&window.__vosForm.vendaId; const v=vendaId&&(db.vendas||[]).find(x=>x.id===vendaId); if(v&&['faturado','finalizada'].includes(low(v.status))&&ev.target.matches('input,textarea,select')){ ev.target.blur(); toast('Venda faturada: estorne para alterar.','info'); } });
@@ -20310,6 +20382,7 @@ try{
     Object.entries(delMap).forEach(([name, gen])=>{
       if(window[name]){
         const orig = window[name];
+        if(name==='deleteProduto' && window.AJUSTES_V51916_PURE && window.AJUSTES_V51916_PURE.deleteProdutoConfirmaInternamente) return;
         window[name] = function(...args){
           const msg = typeof gen==='function'? gen(...args) : gen;
           confirmSistema(msg, 'Excluir').then(ok=>{ if(ok){ allowLegacyConfirmOnce(); orig.apply(this,args); } });
@@ -22546,6 +22619,17 @@ function listaChamadosFiltrada(opts){
   return list.sort((a,b)=>new Date(b.dataAbertura||0)-new Date(a.dataAbertura||0));
 }
 
+/* LC_CHAM_STATUS_PURE_START */
+function filtrarChamadosPorStatus(lista,status){
+  const estado=String(status==null?'abertos':status).trim().toLowerCase();
+  const itens=Array.isArray(lista)?lista:[];
+  if(!estado) return itens.slice();
+  if(estado==='abertos') return itens.filter(o=>!['concluido','cancelado','fechado'].includes(String(o.status||'').trim().toLowerCase()));
+  return itens.filter(o=>String(o.status||'').trim().toLowerCase()===estado);
+}
+/* LC_CHAM_STATUS_PURE_END */
+window.LC_CHAM_STATUS_PURE={filtrarChamadosPorStatus};
+
 function htmlFiltrosChamado(prefix, contratoId){
   const F = window.__lcChamFiltro;
   const origem = contratoId ? '' : `<select id="${prefix}-origem" onchange="window.__lcChamFiltro.origem=this.value; ${prefix==='lcg'?'abrirHistoricoChamadosGeral()':'abrirChamadosContrato(\''+contratoId+'\')'}" class="h-10 px-2 rounded-xl border text-[12px]"><option value="todos" ${F.origem==='todos'?'selected':''}>Todos</option><option value="contrato" ${F.origem==='contrato'?'selected':''}>Chamados de contrato</option><option value="avulso" ${F.origem==='avulso'?'selected':''}>Chamados fora de contrato</option></select>`;
@@ -22563,9 +22647,18 @@ function htmlFiltrosChamado(prefix, contratoId){
   </div>`;
 }
 
+/* LC_CHAM_STATUS_LABEL_PURE_START */
+function apresentacaoStatusChamado(status){
+  const st=String(status||'aberto').trim().toLowerCase();
+  const labels={aberto:'Aberto',concluido:'Finalizado',cancelado:'Cancelado',fechado:'Fechado',excluido:'Excluído',estornado:'Estornado'};
+  const tone=st==='concluido'?'ok':(['cancelado','fechado','excluido','estornado'].includes(st)?'info':'wait');
+  return {label:labels[st]||(st?st.charAt(0).toUpperCase()+st.slice(1):'Aberto'),tone};
+}
+/* LC_CHAM_STATUS_LABEL_PURE_END */
+
 function linhaChamado(o, contratoId){
   const cli = (db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const fin = o.status==='concluido';
+  const statusUi=apresentacaoStatusChamado(o.status);
   const deContrato = chamadoDeContrato(o);
   const click = contratoId
     ? `openModalChamadoCompleto('${o.id}','${contratoId}')`
@@ -22577,7 +22670,7 @@ function linhaChamado(o, contratoId){
     <td class="px-3 py-2">${esc(o.descricao||'')}</td>
     <td class="px-3 py-2">${esc(o.modelo||o.serie||'')}</td>
     <td class="px-3 py-2">${esc(o.tecnico||'')}</td>
-    <td class="px-3 py-2"><span class="neo-status ${fin?'ok':'wait'}">${fin?'Finalizado':'Aberto'}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
+    <td class="px-3 py-2"><span class="neo-status ${statusUi.tone}">${esc(statusUi.label)}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
     <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
       <button onclick="window.imprimirChamadoAgoraV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-[#0a1e8a] hover:bg-blue-50" title="Imprimir direto, sem abrir o chamado"><i class="ph ph-printer"></i></button>
       <button onclick="window.excluirChamadoV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50" title="Excluir chamado"><i class="ph ph-trash"></i></button>
@@ -22664,7 +22757,9 @@ window.abrirChamadosContrato = function(contratoId){
   setTimeout(()=>{
     const body = document.getElementById('modal-body');
     if(!body) return;
-    const list = listaChamadosFiltrada({ contratoId });
+    const statusSelect=document.getElementById('kr-ch-status');
+    const status=statusSelect?statusSelect.value:'abertos';
+    const list = filtrarChamadosPorStatus(listaChamadosFiltrada({ contratoId }),status);
     const extra = document.getElementById('lc-filtros-ctr');
     if(!extra){
       const wrap = document.createElement('div');
@@ -22754,6 +22849,22 @@ function atualizarColorPorImpressora(equipId){
   }
 }
 
+/* LC_EDIT_COLOR_PURE_START */
+function valorContadorColorEditado(os){
+  if(!os || os.contadorColor===null || os.contadorColor===undefined || String(os.contadorColor).trim()==='') return null;
+  return String(os.contadorColor);
+}
+function contadorColorParaSalvar(campo, osExistente){
+  if(campo && !campo.disabled){
+    const raw=String(campo.value??'').trim();
+    if(raw==='') return null;
+    const parsed=Number(raw.replace(',','.'));
+    return Number.isFinite(parsed)?parsed:null;
+  }
+  return osExistente && osExistente.contadorColor!==null && osExistente.contadorColor!==undefined ? osExistente.contadorColor : null;
+}
+/* LC_EDIT_COLOR_PURE_END */
+
 const _auto = window.autoPreencherDadosChamado;
 if(typeof _auto==='function'){
   window.autoPreencherDadosChamado = function(equipId){
@@ -22774,14 +22885,16 @@ if(typeof _openCham==='function'){
     setTimeout(()=>{
       injetarCamposChamado(true);
       const o = osId && (db.os||[]).find(x=>x.id===osId);
+      const colorAtualSalvo=o?valorContadorColorEditado(o):null;
       if(o){
         const da = document.getElementById('lc-data-atend'); if(da) da.value = dia(o.dataAtendimento||'');
         const pc = document.getElementById('lc-pecas'); if(pc) pc.value = o.pecasTexto || (Array.isArray(o.pecas)?o.pecas.map(p=>p.descricao).join(', '):'') || '';
-        const ca = document.getElementById('lc-cont-color-atu'); if(ca && o.contadorColor!=null) ca.value = o.contadorColor;
+        const ca = document.getElementById('lc-cont-color-atu'); if(ca && colorAtualSalvo!==null) ca.value = colorAtualSalvo;
       }
       if(o && o.equipamentoId) atualizarColorPorImpressora(o.equipamentoId);
       const eqSel = document.getElementById('ko-equip')?.value;
       if(eqSel) atualizarColorPorImpressora(eqSel);
+      if(colorAtualSalvo!==null){ const ca=document.getElementById('lc-cont-color-atu'); if(ca) ca.value=colorAtualSalvo; }
       marcarDirtyChamado();
     }, 80);
     setTimeout(()=>injetarCamposChamado(true), 200);
@@ -22838,10 +22951,13 @@ function validarFinalizar(contrato){
 }
 
 function coletarExtrasChamado(){
+  const colorEl=document.getElementById('lc-cont-color-atu');
+  const editId=window.modalContext&&window.modalContext.id;
+  const osExistente=editId&&(db.os||[]).find(x=>x.id===editId);
   return {
     dataAtendimento: document.getElementById('lc-data-atend')?.value || '',
     pecasTexto: document.getElementById('lc-pecas')?.value || '',
-    contadorColor: document.getElementById('lc-cont-color-atu')?.disabled ? null : n(document.getElementById('lc-cont-color-atu')?.value, null),
+    contadorColor: contadorColorParaSalvar(colorEl,osExistente),
     contadorColorAntigo: n(document.getElementById('lc-cont-color-ant')?.value, 0)
   };
 }
@@ -23060,7 +23176,6 @@ if(typeof _lei2==='function' && !_lei2.__lcTodos){
 
 console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.17.0');
 })();
-
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_chamados_fix_patch.js", e); }
 ;
@@ -23784,6 +23899,17 @@ if(typeof _open==='function'){
 }
 
 // wrap save: cliente do contrato + venda
+/* LC_V5172_COLOR_PURE_START */
+function contadorColorAoSalvar(osExistente, campo){
+  if(campo && !campo.disabled){
+    const raw=String(campo.value??'').trim();
+    if(raw==='') return null;
+    const parsed=Number(raw.replace(',','.'));
+    return Number.isFinite(parsed)?parsed:null;
+  }
+  return osExistente && osExistente.contadorColor!==null && osExistente.contadorColor!==undefined ? osExistente.contadorColor : null;
+}
+/* LC_V5172_COLOR_PURE_END */
 const _sav=window.salvarChamadoCompleto;
 if(typeof _sav==='function' && !_sav.__v5172){
   window.salvarChamadoCompleto=function(osId,contratoId){
@@ -23791,9 +23917,11 @@ if(typeof _sav==='function' && !_sav.__v5172){
     if(c && c.clienteId){
       // garante cliente do contrato
     }
+    const osExistente=osId&&(db.os||[]).find(x=>x.id===osId);
+    const colorEl=document.getElementById('lc-cont-color-atu');
     const extras={
       dataAtendimento:document.getElementById('lc-data-atend')?.value||'',
-      contadorColor: document.getElementById('lc-cont-color-atu') && !document.getElementById('lc-cont-color-atu').disabled ? n(document.getElementById('lc-cont-color-atu').value,null) : null,
+      contadorColor: contadorColorAoSalvar(osExistente,colorEl),
       quantidadeColor: n(document.getElementById('lc-qtd-color')?.value,0)
     };
     const r=_sav.apply(this,arguments);
@@ -24619,8 +24747,12 @@ function contadorDaLeitura(equipId, cor){
     (l.itens||[]).forEach(it=>{
       const pr=it.parqueId&&(db.parque||[]).find(x=>x.id===it.parqueId);
       if(it.equipamentoId!==equipId && !(pr&&pr.equipamentoId===equipId)) return;
+      const medidor=String(it.medidor||it.medidorLabel||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const isColor=medidor.startsWith('color');
+      const isPreto=medidor.startsWith('preto')||medidor.startsWith('pb')||medidor.startsWith('black');
+      if(!isColor&&!isPreto) return; // Scanner e medidores desconhecidos não são Preto nem Color.
       if(!best.d||new Date(d)>=new Date(best.d||0)){
-        if(/color/i.test(it.medidor||it.medidorLabel||'')) best={d,pb:best.pb,cor:it.atual};
+        if(isColor) best={d,pb:best.pb,cor:it.atual};
         else best={d,pb:it.atual,cor:best.cor};
       }
     });
@@ -24725,17 +24857,28 @@ if(window.salvarChamadoAvulso && !window.salvarChamadoAvulso.__noCnt){
 }
 
 // Preenche antigo do chamado
+/* LC_EDIT_COUNTER_PURE_START */
+function devePreservarPBEditado(os){
+  return !!(os && String(os.status||'').toLowerCase()==='concluido' && os.contadorAtual!==null && os.contadorAtual!==undefined && String(os.contadorAtual).trim()!=='');
+}
+/* LC_EDIT_COUNTER_PURE_END */
 const _auto=window.autoPreencherDadosChamado;
 if(typeof _auto==='function'){
   window.autoPreencherDadosChamado=function(equipId, manter, ignoreOsId){
+    const idEdit=ignoreOsId||(window.modalContext&&window.modalContext.id)||null;
+    const chamadoEditando=idEdit&&(db.os||[]).find(o=>o.id===idEdit);
+    const atuAntes=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
+    const valorAtualSalvo=atuAntes?atuAntes.value:'';
+    const preservarAtual=devePreservarPBEditado(chamadoEditando);
     const r=_auto.apply(this,arguments);
-    const id=ignoreOsId|| (window.modalContext&&window.modalContext.id)||null;
+    const id=idEdit;
     const ant=document.getElementById('ko-cont-ant')||document.getElementById('ca-cont-ant');
     if(ant&&equipId) ant.value=window.lcContadorAntigoChamado(equipId,false,id);
     const ca=document.getElementById('lc-cont-color-ant')||document.getElementById('ca-cont-color-ant');
     if(ca&&equipId) ca.value=window.lcContadorAntigoChamado(equipId,true,id);
     const atu=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
-    if(atu && !manter) atu.value='';
+    if(atu && preservarAtual) atu.value=valorAtualSalvo;
+    else if(atu && !manter) atu.value='';
     if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
     if(typeof calcChamadoAvulso==='function') calcChamadoAvulso();
     return r;
@@ -27773,6 +27916,16 @@ function low(v){ return String(v == null ? '' : v).toLowerCase().trim(); }
 function sess(){ return typeof getSession === 'function' ? getSession() : null; }
 function avisar(m){ if(typeof window.lfbAlert === 'function') return window.lfbAlert(m, 'Aviso'); else if(typeof toast === 'function') return toast(m, 'info'); }
 function confirmar(m, t){ return typeof window.confirmSistema === 'function' ? window.confirmSistema(m, t || 'Confirmar') : Promise.resolve(false); }
+function produtoDaEmpresa(dbRef,id,empresaId){
+  if(!id||!empresaId) return null;
+  return (dbRef&&dbRef.produtos||[]).find(function(p){ return p&&String(p.id)===String(id)&&p.empresaId===empresaId; })||null;
+}
+function produtosDaEmpresa(dbRef,ids,empresaId){
+  if(!empresaId) return [];
+  var wanted=new Set((ids||[]).map(String));
+  return (dbRef&&dbRef.produtos||[]).filter(function(p){ return p&&p.empresaId===empresaId&&wanted.has(String(p.id)); });
+}
+window.AJUSTES_V51916_PURE = { produtoDaEmpresa:produtoDaEmpresa, produtosDaEmpresa:produtosDaEmpresa, deleteProdutoConfirmaInternamente:true };
 
 // ═════════════════════════════════════════════════════════════════════════
 // Item 1 — venda faturada abre na tela principal (cadastro), travada
@@ -27792,37 +27945,71 @@ if(typeof _hist51916 === 'function'){
 // Item 2 — excluir produto (corrige confirm quebrado + seleção múltipla)
 // ═════════════════════════════════════════════════════════════════════════
 window.excluirProdutoUnificado = function(){
+  const s = sess();
+  if(!s||!s.empresaId){ avisar('Não foi possível identificar a empresa da sessão. Nenhum produto foi excluído.'); return Promise.resolve(false); }
   const checks = Array.from(document.querySelectorAll('input[name="produto-check-lote"]:checked'));
-  let alvos = [];
-  if(checks.length){
-    alvos = checks.map(ch => (db.produtos || []).find(x => x.id === ch.value)).filter(Boolean);
+  const ids = Array.from(new Set(checks.map(ch => String(ch.value || '')).filter(Boolean)));
+  const alvos = produtosDaEmpresa(db, ids, s.empresaId);
+  if(!alvos.length){ avisar('Marque os produtos desta empresa para excluir.'); return Promise.resolve(false); }
+  if(typeof window.confirmSistema !== 'function'){
+    avisar('A confirmação do sistema não está disponível. Os produtos foram mantidos.');
+    return Promise.resolve(false);
   }
-  if(!alvos.length){ avisar('Marque os produtos na tabela para excluir.'); return; }
-  confirmar('Deseja excluir ' + alvos.length + ' produto(s)?', 'Excluir Produtos').then(function(ok){
-    if(!ok) return;
-    alvos.forEach(function(p){
-      db.produtos = (db.produtos || []).filter(x => x.id !== p.id);
+  const idsAlvo = alvos.map(p => String(p.id));
+  let confirmacao;
+  try{ confirmacao = confirmar('Deseja excluir ' + alvos.length + ' produto(s)?', 'Excluir Produtos'); }
+  catch(e){ avisar('Não foi possível confirmar a exclusão. Os produtos foram mantidos.'); return Promise.resolve(false); }
+  return Promise.resolve(confirmacao).then(function(ok){
+    if(ok !== true){ if(ok !== false) avisar('Não foi possível confirmar a exclusão. Os produtos foram mantidos.'); return false; }
+    const sessaoAtual = sess();
+    if(!sessaoAtual || sessaoAtual.empresaId !== s.empresaId){ avisar('A empresa da sessão mudou. Nenhum produto foi excluído.'); return false; }
+    const atuais = produtosDaEmpresa(db, idsAlvo, s.empresaId);
+    if(!atuais.length){ avisar('Os produtos selecionados não estão mais disponíveis nesta empresa.'); return false; }
+    const idsAtuais = new Set(atuais.map(p => String(p.id)));
+    db.produtos = (db.produtos || []).filter(x => !(x && x.empresaId === s.empresaId && idsAtuais.has(String(x.id))));
+    atuais.forEach(function(p){
       if(typeof logAction === 'function') logAction('produto', 'excluir', p.id, 'Excluído produto ' + (p.nome || ''));
     });
     if(typeof saveDB === 'function') saveDB();
     if(typeof renderProdutos === 'function') renderProdutos();
     if(typeof renderAuditoria === 'function') renderAuditoria();
-    if(typeof toast === 'function') toast(alvos.length + ' produto(s) excluído(s)', 'success');
+    if(typeof toast === 'function') toast(atuais.length + ' produto(s) excluído(s)', 'success');
+    return true;
+  },function(){
+    avisar('Não foi possível confirmar a exclusão. Os produtos foram mantidos.');
+    return false;
   });
 };
 
 // Corrige a função original (sem confirm() quebrado)
 window.deleteProduto = function(id){
-  const p = (db.produtos || []).find(x => x.id === id);
-  if(!p) return;
-  confirmar('Excluir produto "' + (p.nome || '') + '"?', 'Excluir Produto').then(function(ok){
-    if(!ok) return;
-    db.produtos = (db.produtos || []).filter(x => x.id !== id);
-    if(typeof logAction === 'function') logAction('produto', 'excluir', id, 'Excluído produto ' + (p.nome || ''));
+  const s = sess();
+  if(!s||!s.empresaId){ avisar('Não foi possível identificar a empresa da sessão. Nenhum produto foi excluído.'); return Promise.resolve(false); }
+  const p = produtoDaEmpresa(db, id, s.empresaId);
+  if(!p){ avisar('Produto não encontrado nesta empresa.'); return Promise.resolve(false); }
+  if(typeof window.confirmSistema !== 'function'){
+    avisar('A confirmação do sistema não está disponível. O produto foi mantido.');
+    return Promise.resolve(false);
+  }
+  let confirmacao;
+  try{ confirmacao = confirmar('Excluir produto "' + (p.nome || '') + '"?', 'Excluir Produto'); }
+  catch(e){ avisar('Não foi possível confirmar a exclusão. O produto foi mantido.'); return Promise.resolve(false); }
+  return Promise.resolve(confirmacao).then(function(ok){
+    if(ok !== true){ if(ok !== false) avisar('Não foi possível confirmar a exclusão. O produto foi mantido.'); return false; }
+    const sessaoAtual = sess();
+    if(!sessaoAtual || sessaoAtual.empresaId !== s.empresaId){ avisar('A empresa da sessão mudou. Nenhum produto foi excluído.'); return false; }
+    const atual = produtoDaEmpresa(db, id, s.empresaId);
+    if(!atual){ avisar('Produto não encontrado nesta empresa.'); return false; }
+    db.produtos = (db.produtos || []).filter(x => !(x && String(x.id) === String(id) && x.empresaId === s.empresaId));
+    if(typeof logAction === 'function') logAction('produto', 'excluir', id, 'Excluído produto ' + (atual.nome || ''));
     if(typeof saveDB === 'function') saveDB();
     if(typeof renderProdutos === 'function') renderProdutos();
     if(typeof renderAuditoria === 'function') renderAuditoria();
     if(typeof toast === 'function') toast('Produto excluído', 'success');
+    return true;
+  },function(){
+    avisar('Não foi possível confirmar a exclusão. O produto foi mantido.');
+    return false;
   });
 };
 
@@ -34699,11 +34886,27 @@ try{
 'use strict';
 
 function soNumeros(v){ return String(v==null?'':v).replace(/\D/g,''); }
+function valorPrecoRecarga(value){
+  var texto=String(value==null?'':value).trim();
+  var valor=texto===''?0:Number(texto.replace(',','.'));
+  return {ok:Number.isFinite(valor)&&valor>=0,valor:valor};
+}
+function recargaDaEmpresa(lista,id,empresaId){
+  if(!id||!empresaId) return null;
+  return (lista||[]).find(function(r){ return r&&String(r.id)===String(id)&&r.empresaId===empresaId; })||null;
+}
+function codigoRecargaDuplicado(lista,empresaId,codigo,ignorarId){
+  var alvo=soNumeros(codigo);
+  if(!empresaId||!alvo) return false;
+  return (lista||[]).some(function(r){
+    return r&&r.empresaId===empresaId&&String(r.id)!==String(ignorarId||'')&&soNumeros(r.codigo)===alvo;
+  });
+}
 function proximoCodigoRecarga(lista, empresaId){
   var max=0;
   (lista||[]).forEach(function(r){
     if(!r) return;
-    if(empresaId && r.empresaId && r.empresaId!==empresaId) return;
+    if(!empresaId || r.empresaId!==empresaId) return;
     var n=parseInt(soNumeros(r.codigo),10)||0;
     if(n>max) max=n;
   });
@@ -34715,7 +34918,7 @@ function filtrarRecargas(lista, empresaId, q){
   var low=String(q||'').toLowerCase().trim();
   return (lista||[]).filter(function(r){
     if(!r || r.status==='inativo' || r.status==='excluido') return false;
-    if(empresaId && r.empresaId && r.empresaId!==empresaId) return false;
+    if(!empresaId || r.empresaId!==empresaId) return false;
     if(!low) return true;
     return [r.codigo, r.nome, r.marca].some(function(x){ return String(x||'').toLowerCase().includes(low); });
   });
@@ -34726,7 +34929,10 @@ window.RECARGAS_PURE = {
   proximoCodigoRecarga: proximoCodigoRecarga,
   ehTipoRecarga: ehTipoRecarga,
   recargaPodeVenderSemEstoque: recargaPodeVenderSemEstoque,
-  filtrarRecargas: filtrarRecargas
+  filtrarRecargas: filtrarRecargas,
+  valorPrecoRecarga: valorPrecoRecarga,
+  recargaDaEmpresa: recargaDaEmpresa,
+  codigoRecargaDuplicado: codigoRecargaDuplicado
 };
 
 if(typeof document==='undefined') return;
@@ -34762,8 +34968,23 @@ window.abrirAbaRecargas = function(){
 
 window.aplicarBuscaRecargas = function(){
   var el = document.getElementById('search-recargas');
+  var ativo = document.activeElement;
+  var view = document.getElementById('view-produtos');
+  var restaurarFoco = !!(el && (ativo===el || (view && view.contains(ativo) && ativo.getAttribute && ativo.getAttribute('title')==='Pesquisar')));
+  var pos = restaurarFoco ? {
+    inicio: el.selectionStart==null?el.value.length:el.selectionStart,
+    fim: el.selectionEnd==null?el.value.length:el.selectionEnd,
+    direcao: el.selectionDirection||'none'
+  } : null;
   window.__recargasBusca = el ? el.value : '';
   window.renderRecargas();
+  if(pos){
+    var novo=document.getElementById('search-recargas');
+    if(novo){
+      novo.focus();
+      try{novo.setSelectionRange(pos.inicio,pos.fim,pos.direcao);}catch(e){}
+    }
+  }
 };
 window.recargasSort = function(col){
   var st = window.__recargasSort;
@@ -34823,7 +35044,7 @@ window.renderRecargas = function(){
 window.abrirModalRecarga = function(id){
   var s = sess(); if(!s) return;
   var isEdit = !!id;
-  var r = isEdit ? store().find(function(x){ return x.id===id && (!x.empresaId || x.empresaId===s.empresaId); }) : {
+  var r = isEdit ? recargaDaEmpresa(store(),id,s.empresaId) : {
     codigo: proximoCodigoRecarga(store(), s.empresaId), nome:'', marca:'', preco:0
   };
   if(!r){ aviso('Recarga não encontrada','Recargas'); return; }
@@ -34837,7 +35058,7 @@ window.abrirModalRecarga = function(id){
     '<div class="md:col-span-2"><label class="block font-bold text-slate-600 mb-1">Descrição *</label><input id="rc-nome" value="'+esc(r.nome||'')+'" class="w-full h-10 px-3 rounded-xl border font-semibold" placeholder="Ex.: Recarga HP 85A"></div></div>'+
     '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">'+
     '<div><label class="block font-bold text-slate-600 mb-1">Marca</label><input id="rc-marca" value="'+esc(r.marca||'')+'" class="w-full h-10 px-3 rounded-xl border"></div>'+
-    '<div><label class="block font-bold text-slate-600 mb-1">Valor venda R$</label><input id="rc-preco" type="number" step="0.01" value="'+(r.preco||0)+'" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"></div></div>'+
+    '<div><label class="block font-bold text-slate-600 mb-1">Valor venda R$</label><input id="rc-preco" type="number" min="0" step="0.01" value="'+(r.preco||0)+'" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"></div></div>'+
     '<p class="text-[12px] text-slate-500">Sem estoque. Sempre disponível na venda Recarga de toner.</p></div>';
   document.getElementById('modal-footer').innerHTML =
     '<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
@@ -34850,22 +35071,29 @@ window.abrirModalRecarga = function(id){
 };
 
 window.salvarRecarga = function(id){
-  var s = sess(); if(!s) return;
+  var s = sess(); if(!s||!s.empresaId) return;
+  var ex = id ? recargaDaEmpresa(store(),id,s.empresaId) : null;
+  if(id&&!ex){ aviso('Recarga não encontrada nesta empresa','Recargas'); return; }
   var nome = String((document.getElementById('rc-nome')||{}).value||'').trim();
   if(!nome){ aviso('Informe a descrição da recarga.','Recargas'); return; }
   var codigo = soNumeros((document.getElementById('rc-cod')||{}).value) || proximoCodigoRecarga(store(), s.empresaId);
+  var preco = valorPrecoRecarga((document.getElementById('rc-preco')||{}).value);
+  if(!preco.ok){ aviso('O valor de venda deve ser um número igual ou maior que zero.','Recargas'); return; }
+  var codigoMudou = !ex || soNumeros(ex.codigo)!==codigo;
+  if(codigoMudou && codigoRecargaDuplicado(store(),s.empresaId,codigo,id)){
+    aviso('Já existe uma recarga com este código nesta empresa.','Recargas');
+    return;
+  }
   var payload = {
     empresaId: s.empresaId,
     codigo: codigo,
     nome: nome,
     marca: String((document.getElementById('rc-marca')||{}).value||'').trim(),
-    preco: parseFloat((document.getElementById('rc-preco')||{}).value)||0,
+    preco: preco.valor,
     status: 'ativo',
     semEstoque: true
   };
   if(id){
-    var ex = store().find(function(x){ return x.id===id; });
-    if(!ex){ aviso('Recarga não encontrada','Recargas'); return; }
     Object.assign(ex, payload, { atualizadoEm: new Date().toISOString(), atualizadoPorNome: s.usuarioNome });
     if(typeof logAction==='function') logAction('recarga','editar',id,'Recarga '+payload.nome+' alterada por '+s.usuarioNome);
   } else {
@@ -34885,19 +35113,37 @@ window.salvarRecarga = function(id){
 };
 
 window.excluirRecarga = function(id){
-  var s = sess(); if(!s) return;
-  var r = store().find(function(x){ return x.id===id; });
-  if(!r) return;
+  var s = sess(); if(!s||!s.empresaId) return Promise.resolve(false);
+  var r = recargaDaEmpresa(store(),id,s.empresaId);
+  if(!r){ aviso('Recarga não encontrada nesta empresa','Recargas'); return Promise.resolve(false); }
+  if(typeof window.confirmSistema!=='function'){
+    aviso('A confirmação do sistema não está disponível. A recarga foi mantida.','Recargas');
+    return Promise.resolve(false);
+  }
   var msg = 'Excluir a recarga '+ (r.codigo||'') +' — '+(r.nome||'')+'?';
   var okFn = function(){
-    db.recargas = store().filter(function(x){ return x.id!==id; });
+    var sessaoAtual=sess();
+    if(!sessaoAtual||sessaoAtual.empresaId!==s.empresaId){ aviso('A empresa da sessão mudou. A recarga foi mantida.','Recargas'); return false; }
+    var atual=recargaDaEmpresa(store(),id,s.empresaId);
+    if(!atual){ aviso('Recarga não encontrada nesta empresa','Recargas'); return false; }
+    db.recargas = store().filter(function(x){ return !(String(x.id)===String(id)&&x.empresaId===s.empresaId); });
     if(typeof logAction==='function') logAction('recarga','excluir',id,'Recarga excluída por '+s.usuarioNome);
     if(typeof saveDB==='function') saveDB();
     window.renderRecargas();
     if(typeof toast==='function') toast('Recarga excluída','success');
+    return true;
   };
-  if(typeof window.confirmSistema==='function') window.confirmSistema(msg,'Excluir recarga').then(function(ok){ if(ok) okFn(); });
-  else okFn();
+  var confirmacao;
+  try{ confirmacao=window.confirmSistema(msg,'Excluir recarga'); }
+  catch(e){ aviso('Não foi possível confirmar a exclusão. A recarga foi mantida.','Recargas'); return Promise.resolve(false); }
+  return Promise.resolve(confirmacao).then(function(ok){
+    if(ok===true) return okFn();
+    if(ok!==false) aviso('Não foi possível confirmar a exclusão. A recarga foi mantida.','Recargas');
+    return false;
+  },function(){
+    aviso('Não foi possível confirmar a exclusão. A recarga foi mantida.','Recargas');
+    return false;
+  });
 };
 
 if(typeof window.renderProdutos==='function' && !window.renderProdutos.__v52214rec){
@@ -51514,11 +51760,11 @@ function renderDepois(){
 function aviso(txt, titulo){
   if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Estornar'); return; }
   if(typeof toast==='function'){ toast(txt, 'info'); return; }
-  if(typeof alert==='function') alert(txt);
 }
 function confirma(txt, titulo, cb){
   if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Estornar venda').then(cb); return; }
-  cb(typeof confirm==='function' ? confirm(txt) : true);
+  if(typeof toast==='function') toast('A confirmação do sistema não está disponível; a operação não foi executada.','error');
+  cb(false);
 }
 
 // Individual — o botão "Estornar" do detalhe da venda já CHAMAVA
