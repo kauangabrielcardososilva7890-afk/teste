@@ -122,3 +122,15 @@ Conferi o relatório dele ponto a ponto (tudo verídico, inclusive as citações
 - Novo teste: `test_r67_nuvem_sem_token_fala.js` em `test_msg_02_nuvem.js` (23 asserções). Contagem de avisos do `test_faixa_botoes_r46.js`: 5 → 6.
 - Estado do build: **v7.3.11**, bundle sha `617d53cac6cc`, suíte 11 ✅ / 0 ❌ / 1 pulada (`jsdom` — sem egress de rede no sandbox; no PC dele: `npm install && node test_msg_11_jsdom.js`). O push desta rodada é o gatilho do build do Pages.
 - Continua **fora por ordem dele**: celular/APK e a frente comercial. Continua **com o dono**: ligar o corte 🔒 Texto-puro (código e teste prontos desde a r54; é operação, não pendência) e os prints das telas que ainda cortam informação para o resto do redesenho.
+
+
+## Reforço r68 — v7.3.12 (01/10/2026, à noite): busca de Contratos tinha duas verdades e o "Mostrar todos" só apagava uma
+
+Segundo relatório do QA externo, verificado claim por claim contra `b4690fd` (os dois arquivos citados e o manifest estão idênticos ao snapshot `1d76e53` que ele analisou — as linhas batem todas). **Diagnóstico dele: correto.** Único ponto que não se sustenta: o argumento de que a seção `test_ajustes_v52422.js` "nunca roda" porque está em `if(false)` — o runner de cada `test_msg_*.js` re-extrai os blocos entre `<<<<SECAO>>>>` e os executa em processo filho; ela roda, só que é 100% estática e nunca exercitava estado/DOM/cliques (§57.1).
+
+- **Reproduzi sem navegador**: `vm` + DOM de mentirinha carregando os dois patches reais com fixture sintética (QA-2026-001/002). Bateu na mosca a tabela dele: `busca='QA-2026-001'` vivo, `q=''`, caixa recheada, 1 linha, cartões Contratos 1 / Ativos 2 / R$ 300,00.
+- **Conserto (1 linha de caminho)**: `ajustes_v52237_contratos_filtros_patch.js` — o botão agora renderiza por `contratosFinalBuscar()` (o caminho da lupa e do `onchange` do seletor), que lê o DOM e reconcilia os dois estados; o `renderContratos()` cru ficou só como reserva. Cartões voltam coerentes (2/2/R$ 300,00) porque a contradição era consequência, não causa.
+- **Teste novo que fica**: `test_r68_busca_contratos_mostrar_todos.js` (em `test_msg_04_clientes.js`, 31 seções) — reconstrói o "antes" na memória e **exige** que o sintoma apareça, depois exige o "depois", o controle negativo e a re-busca pós-reset. Alguém "consertar" por outro caminho sem reconciliar os dois estados = teste vermelho.
+- **Classe varrida**: só 2 arquivos desenham caixa de busca a partir de estado espelhado; a tela de Produtos já zerava `STATE.prod.q` antes de renderizar (o padrão), Contratos era o único fora. `ajustes_consolidados.js` tem o texto antigo mas não está no bundle (não executa). Consolidação num estado único = dívida registrada, não feita de propósito (mexeria na ordem do manifest, fiscalizada entrada por entrada).
+- Estado: v7.3.12, suíte 11 ✅ / 0 ❌ / 1 pulada (`jsdom`). Push desta rodada = gatilho do build do Pages.
+- Continua **com o dono**: ligar o corte 🔒 Texto-puro (código pronto desde a r54) e os prints das telas que cortam informação. Continua **fora por ordem dele**: celular/APK e frente comercial.

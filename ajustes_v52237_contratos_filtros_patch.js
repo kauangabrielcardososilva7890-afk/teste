@@ -234,7 +234,16 @@ function injetar(){
       STATE.campo='todos'; STATE.q='';
       var selEl=document.getElementById('ctr-filtro-campo'); if(selEl) selEl.value='todos';
       var bx=document.getElementById('search-contratos'); if(bx) bx.value='';
-      if(typeof window.renderContratos==='function') window.renderContratos();
+      // v7.3.12 (r68) — o renderer de Contratos tem ESTADO PRÓPRIO
+      // (window.__CONTRATOS_FINAL_STATE__.busca) e é ele que filtra as linhas e
+      // devolve o texto para dentro da caixa no fim do desenho. Limpar só o
+      // STATE desta extensão deixava o termo antigo vivo: sumia o filtro na
+      // faixa, mas a busca voltava sozinha na caixa e a tabela continuava com
+      // uma linha só, com os cartões discordando dela (Contratos 1 / Ativos 2).
+      // Daqui o botão vai pelo mesmo caminho da lupa e do onchange do seletor
+      // (linha ~218), que reconcilia os dois estados lendo o DOM.
+      if(typeof window.contratosFinalBuscar==='function') window.contratosFinalBuscar();
+      else if(typeof window.renderContratos==='function') window.renderContratos();
     };
     pai.insertBefore(btnTodos, busca);
   }

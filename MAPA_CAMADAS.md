@@ -380,7 +380,7 @@
 - sobrepõe: automacoes_contratos_caixa_fiscal_patch.js:267 — função, no carregamento
 - sobrepõe: automacoes_compras_recebimentos_contadores_patch.js:424 — função, no carregamento
 - sobrepõe: automacoes_finais_locacao_auxiliares_patch.js:422 — função, no carregamento
-- sobrepõe: ajustes_v52237_contratos_filtros_patch.js:245 — função, no carregamento
+- sobrepõe: ajustes_v52237_contratos_filtros_patch.js:254 — função, no carregamento
 - **GANHA →** ajustes_v52243_contratos_sort_patch.js:96 — função, no carregamento
 
 ### `__chamadoPecasTemp` — 11 escritas
@@ -1805,7 +1805,7 @@
 ### `contratosFinalBuscar` — 2 escritas
 
 - sobrepõe: contratos_final_patch.js:433 — função, no carregamento
-- **GANHA →** ajustes_v52237_contratos_filtros_patch.js:270 — função, no carregamento
+- **GANHA →** ajustes_v52237_contratos_filtros_patch.js:279 — função, no carregamento
 
 ### `contratosFinalSort` — 2 escritas
 

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 30 seções (r66 soma o contador de Leituras).
+// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 31 seções (r66 soma o contador de Leituras, r68 a busca de Contratos).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_clientes.js, test_loc.js, test_contratos_refino.js, test_contratos_final.js, test_rtf_template.js, test_contratos_visitas.js, test_automacoes_locacao_visitas.js, test_contratos_leituras_definitivo.js, test_fluxo_contrato_leitura_corrigido.js, test_leitura_busca_fluxo.js, test_leitura_detalhada_departamentos.js, test_leitura_impressao_compacta_produtos.js, test_sistema_clientes_loja.js, test_ajustes_v5214.js, test_ajustes_v52236.js, test_ajustes_v52245.js, test_ajustes_v52281.js, test_ajustes_v52435.js, test_ajustes_v52436.js, test_ajustes_v5250.js, test_contrato_impressora_nao_some.js, test_ajustes_v52410.js, test_ajustes_v52411.js, test_ajustes_v52422.js, test_ajustes_v5247.js, test_unificar_contratos_r49.js, test_r63_filtro.js, test_r64_vos.js, test_v5176_medidor_call_counter.js, test_r66_contador_leitura.js
+// Seções: test_r68_busca_contratos_mostrar_todos.js, test_clientes.js, test_loc.js, test_contratos_refino.js, test_contratos_final.js, test_rtf_template.js, test_contratos_visitas.js, test_automacoes_locacao_visitas.js, test_contratos_leituras_definitivo.js, test_fluxo_contrato_leitura_corrigido.js, test_leitura_busca_fluxo.js, test_leitura_detalhada_departamentos.js, test_leitura_impressao_compacta_produtos.js, test_sistema_clientes_loja.js, test_ajustes_v5214.js, test_ajustes_v52236.js, test_ajustes_v52245.js, test_ajustes_v52281.js, test_ajustes_v52435.js, test_ajustes_v52436.js, test_ajustes_v5250.js, test_contrato_impressora_nao_some.js, test_ajustes_v52410.js, test_ajustes_v52411.js, test_ajustes_v52422.js, test_ajustes_v5247.js, test_unificar_contratos_r49.js, test_r63_filtro.js, test_r64_vos.js, test_v5176_medidor_call_counter.js, test_r66_contador_leitura.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -1622,4 +1622,152 @@ ok(bundleTxt.includes('LDP_CONTADOR_PURE_START') && bundleTxt.includes('validarC
 if (falhas) { console.error('\n' + falhas + ' FALHA(S) — lancamento de contador ( Leituras )'); process.exit(1); }
 console.log('\nRESULTADO: lancamento de contador validado (vazio/negativo/decimal/abaixo do anterior) — OK');
 //<<<<SECAO:test_r66_contador_leitura.js:FIM>>>>
+}
+
+
+if (false) { // ═══ test_r68_busca_contratos_mostrar_todos.js (bloco extraído e rodado pelo runner do tema)
+//<<<<SECAO:test_r68_busca_contratos_mostrar_todos.js:INICIO>>>>
+// test_r68_busca_contratos_mostrar_todos.js — a busca de Locação > Contratos
+// tinha DOIS estados para o mesmo texto, e o botão "Mostrar todos" só limpava
+// um deles. Relatório do QA externo (01/10/2026) afirmou o sintoma; aqui ele é
+// reproduzido e provado consertado SEM navegador: os dois patches reais são
+// carregados num DOM de mentirinha e a sequência da tela é dirigida à mão
+// (digitar → lupa → apagar o texto → Mostrar todos).
+const fs = require('fs');
+const vm = require('vm');
+let falhas = 0;
+const ok = (nome, cond) => { if (cond) console.log('  ok - ' + nome); else { console.error('  FALHA - ' + nome); falhas++; } };
+
+const SRC_FINAL = fs.readFileSync('contratos_final_patch.js', 'utf8');
+const SRC_FILT = fs.readFileSync('ajustes_v52237_contratos_filtros_patch.js', 'utf8');
+
+// ── 1) o que está escrito nos arquivos ──────────────────────────────────────
+const iniBtn = SRC_FILT.indexOf('btnTodos.onclick=function(){');
+const fimBtn = SRC_FILT.indexOf('\n    };', iniBtn);
+const trechoBtn = SRC_FILT.slice(iniBtn, fimBtn);
+ok('o handler do botão existe no patch de filtros', iniBtn > 0 && trechoBtn.length > 80);
+ok('ele limpa o estado da extensão (campo e q)', /STATE\.campo='todos'; STATE\.q='';/.test(trechoBtn));
+ok('ele limpa a caixa de texto', /bx\.value='';/.test(trechoBtn));
+ok('renderiza pelo caminho canônico da lupa', /window\.contratosFinalBuscar\(\)/.test(trechoBtn));
+ok('o render cru ficou só como reserva (depois do else if)',
+  trechoBtn.indexOf('contratosFinalBuscar') < trechoBtn.indexOf('renderContratos'));
+ok('o botão e o seletor de filtro usam o mesmo caminho',
+  (SRC_FILT.match(/window\.contratosFinalBuscar\(\)/g) || []).length >= 2);
+ok('perigo documentado: o renderer final ainda repõe a caixa a partir do estado dele',
+  /value="\$\{esc\(STATE\.busca\)\}"/.test(SRC_FINAL) && /const q=up\(STATE\.busca\)/.test(SRC_FINAL));
+
+// ── 2) DOM de mentirinha + os dois patches carregados de verdade ───────────
+function arena() {
+  const porId = new Map();
+  function El(tag) {
+    const e = { tagName: tag, children: [], parentNode: null, _html: '', value: '', type: '', title: '', className: '', checked: false };
+    Object.defineProperty(e, 'id', { get() { return e._id || ''; }, set(v) { e._id = String(v); if (v) porId.set(String(v), e); }, enumerable: true });
+    Object.defineProperty(e, 'innerHTML', { get() { return e._html; }, set(v) { e._html = String(v); }, enumerable: true });
+    e.classList = { _s: new Set(), contains(c) { return this._s.has(c); }, add(c) { this._s.add(c); }, remove(c) { this._s.delete(c); } };
+    e.setAttribute = (k, v) => { e[k] = v; }; e.getAttribute = (k) => e[k]; e.removeAttribute = () => { };
+    e.appendChild = (c) => { if (c) { c.parentNode = e; e.children.push(c); } return c; };
+    e.insertBefore = (c) => { if (c) { c.parentNode = e; e.children.unshift(c); } return c; };
+    e.querySelectorAll = () => []; e.focus = () => { }; e.blur = () => { }; e.remove = () => { };
+    return e;
+  }
+  const view = El('div'); view.id = 'view-contratos';
+  const faixa = El('div'); view.appendChild(faixa);
+  const inp = El('input'); inp.id = 'search-contratos'; faixa.appendChild(inp);
+  const selStatus = El('select'); selStatus.id = 'filter-contrato-status'; faixa.appendChild(selStatus);
+  const document = {
+    createElement: El, getElementById: (id) => porId.get(id) || null, querySelectorAll: () => [],
+    addEventListener: () => { }, removeEventListener: () => { }, body: El('body'), documentElement: El('html'), hidden: false,
+  };
+  const db = {
+    contratos: [
+      { id: 'qa1', numero: 'QA-2026-001', empresaId: 'E1', status: 'ativo', valorMensalFixo: 100, dataInicio: '2026-01-10', dataFim: '2026-12-10' },
+      { id: 'qa2', numero: 'QA-2026-002', empresaId: 'E1', status: 'ativo', valorMensalFixo: 200, dataInicio: '2026-02-10', dataFim: '2026-12-10' },
+    ],
+    clientes: [], os: [], leituras: [], parque: [], equipamentos: [], locacoes: [], auditoria: [], vendas: [],
+  };
+  const win = {};
+  const contexto = {
+    window: win, document, db, console: { log() { }, warn() { }, error() { } },
+    getSession: () => ({ empresaId: 'E1', usuarioNome: 'QA Sintético', usuario: 'qa' }),
+    fmtMoney: (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    fmtDate: (v) => (v ? String(v) : '-'),
+    setTimeout: (fn) => { try { if (typeof fn === 'function') fn(); } catch (e) { } return 0; },
+    setInterval: () => 0, clearTimeout: () => { }, clearInterval: () => { },
+    localStorage: { getItem: () => null, setItem: () => { }, removeItem: () => { }, key: () => null, length: 0 },
+    navigator: { userAgent: 'node' }, location: { href: 'http://qa.local/', origin: 'http://qa.local' },
+    alert: () => { }, confirm: () => true, prompt: () => null, Blob: class { }, URL,
+  };
+  const noops = ['toast', 'aviso', 'saveDB', 'renderAuditoria', 'logAction', 'openModal', 'closeModal', 'closeK', 'uid', 'showApp', 'showModal', 'imprimir', 'salvar', 'registrarEvento', 'fecharModalOperacional'];
+  for (const k of noops) contexto[k] = () => '';
+  contexto.globalThis = contexto;
+  const cx = vm.createContext(contexto);
+  vm.runInContext(SRC_FINAL, cx, { filename: 'contratos_final_patch.js' });
+  return { win, view, inp, selStatus, porId, carregarFiltros: (src) => vm.runInContext(src, cx, { filename: 'filtros.js' }) };
+}
+const linhas = (html) => (html.match(/ondblclick="openContratoCompleto\(/g) || []).length;
+const caixa = (html) => { const m = html.match(/<input id="search-contratos" value="([^"]*)"/); return m ? m[1] : null; };
+const cartao = (html, nome) => { const m = html.match(new RegExp('>' + nome + '</p><p[^>]*>([^<]+)<')); return m ? m[1].trim() : null; };
+
+// ── 3) o ANTES, reconstruído na memória: botão renderizando pelo caminho cru ─
+const PAR_CANONICO = "      if(typeof window.contratosFinalBuscar==='function') window.contratosFinalBuscar();\n      else if(typeof window.renderContratos==='function') window.renderContratos();";
+const PAR_CRU = "      if(typeof window.renderContratos==='function') window.renderContratos();";
+ok('a reconstrução do "antes" é fiel (par canônico trocado por um só lugar)',
+  SRC_FILT.indexOf(PAR_CANONICO) === SRC_FILT.lastIndexOf(PAR_CANONICO));
+const SRC_ANTES = SRC_FILT.replace(PAR_CANONICO, PAR_CRU);
+
+function cena(srcFiltros, { buscaAnterior }) {
+  const a = arena();
+  a.carregarFiltros(srcFiltros);
+  const btn = a.porId.get('ctr-mostrar-todos');
+  if (buscaAnterior) { a.inp.value = buscaAnterior; a.win.contratosFinalBuscar(); }
+  else { a.win.renderContratos(); }
+  a.inp.value = '';                       // apaga o texto: sem lupa, sem Enter
+  btn.onclick();                          // Mostrar todos
+  const h = () => a.view.innerHTML;
+  return {
+    busca: a.win.__CONTRATOS_FINAL_STATE__.busca || '',
+    q: a.win.__CTR_FILTRO_V52237.q || '',
+    campo: a.win.__CTR_FILTRO_V52237.campo,
+    linhas: linhas(h()), caixa: caixa(h()),
+    contratos: cartao(h(), 'Contratos'), ativos: cartao(h(), 'Ativos'), mensalidade: cartao(h(), 'Mensalidade'),
+  };
+}
+
+const antes = cena(SRC_ANTES, { buscaAnterior: 'QA-2026-001' });
+console.log('  — antes do conserto: ' + JSON.stringify(antes));
+ok('o bug é real e reproduzível: a busca antiga sobrevivia ao reset', antes.busca === 'QA-2026-001' && antes.q === '');
+ok('o texto reaparecia na caixa desenhada', antes.caixa === 'QA-2026-001');
+ok('a tabela continuava com uma linha só', antes.linhas === 1);
+ok('e os cartões discordavam dela (Contratos 1 × Ativos 2 × R$ 300,00)',
+  antes.contratos === '1' && antes.ativos === '2' && antes.mensalidade === 'R$ 300,00');
+
+const depois = cena(SRC_FILT, { buscaAnterior: 'QA-2026-001' });
+console.log('  — depois do conserto: ' + JSON.stringify(depois));
+ok('os DOIS estados ficam vazios (fim da segunda fonte de verdade)', depois.busca === '' && depois.q === '');
+ok('a caixa fica vazia no desenho', depois.caixa === '');
+ok('todas as linhas voltam', depois.linhas === 2);
+ok('cartões coerentes com a tabela', depois.contratos === '2' && depois.ativos === '2' && depois.mensalidade === 'R$ 300,00');
+ok('o seletor da extensão volta para "todos"', depois.campo === 'todos');
+
+const controle = cena(SRC_FILT, { buscaAnterior: null });
+ok('controle negativo: sem busca anterior o botão não inventa termo',
+  controle.busca === '' && controle.q === '' && controle.caixa === '' && controle.linhas === 2);
+
+const a = arena(); a.carregarFiltros(SRC_FILT);
+a.inp.value = 'QA-2026-001'; a.win.contratosFinalBuscar();
+a.inp.value = ''; a.porId.get('ctr-mostrar-todos').onclick();
+a.inp.value = 'QA-2026-002'; a.win.contratosFinalBuscar();
+const h2 = a.view.innerHTML;
+ok('a busca continua funcionando depois do reset (acha o outro contrato)',
+  linhas(h2) === 1 && /QA-2026-002/.test(h2) && caixa(h2) === 'QA-2026-002' && !/QA-2026-001/.test(h2));
+
+// ── 4) o que vai no bundle publicado (é isso que o navegador executa) ───────
+for (const b of ['app.bundle.js', 'mobile/www/app.bundle.js']) {
+  const src = fs.readFileSync(b, 'utf8');
+  ok('bundle contém o botão pelo caminho canônico: ' + b, src.indexOf(PAR_CANONICO.replace(/\n/g, src.indexOf('\r\n') > 0 ? '\r\n' : '\n')) >= 0);
+}
+
+console.log('\nRESULTADO: ' + (falhas ? falhas + ' FALHA(S)' : 'ok — "Mostrar todos" reconcilia os dois estados de busca'));
+process.exit(falhas ? 1 : 0);
+//<<<<SECAO:test_r68_busca_contratos_mostrar_todos.js:FIM>>>>
 }

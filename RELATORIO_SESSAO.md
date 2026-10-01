@@ -8341,3 +8341,25 @@ retorno do saveDB() intocados de propósito (decisão registrada na §56.3).
 Teste novo test_r67_nuvem_sem_token_fala.js (23 asserções, 5 mundos falsos
 dirigindo v7015ConferirNuvem); contagem de avisos do faixa_botoes 5→6 com o
 motivo escrito. Suite 11-0-1. AUDITORIA §56 + handoff "Reforço r67".
+
+## r68 — 01/10/2026: "Mostrar todos" de Contratos devolvia a busca antiga (v7.3.12)
+Relatório do QA externo sobre a busca de Locação > Contratos. Conferido ponto a
+ponto no HEAD (os 2 arquivos citados + manifest idênticos ao snapshot 1d76e53
+dele): todas as 12 citações batem; caiu só o argumento de cobertura — a seção
+test_ajustes_v52422 roda sim (o runner do tema re-extrai cada <<<<SECAO>>>> e a
+executa em filho), é que era 100% estática. Reproduzi o bug sem navegador: vm +
+DOM de mentirinha carregando os dois patches reais com fixture sintética, e a
+mesma tabela dele saiu (busca viva no estado primário, 1 linha, cartões
+1/2/R$ 300,00). Causa: DOIS estados para o mesmo filtro (__CONTRATOS_FINAL_
+STATE__.busca e __CTR_FILTRO_V52237.q); o botão limpava o segundo e renderizava
+pelo caminho cru, aí o renderer desenhava de volta value=${esc(STATE.busca)}.
+Conserto: botão passa por contratosFinalBuscar() (mesmo caminho da lupa e do
+onchange do seletor) — reconcilia os dois lendo o DOM; render cru só reserva.
+Cartões viram 2/2/300 sozinhos (contradição era consequência). Teste novo
+test_r68_busca_contratos_mostrar_todos.js (31 seções no tema 04) reconstrói o
+"antes" na memória e exige o sintoma, depois o "depois", o controle negativo e a
+re-busca pós-reset. Classe varrida: só 2 telas desenham caixa de busca por
+estado espelhado; Produtos já zerava STATE.prod.q (padrão), Contratos era o
+único fora; ajustes_consolidados.js tem o texto velho mas não está no bundle.
+Consolidar num estado único = dívida registrada (mexeria na ordem do manifest).
+7.3.12 via npm run versao + 4 guias + mapa + mobile sync. Suite 11-0-1.

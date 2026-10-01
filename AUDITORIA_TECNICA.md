@@ -3432,3 +3432,68 @@ O achado central do QA é um **estado mudo**: sem token do aparelho, o `saveDB()
 | `node test_runner.js` | 11 grupos passaram, 0 falharam, 1 pulado (`jsdom`) |
 | `node mapa_camadas.js` | 1.089 nomes / 291 repetidos — sem alteração de base |
 | `mobile/sync-www.js` | 4 arquivos, 0 referências quebradas (só o pacote mecânico; celular fora de escopo por ordem dele) |
+
+
+## §57 — Rodada 68 (01/10/2026): a busca de Locação > Contratos tinha duas verdades (v7.3.12)
+
+Segundo relatório do QA externo, este sobre **texto que volta sozinho na caixa** ao clicar em **Mostrar todos**. Snapshot analisado por ele: `1d76e53` (r66). Como `contratos_final_patch.js`, `ajustes_v52237_contratos_filtros_patch.js` e o `bundle-manifest.json` estão **idênticos** entre `1d76e53` e o meu `b4690fd` (`git diff --stat` vazio), as citações de linha dele valem para o código atual sem ajuste.
+
+### 57.1 Conferência claim por claim
+
+| Alegação | Checado em | Bate |
+|---|---|---|
+| `__CONTRATOS_FINAL_STATE__ = {busca,status,sort}` é o estado primário do renderer | `contratos_final_patch.js:407` | ✅ |
+| `contratosFinalBuscar()` sincroniza o input → `STATE.busca` e renderiza | `:433` | ✅ |
+| O input **não** tem `oninput`: digitar/apagar sozinho nunca sincroniza nada | `:405` (`bindEnter` faz `removeAttribute('oninput')` e só liga Enter) | ✅ |
+| O render filtra por `STATE.busca` **e** devolve `value="${esc(STATE.busca)}"` para a caixa | `:439-447` | ✅ |
+| A extensão cria estado separado `__CTR_FILTRO_V52237 = {campo,q}` | `ajustes_v52237…:189` | ✅ |
+| `reporTexto()` só age com `STATE.q` cheio — não é a origem do termo | `:197-200` | ✅ |
+| **Mostrar todos** limpa `campo`/`q`/select/input mas chama `renderContratos()` cru, sem tocar no estado primário | `:233-238` | ✅ (era a linha 237) |
+| O wrapper do renderer filtra `db.contratos` temporariamente e restaura no `finally` | `:243-266` | ✅ |
+| O wrapper da `contratosFinalBuscar` sincroniza a extensão quando se usa a lupa — e o botão não passa por aí | `:268-276` | ✅ |
+| Ordem do bundle: `contratos_final_patch.js` (22) antes de `ajustes_v52237…` (146) | manifest lido no node: 22 e 146 exatos | ✅ |
+| Contradição dos cartões (Contratos 1 × Ativos 2 × R$ 300,00) | `ativos` é calculado de `db.contratos` (`:445`) **dentro** da janela do wrapper, `lista` passa ainda filtrada pela busca velha (`:442`) | ✅ reproduzido |
+| *`test_msg_04_clientes.js:1182` está em `if (false)`, logo aquelas asserções nunca rodam* | **Parcialmente errado**: o `if(false)` só impede a execução inline — o **runner do tema** (linhas 9-30 de todo `test_msg_*.js`) re-extrai cada bloco entre marcadores `<<<<SECAO:…>>>>` e o executa isolado em processo filho. A seção `test_ajustes_v52422.js` roda sim. O que **é** verdade: ela só faz `String.includes` estático (1206-1212) e nunca exercita estado, DOM nem cliques | ⚠️ |
+
+Reprodução deles está em `/home/ubuntu/teste-r66-review/evidence/contracts-search-restored.webp` — caminho fora do meu workspace, não abri. O resto eu reproduzi sozinho, abaixo.
+
+### 57.2 Reprodução sem navegador (o que virou teste permanente)
+
+`test_r68_busca_contratos_mostrar_todos.js` (em `test_msg_04_clientes.js`) carrega os **dois patches reais** num contexto isolado (`vm` + um DOM de mentirinha de ~30 linhas: `view-contratos`, `search-contratos`, `filter-contrato-status`, `createElement`/`insertBefore`/`innerHTML`), com `db` sintético de dois contratos (`QA-2026-001` R$ 100 e `QA-2026-002` R$ 200), e dirige a sequência da tela: digitar → lupa → apagar o texto → **Mostrar todos**.
+
+| Depois do clique | ANTES (render cru) | DEPOIS (caminho canônico) |
+|---|---|---|
+| `__CONTRATOS_FINAL_STATE__.busca` | `QA-2026-001` | `''` |
+| `__CTR_FILTRO_V52237.q` | `''` | `''` |
+| texto desenhado na caixa | `QA-2026-001` | vazio |
+| linhas na tabela | 1 | 2 |
+| Contratos / Ativos / Mensalidade | 1 / 2 / R$ 300,00 | 2 / 2 / R$ 300,00 |
+
+A coluna "ANTES" não é memória: o teste **reconstrói** o handler antigo na memória (troca o par canônico de volta pela chamada crua, com asserção de que o par aparece uma única vez) e exige que o sintoma apareça — assim o teste morre se alguém "consertar" o sintoma de outro jeito que não reconcilie os dois estados. Tem ainda controle negativo (sem busca anterior, o botão não inventa termo) e a volta por cima (pesquisar `QA-2026-002` depois do reset acha só ele, e o 001 some da caixa).
+
+### 57.3 O conserto
+
+`ajustes_v52237_contratos_filtros_patch.js`, no `btnTodos.onclick`: depois de normalizar o DOM, o botão passou a renderizar **pelo mesmo caminho da lupa**:
+
+```js
+if(typeof window.contratosFinalBuscar==='function') window.contratosFinalBuscar();
+else if(typeof window.renderContratos==='function') window.renderContratos();
+```
+
+`contratosFinalBuscar` lê o input e o seletor e escreve `STATE.busca`/`STATE.status`; o wrapper da extensão (que continua por trás dela) lê o mesmo DOM e escreve `q`/`campo`. Uma leitura, duas verdades reconciliadas — e o botão fica simétrico ao `sel.onchange` (`:215-220`), que já fazia exatamente isso.
+
+**Por que não fundir os dois estados num só** (a outra sugestão do relatório): o estado primário é lido por três camadas (renderer final, wrapper v52237, ordenação v52243) e a consolidação mexeria na ordem de patch, que `test_msg_04_clientes.js` fiscaliza entrada por entrada no manifest. O ganho seria estético; o risco, de quebrar tela boa. Fica anotado como dívida: *enquanto houver duas fontes de verdade para o mesmo filtro, todo botão de limpar precisa reconciliar as duas* — e agora há um teste que cobra isso nesta dupla.
+
+### 57.4 A classe do bug, varrida
+
+No app inteiro, só **dois** arquivos desenham a caixa de busca a partir de estado espelhado: `contratos_final_patch.js` (`STATE.busca`) e `fluxos_operacionais_patch.js` (`STATE.prod.q`, `STATE.ctr.q`). Na tela de Produtos, os botões de reset **já** fazem o certo — `limparBuscaProdutosOperacional`/`verTodosProdutos` zeram `STATE.prod.q` antes de renderizar (`:487-511`) — e é o padrão que a tela de Contratos agora segue. Os dois únicos outros candidatos apontados pela varredura (`notinha_patch.js:565` e `:805`) leem o DOM a cada render, sem espelho: nada a limpar lá. `ajustes_consolidados.js` carrega o texto antigo do botão, mas **não está no bundle** (verificado no manifest), então não executa.
+
+### 57.5 Provas da rodada
+
+| Verificação | Resultado |
+|---|---|
+| `node --check` no patch e no tema | OK |
+| `node test_msg_04_clientes.js` | TEMA OK: 31 seções (a nova executada de verdade pelo runner) |
+| `node build_bundle.js` / `sync_build.js --check` | 233 scripts; Sync OK v7.3.12, 0 soltos; bundle `app.bundle.js` e `mobile/www/app.bundle.js` contêm o par canônico (asserção no teste) |
+| `node test_runner.js` | 11 grupos passaram, 0 falharam, 1 pulado (`jsdom`) |
+| `mobile/sync-www.js` | 4 arquivos, 0 referências quebradas |
