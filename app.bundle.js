@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: de4606df7d461bfc
+ * scripts: 233 | sha256: e8ad73a6382555fd
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -23899,6 +23899,17 @@ if(typeof _open==='function'){
 }
 
 // wrap save: cliente do contrato + venda
+/* LC_V5172_COLOR_PURE_START */
+function contadorColorAoSalvar(osExistente, campo){
+  if(campo && !campo.disabled){
+    const raw=String(campo.value??'').trim();
+    if(raw==='') return null;
+    const parsed=Number(raw.replace(',','.'));
+    return Number.isFinite(parsed)?parsed:null;
+  }
+  return osExistente && osExistente.contadorColor!==null && osExistente.contadorColor!==undefined ? osExistente.contadorColor : null;
+}
+/* LC_V5172_COLOR_PURE_END */
 const _sav=window.salvarChamadoCompleto;
 if(typeof _sav==='function' && !_sav.__v5172){
   window.salvarChamadoCompleto=function(osId,contratoId){
@@ -23906,9 +23917,11 @@ if(typeof _sav==='function' && !_sav.__v5172){
     if(c && c.clienteId){
       // garante cliente do contrato
     }
+    const osExistente=osId&&(db.os||[]).find(x=>x.id===osId);
+    const colorEl=document.getElementById('lc-cont-color-atu');
     const extras={
       dataAtendimento:document.getElementById('lc-data-atend')?.value||'',
-      contadorColor: document.getElementById('lc-cont-color-atu') && !document.getElementById('lc-cont-color-atu').disabled ? n(document.getElementById('lc-cont-color-atu').value,null) : null,
+      contadorColor: contadorColorAoSalvar(osExistente,colorEl),
       quantidadeColor: n(document.getElementById('lc-qtd-color')?.value,0)
     };
     const r=_sav.apply(this,arguments);

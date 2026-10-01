@@ -1506,6 +1506,15 @@ ok(colorPure.contadorColorParaSalvar({disabled:false,value:'605'},null)===605, '
 ok(colorPure.contadorColorParaSalvar({disabled:false,value:''},null)===null, 'campo Color vazio não vira zero');
 ok(colorPure.contadorColorParaSalvar({disabled:true,value:''},{contadorColor:605})===605, 'campo desativado preserva Color histórico do chamado');
 ok(colorPure.contadorColorParaSalvar({disabled:true,value:''},null)===null, 'campo desativado em novo chamado permanece nulo');
+const v5172ColorSource=fs.readFileSync(__dirname+'/ajustes_v5172_patch.js','utf8');
+const v5172ColorStart=v5172ColorSource.indexOf('/* LC_V5172_COLOR_PURE_START */')+'/* LC_V5172_COLOR_PURE_START */'.length;
+const v5172ColorEnd=v5172ColorSource.indexOf('/* LC_V5172_COLOR_PURE_END */',v5172ColorStart);
+ok(v5172ColorStart>=0 && v5172ColorEnd>v5172ColorStart, 'wrapper posterior tem helper puro de preservação Color');
+const colorWrapPure=new Function(v5172ColorSource.slice(v5172ColorStart,v5172ColorEnd)+'; return contadorColorAoSalvar;')();
+ok(colorWrapPure({contadorColor:707},{disabled:true,value:''})===707, 'wrapper v5.17.2 preserva Color histórico ao editar com Color inativo');
+ok(colorWrapPure(null,{disabled:true,value:''})===null, 'wrapper v5.17.2 mantém novo chamado sem Color como nulo');
+ok(colorWrapPure(null,{disabled:false,value:'742'})===742, 'wrapper v5.17.2 salva Color informado em campo ativo');
+ok(v5172ColorSource.includes('contadorColor: contadorColorAoSalvar(osExistente,colorEl)'), 'wrapper aplica helper de retenção antes de gravar extras');
 ok(colorSource.indexOf('if(eqSel) atualizarColorPorImpressora(eqSel);') < colorSource.lastIndexOf('ca.value=colorAtualSalvo'), 'valor Color é reidratado depois da detecção da impressora');
 if(falhas){ console.error('\n'+falhas+' FALHA(S) — v5176 medidor/counter'); process.exit(1); }
 console.log('\nRESULTADO: v5176 contador + status Chamados passou!');
