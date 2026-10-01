@@ -1180,6 +1180,27 @@ window.openModalChamadoCompleto = function(osId, contratoId){
   }
 };
 
+// ── r66 — o "escolha a impressora" da OS ficou com dois botoes 6os quando o
+// <select> virou lista de bot6es (auditoria de bot6es mortos, rodadas 46/66).
+// Nenhuma regra nova: selecionar = chamar o autoPreencherDadosChamado de sempre
+// e pintar a escolha; editar = reabrir a lista.
+window.selecionarEquipamentoOS=function(eqId){
+  const alvo=(db.equipamentos||[]).find(e=>String(e.id)===String(eqId));
+  if(!alvo){ if(typeof toast==='function') toast('Impressora não encontrada','error'); return; }
+  const sel=document.getElementById('o-equip-sel'); if(sel) sel.value=alvo.id;
+  const nome=document.getElementById('o-equip-nome'); if(nome) nome.innerText=alvo.modelo||'Impressora';
+  const caixa=document.getElementById('o-equip-escolhida'); if(caixa) caixa.classList.remove('hidden');
+  const lista=document.getElementById('o-equip-lista'); if(lista) lista.classList.add('hidden');
+  if(typeof autoPreencherDadosChamado==='function'){ try{ autoPreencherDadosChamado(alvo.id); }catch(e){} }
+};
+window.editarEquipamentoOS=function(){
+  const lista=document.getElementById('o-equip-lista');
+  const caixa=document.getElementById('o-equip-escolhida');
+  if(!lista) return;
+  lista.classList.remove('hidden'); if(caixa) caixa.classList.add('hidden');
+  const primeiro=lista.querySelector('button'); if(primeiro) primeiro.focus();
+};
+
 window.mudarAbaChamado = function(aba){
   ['geral', 'finais', 'eq'].forEach(a => {
     const p = document.getElementById('painel-os-' + a);

@@ -12,6 +12,13 @@
 //
 // Vale para os menus da faixa azul (.module-menu), sugestões (.neo-suggest)
 // e qualquer lista marcada com data-menu-flutuante.
+//
+// v5.22.69 (r66 — 'telas apertadas', adiamento que ele liberou): o mesmo
+// cuidado agora vale para o MODAL. O corpo rola sozinho e o rodapé continua
+// vivo embaixo, o modal largo respeita a janela e, em tela estreita, as grades
+// de campos caem para 1 coluna. Em tela grande nada muda: as regras novas ficam
+// dentro de media queries (só a rolagem do corpo vale sempre, e ela é invisível
+// quando o conteúdo cabe).
 // ═══════════════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
@@ -56,16 +63,35 @@
     return { left: Math.round(left), top: Math.round(botao.top + botao.altura + 2) };
   }
 
+  // Regras da rodada 66 ('telas apertadas'). Ficam numa constante para que o
+  // teste confira exatamente o que vai para a página — e para o css() abaixo não
+  // duplicar nada.
+  var CSS_TELA_APERTADA =
+    '#modal-root #modal-box{max-height:94vh}' +
+    '#modal-root #modal-body{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}' +
+    '#modal-root #modal-footer{flex:0 0 auto}' +
+    '@media (max-width:1200px){' +
+      '#modal-root #modal-box{max-width:96vw}' +
+      '#modal-root #modal-body .grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}' +
+      '#modal-root #modal-body .flex.items-center.justify-end{flex-wrap:wrap;gap:6px}' +
+      '#modal-root #modal-footer button{white-space:nowrap}' +
+    '}' +
+    '@media (max-width:820px){' +
+      '#modal-root #modal-body .grid{grid-template-columns:1fr}' +
+      '#modal-root #modal-box{max-height:96vh}' +
+    '}';
   window.MENUS_TELA_PEQUENA_PURE = {
     ajusteNecessario: ajusteNecessario,
     precisaRolar: precisaRolar,
     posicaoDoMenu: posicaoDoMenu,
     FOLGA: FOLGA,
     MIN_ALTURA: MIN_ALTURA,
-    VERSAO: '5.22.67'
+    VERSAO: '5.22.69',
+    TELA_APERTADA: CSS_TELA_APERTADA,
   };
 
-  if (typeof document === 'undefined') return;
+
+if (typeof document === 'undefined') return;
 
   var SELETOR = '.module-menu, .neo-suggest, [data-menu-flutuante]';
 
@@ -80,7 +106,8 @@
       '.module-row.digi-row-rola::-webkit-scrollbar-thumb{background:#c7d2e4;border-radius:6px}' +
       '.module-row.digi-row-rola::-webkit-scrollbar-track{background:transparent}' +
       '.module-row.digi-row-rola > *{flex:0 0 auto}' +
-      '.module-row.digi-row-rola .module-menu{position:fixed;top:auto;left:auto;z-index:1200}';
+      '.module-row.digi-row-rola .module-menu{position:fixed;top:auto;left:auto;z-index:1200}' +
+      CSS_TELA_APERTADA;
     document.head.appendChild(st);
   }
 

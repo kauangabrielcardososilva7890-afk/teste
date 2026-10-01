@@ -89,8 +89,24 @@ Para a trilha de evidências, defeitos e decisões de correção, consulte [`AUD
 
 ### Continuidade (nada disso foi esquecido)
 
-1. **`AUDITORIA_TECNICA.md` §47 continua aberto:** `leitura_detalhada_departamentos_patch.js:141` (`salvarLancamentoContador`) salva o campo `lan-cont` sem validar vazio, negativo e valor abaixo da leitura anterior. O arquivo não estava no diff do PR #34. Correção depende de "pode" do dono.
+1. ~~§47 (contador de Leituras sem validação)~~ — **FECHADO na r66**, v7.3.10: ver §47.3 e §55.1 da auditoria.
 2. Prova de **toque no celular** do submenu de Cadastros (r64): não executada.
 3. Adiados para depois de sexta: redesenho das telas apertadas, revisão do corte de botões, ciclo E2E completo, nuvem PURO.
 4. `package.json > digicopy.branch` continua `arena/01a0d9c3-teste` — não mexer para não redirecionar link de download/publicação.
 5. Regras permanentes: senha de conexão ≠ senha de gerente; nunca token, senha, CSC ou certificado no repositório, no guia ou no chat; criar arquivo só quando o serviço não sai sem ele.
+
+
+## Reforço r66 — v7.3.10 (01/10/2026, mesma sessão, depois do deploy do 7.3.9)
+
+Ordem dele: *"já faça tudo o que está pendente, menos os outros sistemas tipo celular, comercial"*.
+
+| Item pendente | O que saiu desta rodada |
+|---|---|
+| **§47 Leituras** (contador sem validação) | **Corrigido.** `leitura_detalhada_departamentos_patch.js` v4.9.48: validador puro `validarContadorLancamento` (exportado no `LEITURA_DETALHADA_DEPARTAMENTOS_PURE`) + `min=0 step=1 inputmode=numeric` no campo. Vazio, letra, decimal, negativo, acima de inteiro seguro e abaixo do anterior = **falha fechada** (nada gravado, parque vivo intacto, modal aberto). Teste novo: seção `test_r66_contador_leitura.js` em `test_msg_04_clientes.js` (27 asserções puras + integração). |
+| **Revisão do corte de botões** | **Feita com varredura.** 5 handlers inline chamavam função inexistente no bundle: os 3 do "baixa múltipla" do Financeiro foram **removidos** (a etiqueta EXTORNADO ficou) e os 2 do seletor de impressora da OS foram **religados** ao `autoPreencherDadosChamado` que já existia. `auditar_mortos.js`: 0 testes órfãos, 233 no bundle de 266 .js. |
+| **Telas apertadas** | **Começado pelo que prende botão:** `menus_tela_pequena_patch.js` v5.22.69 passou a cuidar do modal (corpo rola, caixa presa a 94/96`vh`, grades → `auto-fit` ≤1200px e coluna única ≤820px, sem cor fixa para não furar o modo escuro). Regressão: seção `test_r66_telas_e_botoes.js` em `test_msg_05_telas.js`. **O resto do redesenho depende dos prints dele** (qual tela ainda corta informação) — sem navegador de layout aqui. |
+| **Ciclo E2E** | Rodado o que roda aqui: `npm test` (11 ✅ / 0 ❌ / 1 pulado), `npm run check` (bundle + `node --check` em tudo), `mapa_camadas`, `auditar_mortos`. **O E2E de `jsdom` não roda neste sandbox**: `npm install` não tem saída de rede para o registry. No PC dele: `npm install` e `node test_msg_11_jsdom.js`. |
+| **Nuvem PURO** | **Verificado, sem código novo** — e é decisão de operação, não pendência de programa. O corte existe (`🔒 Texto-puro` → `db.config.seguranca.corteTextoPuro`), o envio já risca `senha` de `usuarios`/`empresas` quando ligado, o Worker só aceita a prova velha enquanto houver `senha` no registro, e há teste (`test_msg_09_login.js:674-677)). Ligar com PC da loja ainda no app velho trava login → fica com o dono, depois de todos atualizados e senhas trocadas. |
+| **Celular / comercial** | **Fora por ordem dele.** Só o `mobile/sync-www.js` mecânico (cópia do bundle no `www`) para a cópia não ficar divergindo; nada de APK, toque no Cadastros, ou loja de apps. |
+
+Estado do build publicado nesta rodada: **v7.3.10**, `app.bundle.js` sha256 `c5d909a40abc31d1`, 233 scripts, manifest sem mudança de contagem, `sync:check` OK, suíte 11 ✅ / 0 ❌. Commit desta rodada = gatilho do build de produção do Pages (a regra aprendida na r65 está registrada acima: trocar a Production branch não republica sozinho).

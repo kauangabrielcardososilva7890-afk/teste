@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_05_telas.js — GERADO por migrar_testes_r57.js; 22 seções.
+// test_msg_05_telas.js — GERADO por migrar_testes_r57.js; 23 seções (r66 soma telas apertadas + botões órfãos).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_interface.js, test_cartuchos_etiquetas_config.js, test_finalizacao_sistema.js, test_confirm_compat.js, test_ajustes_v52216.js, test_ajustes_v52217.js, test_ajustes_v52221.js, test_ajustes_v52222.js, test_ajustes_v52230.js, test_ajustes_v52239.js, test_ajustes_v52425.js, test_ajustes_v6002.js, test_ajustes_v6003.js, test_ajustes_v6007.js, test_ajustes_v6008.js, test_ajustes_v6009.js, test_ajustes_v60010.js, test_ajustes_v60012.js, test_mobile_apk.js, test_navegador_embutido.js, test_lembrar_tela.js, test_ajustes_v5246.js
+// Seções: test_interface.js, test_cartuchos_etiquetas_config.js, test_finalizacao_sistema.js, test_confirm_compat.js, test_ajustes_v52216.js, test_ajustes_v52217.js, test_ajustes_v52221.js, test_ajustes_v52222.js, test_ajustes_v52230.js, test_ajustes_v52239.js, test_ajustes_v52425.js, test_ajustes_v6002.js, test_ajustes_v6003.js, test_ajustes_v6007.js, test_ajustes_v6008.js, test_ajustes_v6009.js, test_ajustes_v60010.js, test_ajustes_v60012.js, test_mobile_apk.js, test_navegador_embutido.js, test_lembrar_tela.js, test_ajustes_v5246.js, test_r66_telas_e_botoes.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -1454,4 +1454,79 @@ ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json com versão válida (v' + 
 if(falhas){ console.error('\n' + falhas + ' FALHA(S) v' + pkg.version); process.exit(1); }
 console.log('\nTudo certo v' + pkg.version + '!');
 //<<<<SECAO:test_ajustes_v5246.js:FIM>>>>
+}
+
+
+if (false) { // ═══ test_r66_telas_e_botoes.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r66_telas_e_botoes.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(cond, msg){ if(cond) console.log('  ok - '+msg); else { falhas++; console.error('  FALHA - '+msg); } }
+const ler = f => fs.readFileSync(__dirname + '/' + f, 'utf8');
+
+// ── 1) TELAS APERTADAS: o modal para de comer botão (r66) ───────────────────
+const tela = ler('menus_tela_pequena_patch.js');
+const win0 = {};
+new Function('window', 'document', tela)(win0, undefined);
+const P = win0.MENUS_TELA_PEQUENA_PURE;
+ok(!!P && typeof P.TELA_APERTADA === 'string' && P.TELA_APERTADA.length > 200, 'PURE entrega o CSS de tela apertada (fonte única, sem duplicar)');
+ok(/#modal-root #modal-body\{overflow-y:auto/.test(P.TELA_APERTADA), 'corpo do modal rola sozinho (rodapé nunca some)');
+ok(/#modal-root #modal-box\{max-height:94vh\}/.test(P.TELA_APERTADA), 'modal nunca passa da janela');
+ok(tela.includes('CSS_TELA_APERTADA') && /st\.textContent =/.test(tela) && tela.indexOf('CSS_TELA_APERTADA;') > tela.indexOf("st.textContent"), 'o css() injeta a mesma constante que o teste lê');
+const denso = (P.TELA_APERTADA.match(/@media \(max-width:1200px\)\{[\s\S]*?\}@\{0,1\}/) || [''])[0] + (P.TELA_APERTADA.split('@media (max-width:1200px){')[1] || '');
+ok(/grid-template-columns/.test(denso) && /white-space:nowrap/.test(denso), 'regras que mudam a cara da tela só valem dentro de media query');
+const cssJunto = P.TELA_APERTADA.replace(/\s*\+\s*'/g, '').replace(/'/g, '');
+const oitocentos = cssJunto.slice(cssJunto.indexOf('@media (max-width:820px){'));
+ok(oitocentos.startsWith('@media (max-width:820px){') && /\.grid\{grid-template-columns:1fr\}/.test(oitocentos), 'em tela de celular o modal vira coluna única');
+ok(!/background:#fff/.test(P.TELA_APERTADA) && !/color:#/.test(P.TELA_APERTADA), 'nada de cor fixa no CSS novo (modo escuro segue inteiro)');
+ok(P.VERSAO === '5.22.69', 'carimbo do patch sobe para 5.22.69');
+
+// ── 2) BOTÕES MORTOS: o resto do corte da r46 (Financeiro) ──────────────────
+const app = ler('app.js');
+for (const morto of ['baixarMultiplasCR', 'updateBaixaMulti', 'toggleSelectAllCR', 'cr-select-all', 'btn-baixa-multi', 'cr-check']) {
+  ok(!new RegExp('\\b' + morto + '\\b').test(app), 'app.js não chama mais ' + morto + ' (botão sem função não volta a existir)');
+}
+ok(/EXTORNADO<\/span>/.test(app), 'a etiqueta EXTORNADO da conta continua na tela (não foi junto com o lixo)');
+const bundle = ler('app.bundle.js');
+ok(!/onclick="baixarMultiplasCR/.test(bundle) && !/onchange="updateBaixaMulti/.test(bundle), 'bundle reconstruído está limpo dos handlers mortos');
+
+// ── 3) SELETOR DE IMPRESSORA DA OS: religado, sem regra nova ────────────────
+const loc = ler('locacao_contratos_patch.js');
+ok(/window\.selecionarEquipamentoOS=function/.test(loc) && /window\.editarEquipamentoOS=function/.test(loc), 'os dois controles da OS têm dono de novo');
+ok(/autoPreencherDadosChamado\(alvo\.id\)/.test(loc), 'escolher impressora reusa o autoPreencherDadosChamado (contador antigo continua vindo dele)');
+ok(loc.indexOf("getElementById('o-equip-sel')") < loc.indexOf("getElementById('o-equip-lista')"), 'a escolha é gravada no mesmo campo hidden de sempre');
+
+// 3b. funcional com DOM falso: clicar na lista fecha a lista e pinta a escolha
+const els = {
+  'o-equip-sel': { value: '' },
+  'o-equip-nome': { innerText: '', },
+  'o-equip-escolhida': { classList: { remove(){ this.rem = 1; }, add(){}, contains: () => false } },
+  'o-equip-lista': {
+    classList: { add(){ els['o-equip-lista'].oculta = true; }, remove(){ els['o-equip-lista'].oculta = false; } },
+    querySelector(){ return { focus(){ els['o-equip-lista'].focou = true; } }; }
+  }
+};
+let chamadoCom = null;
+const ctxWin = { db: { equipamentos: [{ id: 'eq1', modelo: 'Brother 8110' }] }, autoPreencherDadosChamado: (id) => { chamadoCom = id; } };
+const soFuncoes = (function(){
+  const ini = loc.indexOf('window.selecionarEquipamentoOS=function');
+  const fim = loc.indexOf('console.log', ini) > 0 ? loc.indexOf('\n};', loc.indexOf('window.editarEquipamentoOS', ini)) + 3 : loc.length;
+  return loc.slice(ini, fim);
+})();
+new Function('window', 'document', 'db', 'toast', 'autoPreencherDadosChamado', soFuncoes)(
+  ctxWin, { getElementById: id => els[id] || null }, ctxWin.db, () => {}, ctxWin.autoPreencherDadosChamado
+);
+ctxWin.selecionarEquipamentoOS('eq1');
+ok(els['o-equip-sel'].value === 'eq1', 'escolher grava o equipamento no campo do formulário');
+ok(els['o-equip-nome'].innerText === 'Brother 8110', 'a linha "escolhida" mostra o modelo');
+ok(els['o-equip-lista'].oculta === true, 'a lista se esconde depois de escolher');
+ok(chamadoCom === 'eq1', 'o preenchimento de contador/serial roda como sempre');
+ctxWin.editarEquipamentoOS();
+ok(els['o-equip-lista'].oculta === false && els['o-equip-lista'].focou === true, 'o lápis reabre a lista e leva o foco para o primeiro item');
+ctxWin.selecionarEquipamentoOS('nao-existe');
+ok(els['o-equip-sel'].value === 'eq1', 'equipamento inexistente não apaga a escolha anterior');
+
+if (falhas) { console.error('\n' + falhas + ' FALHA(S) — telas apertadas + botões mortos (r66)'); process.exit(1); }
+console.log('\nRESULTADO: modal cabe na tela, botões órfãos fora e seletor da OS religado');
+//<<<<SECAO:test_r66_telas_e_botoes.js:FIM>>>>
 }

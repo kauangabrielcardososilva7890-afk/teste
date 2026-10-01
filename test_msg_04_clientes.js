@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 29 seções.
+// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 30 seções (r66 soma o contador de Leituras).
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_clientes.js, test_loc.js, test_contratos_refino.js, test_contratos_final.js, test_rtf_template.js, test_contratos_visitas.js, test_automacoes_locacao_visitas.js, test_contratos_leituras_definitivo.js, test_fluxo_contrato_leitura_corrigido.js, test_leitura_busca_fluxo.js, test_leitura_detalhada_departamentos.js, test_leitura_impressao_compacta_produtos.js, test_sistema_clientes_loja.js, test_ajustes_v5214.js, test_ajustes_v52236.js, test_ajustes_v52245.js, test_ajustes_v52281.js, test_ajustes_v52435.js, test_ajustes_v52436.js, test_ajustes_v5250.js, test_contrato_impressora_nao_some.js, test_ajustes_v52410.js, test_ajustes_v52411.js, test_ajustes_v52422.js, test_ajustes_v5247.js, test_unificar_contratos_r49.js, test_r63_filtro.js, test_r64_vos.js, test_v5176_medidor_call_counter.js
+// Seções: test_clientes.js, test_loc.js, test_contratos_refino.js, test_contratos_final.js, test_rtf_template.js, test_contratos_visitas.js, test_automacoes_locacao_visitas.js, test_contratos_leituras_definitivo.js, test_fluxo_contrato_leitura_corrigido.js, test_leitura_busca_fluxo.js, test_leitura_detalhada_departamentos.js, test_leitura_impressao_compacta_produtos.js, test_sistema_clientes_loja.js, test_ajustes_v5214.js, test_ajustes_v52236.js, test_ajustes_v52245.js, test_ajustes_v52281.js, test_ajustes_v52435.js, test_ajustes_v52436.js, test_ajustes_v5250.js, test_contrato_impressora_nao_some.js, test_ajustes_v52410.js, test_ajustes_v52411.js, test_ajustes_v52422.js, test_ajustes_v5247.js, test_unificar_contratos_r49.js, test_r63_filtro.js, test_r64_vos.js, test_v5176_medidor_call_counter.js, test_r66_contador_leitura.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -1519,4 +1519,107 @@ ok(colorSource.indexOf('if(eqSel) atualizarColorPorImpressora(eqSel);') < colorS
 if(falhas){ console.error('\n'+falhas+' FALHA(S) — v5176 medidor/counter'); process.exit(1); }
 console.log('\nRESULTADO: v5176 contador + status Chamados passou!');
 //<<<<SECAO:test_v5176_medidor_call_counter.js:FIM>>>>
+}
+
+
+if (false) { // ═══ test_r66_contador_leitura.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r66_contador_leitura.js:INICIO>>>>
+const fs = require('fs');
+let falhas = 0;
+function ok(cond, msg){ if(cond) console.log('  ok - '+msg); else { falhas++; console.error('  FALHA - '+msg); } }
+
+// ── fonte do executor vencedor do lancamento de contador ─────────────────────
+const fonte = fs.readFileSync(__dirname + '/leitura_detalhada_departamentos_patch.js', 'utf8');
+
+// 1. Pure: a regra sozinha (extraida pelos marcadores, sem depender do DOM)
+const ini = fonte.indexOf('/* LDP_CONTADOR_PURE_START */') + '/* LDP_CONTADOR_PURE_START */'.length;
+const fim = fonte.indexOf('/* LDP_CONTADOR_PURE_END */', ini);
+ok(ini > 60 && fim > ini, 'bloco puro do contador esta marcado para regressao');
+const V = new Function(fonte.slice(ini, fim) + '; return validarContadorLancamento;')();
+ok(typeof V === 'function', 'PURE: validador exportado');
+ok(V('', 1000).ok === false && V('', 1000).motivo === 'vazio', 'vazio e barrado (era aceito e virava 0)');
+ok(V('   ', 1000).motivo === 'vazio', 'so espacos conta como vazio');
+ok(V('999', 1000).ok === false && V('999', 1000).motivo === 'menor', 'abaixo do anterior e barrado');
+ok(V('-1', 500).ok === false && V('-1', 500).motivo === 'negativo', 'negativo e barrado');
+ok(V('1.5', 0).motivo === 'fracionário' && V('1,5', 0).motivo === 'fracionário', 'decimal (ponto ou virgula) e barrado');
+ok(V('abc', 0).motivo === 'inválido' && V('12a', 0).motivo === 'inválido', 'letra no meio e barrada');
+ok(V('12.345', 0).ok === false, 'ponto de milhar nao passa como inteiro');
+ok(V('999999999999999999999', 0).ok === false && V('999999999999999999999', 0).motivo === 'grande', 'numero maior que inteiro seguro e barrado');
+ok(V('1000', 1000).ok === true && V('1000', 1000).atual === 1000, 'igual ao anterior e permitido (medidor parado)');
+ok(V('1200', 1000).ok === true && V('1200', 1000).anterior === 1000, 'acima do anterior passa e traz o anterior junto');
+ok(V('0', 0).ok === true, '0 e valido quando nao ha anterior (medidor novo)');
+ok(V(' +1200 ', 1000).ok === true, 'espaco e sinal de mais nao atrapalham');
+ok(V('001200', 1000).atual === 1200, 'zeros a esquerda sao normalizados');
+ok(V('1200', '').anterior === 0 && V('1200', undefined).anterior === 0, 'anterior ausente vira zero (nao derruba o save)');
+ok(V('900', 1000).msg.includes('1.000'), 'mensagem cita o anterior formatado em pt-BR');
+ok(V('900', 1000).msg.toLowerCase().includes('ajuste o medidor'), 'mensagem diz o caminho certo (ajustar o medidor)');
+
+// 2. Integracao: o save falha FECHADO (nao grava item, nao mexe no parque vivo)
+const db = {
+  clientes: [{ id: 'c0', nome: 'Cliente Balcão', empresaId: 'e0' }],
+  contratos: [{ id: 'k1', clienteId: 'c0', empresaId: 'e0', status: 'ativo' }],
+  equipamentos: [{ id: 'eq1', modelo: 'Brother 8110', patrimonio: 'PAT-1', serie: 'SER-1' }],
+  parque: [{ id: 'p1', equipamentoId: 'eq1', empresaId: 'e0', setor: 'Financeiro', contadores: { pretoA4: 1000 },
+    medidoresConfig: { pretoA4: { ativo: true, ocultar: false, modalidade: 'individual', contadorInicial: 0, franquia: 100, valorFranquia: 0, valorExcedente: 0.32, acrescimo: 0 } } }],
+  leituras: [{ id: 'l1', contratoId: 'k1', numero: 'L-900', status: 'aberta', itens: [] }]
+};
+const toasts = []; let salvos = 0;
+const els = {
+  'lan-prq': { value: 'p1' }, 'lan-med': { value: 'pretoA4' }, 'lan-edit-idx': { value: '' },
+  'lan-cont': { value: '', classList: { add(){}, remove(){} }, focus(){} }
+};
+const win = {};
+const abriu = [];
+globalThis.abrirLeituraContratoDetalhe = (id) => abriu.push(id); // no browser isso e um global do window
+const doc = { getElementById: (id) => els[id] || null, addEventListener(){}, querySelector: () => null, querySelectorAll: () => [] };
+new Function('window', 'document', 'db', 'toast', 'saveDB', 'console', fonte)(
+  win, doc, db, (m, t) => toasts.push(String(t) + '|' + String(m)), () => { salvos++; }, { log(){} }
+);
+ok(typeof win.salvarLancamentoContador === 'function', 'executor do lancamento carregado');
+ok(!!win.LEITURA_DETALHADA_DEPARTAMENTOS_PURE && typeof win.LEITURA_DETALHADA_DEPARTAMENTOS_PURE.validarContadorLancamento === 'function', 'PURE exposto no window para o resto do sistema/testes');
+
+win.salvarLancamentoContador('l1');
+ok(db.leituras[0].itens.length === 0 && salvos === 0, 'vazio: nada gravado (antes criava item atual=0)');
+ok(db.parque[0].contadores.pretoA4 === 1000, 'vazio: parque vivo intacto em 1000');
+ok(toasts.some(t => t.startsWith('error|') && /Digite o contador atual/.test(t)), 'vazio: aviso na tela, sem dialog nativo');
+
+els['lan-cont'].value = '999';
+win.salvarLancamentoContador('l1');
+ok(db.leituras[0].itens.length === 0 && salvos === 0 && db.parque[0].contadores.pretoA4 === 1000, '999 diante de 1000: rebaixamento bloqueado');
+
+els['lan-cont'].value = '-1';
+win.salvarLancamentoContador('l1');
+ok(db.leituras[0].itens.length === 0 && salvos === 0, 'negativo: bloqueado sem gravar');
+
+els['lan-cont'].value = '1200';
+win.salvarLancamentoContador('l1');
+const it = db.leituras[0].itens[0] || {};
+ok(db.parque[0].contadores.pretoA4 === 1200, 'valor valido: lanca e sobe o parque vivo');
+ok(it.anterior === 1000 && it.atual === 1200 && it.utilizado === 200, 'item guarda anterior/atual/usado corretos');
+ok(salvos === 1, 'grava uma unica vez (saveDB)');
+ok(typeof it.valorTotal === 'number' && it.valorTotal > 0, 'cobranca calculada continua vindo do calc original');
+ok(abriu[0] === 'l1', 'apos gravar, reabre o detalhe da leitura (comportamento antigo preservado)');
+ok(db.leituras[0].valorTotal > 0, 'total da leitura recalculado');
+
+// edicao do proprio lancamento: o chao e o anterior CONGELADO do item, nao o atual salvo
+els['lan-edit-idx'].value = '0';
+els['lan-cont'].value = '1100';
+win.salvarLancamentoContador('l1');
+ok(db.leituras[0].itens[0].atual === 1200, 'editar para valor menor que o anterior do item: barrado');
+els['lan-cont'].value = '1300';
+win.salvarLancamentoContador('l1');
+ok(db.leituras[0].itens[0].atual === 1300 && db.parque[0].contadores.pretoA4 === 1300, 'editar para cima: permitido e o parque acompanha');
+
+// 3. Estrutura: o campo ja chega com trava nativa e o validador esta ANTES da mutacao
+ok(/id="lan-cont"[^>]*min="0"/.test(fonte) && /id="lan-cont"[^>]*step="1"/.test(fonte), 'campo ja nasce com min=0 e step=1');
+const salvar = fonte.slice(fonte.indexOf('window.salvarLancamentoContador'), fonte.indexOf('window.estornarLeituraContrato'));
+ok(salvar.indexOf('validarContadorLancamento(') < salvar.indexOf('p.contadores[key]=atual'), 'validacao roda antes de mexer no parque vivo');
+ok(/if\(!chk\.ok\)/.test(salvar) && salvar.indexOf('if(!chk.ok)') < salvar.indexOf('const atual=chk.atual'), 'falha fecha o caminho e devolve cedo');
+ok(/v4\.9\.48/.test(fonte) && fonte.includes('v4.9.48 carregado'), 'carimbo do arquivo atualizado para v4.9.48');
+const bundleTxt = fs.readFileSync(__dirname + '/app.bundle.js', 'utf8');
+ok(bundleTxt.includes('LDP_CONTADOR_PURE_START') && bundleTxt.includes('validarContadorLancamento') && bundleTxt.includes('v4.9.48 carregado'), 'bundle reconstruido carrega a trava do contador');
+
+if (falhas) { console.error('\n' + falhas + ' FALHA(S) — lancamento de contador ( Leituras )'); process.exit(1); }
+console.log('\nRESULTADO: lancamento de contador validado (vazio/negativo/decimal/abaixo do anterior) — OK');
+//<<<<SECAO:test_r66_contador_leitura.js:FIM>>>>
 }

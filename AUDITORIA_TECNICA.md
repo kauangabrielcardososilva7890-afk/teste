@@ -3224,6 +3224,16 @@ Nenhum deploy, merge, Worker ou banco real foi tocado. A cópia `mobile/www` foi
 - Fora do escopo: leitura avulsa/legada, faturamento fiscal/NF, financeiro fora do título criado por leitura, outros menus, mobile/APK como funcionalidade, dados de produção, Worker, merge e deploy de produção. A tentativa de fetch do banner de versão é de mesmo origin e permaneceu bloqueada durante o QA.
 
 
+### 47.3 Correção e validação (r66, 01/10/2026 — v7.3.10) — FECHADO
+`leitura_detalhada_departamentos_patch.js` (v4.9.48) ganhou `validarContadorLancamento(bruto, anterior)`: vazio, letra, decimal (ponto ou vírgula),
+negativo, número acima de inteiro seguro e **valor abaixo do anterior** agora falham fechado — sem gravar item, sem tocar em `p.contadores[key]`,
+sem `saveDB`, sem fechar o modal; o campo é focado e fica vermelho. O `<input id="lan-cont">` também nasceu com `min="0" step="1" inputmode="numeric"`.
+A régua é o mesmo `anterior` que a tela mostra, e como o wrapper v5.24.36 (ajustes_v52436) já alinha o parque vivo ao anterior congelado do item antes
+de chamar o original, a regra vale igual nos dois caminhos (lançar novo e editar depois do estorno). Regressão: 18 asserções puras + 9 de integração com
+DOM falso em `test_msg_04_clientes.js` (seção `test_r66_contador_leitura.js`). Reset/troca de medidor continua sem atalho novo: o aviso manda ajustar o
+medidor na impressora antes de lançar (decisão da §47.2 — não inventar caminho de reset por campo de leitura).
+
+
 ## §48 — PR #33 — contador de Scanner contamina contador Preto no Chamado (01/10/2026)
 
 ### 48.1 Prova antes da edição
@@ -3318,3 +3328,64 @@ No QA isolado, alterei somente a fixture da impressora para Color inativo, reabr
 **Limite da repetição visual no build final:** a origem temporária nova exibiu o portão obrigatório de primeira conexão com a nuvem. Nenhuma credencial foi fornecida ou inserida. Para inspeção somente local, o browser isolado usou fixture sintética e interceptores de rede/gravação; depois disso, três tentativas de API (`/v1/snapshot`, `/v1/status`, `/v1/changes`) foram registradas e bloqueadas antes de sair do browser, com zero chamadas a `saveDB`. A tela Locação > Contratos pôde ser aberta, mas o próprio sistema manteve as listas vazias enquanto o computador estava desconectado. Por isso não afirmo que o formulário/save da nova regra Color desativado foi revalidado visualmente no v7.3.9; essa regra passou na regressão pura e a reprodução UI anterior ao patch está documentada em §54.1. Os fluxos de UI anteriores de Produtos/Recargas e de Chamados/Leituras permanecem documentados nas seções de evidência desta auditoria.
 
 Não houve alteração de Worker/banco real, conexão da nuvem, deploy de produção ou merge.
+
+
+## §55 — Rodada 66 (01/10/2026): §47 fechado, revisão dos botões órfãos e telas apertadas (v7.3.10)
+
+Ordem do dono: *"já faça tudo o que está pendente, menos os outros sistemas (celular, comercial)"*. Feito dentro do sistema; o que depende de painel/
+máquina dele virou registro, não promessa.
+
+### 55.1 Lançamento de contador de Leituras (§47)
+
+Ver §47.3. Resumo da medição antes/depois (DOM falso, mesmo harness dos temas):
+
+| Cenário (anterior do medidor = 1.000) | Antes | Agora |
+|---|---|---|
+| campo vazio + Salvar | gravava item `anterior=1000, atual=0`, zerava o parque e gerava cobrança | bloqueado, nada gravado |
+| `999 | aceito, rebaixava o contador vivo | bloqueado com o anterior na mensagem |
+| `-1 | aceito | bloqueado |
+| `1.5` / `1,5` / `abc` / número de 21 dígitos | aceitos ou viravam 0 | bloqueados, cada um com o motivo próprio |
+| `1000` (igual) e `1200` | aceitos | continuam aceitos — nada de regra nova no cálculo |
+
+### 55.2 Revisão do corte de botões (eco da rodada 46) — 5 controles mortos
+
+Varredura de todos os handlers inline do `app.bundle.js` (415 funções chamadas × 3.612 definidas) mais `node auditar_mortos.js` (266 .js na raiz,
+233 no bundle, 12 grupos de teste, **0 testes órfãos**). Cinco handlers chamavam função que não existe em lugar nenhum do bundle:
+
+| Onde | O que era | O que foi feito |
+|---|---|---|
+| Financeiro > Contas a receber | botão "Baixa múltipla" (`#btn-baixa-multi`, já `hidden`, sem função) | removido |
+| idem | caixa "marcar tudo" do `<thead>` (`toggleSelectAllCR`) | coluna volta a existir como cabeçalho vazio; a caixa saiu |
+| idem | checkbox por linha (`.cr-check` + `updateBaixaMulti`) | saiu; a etiqueta **EXTORNADO** foi preservada |
+| Locação > Chamados (OS) | lápis "Trocar impressora" (`editarEquipamentoOS`) | **religado**: reabre a lista e foca o primeiro item |
+| idem | botões da lista de impressoras (`selecionarEquipamentoOS`) | **religados**: gravam `#o-equip-sel`, pintam o modelo, escondem a lista e chamam o `autoPreencherDadosChamado` de sempre |
+
+Nada de regra nova: na OS o que existia era UI sem dono (clique mudo), e a escolha agora passa exatamente pelo caminho que já preenchia contador/série ao
+criar o chamado. Regressão em `test_msg_05_telas.js` (seção `test_r66_telas_e_botoes.js`, 27 asserções — inclusive "inexistente não apaga a escolha").
+
+### 55.3 Telas apertadas (redesenho começado pelo que prende botão)
+
+`menus_tela_pequena_patch.js` v5.22.69 passou a responder também pelo **modal**, não só pela faixa e pelos menus: corpo com rolagem própria
+(`overflow-y:auto` + `overscroll-behavior:contain`), `#modal-box` preso a 94/96`vh`, e — só dentro de media query — grades de campos viram
+`auto-fit` a ≤1200px e coluna única a ≤820px, com botões do rodapé sem quebra de rótulo. Zero cor fixa no CSS novo (o modo escuro não é
+sobrescrito) e nada muda em tela larga. O desenho das telas grandes continua como estava: **falta a parte que exige os prints dele** (quais telas
+ainda cortam informação), porque daqui não há navegador medindo layout — o `jsdom` não instala no sandbox (egress de rede bloqueado).
+
+### 55.4 Nuvem PURO — verificado, sem código novo (é operação, não defeito)
+
+Estado medido hoje: `tirarSegredosDoEnvioPuro(entity, data, corte)` só corta `usuarios`/`empresas` e só quando `db.config.seguranca.corteTextoPuro === true`;
+o botão `🔒 Texto-puro` (app.js:2695-2701) alterna por `senhaCorteAlternar()` com guarda de permissão (Admin/Dono); o Worker aceita a prova velha
+(`sha256(login|senha)`) **enquanto o registro ainda tiver `senha` em texto** — por isso o corte não trava PC velho e por isso ele é *efetivo* de verdade
+só depois que a senha de cada usuário for trocada no app novo (a reescrita grava apenas salt+hash e apaga o texto). Cobertura de teste já existente em
+`test_msg_09_login.js:674-677`. Ligar o corte agora, com PCs da loja ainda no app velho, é exatamente o que a regra da casa proíbe — fica com ele.
+
+### 55.5 Provas da rodada
+
+| Verificação | Resultado |
+|---|---|
+| `node --check` nos 4 arquivos editados | OK |
+| `node build_bundle.js` | 233 scripts, sha256 `c5d909a40abc31d1` |
+| `node sync_build.js --check` | Sync OK v7.3.10, 233 no bundle, 0 soltos, 13 entradas em `build.files` |
+| `node test_runner.js` | **11 grupos passaram, 0 falharam**, 1 pulado (falta `jsdom`) |
+| `node mapa_camadas.js` | 1089 nomes globais, 2057 escritas, 291 repetidos — `MAPA_CAMADAS.md` atualizado junto |
+| `node auditar_mortos.js` | órfãos de teste: 0 |
