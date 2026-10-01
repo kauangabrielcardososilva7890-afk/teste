@@ -3208,3 +3208,113 @@ O adaptador agora define `controleEstoque` como o inverso de `estoqueInfinito` e
 | Browser QA | Produtos e Recargas testados em ambiente isolado; cadastro, busca, foco/cursor, ordenação numérica, validações, CRUD, confirmações e limites de empresa cobertos; fetch bloqueado, saves interceptados e fixtures limpas |
 
 Nenhum deploy, merge, Worker ou banco real foi tocado. A cópia `mobile/www` foi apenas sincronizada mecanicamente pelas regras de build, sem trabalho de funcionalidade/APK. O script de versão continua alertando que `package.json > digicopy.branch` aponta para `arena/01a0d9c3-teste` enquanto esta branch é `fix/dialogos-nativos-733`; a publicação será feita por push explícito para a branch do PR, não por `npm run guardar`.
+
+
+## §47 — PR #33 — contador de leitura aceita vazio, redução e negativo (01/10/2026)
+
+### 47.1 Prova antes da edição
+- Ambiente: navegador isolado do Sandbox, branch do PR #33 em v7.3.6. Sessão/empresa, contrato `92001`, cliente Alpha e impressora Brother `QA-SER-NEW-1001` foram fixtures sintéticas. `saveDB` ficou interceptado por spy; `fetch` ficou bloqueado. A única tentativa observada foi `fetch('index.html')` da verificação de versão de mesmo origin; a requisição foi interceptada antes de sair do Sandbox.
+- Fluxo ativo: o formulário real selecionou o medidor Preto A4 e mostrou contador anterior `1.000`. O input `lan-cont` é `type=number`, sem `required` nem `min`. O executor vencedor é `leitura_detalhada_departamentos_patch.js:141` (após os patches antigos de leitura): converte o valor com `n(...)`, calcula e altera o contador do parque sem validar campo ausente, valor abaixo do anterior ou negativo.
+- Reprodução pelo botão real **Salvar lançamento**, com valor vazio: salvou um item `anterior=1000, atual=0`, zerou `p.contadores.pretoA4` e gerou cobrança calculada de **R$ 32,00** (taxas fixas/locação), apesar de nenhum contador ter sido informado. Não apareceu bloqueio. Depois da prova, o item foi removido e o contador/resto da leitura foi restaurado para o estado inicial, somente em memória.
+- Contra-provas adicionais na mesma UI: `999` foi aceito diante do anterior `1000`; `-1` foi aceito diante do anterior `500`. Ambos rebaixaram o contador vivo, com uso calculado como zero. Os itens temporários foram removidos e os contadores restaurados para `1000` e `500`; não houve persistência nem envio de dados.
+
+### 47.2 Decisão de implementação (escopo Leituras de contrato)
+- Fazer o save falhar fechado se o campo estiver vazio, não for um inteiro finito não negativo ou estiver abaixo do contador anterior. A tela atual não oferece ação explícita de reset/troca do medidor; uma leitura menor não pode rebaixar silenciosamente o histórico. Se existir um caso real de reset de contador, ele precisa de fluxo próprio e explícito, não de aceitar um campo ausente.
+- Preservar o cálculo existente e as regras já estabelecidas de uma leitura aberta por contrato, extorno/estorno e anterior congelado. Acrescentar testes de regressão no módulo de Locação existente e repetir o cenário no browser após o build.
+- Fora do escopo: leitura avulsa/legada, faturamento fiscal/NF, financeiro fora do título criado por leitura, outros menus, mobile/APK como funcionalidade, dados de produção, Worker, merge e deploy de produção. A tentativa de fetch do banner de versão é de mesmo origin e permaneceu bloqueada durante o QA.
+
+
+## §48 — PR #33 — contador de Scanner contamina contador Preto no Chamado (01/10/2026)
+
+### 48.1 Prova antes da edição
+No mesmo navegador isolado, a leitura QA vinculada à impressora `QA-SER-NEW-1001` continha três itens independentes: Preto A4 `1000→1200`, Color A4 `500→600` e Scanner `0→5`; o parque conservava `p.contadores={pretoA4:1200,colorA4:600,scanner:5}`. Ao abrir **Novo Chamado** pelo contrato, sem salvar o chamado, o formulário real mostrou **Contador Preto Antigo = 5** e Color Antigo = 600. Portanto, o valor da modalidade Scanner foi apresentado como Preto.
+
+A origem foi confirmada em `ajustes_v5176_patch.js:21-48`: `contadorDaLeitura` percorre todos os itens da leitura e, se o medidor não contém `color`, grava `it.atual` no campo Preto; assim, o item `scanner` posterior sobrescreve `1200` por `5`. O formulário identifica esses campos explicitamente como Preto e Color. O chamado permaneceu aberto, sem gravação, e nenhum dado foi persistido.
+
+### 48.2 Decisão de implementação (escopo Chamados de contrato)
+Ajustar a seleção por chave de medidor: apenas `pretoA4/pretoA3` podem atualizar o contador Preto; apenas `colorA4/colorA3` o contador Color; `scanner` e chaves desconhecidas não alteram nenhum dos dois. Manter a leitura antiga de formato escalar e a precedência de chamado conforme existentes. Acrescentar regressão ao conjunto Locação/Clientes e repetir a abertura real do formulário: Preto deve ser `1200`, Color `600`, sem alteração do registro QA.
+
+
+## §49 — PR #33 — filtro Abertos do Chamado mostra ticket finalizado (01/10/2026)
+
+### 49.1 Prova antes da edição
+No bundle QA v7.3.7, finalizei um chamado sintético pela interface e confirmei `status='concluido'`. A lista do contrato ficou com o filtro visível **Abertos automáticos** (`kr-ch-status=abertos`), mas continuou exibindo a linha do chamado como **FINALIZADO**. A seleção direta de Finalizados/Todos também não alterou consistentemente as linhas finais da lista.
+
+A ordem efetiva explica a discrepância: `contratos_refino_patch.js:528-539` armazena o filtro e o aplica ao gerar a lista; depois, `locacao_chamados_fix_patch.js:285-310` envolve a mesma rota e, após 40 ms, sobrescreve o `tbody` com `listaChamadosFiltrada({contratoId})`, sem aplicar `kr-ch-status`. O comportamento foi reproduzido na UI depois do save real do ticket QA; nenhum dado de produção ou banco remoto foi usado.
+
+### 49.2 Decisão de implementação
+Manter os filtros de data/texto já existentes no wrapper, mas também aplicar o status ativo (`abertos`, `concluido`, `cancelado` ou Todos) ao conjunto final que ele desenha. Acrescentar regressão para os quatro casos e repetir a troca de filtros pelo controle real. O escopo permanece na lista de Chamados dentro do contrato.
+
+
+### 49.3 Nota de precisão antes da edição
+A reprodução do caso **Abertos automáticos** é válida: selecionei o value real `abertos` e a linha `FINALIZADO` permaneceu. Porém, uma tentativa inicial de varrer os outros estados usou os rótulos (`finalizados`, `todos`) em vez dos values reais (`concluido`, vazio); descarto aquela parte como evidência de UI. A inspeção do handler confirmou separadamente que `value || 'abertos'` converte a opção Todos (`value=""`) em Abertos. A correção e a regressão cobrirão os values reais `abertos`, `concluido`, `cancelado` e `''`.
+
+
+## §50 — PR #33 — botão Tirar não remove peça do Chamado (01/10/2026)
+
+### 50.1 Prova antes da edição
+No editor real do Chamado QA, a linha “QA Toner Black” é exibida com o botão “Tirar”. Restaurei o array temporário somente a partir do registro salvo, repintei o editor e cliquei no botão visível; o array continuou com 1 peça e a linha/total permaneceram. O HTML gerado por `ajustes_v5182_patch.js:125-143` dá `data-lc-del` ao botão, mas não mostra handler local de remoção; não houve save.
+
+### 50.2 Decisão de implementação
+Adicionar um executor explícito de remoção por índice que atualiza o array temporário e repinta a lista/total, conectar o botão “Tirar” a esse executor e testar remoção de primeiro/último item e índice inválido. Tudo continua em fixtures locais.
+
+
+## §51 — PR #33 — edição de Chamado finalizado limpa contador Preto atual (01/10/2026)
+
+### 51.1 Prova antes da edição
+O Chamado QA `os_i3c2bfdf76` foi salvo finalizado com `contadorAtual=1210` e `contadorColor=605`. Ao reabri-lo pela linha da lista, o formulário preservou os demais campos e o Color, mas `ko-cont-atu` apareceu vazio. Uma tentativa de salvar a edição foi corretamente bloqueada pela validação “Preencha o contador preto atual para finalizar”; não houve save nem alteração do registro.
+
+A origem está em `ajustes_v5176_patch.js`: o wrapper de `autoPreencherDadosChamado` limpa `atu.value` sempre que `!manter` (`if(atu && !manter)`), inclusive no editor de um chamado já persistido/concluído. A tela base havia renderizado o valor do registro antes da chamada do helper. O wrapper externo de Locação identifica o registro com `window.modalContext.id` e `window.__lcChamPersistida` antes de abrir o formulário.
+
+### 51.2 Decisão de implementação
+Preservar o contador Preto já preenchido ao reabrir um chamado concluído com valor salvo; continuar limpando o contador para um novo chamado, mantendo a validação de finalização. Adicionar regressão de helper e retestar edição salva pela interface com o mesmo valor, sem tocar em contadores do equipamento.
+
+
+### 50.3 Correção do diagnóstico (antes de qualquer patch)
+Inspeção subsequente revelou o listener ativo em `ajustes_v5178_patch.js:31-40,55-71`: o clique abre a confirmação “Deseja remover esse item?” e só remove depois que `confirmar(...).then(ok)` recebe aceite. Os testes iniciais leram o array antes de responder ao diálogo e, portanto, não comprovam defeito. **Retiro a decisão de alterar a remoção**; a ação será validada com Cancelar e Confirmar, sem mudança de código se ambos funcionarem.
+
+
+## §52 — PR #33 — Chamado cancelado aparece como Aberto no badge (01/10/2026)
+
+### 52.1 Prova após a correção do filtro
+No bundle v7.3.8 e na UI real de `Locação > Contratos > Chamados`, com três fixtures QA em memória, os values reais produziram: `abertos` → somente `QA-OPEN`; `concluido` → somente o ticket finalizado; `cancelado` → somente `QA-CANCEL`; value vazio (Todos) → os três. Porém, a linha que aparece em Cancelados ainda exibe o badge **ABERTO**. É uma contradição visível de estado, não falha do filtro.
+
+### 52.2 Decisão de implementação
+Ajustar a apresentação da linha para informar `Cancelado` e `Fechado` quando esses forem os estados reais, preservando `Finalizado` e `Aberto`; acrescentar regressão para a rotulagem sem tocar no estado do registro.
+
+
+## §53 — PR #33 — edição de Chamado finalizado não reidrata contador Color (01/10/2026)
+
+### 53.1 Prova antes da edição
+No build v7.3.8, ao reabrir o ticket QA, a correção anterior já preserva Preto: salvo `1210`, antigo `1200`, atuais no form `1210`/quantidade calculada `10`. Já o registro salva `contadorColor=605`, mas o input `lc-cont-color-atu` aparece vazio e habilitado. A validação de finalização exige Color para essa impressora; o save tentado não ocorreu, não houve alteração do ticket.
+
+O wrapper `locacao_chamados_fix_patch.js` injeta o valor salvo antes de recalcular o modo Color da impressora (`atualizarColorPorImpressora`); essa atualização posterior pode limpar a leitura quando ainda não reconhece o modo. A tela precisa reidratar o valor salvo depois de concluir a detecção/configuração.
+
+### 53.2 Decisão de implementação
+Capturar o Color já salvo do ticket e reaplicá-lo após a detecção da impressora, sem mudar a regra para chamados novos; testar reabertura, edição válida e invariância do financeiro (sem venda/conta a receber duplicada).
+
+
+## §54 — PR #33 — salvar Chamado com Color desativado apaga leitura histórica (01/10/2026)
+
+### 54.1 Prova antes da edição
+No QA isolado, alterei somente a fixture da impressora para Color inativo, reabri o Chamado concluído e usei Salvar pela UI. O campo Color ficou desativado/vazio; antes do save o ticket tinha `contadorColor=605`; depois, passou a `null`. A venda e a conta a receber permaneceram em 1 cada (sem duplicação). O `saveDB` estava interceptado e nenhuma gravação remota foi permitida.
+
+### 54.2 Causa e decisão
+`coletarExtrasChamado()` transformava qualquer campo Color desativado em `null`, e o wrapper aplicava esse valor ao registro existente. Reaplicar o Color salvo depois da detecção do modo evita a tela incompleta; no save, campo desativado mantém o valor histórico do Chamado; campo editável vazio continua sendo `null` em vez de virar zero. Cobrir os três casos em teste e verificar edição/faturamento sem duplicação.
+
+
+### 54.3 Correção e validação
+`locacao_chamados_fix_patch.js` agora captura `contadorColor` do chamado antes de recalcular a modalidade da impressora e reaplica o valor após a detecção; ao salvar, campo Color editável vazio continua resultando em `null`, enquanto campo desativado preserva o Color histórico do chamado existente. Em chamado novo sem leitura Color, o valor permanece `null`. A regressão pura em `test_msg_04_clientes.js` cobre esses casos, a ordem da reidratação, e mantém os testes de Preto, filtro de status e badge.
+
+| Verificação final | Resultado |
+|---|---|
+| `node test_msg_04_clientes.js` | Tema Locação/Contratos: 29 seções, sem falha |
+| `npm test` | 11 grupos passaram, 0 falharam, 1 não rodou por falta de `jsdom` |
+| `npm run check` | Bundle coerente: 233 scripts; hash SHA-256 do arquivo `app.bundle.js`: `a277a9f569addf52e267a557bc33ee840856a5ee31246f0d4d24f8f1cd84a433` |
+| `npm run sync:check` | Sync OK v7.3.9, 233 scripts no bundle, 0 soltos, 13 entradas em `build.files` |
+| `git diff --check` | OK |
+| Checks remotos do PR | Cloudflare Pages: sucesso |
+
+**Limite da repetição visual no build final:** a origem temporária nova exibiu o portão obrigatório de primeira conexão com a nuvem. Nenhuma credencial foi fornecida ou inserida. Para inspeção somente local, o browser isolado usou fixture sintética e interceptores de rede/gravação; depois disso, três tentativas de API (`/v1/snapshot`, `/v1/status`, `/v1/changes`) foram registradas e bloqueadas antes de sair do browser, com zero chamadas a `saveDB`. A tela Locação > Contratos pôde ser aberta, mas o próprio sistema manteve as listas vazias enquanto o computador estava desconectado. Por isso não afirmo que o formulário/save da nova regra Color desativado foi revalidado visualmente no v7.3.9; essa regra passou na regressão pura e a reprodução UI anterior ao patch está documentada em §54.1. Os fluxos de UI anteriores de Produtos/Recargas e de Chamados/Leituras permanecem documentados nas seções de evidência desta auditoria.
+
+Não houve alteração de Worker/banco real, conexão da nuvem, deploy de produção ou merge.

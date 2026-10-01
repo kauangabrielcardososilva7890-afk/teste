@@ -35,8 +35,12 @@ function contadorDaLeitura(equipId, cor){
     (l.itens||[]).forEach(it=>{
       const pr=it.parqueId&&(db.parque||[]).find(x=>x.id===it.parqueId);
       if(it.equipamentoId!==equipId && !(pr&&pr.equipamentoId===equipId)) return;
+      const medidor=String(it.medidor||it.medidorLabel||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const isColor=medidor.startsWith('color');
+      const isPreto=medidor.startsWith('preto')||medidor.startsWith('pb')||medidor.startsWith('black');
+      if(!isColor&&!isPreto) return; // Scanner e medidores desconhecidos não são Preto nem Color.
       if(!best.d||new Date(d)>=new Date(best.d||0)){
-        if(/color/i.test(it.medidor||it.medidorLabel||'')) best={d,pb:best.pb,cor:it.atual};
+        if(isColor) best={d,pb:best.pb,cor:it.atual};
         else best={d,pb:it.atual,cor:best.cor};
       }
     });
@@ -141,17 +145,28 @@ if(window.salvarChamadoAvulso && !window.salvarChamadoAvulso.__noCnt){
 }
 
 // Preenche antigo do chamado
+/* LC_EDIT_COUNTER_PURE_START */
+function devePreservarPBEditado(os){
+  return !!(os && String(os.status||'').toLowerCase()==='concluido' && os.contadorAtual!==null && os.contadorAtual!==undefined && String(os.contadorAtual).trim()!=='');
+}
+/* LC_EDIT_COUNTER_PURE_END */
 const _auto=window.autoPreencherDadosChamado;
 if(typeof _auto==='function'){
   window.autoPreencherDadosChamado=function(equipId, manter, ignoreOsId){
+    const idEdit=ignoreOsId||(window.modalContext&&window.modalContext.id)||null;
+    const chamadoEditando=idEdit&&(db.os||[]).find(o=>o.id===idEdit);
+    const atuAntes=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
+    const valorAtualSalvo=atuAntes?atuAntes.value:'';
+    const preservarAtual=devePreservarPBEditado(chamadoEditando);
     const r=_auto.apply(this,arguments);
-    const id=ignoreOsId|| (window.modalContext&&window.modalContext.id)||null;
+    const id=idEdit;
     const ant=document.getElementById('ko-cont-ant')||document.getElementById('ca-cont-ant');
     if(ant&&equipId) ant.value=window.lcContadorAntigoChamado(equipId,false,id);
     const ca=document.getElementById('lc-cont-color-ant')||document.getElementById('ca-cont-color-ant');
     if(ca&&equipId) ca.value=window.lcContadorAntigoChamado(equipId,true,id);
     const atu=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
-    if(atu && !manter) atu.value='';
+    if(atu && preservarAtual) atu.value=valorAtualSalvo;
+    else if(atu && !manter) atu.value='';
     if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
     if(typeof calcChamadoAvulso==='function') calcChamadoAvulso();
     return r;

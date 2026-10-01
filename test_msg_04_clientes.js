@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 28 seções.
+// test_msg_04_clientes.js — GERADO por migrar_testes_r57.js; 29 seções.
 // Novos testes do tema: APPEND no fim (copiar um bloco if(false){ + SEÇÃO).
-// Seções: test_clientes.js, test_loc.js, test_contratos_refino.js, test_contratos_final.js, test_rtf_template.js, test_contratos_visitas.js, test_automacoes_locacao_visitas.js, test_contratos_leituras_definitivo.js, test_fluxo_contrato_leitura_corrigido.js, test_leitura_busca_fluxo.js, test_leitura_detalhada_departamentos.js, test_leitura_impressao_compacta_produtos.js, test_sistema_clientes_loja.js, test_ajustes_v5214.js, test_ajustes_v52236.js, test_ajustes_v52245.js, test_ajustes_v52281.js, test_ajustes_v52435.js, test_ajustes_v52436.js, test_ajustes_v5250.js, test_contrato_impressora_nao_some.js, test_ajustes_v52410.js, test_ajustes_v52411.js, test_ajustes_v52422.js, test_ajustes_v5247.js, test_unificar_contratos_r49.js
+// Seções: test_clientes.js, test_loc.js, test_contratos_refino.js, test_contratos_final.js, test_rtf_template.js, test_contratos_visitas.js, test_automacoes_locacao_visitas.js, test_contratos_leituras_definitivo.js, test_fluxo_contrato_leitura_corrigido.js, test_leitura_busca_fluxo.js, test_leitura_detalhada_departamentos.js, test_leitura_impressao_compacta_produtos.js, test_sistema_clientes_loja.js, test_ajustes_v5214.js, test_ajustes_v52236.js, test_ajustes_v52245.js, test_ajustes_v52281.js, test_ajustes_v52435.js, test_ajustes_v52436.js, test_ajustes_v5250.js, test_contrato_impressora_nao_some.js, test_ajustes_v52410.js, test_ajustes_v52411.js, test_ajustes_v52422.js, test_ajustes_v5247.js, test_unificar_contratos_r49.js, test_r63_filtro.js, test_r64_vos.js, test_v5176_medidor_call_counter.js
 // ═══════════════════════════════════════════════════════════════
 // Runner do tema: extrai cada SEÇÃO, roda isolada em processo filho
 // (comportamento idêntico ao arquivo solto) e agrega o resultado.
@@ -1424,4 +1424,90 @@ ok(bundle.indexOf('id="vos-cli-campo"') >= 0, 'seletor VOS chegou no bundle');
 if(falhas){ console.error('\n' + falhas + ' FALHA(S) r64-vos'); process.exit(1); }
 console.log('\nRESULTADO: r64 vos passou!');
 //<<<<SECAO:test_r64_vos.js:FIM>>>>
+}
+
+
+if (false) { // ═══ test_v5176_medidor_call_counter.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_v5176_medidor_call_counter.js:INICIO>>>>
+const fs = require('fs');
+const vm = require('vm');
+let falhas = 0;
+function ok(cond, msg){ if(cond) console.log('  ok - '+msg); else { falhas++; console.error('  FALHA - '+msg); } }
+const db = {
+  equipamentos: [{id:'eq-qa', contadorPB:0, contadorCor:0}],
+  parque: [{
+    id:'parque-qa', equipamentoId:'eq-qa',
+    medidoresConfig:{pretoA4:{modalidade:'individual'},colorA4:{modalidade:'impressao'},scanner:{modalidade:'mes_fixo'}},
+    contadores:{pretoA4:1200,colorA4:600,scanner:5}
+  }],
+  leituras: [{
+    id:'leitura-qa', dataLeitura:'2026-10-01T12:00:00.000Z',
+    itens:[
+      {equipamentoId:'eq-qa',parqueId:'parque-qa',medidor:'pretoA4',anterior:1000,atual:1200},
+      {equipamentoId:'eq-qa',parqueId:'parque-qa',medidor:'colorA4',anterior:500,atual:600},
+      {equipamentoId:'eq-qa',parqueId:'parque-qa',medidor:'scanner',anterior:0,atual:5}
+    ]
+  }],
+  os:[]
+};
+const win = {console:{log(){}}};
+const sandbox = {
+  window:win, db,
+  document:{getElementById(){return null;},querySelectorAll(){return [];},createElement(){return {}; }},
+  console:{log(){}}, saveDB(){}, getSession(){return null}
+};
+vm.createContext(sandbox);
+vm.runInContext(fs.readFileSync(__dirname+'/ajustes_v5176_patch.js','utf8'), sandbox);
+const antigo = win.lcContadorAntigoChamado;
+ok(typeof antigo==='function', 'exporta a função real do contador antigo');
+ok(antigo('eq-qa',false)===1200, 'Novo Chamado usa Preto A4=1200 e ignora Scanner=5');
+ok(antigo('eq-qa',true)===600, 'Novo Chamado mantém Color A4=600');
+db.os.push({id:'os-qa',equipamentoId:'eq-qa',contadorAtual:1300,contadorColor:700,dataAbertura:'2026-10-02T12:00:00.000Z'});
+ok(antigo('eq-qa',false)===1300 && antigo('eq-qa',true)===700, 'o último chamado continua tendo precedência');
+ok(antigo('eq-qa',false,'os-qa')===1200 && antigo('eq-qa',true,'os-qa')===600, 'ignorar o próprio chamado retorna os contadores da leitura por medidor');
+const filtroSource=fs.readFileSync(__dirname+'/locacao_chamados_fix_patch.js','utf8');
+const filtroStart=filtroSource.indexOf('/* LC_CHAM_STATUS_PURE_START */')+'/* LC_CHAM_STATUS_PURE_START */'.length;
+const filtroEnd=filtroSource.indexOf('/* LC_CHAM_STATUS_PURE_END */',filtroStart);
+ok(filtroStart>=0 && filtroEnd>filtroStart, 'helper puro de status está marcado para regressão');
+const filtrarStatus=new Function(filtroSource.slice(filtroStart,filtroEnd)+'; return filtrarChamadosPorStatus;')();
+const tickets=[{id:'a',status:'aberto'},{id:'f',status:'concluido'},{id:'c',status:'cancelado'},{id:'h',status:'fechado'}];
+const ids=xs=>xs.map(x=>x.id).sort().join(',');
+ok(ids(filtrarStatus(tickets,'abertos'))==='a', 'Abertos exclui concluídos, cancelados e fechados');
+ok(ids(filtrarStatus(tickets,'concluido'))==='f', 'Finalizados mostra somente concluídos');
+ok(ids(filtrarStatus(tickets,'cancelado'))==='c', 'Cancelados mostra somente cancelados');
+ok(ids(filtrarStatus(tickets,''))==='a,c,f,h', 'Todos preserva value vazio e inclui todos os estados');
+ok(filtroSource.includes('filtrarChamadosPorStatus(listaChamadosFiltrada({ contratoId }),status)'), 'wrapper aplica status depois dos filtros existentes');
+const refinoSource=fs.readFileSync(__dirname+'/contratos_refino_patch.js','utf8');
+ok(refinoSource.includes('STATE.chamadoStatus = filtro ? filtro.value : \'abertos\''), 'handler mantém Todos vazio em vez de voltar para Abertos');
+const contadorEditSource=fs.readFileSync(__dirname+'/ajustes_v5176_patch.js','utf8');
+const contadorEditStart=contadorEditSource.indexOf('/* LC_EDIT_COUNTER_PURE_START */')+'/* LC_EDIT_COUNTER_PURE_START */'.length;
+const contadorEditEnd=contadorEditSource.indexOf('/* LC_EDIT_COUNTER_PURE_END */',contadorEditStart);
+ok(contadorEditStart>=0 && contadorEditEnd>contadorEditStart, 'helper de edição do contador está marcado para regressão');
+const preservarPB=new Function(contadorEditSource.slice(contadorEditStart,contadorEditEnd)+'; return devePreservarPBEditado;')();
+ok(preservarPB({status:'concluido',contadorAtual:1210}), 'edição de Chamado concluído preserva contador salvo');
+ok(!preservarPB({status:'aberto',contadorAtual:1210}), 'edição de Chamado em aberto continua exigindo novo contador para finalizar');
+ok(!preservarPB({status:'concluido',contadorAtual:''}), 'não inventa leitura salva quando contador está vazio');
+ok(contadorEditSource.includes('if(atu && preservarAtual) atu.value=valorAtualSalvo;'), 'wrapper restaura somente o contador preto já salvo em concluído');
+const badgeStart=filtroSource.indexOf('/* LC_CHAM_STATUS_LABEL_PURE_START */')+'/* LC_CHAM_STATUS_LABEL_PURE_START */'.length;
+const badgeEnd=filtroSource.indexOf('/* LC_CHAM_STATUS_LABEL_PURE_END */',badgeStart);
+ok(badgeStart>=0 && badgeEnd>badgeStart, 'helper de rótulo de status está marcado para regressão');
+const rotuloStatus=new Function(filtroSource.slice(badgeStart,badgeEnd)+'; return apresentacaoStatusChamado;')();
+ok(rotuloStatus('aberto').label==='Aberto' && rotuloStatus('concluido').label==='Finalizado', 'badges de Aberto/Finalizado permanecem coerentes');
+ok(rotuloStatus('cancelado').label==='Cancelado' && rotuloStatus('cancelado').tone==='info', 'badge cancelado não se apresenta como aberto');
+ok(rotuloStatus('fechado').label==='Fechado' && rotuloStatus('fechado').tone==='info', 'badge fechado mostra estado fechado');
+ok(filtroSource.includes('apresentacaoStatusChamado(o.status)'), 'renderer da linha usa o rótulo semântico do estado');
+const colorSource=filtroSource;
+const colorStart=colorSource.indexOf('/* LC_EDIT_COLOR_PURE_START */')+'/* LC_EDIT_COLOR_PURE_START */'.length;
+const colorEnd=colorSource.indexOf('/* LC_EDIT_COLOR_PURE_END */',colorStart);
+ok(colorStart>=0 && colorEnd>colorStart, 'helpers de leitura Color em edição estão marcados para regressão');
+const colorPure=new Function(colorSource.slice(colorStart,colorEnd)+'; return {valorContadorColorEditado,contadorColorParaSalvar};')();
+ok(colorPure.valorContadorColorEditado({contadorColor:605})==='605', 'leitura Color salva é preparada para reidratação');
+ok(colorPure.contadorColorParaSalvar({disabled:false,value:'605'},null)===605, 'campo Color habilitado salva contador numérico');
+ok(colorPure.contadorColorParaSalvar({disabled:false,value:''},null)===null, 'campo Color vazio não vira zero');
+ok(colorPure.contadorColorParaSalvar({disabled:true,value:''},{contadorColor:605})===605, 'campo desativado preserva Color histórico do chamado');
+ok(colorPure.contadorColorParaSalvar({disabled:true,value:''},null)===null, 'campo desativado em novo chamado permanece nulo');
+ok(colorSource.indexOf('if(eqSel) atualizarColorPorImpressora(eqSel);') < colorSource.lastIndexOf('ca.value=colorAtualSalvo'), 'valor Color é reidratado depois da detecção da impressora');
+if(falhas){ console.error('\n'+falhas+' FALHA(S) — v5176 medidor/counter'); process.exit(1); }
+console.log('\nRESULTADO: v5176 contador + status Chamados passou!');
+//<<<<SECAO:test_v5176_medidor_call_counter.js:FIM>>>>
 }

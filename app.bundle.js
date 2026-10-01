@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: a592fa8ee31f096c
+ * scripts: 233 | sha256: de4606df7d461bfc
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -12272,7 +12272,7 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   salvar(); aviso('Chamado salvo', 'success'); if(c) abrirChamadosContrato(c.id); else { closeK(); if(typeof renderOs === 'function') renderOs(); } if(typeof renderProdutos === 'function') renderProdutos();
 };
 function thChamado(col, label, cId){ return `<th onclick="chamadosSortRefino('${col}','${cId}')" class="px-4 py-3 cursor-pointer hover:text-[#0a1e8a]">${label}${STATE.chamadoSort===col?' ▲':''}</th>`; }
-window.aplicarBuscaChamadosRefino = function(cId){ STATE.chamadoBusca = document.getElementById('kr-ch-busca')?.value || ''; STATE.chamadoStatus = document.getElementById('kr-ch-status')?.value || 'abertos'; abrirChamadosContrato(cId); };
+window.aplicarBuscaChamadosRefino = function(cId){ STATE.chamadoBusca = document.getElementById('kr-ch-busca')?.value || ''; const filtro=document.getElementById('kr-ch-status'); STATE.chamadoStatus = filtro ? filtro.value : 'abertos'; abrirChamadosContrato(cId); };
 window.chamadosSortRefino = function(col,cId){ STATE.chamadoSort = col; abrirChamadosContrato(cId); };
 window.abrirChamadosContrato = function(contratoId){
   const c = getCtr(contratoId); if(!c) return;
@@ -22619,6 +22619,17 @@ function listaChamadosFiltrada(opts){
   return list.sort((a,b)=>new Date(b.dataAbertura||0)-new Date(a.dataAbertura||0));
 }
 
+/* LC_CHAM_STATUS_PURE_START */
+function filtrarChamadosPorStatus(lista,status){
+  const estado=String(status==null?'abertos':status).trim().toLowerCase();
+  const itens=Array.isArray(lista)?lista:[];
+  if(!estado) return itens.slice();
+  if(estado==='abertos') return itens.filter(o=>!['concluido','cancelado','fechado'].includes(String(o.status||'').trim().toLowerCase()));
+  return itens.filter(o=>String(o.status||'').trim().toLowerCase()===estado);
+}
+/* LC_CHAM_STATUS_PURE_END */
+window.LC_CHAM_STATUS_PURE={filtrarChamadosPorStatus};
+
 function htmlFiltrosChamado(prefix, contratoId){
   const F = window.__lcChamFiltro;
   const origem = contratoId ? '' : `<select id="${prefix}-origem" onchange="window.__lcChamFiltro.origem=this.value; ${prefix==='lcg'?'abrirHistoricoChamadosGeral()':'abrirChamadosContrato(\''+contratoId+'\')'}" class="h-10 px-2 rounded-xl border text-[12px]"><option value="todos" ${F.origem==='todos'?'selected':''}>Todos</option><option value="contrato" ${F.origem==='contrato'?'selected':''}>Chamados de contrato</option><option value="avulso" ${F.origem==='avulso'?'selected':''}>Chamados fora de contrato</option></select>`;
@@ -22636,9 +22647,18 @@ function htmlFiltrosChamado(prefix, contratoId){
   </div>`;
 }
 
+/* LC_CHAM_STATUS_LABEL_PURE_START */
+function apresentacaoStatusChamado(status){
+  const st=String(status||'aberto').trim().toLowerCase();
+  const labels={aberto:'Aberto',concluido:'Finalizado',cancelado:'Cancelado',fechado:'Fechado',excluido:'Excluído',estornado:'Estornado'};
+  const tone=st==='concluido'?'ok':(['cancelado','fechado','excluido','estornado'].includes(st)?'info':'wait');
+  return {label:labels[st]||(st?st.charAt(0).toUpperCase()+st.slice(1):'Aberto'),tone};
+}
+/* LC_CHAM_STATUS_LABEL_PURE_END */
+
 function linhaChamado(o, contratoId){
   const cli = (db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const fin = o.status==='concluido';
+  const statusUi=apresentacaoStatusChamado(o.status);
   const deContrato = chamadoDeContrato(o);
   const click = contratoId
     ? `openModalChamadoCompleto('${o.id}','${contratoId}')`
@@ -22650,7 +22670,7 @@ function linhaChamado(o, contratoId){
     <td class="px-3 py-2">${esc(o.descricao||'')}</td>
     <td class="px-3 py-2">${esc(o.modelo||o.serie||'')}</td>
     <td class="px-3 py-2">${esc(o.tecnico||'')}</td>
-    <td class="px-3 py-2"><span class="neo-status ${fin?'ok':'wait'}">${fin?'Finalizado':'Aberto'}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
+    <td class="px-3 py-2"><span class="neo-status ${statusUi.tone}">${esc(statusUi.label)}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
     <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
       <button onclick="window.imprimirChamadoAgoraV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-[#0a1e8a] hover:bg-blue-50" title="Imprimir direto, sem abrir o chamado"><i class="ph ph-printer"></i></button>
       <button onclick="window.excluirChamadoV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50" title="Excluir chamado"><i class="ph ph-trash"></i></button>
@@ -22737,7 +22757,9 @@ window.abrirChamadosContrato = function(contratoId){
   setTimeout(()=>{
     const body = document.getElementById('modal-body');
     if(!body) return;
-    const list = listaChamadosFiltrada({ contratoId });
+    const statusSelect=document.getElementById('kr-ch-status');
+    const status=statusSelect?statusSelect.value:'abertos';
+    const list = filtrarChamadosPorStatus(listaChamadosFiltrada({ contratoId }),status);
     const extra = document.getElementById('lc-filtros-ctr');
     if(!extra){
       const wrap = document.createElement('div');
@@ -22827,6 +22849,22 @@ function atualizarColorPorImpressora(equipId){
   }
 }
 
+/* LC_EDIT_COLOR_PURE_START */
+function valorContadorColorEditado(os){
+  if(!os || os.contadorColor===null || os.contadorColor===undefined || String(os.contadorColor).trim()==='') return null;
+  return String(os.contadorColor);
+}
+function contadorColorParaSalvar(campo, osExistente){
+  if(campo && !campo.disabled){
+    const raw=String(campo.value??'').trim();
+    if(raw==='') return null;
+    const parsed=Number(raw.replace(',','.'));
+    return Number.isFinite(parsed)?parsed:null;
+  }
+  return osExistente && osExistente.contadorColor!==null && osExistente.contadorColor!==undefined ? osExistente.contadorColor : null;
+}
+/* LC_EDIT_COLOR_PURE_END */
+
 const _auto = window.autoPreencherDadosChamado;
 if(typeof _auto==='function'){
   window.autoPreencherDadosChamado = function(equipId){
@@ -22847,14 +22885,16 @@ if(typeof _openCham==='function'){
     setTimeout(()=>{
       injetarCamposChamado(true);
       const o = osId && (db.os||[]).find(x=>x.id===osId);
+      const colorAtualSalvo=o?valorContadorColorEditado(o):null;
       if(o){
         const da = document.getElementById('lc-data-atend'); if(da) da.value = dia(o.dataAtendimento||'');
         const pc = document.getElementById('lc-pecas'); if(pc) pc.value = o.pecasTexto || (Array.isArray(o.pecas)?o.pecas.map(p=>p.descricao).join(', '):'') || '';
-        const ca = document.getElementById('lc-cont-color-atu'); if(ca && o.contadorColor!=null) ca.value = o.contadorColor;
+        const ca = document.getElementById('lc-cont-color-atu'); if(ca && colorAtualSalvo!==null) ca.value = colorAtualSalvo;
       }
       if(o && o.equipamentoId) atualizarColorPorImpressora(o.equipamentoId);
       const eqSel = document.getElementById('ko-equip')?.value;
       if(eqSel) atualizarColorPorImpressora(eqSel);
+      if(colorAtualSalvo!==null){ const ca=document.getElementById('lc-cont-color-atu'); if(ca) ca.value=colorAtualSalvo; }
       marcarDirtyChamado();
     }, 80);
     setTimeout(()=>injetarCamposChamado(true), 200);
@@ -22911,10 +22951,13 @@ function validarFinalizar(contrato){
 }
 
 function coletarExtrasChamado(){
+  const colorEl=document.getElementById('lc-cont-color-atu');
+  const editId=window.modalContext&&window.modalContext.id;
+  const osExistente=editId&&(db.os||[]).find(x=>x.id===editId);
   return {
     dataAtendimento: document.getElementById('lc-data-atend')?.value || '',
     pecasTexto: document.getElementById('lc-pecas')?.value || '',
-    contadorColor: document.getElementById('lc-cont-color-atu')?.disabled ? null : n(document.getElementById('lc-cont-color-atu')?.value, null),
+    contadorColor: contadorColorParaSalvar(colorEl,osExistente),
     contadorColorAntigo: n(document.getElementById('lc-cont-color-ant')?.value, 0)
   };
 }
@@ -23133,7 +23176,6 @@ if(typeof _lei2==='function' && !_lei2.__lcTodos){
 
 console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.17.0');
 })();
-
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_chamados_fix_patch.js", e); }
 ;
@@ -24692,8 +24734,12 @@ function contadorDaLeitura(equipId, cor){
     (l.itens||[]).forEach(it=>{
       const pr=it.parqueId&&(db.parque||[]).find(x=>x.id===it.parqueId);
       if(it.equipamentoId!==equipId && !(pr&&pr.equipamentoId===equipId)) return;
+      const medidor=String(it.medidor||it.medidorLabel||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const isColor=medidor.startsWith('color');
+      const isPreto=medidor.startsWith('preto')||medidor.startsWith('pb')||medidor.startsWith('black');
+      if(!isColor&&!isPreto) return; // Scanner e medidores desconhecidos não são Preto nem Color.
       if(!best.d||new Date(d)>=new Date(best.d||0)){
-        if(/color/i.test(it.medidor||it.medidorLabel||'')) best={d,pb:best.pb,cor:it.atual};
+        if(isColor) best={d,pb:best.pb,cor:it.atual};
         else best={d,pb:it.atual,cor:best.cor};
       }
     });
@@ -24798,17 +24844,28 @@ if(window.salvarChamadoAvulso && !window.salvarChamadoAvulso.__noCnt){
 }
 
 // Preenche antigo do chamado
+/* LC_EDIT_COUNTER_PURE_START */
+function devePreservarPBEditado(os){
+  return !!(os && String(os.status||'').toLowerCase()==='concluido' && os.contadorAtual!==null && os.contadorAtual!==undefined && String(os.contadorAtual).trim()!=='');
+}
+/* LC_EDIT_COUNTER_PURE_END */
 const _auto=window.autoPreencherDadosChamado;
 if(typeof _auto==='function'){
   window.autoPreencherDadosChamado=function(equipId, manter, ignoreOsId){
+    const idEdit=ignoreOsId||(window.modalContext&&window.modalContext.id)||null;
+    const chamadoEditando=idEdit&&(db.os||[]).find(o=>o.id===idEdit);
+    const atuAntes=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
+    const valorAtualSalvo=atuAntes?atuAntes.value:'';
+    const preservarAtual=devePreservarPBEditado(chamadoEditando);
     const r=_auto.apply(this,arguments);
-    const id=ignoreOsId|| (window.modalContext&&window.modalContext.id)||null;
+    const id=idEdit;
     const ant=document.getElementById('ko-cont-ant')||document.getElementById('ca-cont-ant');
     if(ant&&equipId) ant.value=window.lcContadorAntigoChamado(equipId,false,id);
     const ca=document.getElementById('lc-cont-color-ant')||document.getElementById('ca-cont-color-ant');
     if(ca&&equipId) ca.value=window.lcContadorAntigoChamado(equipId,true,id);
     const atu=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
-    if(atu && !manter) atu.value='';
+    if(atu && preservarAtual) atu.value=valorAtualSalvo;
+    else if(atu && !manter) atu.value='';
     if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
     if(typeof calcChamadoAvulso==='function') calcChamadoAvulso();
     return r;

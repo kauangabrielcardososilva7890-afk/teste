@@ -525,7 +525,7 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   salvar(); aviso('Chamado salvo', 'success'); if(c) abrirChamadosContrato(c.id); else { closeK(); if(typeof renderOs === 'function') renderOs(); } if(typeof renderProdutos === 'function') renderProdutos();
 };
 function thChamado(col, label, cId){ return `<th onclick="chamadosSortRefino('${col}','${cId}')" class="px-4 py-3 cursor-pointer hover:text-[#0a1e8a]">${label}${STATE.chamadoSort===col?' ▲':''}</th>`; }
-window.aplicarBuscaChamadosRefino = function(cId){ STATE.chamadoBusca = document.getElementById('kr-ch-busca')?.value || ''; STATE.chamadoStatus = document.getElementById('kr-ch-status')?.value || 'abertos'; abrirChamadosContrato(cId); };
+window.aplicarBuscaChamadosRefino = function(cId){ STATE.chamadoBusca = document.getElementById('kr-ch-busca')?.value || ''; const filtro=document.getElementById('kr-ch-status'); STATE.chamadoStatus = filtro ? filtro.value : 'abertos'; abrirChamadosContrato(cId); };
 window.chamadosSortRefino = function(col,cId){ STATE.chamadoSort = col; abrirChamadosContrato(cId); };
 window.abrirChamadosContrato = function(contratoId){
   const c = getCtr(contratoId); if(!c) return;
