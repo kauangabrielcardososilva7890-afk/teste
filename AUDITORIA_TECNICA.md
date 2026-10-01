@@ -3554,3 +3554,11 @@ Os três arquivos novos da cópia dele (diagnóstico da Nuvem em modal, `patch_n
 | `node test_runner.js` | 11 grupos passaram, 0 falharam, 1 pulado (`jsdom`) |
 | `node mapa_camadas.js` / `mobile/sync-www.js` | regenerated; 4 arquivos, 0 referências quebradas |
 | Para o dono rodar o teste de UI sem sujar o package.json | `npm install --no-save --package-lock=false --ignore-scripts jsdom && node test_msg_11_jsdom.js` |
+
+### 58.6 Addendum (reenvio do mesmo relatório): a ideia transferível que ele não explicou, e o duplicado que ele criou
+
+O relatório veio de novo, igual. Aproveitei a única coisa dele que eu ainda não tinha cobrado: **a classe do listener que morre quando a barra é recriada** (ele esbarrou nisso sem generalizar: prendeu o clique no nó antigo, `showApp` → `buildNav()` recriou a barra, e o botão existia mas ninguém escutava).
+
+Varredura no que **este** repo tem de código mexendo na barra recriada — resultado: **nada desse tipo**. Os quatro pontos que tocam `#btn-nuvem`/`#btn-backup-top` rebuscam o nó dentro de uma função chamada depois do render (`cloudflare_data_sync_patch.js:1515` `indicator()`, `ajustes_v52217…:36` `aplicarVisibilidadeBarra()`, `ajustes_v52296…:634` `aplicarVisibilidadeMenusNuvemBackup()`); os módulos plantados na barra usam `onclick` **no próprio HTML da string** (`navegador_embutido_patch.js:530-536`, `finalizacao_sistema_patch.js:59`, `autocura_empresa_central_nf_tela_patch.js:267`, e a faixa do `ajustes_v7015…:112` liga os botões do banner que ela mesma criou). E as duas visibilidades têm cinto: `ajustes_v52217…:168` embrulha `showApp` e remarca, e `ajustes_v52296…:653` roda a cada 2 s. Registrado para ninguém refazer este exame.
+
+O segundo achado do reenvio: o `patch_notes_local.js` dele **duplica recurso que existe desde a v5.24.34** — `ajustes_v52239_avisos_erro_auditoria_patch.js:111` já define a chave de "visto" por versão (`digicopy_upd_visto_<versão>`, um aviso por versão por aparelho, `localStorage`), com a nota vindo do release da nuvem. Adotar o arquivo dele deixaria o app com **duas chaves de "já vi"** competindo — exatamente o padrão de duas fontes de verdade que causou o bug da busca de Contratos (r68). O motivo de recusa, que antes era de superfície de carga, agora é de consistência.
