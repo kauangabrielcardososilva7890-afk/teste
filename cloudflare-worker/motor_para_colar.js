@@ -20,9 +20,9 @@
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
  * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.4   (igual ao src/index.js)
- * GERADO EM: 2026-09-29 03:39 UTC
+ * GERADO EM: 2026-10-01 03:56 UTC
  * sha256 do código (sem este cabeçalho):
- *   99da78f046b2c601af9c7b41142120fb698df9d363e54da923673029136d611b
+ *   3a3f3cf3a8cfaa3389f112defa785e6de05fcd10b13d466f6e14806f70c95863
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -1175,7 +1175,7 @@ function cnpjValido(cnpj) {
 }
 __name(cnpjValido, "cnpjValido");
 async function senhaHash(env, cnpj, senha) {
-  if(!env || !env.SETUP_SECRET) throw new ApiError(500, "SEM_SEGREDO", "Motor sem SETUP_SECRET: defina o segredo na Cloudflare e publique de novo.");
+  if (!env || !env.SETUP_SECRET) throw new ApiError(500, "SEM_SEGREDO", "Motor sem SETUP_SECRET: defina o segredo na Cloudflare e publique de novo.");
   const pepper = env.SETUP_SECRET;
   return sha256(pepper + "|" + soDigitos(cnpj) + "|" + String(senha || ""));
 }

@@ -2099,9 +2099,12 @@ async function cicloFecharReabrir(opNuvem, tag, esperarEnvio) {
   console.log('-- recusa da nuvem nunca mais em silêncio --');
   {
     const r = await cicloFecharReabrir({ rejeitar: (m) => m.entity === 'parque' && String(m.recordId) === 'prq-C' }, 'C', false);
+    // A r61 trocou o toast/modal por item pelo sino: abrir uma janela para
+    // cada recusa criava uma tempestade bloqueante. Toast continua aceito para
+    // caminhos antigos, mas o sino é o canal oficial e fica visível ao usuário.
     const avisouTela = r.avisos.some((a) => /recusou/i.test(a.txt));
     const avisouSino = r.sino.some((s) => /recusou/i.test(s.msg));
-    ok('a recusa aparece na tela (toast)', avisouTela, JSON.stringify(r.avisos.map((a) => a.txt).slice(0, 2)));
+    ok('a recusa aparece em aviso visível (toast ou sino)', avisouTela || avisouSino, JSON.stringify({ avisos: r.avisos.map((a) => a.txt).slice(0, 2), sino: r.sino.map((s) => s.msg).slice(0, 1) }));
     ok('a recusa aparece no sino', avisouSino, JSON.stringify(r.sino.map((s) => s.msg).slice(0, 1)));
     ok('a recusa vai para o relatório de saúde da nuvem', r.relatos.some((x) => x && x.tipo === 'recusado'), JSON.stringify(r.relatos.slice(0, 2)));
   }
