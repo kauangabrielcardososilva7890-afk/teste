@@ -8284,3 +8284,60 @@ Minecraft (pergunta consultiva dele): Workers NÃO roda servidor MC (sem TCP
 listen nem processo contínuo); túnel (cloudflared) só ROTEIA — servidor teria
 que rodar no PC dele (ligado 24h) ou numa VPS; Java/TCP ok via túnel,
 Bedrock/UDP não. Oferecido o passo a passo se quiser no PC.
+
+## r57 a r65 — ponte lançada agora (foram direto no git; 01/10/2026)
+Estas rodadas não foram escritas aqui na hora; o registro fiel está nos
+commits e no que foi publicado. Um por linha, na ordem:
+- r57 dfc7512: 253 testes fundidos em 11 temas + botão "Apagar dados DESTE
+  PC" + 7.1.3; suíte 10-0-1 (254 seções; jsdom pula sem a dependência).
+- r58 55db46f (+d361b4a, 045cf83): auditoria 7.1.3, app 7.1.4, motor 5.28.3;
+  2 pins escapados no tema 02; cartão "Senhas de conexão" de volta (âncora
+  dc-invite aposentada → dc-admin-result).
+- r59b 697d1cb: Comercial v7.2.1 + motor 5.28.4.
+- r59b-auditoria 44052e6: throw síncrono do indexedDB.open não envenena mais
+  o openPromise.
+- r59c 83f4570: api() null não quebra mais (9 guards + testes).
+- r59d 3a195aa: gravação local não some mais (clearing + falha dupla + fila).
+- r60 2ead5b7 v7.3.0: login que se cura sozinho + apagar-junto entre abas +
+  menu trio do Navegador (Nacional removido).
+- r61 6122328 v7.3.1: P0 tempestade de modais "nuvem recusou" (30/09).
+- r62 4f95461: testador automático combinado (auditoria + visual + veredito
+  único).
+- r63 47b0bb1: P1 dinheiro (1,00 vale 1) + P1 filtro respeita o campo + P2
+  Estornar/encoding + testador enxuto (auditoria --tudo).
+- r64 61798f6: alinhar aviso de recusa e artefato do worker.
+- entre PRs (3c7606f, 1a75e61, db44591, 9e3a06a): validar produtos/recargas,
+  QA locação contratos v7.3.9, contador Color preservado no Chamado, entradas
+  dinâmicas do menu Cadastro restauradas.
+
+## r66 — 01/10/2026: §47 fechado + botões órfãos + telas apertadas (v7.3.10)
+Ele mandou aplicar o que o auditor trouxesse. Saiu o fix do lançamento de
+contador (ajustes_v7331_leituras_lancamento_patch.js: anterior vem dos
+registros, campo aceita 0, recusa vazio/negativo/menor que o último lido,
+retroage em 3 dias, trava Color com registro e Scanner sem cor) — reutilizando
+o `anterior` já correto, sem rama extra de edição. Revisão dos botões órfãos
+(0 soltos; o "Modo de escrita na nuvem" foi REMOVIDO da Config: a chave batch
+estava morta no motor, não havia o que ligar). Modal de 4 telas que cortavam
+informação: largura adaptada + scroll interno. AUDITORIA §55. Build 7.3.10 +
+4 guias + mapa regen; suíte verde. Deploy: o push na branch de produção do
+Pages basta (não precisa clicar em "Deploy site").
+
+## r67 — 01/10/2026: o relatório do QA externo virou código (v7.3.11)
+"pode aplicar desse relatório o que achar melhor já". Conferi claim por claim
+contra o git e o site servido: tudo verídico (as 8 citações de linha batem; o
+bundle servido era mesmo 7.3.9-36c2da9d6340). Duas frases envelheceram 15 min
+(a r66 já tinha saído com código novo). Sua pergunta em aberto — "talvez um
+handler grave no db e esqueça de salvar" — foi FECHADA por varredura: 82
+funções que mutam db sem salvar → 27 após filtro de call-site → todas falsos
+positivos (ajudantes de migração salvos pelo agregador: `if(total) salvar();`).
+Ou seja: "dado que não salva" NÃO é falta de saveDB(). O que sobrava era um
+estado mudo, e isso virou produto: (1) v7015 caso 1b — sem token DO APARELHO e
+com escrita local pendente, a faixa diz "fica só neste navegador e não aparece
+em outro PC (N esperando o envio)" com "Conectar agora"; calada em PC de
+consulta e quando a fila está em voo. (2) v7020 — o "mandar erro" leva
+`nuvem: conectado=… | fila=… | so-aqui=… | cursor=… | ultimoOk=… | ultimoErro=…`
+no topo, tudo pelo redigir() (nenhuma credencial fora). Núcleo de sync e o
+retorno do saveDB() intocados de propósito (decisão registrada na §56.3).
+Teste novo test_r67_nuvem_sem_token_fala.js (23 asserções, 5 mundos falsos
+dirigindo v7015ConferirNuvem); contagem de avisos do faixa_botoes 5→6 com o
+motivo escrito. Suite 11-0-1. AUDITORIA §56 + handoff "Reforço r67".
