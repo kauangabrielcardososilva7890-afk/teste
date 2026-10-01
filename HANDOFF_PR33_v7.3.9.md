@@ -61,3 +61,36 @@ Assim, as regras novas de Color passaram por regressão pura e a reprodução da
 - PR #33 foi fechado **sem merge**, de acordo com a instrução do usuário. Nenhum deploy de produção foi feito.
 
 Para a trilha de evidências, defeitos e decisões de correção, consulte [`AUDITORIA_TECNICA.md`](./AUDITORIA_TECNICA.md).
+
+---
+
+## Reforço de handoff — sessão `arena/01a0d9c3-teste` (01/10/2026, depois do PR #34)
+
+### Estado do versionamento (conferido, não narrado)
+
+- PR #34 (`fix/dialogos-nativos-733` → `arena/01a0d9c3-teste`) **mesclado** em 01/10/2026 18:23:36Z → merge commit `ac15daa8b56b42289a1f187ebab8d34f4353ac04` (7 commits, 35 arquivos, +1868/−423).
+- App **v7.3.9**; `app.bundle.js` SHA-256 `36c2da9d63405e2f…` = `package.json > digicopy.bundleSha256Expected`; manifest com 233 scripts.
+- Suíte no ponto do merge: `node test_runner.js` → **11 passaram, 0 falharam, 1 pulada** (`test_msg_11_jsdom.js` — sem `jsdom` no sandbox). `npm run sync:check` → OK.
+- Árvore local comparada com `ac15daa` por `diff -rq` de um worktree temporário: **idêntica** (só `teste-auto/` é scratch, fora do versionamento).
+
+### Publicação do site — o "problema engraçado", já provado por A+B
+
+| Medição | Como | Resultado |
+|---|---|---|
+| Merge no GitHub | `gh pr view 34`, `git ls-remote` | ✅ branch em `ac15daa8`, 7.3.9 |
+| Deploy automático da branch | `arena-01a0d9c3-teste.teste-60f.pages.dev/package.json` e `/HANDOFF_PR33_v7.3.9.md` | ✅ **7.3.9 já no ar** no alias da branch |
+| Link principal | `teste-60f.pages.dev/package.json` (com `?cb=`) | ❌ ainda **7.3.3** |
+| Cache do navegador? | `_headers` → `Cache-Control: no-cache` + requisição cache-busted | ❌ **não** é cache |
+
+- **Causa:** o *Production branch* do projeto Pages `teste-60f` era outra branch (o projeto nasceu em 12/09/2026 com produção em `arena/01a0683d-teste` — ver `RELATORIO_SESSAO.md`, seção "NUVEM: GitHack → Cloudflare Pages"). Para o Pages, push em branch que **não** é a de produção gera só preview; por isso o merge apareceu no alias e não no link principal.
+- **Detalhe que custa caro:** mudar a Production branch no painel **não dispara build nenhum** — ela vale para o *próximo* push. A cura é: trocar a branch **e** empurrar um commit (ou `Deployments → ⋯ → Switch to this deployment`).
+- Este arquivo foi comitado e empurrado nesta branch exatamente para servir de **gatilho** do build de produção (só docs: nada de código mudou, o app publicado continua byte a byte o do merge `ac15daa`).
+- Limitação honesta: o sandbox não tem credencial Cloudflare (sem `CLOUDFLARE_*` no ambiente, `wrangler` não instalado) e o repo não tem workflow nem script de deploy — quem vê a fila de builds e o log de falha é o painel do dono. Confirmação de sucesso: rodapé de `https://teste-60f.pages.dev` com **Ctrl+F5** = **v7.3.9** e `app.bundle.js?v=7.3.9-36c2da9d6340`.
+
+### Continuidade (nada disso foi esquecido)
+
+1. **`AUDITORIA_TECNICA.md` §47 continua aberto:** `leitura_detalhada_departamentos_patch.js:141` (`salvarLancamentoContador`) salva o campo `lan-cont` sem validar vazio, negativo e valor abaixo da leitura anterior. O arquivo não estava no diff do PR #34. Correção depende de "pode" do dono.
+2. Prova de **toque no celular** do submenu de Cadastros (r64): não executada.
+3. Adiados para depois de sexta: redesenho das telas apertadas, revisão do corte de botões, ciclo E2E completo, nuvem PURO.
+4. `package.json > digicopy.branch` continua `arena/01a0d9c3-teste` — não mexer para não redirecionar link de download/publicação.
+5. Regras permanentes: senha de conexão ≠ senha de gerente; nunca token, senha, CSC ou certificado no repositório, no guia ou no chat; criar arquivo só quando o serviço não sai sem ele.
