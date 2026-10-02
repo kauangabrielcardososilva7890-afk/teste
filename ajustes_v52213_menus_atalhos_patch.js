@@ -50,7 +50,8 @@ function menusPadrao(){
     {id:'config', icon:'ph-gear', label:'Configurações', click:'navigateTo(\'config\')', menuId:'menu-config', items:[
       {id:'prefs', icon:'ph-sliders', label:'Preferências', click:'navigateTo(\'config\')'},
       {id:'usuarios', icon:'ph-user-gear', label:'Usuários e permissões', click:'navigateTo(\'usuarios\')'},
-      {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'}
+      {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'},
+      {id:'migracao-banco', icon:'ph-database', label:'Importar banco antigo', click:'renderBanco()'}
     ]},
     {id:'backup', icon:'ph-download-simple', label:'Backup', click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()', btnId:'btn-backup-top', title:'Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC'},
     {id:'nuvem', icon:'ph-cloud-check', label:'Nuvem', click:'abrirCloudflareNuvem()', btnId:'btn-nuvem', title:'Configurar e verificar a nuvem DIGICOPY'},

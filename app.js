@@ -1481,12 +1481,14 @@ window.openModal = function(type,id=null){
 };
 function renderBanco(){
   const sess=getSession();
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   let el=document.getElementById('view-banco');
   if(!el){ el=ensureView('banco'); }
   el.innerHTML='';
   el.classList.remove('hidden');
   el.style.display='block';
   el.style.visibility='visible';
+  setPageHeader('Importar banco antigo','Migração segura de dados do Firebird/DBeaver');
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const kpiCont = db.contratos.filter(c=>c.empresaId===sess?.empresaId && c.status==='ativo').length;
   const kpiParq = db.parque.filter(p=>p.empresaId===sess?.empresaId && p.status==='ativo').length;

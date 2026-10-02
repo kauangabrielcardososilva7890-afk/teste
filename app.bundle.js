@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: 931a0c8c31c3bc3f
+ * scripts: 236 | sha256: 39443142e879b587
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1733,12 +1733,14 @@ window.openModal = function(type,id=null){
 };
 function renderBanco(){
   const sess=getSession();
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   let el=document.getElementById('view-banco');
   if(!el){ el=ensureView('banco'); }
   el.innerHTML='';
   el.classList.remove('hidden');
   el.style.display='block';
   el.style.visibility='visible';
+  setPageHeader('Importar banco antigo','Migração segura de dados do Firebird/DBeaver');
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const kpiCont = db.contratos.filter(c=>c.empresaId===sess?.empresaId && c.status==='ativo').length;
   const kpiParq = db.parque.filter(p=>p.empresaId===sess?.empresaId && p.status==='ativo').length;
@@ -34595,7 +34597,8 @@ function menusPadrao(){
     {id:'config', icon:'ph-gear', label:'Configurações', click:'navigateTo(\'config\')', menuId:'menu-config', items:[
       {id:'prefs', icon:'ph-sliders', label:'Preferências', click:'navigateTo(\'config\')'},
       {id:'usuarios', icon:'ph-user-gear', label:'Usuários e permissões', click:'navigateTo(\'usuarios\')'},
-      {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'}
+      {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'},
+      {id:'migracao-banco', icon:'ph-database', label:'Importar banco antigo', click:'renderBanco()'}
     ]},
     {id:'backup', icon:'ph-download-simple', label:'Backup', click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()', btnId:'btn-backup-top', title:'Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC'},
     {id:'nuvem', icon:'ph-cloud-check', label:'Nuvem', click:'abrirCloudflareNuvem()', btnId:'btn-nuvem', title:'Configurar e verificar a nuvem DIGICOPY'},
