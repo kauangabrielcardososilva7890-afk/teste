@@ -271,6 +271,7 @@
   }
 
   var CSS =
+    '.fx-root-wrap{padding-bottom:140px}' +
     '.fx-root-wrap .fx-placa{padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;margin-bottom:10px}' +
     '.fx-root-wrap .fx-barra{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;margin-bottom:10px}' +
     '.fx-root-wrap .fx-lb{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#64748b;display:flex;flex-direction:column;gap:3px}' +

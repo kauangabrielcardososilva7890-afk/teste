@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: 39443142e879b587
+ * scripts: 236 | sha256: 25f47b26e8e6faf2
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2071,6 +2071,15 @@ window.handleMultipleUpload = async function(files, inputEl){
     const tabelasCount = Object.keys(tabelasImportadas).length;
 
     window._rawDataParaImportar = rawData;
+    if(status){
+      status.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+        <p class="font-bold text-emerald-800">✅ Leitura concluída: ${totalRegistros.toLocaleString('pt-BR')} registros em ${tabelasCount} tabelas.</p>
+        <p class="text-[11px] text-emerald-700 mt-1">Revise o log ao lado e confirme quando estiver pronto. Os dados só serão gravados após a confirmação.</p>
+        <button type="button" onclick="importarTudoDeUmaVez()" class="mt-3 w-full h-10 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition">
+          <i class="ph ph-download-simple"></i> Importar dados para o ERP
+        </button>
+      </div>`;
+    }
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
   } catch(e){
     console.error('[UPLOAD] falha geral', e);
@@ -58375,6 +58384,7 @@ try{
   }
 
   var CSS =
+    '.fx-root-wrap{padding-bottom:140px}' +
     '.fx-root-wrap .fx-placa{padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;margin-bottom:10px}' +
     '.fx-root-wrap .fx-barra{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;margin-bottom:10px}' +
     '.fx-root-wrap .fx-lb{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#64748b;display:flex;flex-direction:column;gap:3px}' +
@@ -60141,6 +60151,19 @@ try{
 
     /* clique na ABA FISCAL da barra clássica: abre o submenu (pin), não navega */
     var mod = t.closest('.module');
+    var menuComum = mod && mod.querySelector(':scope > .module-menu');
+    var botaoPai = mod && mod.querySelector(':scope > button');
+    if (mod && menuComum && botaoPai && botaoPai.contains(t)) {
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      var estavaAberto = mod.classList.contains('sfo-pin');
+      document.querySelectorAll('.module.sfo-pin').forEach(function (x) { x.classList.remove('sfo-pin'); });
+      if (!estavaAberto) mod.classList.add('sfo-pin');
+      if (estavaAberto) {
+        window.setTimeout(function () { mod.classList.remove('sfo-pin'); }, 0);
+        window.setTimeout(function () { mod.classList.remove('sfo-pin'); }, 80);
+      }
+      return;
+    }
     if (mod && mod.querySelector('#menu-nfe') && mod.querySelector(':scope > button') && mod.querySelector(':scope > button').contains(t)) {
       ev.preventDefault(); ev.stopImmediatePropagation();
       var aberto = mod.classList.contains('sfo-pin');
@@ -60163,6 +60186,10 @@ try{
     }
     /* clique num item do flyout: fecha tudo (a navegação segue pelo handler dele) */
     if (t.closest('#sxvm-flyout-nav')) { despinTodos(); return; }
+    /* Menus comuns têm o toggle inline no próprio botão. Não despinamos aqui
+       antes que esse handler rode, senão o segundo clique sempre reabre o menu. */
+    if (mod && mod.querySelector(':scope > .module-menu') &&
+        mod.querySelector(':scope > button') && mod.querySelector(':scope > button').contains(t)) return;
     /* qualquer outro clique: fecha pins */
     despinTodos();
   }
@@ -63142,18 +63169,6 @@ try{
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',remover);
   setTimeout(remover,100); setTimeout(remover,500); setTimeout(remover,1500);
   try{ new MutationObserver(remover).observe(document.body,{childList:true,subtree:true}); }catch(e){}
-  // Fonte única para módulos não fiscais: captura o clique antes dos
-  // onclick legados e torna abrir/fechar determinístico.
-  document.addEventListener('click', function(e){
-    if(e.defaultPrevented || !e.target || !e.target.closest) return;
-    var b=e.target.closest('.module-row .module > button');
-    var m=b && b.parentElement;
-    var menu=m && m.querySelector(':scope > .module-menu');
-    if(!b || !menu || m.querySelector('#menu-nfe')) return;
-    e.preventDefault(); e.stopImmediatePropagation();
-    document.querySelectorAll('.module.sfo-pin').forEach(function(x){ if(x!==m) x.classList.remove('sfo-pin'); });
-    m.classList.toggle('sfo-pin');
-  }, true);
   })();
 
 })();

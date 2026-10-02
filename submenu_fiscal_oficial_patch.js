@@ -152,6 +152,19 @@
 
     /* clique na ABA FISCAL da barra clássica: abre o submenu (pin), não navega */
     var mod = t.closest('.module');
+    var menuComum = mod && mod.querySelector(':scope > .module-menu');
+    var botaoPai = mod && mod.querySelector(':scope > button');
+    if (mod && menuComum && botaoPai && botaoPai.contains(t)) {
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      var estavaAberto = mod.classList.contains('sfo-pin');
+      document.querySelectorAll('.module.sfo-pin').forEach(function (x) { x.classList.remove('sfo-pin'); });
+      if (!estavaAberto) mod.classList.add('sfo-pin');
+      if (estavaAberto) {
+        window.setTimeout(function () { mod.classList.remove('sfo-pin'); }, 0);
+        window.setTimeout(function () { mod.classList.remove('sfo-pin'); }, 80);
+      }
+      return;
+    }
     if (mod && mod.querySelector('#menu-nfe') && mod.querySelector(':scope > button') && mod.querySelector(':scope > button').contains(t)) {
       ev.preventDefault(); ev.stopImmediatePropagation();
       var aberto = mod.classList.contains('sfo-pin');
@@ -174,6 +187,10 @@
     }
     /* clique num item do flyout: fecha tudo (a navegação segue pelo handler dele) */
     if (t.closest('#sxvm-flyout-nav')) { despinTodos(); return; }
+    /* Menus comuns têm o toggle inline no próprio botão. Não despinamos aqui
+       antes que esse handler rode, senão o segundo clique sempre reabre o menu. */
+    if (mod && mod.querySelector(':scope > .module-menu') &&
+        mod.querySelector(':scope > button') && mod.querySelector(':scope > button').contains(t)) return;
     /* qualquer outro clique: fecha pins */
     despinTodos();
   }

@@ -1819,6 +1819,15 @@ window.handleMultipleUpload = async function(files, inputEl){
     const tabelasCount = Object.keys(tabelasImportadas).length;
 
     window._rawDataParaImportar = rawData;
+    if(status){
+      status.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+        <p class="font-bold text-emerald-800">✅ Leitura concluída: ${totalRegistros.toLocaleString('pt-BR')} registros em ${tabelasCount} tabelas.</p>
+        <p class="text-[11px] text-emerald-700 mt-1">Revise o log ao lado e confirme quando estiver pronto. Os dados só serão gravados após a confirmação.</p>
+        <button type="button" onclick="importarTudoDeUmaVez()" class="mt-3 w-full h-10 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition">
+          <i class="ph ph-download-simple"></i> Importar dados para o ERP
+        </button>
+      </div>`;
+    }
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
   } catch(e){
     console.error('[UPLOAD] falha geral', e);
