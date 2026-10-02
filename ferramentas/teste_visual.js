@@ -163,6 +163,11 @@ function medirTela() {
 }
 
 function medirModal() {
+  // `rec` é redeclarado aqui de propósito: esta função é serializada e avaliada isolada no
+  // navegador, então nada do escopo do evaluate das telas existe para ela (rodada #9 caiu em
+  // 'ReferenceError: rec is not defined' — ramo que só passou a existir quando o boot do app
+  // parou de morrer e o modal de Chamados abriu de verdade).
+  const rec = (el) => { if (!el) return null; const r = el.getBoundingClientRect(); return { esq: Math.round(r.left), dir: Math.round(r.right), larg: Math.round(r.width), alt: Math.round(r.height) }; };
   const box = document.getElementById('modal-box');
   const raiz = document.getElementById('modal-root');
   if (!box || !raiz || raiz.classList.contains('hidden')) return null;
