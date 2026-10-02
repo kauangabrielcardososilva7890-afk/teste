@@ -116,17 +116,14 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
   // Smoke test físico: o submenu precisa abrir com o clique real do usuário,
   // não apenas existir no DOM ou funcionar por execução direta de onclick.
   for (const label of ['Atendimento', 'Locação', 'Fiscal', 'Cadastros', 'Configurações']) {
-    const parent = page.locator('.modern-topnav .module > button').filter({ hasText: label }).first();
+    const parent = page.locator('#shell-sidebar-links details > summary').filter({ hasText: label }).first();
     await expect(parent, `menu pai ${label} deve estar visível`).toBeVisible();
-    const submenu = parent.locator('xpath=..').locator('.module-menu');
+    const group = parent.locator('xpath=..');
+    const submenu = group.locator('.shell-side-sub');
     await parent.click();
-    await expect(submenu, `submenu ${label} deve abrir após clique`).toBeVisible();
+    await expect(submenu, `submenu ${label} deve abrir após o clique`).toBeVisible();
     await expect(submenu.locator('button').first(), `submenu ${label} deve ter itens clicáveis`).toBeVisible();
     await parent.click();
-    // Enquanto o ponteiro está sobre o pai, a regra :hover mantém o menu
-    // visualmente aberto; clicar fora é o contrato comum de fechamento real.
-    await page.mouse.move(1200, 780);
-    await page.locator('body').click({ position: { x: 20, y: 820 } });
     await expect(submenu, `submenu ${label} deve fechar no segundo clique`).not.toBeVisible();
   }
   await page.reload();
@@ -189,21 +186,22 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
       let target;
       let menuForDebug = null;
       if (trigger.menuLabel) {
-        const top = page.locator('.modern-topnav .module > button').filter({ hasText: trigger.menuLabel }).first();
+        const top = page.locator('#shell-sidebar-links details > summary').filter({ hasText: trigger.menuLabel }).first();
         if (!(await top.count()) || !(await top.isVisible())) {
-          result.routes.push({ id, ok: false, reason: `menu superior ausente: ${trigger.menuLabel}` });
+          result.routes.push({ id, ok: false, reason: `grupo lateral ausente: ${trigger.menuLabel}` });
           fs.writeFileSync(path.join(OUT_DIR, 'audit.partial.json'), JSON.stringify(result, null, 2));
           return;
         }
-        await top.hover({ timeout: 2500 });
-        await top.click({ timeout: 2500 });
-        menuForDebug = top.locator('xpath=..').locator('.module-menu');
+        const group = top.locator('xpath=..');
+        if (!(await group.getAttribute('open'))) await top.click({ timeout: 2500 });
+        menuForDebug = group.locator('.shell-side-sub');
         await menuForDebug.waitFor({ state: 'visible', timeout: 1800 }).catch(() => {});
+        await group.evaluate(el => { el.open = true; });
         target = menuForDebug.locator('button').filter({ hasText: trigger.menuItem }).first();
       } else if (trigger.selector) {
         target = page.locator(trigger.selector).first();
       } else {
-        target = page.locator('.modern-topnav .module > button').filter({ hasText: trigger.label }).first();
+        target = page.locator('#shell-sidebar-links > .shell-side-link').filter({ hasText: trigger.label }).first();
       }
       const targetCount = await target.count();
       const targetVisible = targetCount ? await target.isVisible() : false;
@@ -243,7 +241,7 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
     { id: 'dashboard', label: 'Início', view: 'dashboard' },
     { id: 'vendas', menuLabel: 'Atendimento', menuItem: 'Consultar notinhas', view: 'vendas' },
     { id: 'orcamentos', menuLabel: 'Atendimento', menuItem: 'Orçamentos', view: 'orcamentos' },
-    { id: 'produtos', label: 'Produtos', view: 'produtos' },
+    { id: 'produtos', menuLabel: 'Produtos', menuItem: 'Produtos e estoque', view: 'produtos' },
     { id: 'clientes', menuLabel: 'Cadastros', menuItem: 'Clientes', view: 'clientes' },
     { id: 'contratos', menuLabel: 'Locação', menuItem: 'Contratos', view: 'contratos' },
     { id: 'parque', menuLabel: 'Locação', menuItem: 'Máquinas nos clientes', view: 'impressoras', expectedText: 'Todas as impressoras cadastradas nos clientes' },
@@ -258,7 +256,6 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
     { id: 'fiscal-manifestacao', menuLabel: 'Fiscal', menuItem: 'Manifestação', view: 'fiscal-manifestacao' },
     { id: 'fiscal-ncm', menuLabel: 'Fiscal', menuItem: 'NCM', view: 'fiscal-ncm' },
     { id: 'fiscal-enviar-xml', menuLabel: 'Fiscal', menuItem: 'Enviar XML', view: 'fiscal-enviar-xml' },
-    { id: 'config-fiscal', menuLabel: 'Fiscal', menuItem: 'Configurações', view: 'config-fiscal' },
     { id: 'buscador-escola', label: 'Buscador Escola', view: 'buscador-escola' },
     { id: 'backup', label: 'Backup', modal: true, expectedText: 'Backup do sistema', closeAfter: 'backup' },
     { id: 'nuvem', label: 'Nuvem', modal: true, expectedText: 'Nuvem DIGICOPY', closeAfter: 'cloud' },

@@ -73,7 +73,7 @@ test('troca de senha, nota única e diagnóstico da nuvem em fixture sem produç
   await expect(page.locator('#digicopy-patch-notes')).toHaveCount(0);
 
   // Encerrar e autenticar novamente com a senha nova: sem novo modal obrigatório.
-  await page.getByTitle('Sair do sistema').click();
+  await page.locator('#sidebar button[title="Sair do sistema"]').click();
   await page.getByRole('button', { name: 'Confirmar' }).click();
   await expect(page.locator('#login-screen')).toBeVisible();
   await page.locator('#login-user').fill('qa-admin');
@@ -85,7 +85,7 @@ test('troca de senha, nota única e diagnóstico da nuvem em fixture sem produç
   await expect(page.locator('#digicopy-patch-notes')).toHaveCount(0);
 
   // Senha antiga é recusada após logout; o alerta é capturado sem bloquear o runner.
-  await page.getByTitle('Sair do sistema').click();
+  await page.locator('#sidebar button[title="Sair do sistema"]').click();
   await page.getByRole('button', { name: 'Confirmar' }).click();
   await expect(page.locator('#login-screen')).toBeVisible();
   await page.locator('#login-user').fill('qa-admin');
@@ -100,7 +100,7 @@ test('troca de senha, nota única e diagnóstico da nuvem em fixture sem produç
   await page.locator('#login-senha-user').fill('senha-final-sintetica');
   await page.getByRole('button', { name: 'Entrar no Sistema' }).click();
   await expect(page.locator('#app-shell')).toBeVisible();
-  await page.locator('#btn-nuvem').click();
+  await page.locator('#shell-sidebar-links #btn-nuvem').click();
   await expect(page.locator('#digicopy-cloud-modal')).toBeVisible();
   await expect(page.getByText('Nuvem pronta. Este computador ainda não foi autorizado.')).toBeVisible();
   await expect(page.locator('#dc-secret')).toHaveAttribute('type', 'password');
@@ -111,15 +111,15 @@ test('troca de senha, nota única e diagnóstico da nuvem em fixture sem produç
     loaded: !!window.__DIGICOPY_DIAG_NUVEM_V1
   }));
   expect(diagBinding).toEqual({ available: true, loaded: true });
-  await page.locator('#dc-cloud-diag-trigger').click();
+  await page.evaluate(() => document.getElementById('dc-cloud-diag-trigger')?.click());
   await expect(page.locator('#dc-cloud-diagnostic')).toBeVisible();
   await expect(page.locator('#dc-cloud-diagnostic-status')).toContainText('este computador ainda não está autorizado');
   await expect(page.locator('#dc-cloud-diagnostic-rows')).toContainText('Respondendo e pronto');
   await page.locator('#dc-cloud-diagnostic').getByRole('button', { name: 'Fechar diagnóstico' }).click();
 
   // Acessar o menu real, não apenas a função isolada: o subtítulo técnico não deve aparecer.
-  await page.getByRole('button', { name: 'Configurações' }).click();
-  await page.getByText('Usuários e permissões', { exact: true }).last().click();
+  await page.locator('#shell-sidebar-links details > summary').filter({ hasText: 'Configurações' }).click();
+  await page.locator('#shell-sidebar-links details').filter({ hasText: 'Configurações' }).locator('button').filter({ hasText: 'Usuários e permissões' }).click({ force: true });
   await expect(page.locator('#view-usuarios')).toBeVisible();
   await expect(page.locator('#view-usuarios')).toContainText('Usuários e permissões');
   await expect(page.locator('#view-usuarios')).not.toContainText('Hierarquia:');

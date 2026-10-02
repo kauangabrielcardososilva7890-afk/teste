@@ -111,6 +111,56 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 #login-screen.hidden{display:none!important;pointer-events:none!important}
 #login-screen:not(.hidden){display:flex!important}
 
+/* v8.0.0 — shell completo alinhado ao mockup aprovado. */
+@media (min-width:901px){
+  #sidebar{display:flex!important;position:fixed!important;inset:0 auto 0 0!important;width:220px!important;transform:none!important;background:#f7f9fd!important;color:#173d70!important;border-right:1px solid #e1e8f2!important;z-index:60!important}
+  #sidebar>div:first-child{height:60px!important;padding:0 18px!important;background:#0b3d7d!important;border-bottom:0!important}
+  #sidebar>div:first-child img{height:34px!important;width:auto!important}
+  #sidebar>div:nth-child(2){padding:16px 14px 10px!important}
+  #sidebar>div:nth-child(2)>div:first-child{background:#fff!important;border:1px solid #e2e9f2!important;padding:10px!important;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+  #sidebar>div:nth-child(2) #user-name{color:#173d70!important}
+  #sidebar>div:nth-child(2) #user-perfil{background:#eaf2ff!important;color:#2867a8!important}
+  #sidebar>div:nth-child(2) #user-empresa{color:#94a3b8!important}
+  #sidebar>div:nth-child(2) button{background:#f7faff!important;color:#47637f!important}
+  #sidebar>div:nth-child(2)>div:last-child{color:#94a3b8!important}
+  #sidebar nav{padding:8px 12px 14px!important;gap:18px!important}
+  #sidebar nav p{color:#94a3b8!important;font-size:10px!important;letter-spacing:.12em!important}
+  #sidebar nav button{width:100%!important;min-height:39px!important;padding:0 12px!important;border-radius:9px!important;color:#315273!important;background:transparent!important;font-size:12.5px!important;font-weight:700!important;text-align:left!important}
+  #sidebar nav button:hover,#sidebar nav button.active{background:#eaf2ff!important;color:#0a5eb4!important}
+  #sidebar nav button i{color:#3c76ad!important;font-size:18px!important}
+  #sidebar>nav{display:none!important}
+  #shell-sidebar-links{display:flex!important;flex-direction:column;gap:3px;padding:7px 12px 14px;overflow-y:auto;flex:1}
+  .shell-side-link{width:100%;min-height:39px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:#315273;display:flex;align-items:center;gap:11px;text-align:left;font-size:12.5px;font-weight:700;cursor:pointer;transition:.14s}
+  .shell-side-link:hover,.shell-side-link.active{background:#eaf2ff;color:#0a5eb4}.shell-side-link>i:first-child{font-size:18px;color:#3c76ad;flex:none}.shell-side-link .shell-caret{margin-left:auto;font-size:13px;color:#94a3b8;transition:.14s}.shell-sidebar-links details[open]>.shell-side-link{background:#edf5ff;color:#0a5eb4}.shell-sidebar-links details[open]>.shell-side-link .shell-caret{transform:rotate(90deg)}
+  .shell-side-sub{margin:2px 0 5px 29px;border-left:1px solid #d9e5f2;padding-left:8px;display:grid;gap:2px}.shell-side-sub button{min-height:30px;padding:0 8px;border:0;border-radius:7px;background:transparent;color:#66809a;text-align:left;font-size:11px;cursor:pointer}.shell-side-sub button:hover{background:#f0f6ff;color:#0a5eb4}
+  #sidebar>div:last-child{padding:12px!important;border-top:1px solid #e1e8f2!important}
+  #sidebar>div:last-child>div:first-child{background:#eaf3ff!important;border:1px solid #d5e5f8!important;color:#244e7a!important}
+  #sidebar>div:last-child>div:first-child p,#sidebar>div:last-child>div:first-child span{color:#244e7a!important}
+  #sidebar>div:last-child>div:first-child button{background:#fff!important;color:#0a5eb4!important}
+  #sidebar>div:last-child>div:last-child{color:#94a3b8!important}
+  #app-shell>div>main{margin-left:220px!important;min-height:100vh!important;background:#fff!important}
+  .app-titlebar{display:block!important;height:60px!important;background:#0b3d7d!important;position:sticky!important;top:0!important;z-index:55!important;box-shadow:0 2px 8px rgba(10,30,70,.12)!important}
+  .app-titlebar>div:first-child{height:60px!important;background:#0b3d7d!important;justify-content:flex-start!important;padding:0 24px!important}
+  .app-titlebar img{height:34px!important;width:auto!important}
+  #app-title-version{font-size:13px!important;font-weight:700!important;color:#fff!important;margin-left:8px!important}
+  #page-title{display:none!important}
+  .app-titlebar .absolute.right-2{right:24px!important}
+  .app-titlebar .absolute.right-2 #current-date{color:rgba(255,255,255,.75)!important}
+  .modern-topnav{display:none!important}
+  #app-shell>div>main>.flex-1{padding:0!important;background:#fff!important}
+  #app-shell>div>main>.flex-1>.view{padding:0 30px 36px!important}
+  #app-shell>div>main>.flex-1>#view-dashboard{padding:0!important}
+  .statusbar{display:none!important}
+  #etq-busca-box{margin:18px 30px 0!important;border-color:#e2e9f2!important;box-shadow:0 2px 9px rgba(15,23,42,.04)!important}
+}
+@media (max-width:900px){
+  #sidebar{background:#f7f9fd!important;color:#173d70!important}
+  #sidebar nav button{color:#315273!important}
+  .app-titlebar{display:block!important;background:#0b3d7d!important}
+  #shell-sidebar-links{display:none!important}
+  .modern-topnav{display:block!important}
+}
+
 /* fix menu cobrindo botão contrato - dá espaço sem quebrar scroll */
 .view { scroll-margin-top: 80px; }
 /* v8.0.0 — auditoria visual: conteúdo estreito deve ser rolável, não cortado. */
@@ -190,9 +240,22 @@ html,body{max-width:100%;overflow-x:hidden}
           <p class="text-[11px] text-white/50 truncate flex items-center gap-1.5"><span id="user-perfil" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase">Admin</span><span id="user-empresa" class="truncate">DIGICOPY</span></p>
         </div>
         <button onclick="exportBackup()" title="Exportar backup (arquivo JSON com todos os dados)" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-download-simple"></i></button>
-        <button onclick="doLogout()" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
+        <button onclick="doLogout()" title="Sair do sistema" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
       </div>
       <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
+    </div>
+    <div id="shell-sidebar-links" class="shell-sidebar-links">
+      <button class="shell-side-link active" onclick="navigateTo('dashboard')"><i class="ph ph-house"></i><span>Início</span></button>
+      <details><summary class="shell-side-link"><i class="ph ph-headset"></i><span>Atendimento</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('vendas')">Consultar notinhas</button><button onclick="navigateTo('orcamentos')">Orçamentos</button><button onclick="openQuickOS()">Abrir chamado</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-cube"></i><span>Produtos</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('produtos')">Produtos e estoque</button><button onclick="navigateTo('impressoras')">Impressoras</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-printer"></i><span>Locação</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('contratos')">Contratos</button><button onclick="navigateTo('parque')">Máquinas nos clientes</button><button onclick="navigateTo('leituras')">Leituras</button><button onclick="navigateTo('impressoras')">Impressoras</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-file-text"></i><span>Fiscal</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('central-nf')">Nota fiscal</button><button onclick="navigateTo('fiscal-perfil')">Perfil tributário</button><button onclick="navigateTo('fiscal-manifestacao')">Manifestação</button><button onclick="navigateTo('fiscal-ncm')">NCM</button><button onclick="navigateTo('fiscal-enviar-xml')">Enviar XML</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-users-three"></i><span>Cadastros</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('clientes')">Clientes</button><button onclick="openModal('cliente')">Novo cliente</button><button onclick="navigateTo('usuarios')">Usuários</button></div></details>
+      <button class="shell-side-link" onclick="navigateTo('financeiro')"><i class="ph ph-chart-line-up"></i><span>Financeiro</span></button>
+      <details><summary class="shell-side-link"><i class="ph ph-gear"></i><span>Configurações</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('config')">Preferências</button><button onclick="navigateTo('usuarios')">Usuários e permissões</button><button onclick="navigateTo('auditoria')">Auditoria</button></div></details>
+      <button id="btn-backup-top" class="shell-side-link" onclick="abrirTelaBackup()"><i class="ph ph-cloud-arrow-up"></i><span>Backup</span></button>
+      <button id="btn-nuvem" class="shell-side-link" onclick="abrirCloudflareNuvem()"><i class="ph ph-cloud-check"></i><span>Nuvem</span></button>
+      <button class="shell-side-link" onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i><span>Buscador Escola</span></button>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
@@ -230,8 +293,8 @@ html,body{max-width:100%;overflow-x:hidden}
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
-        <div class="module"><button id="btn-backup-top" type="button" onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()" title="Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC"><i class="ph ph-download-simple"></i>Backup</button></div>
-        <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
+        <div class="module"><button id="legacy-btn-backup-top" type="button" onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()" title="Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC"><i class="ph ph-download-simple"></i>Backup</button></div>
+        <div class="module"><button id="legacy-btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><button id="dc-cloud-diag-trigger" type="button" aria-label="Abrir diagnóstico da nuvem" title="Abrir diagnóstico da nuvem" class="inline-flex items-center gap-2 border-0 bg-transparent text-slate-500 cursor-pointer"><span class="pulse-dot" aria-hidden="true"></span><span class="hidden xl:inline">Nuvem</span></button></div>
       </div></div>
     <div class="flex-1 p-4 lg:p-8">
@@ -263,6 +326,6 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
 <script>window.__DIGICOPY_FALHAS=[];window.__DIGICOPY_FALHA=function(f,e){try{window.__DIGICOPY_FALHAS.push({arq:String(f),erro:String((e&&e.message)||e).slice(0,160)});}catch(_){}};</script>
-    <script src="./app.bundle.js?v=8.0.0-24733f8742af"></script>
+    <script src="./app.bundle.js?v=8.0.0-dce4511b6732"></script>
 </body>
 </html>

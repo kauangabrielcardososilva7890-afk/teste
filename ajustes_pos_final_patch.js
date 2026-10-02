@@ -55,10 +55,10 @@ window.AJUSTES_POS_FINAL_PURE={isProdutoImpressoraLocacao,patchHtmlImpressao};
 
 if(typeof document==='undefined') return;
 
-// Remove a barra azul duplicada no topo; o .exe já tem barra própria.
+// O shell web usa a barra azul principal do sistema; ela não deve ser ocultada.
 const style=document.createElement('style');
 style.id='ajustes-pos-final-css';
-style.textContent=`.app-titlebar{display:none!important}.faixa-chamado-final{margin:10px 0 6px;padding:7px 10px;background:#0a1e8a;color:#fff;border-radius:10px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}`;
+style.textContent=`.faixa-chamado-final{margin:10px 0 6px;padding:7px 10px;background:#0a1e8a;color:#fff;border-radius:10px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}`;
 document.head.appendChild(style);
 
 // Produtos: não mostrar impressoras de locação/equipamentos no menu Produtos.
