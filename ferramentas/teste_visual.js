@@ -80,7 +80,18 @@ function medirTela() {
 
   // 1) a tabela não cabe? o bloco dela rola? o bilhete existe? e depois de
   //    arrastar até o fim, a última célula entra no recorte?
-  const tab = vista ? vista.querySelector('table') : null;
+  //    A escolhida é a tabela VISÍVEL mais larga da tela — a primeira do DOM é
+  //    quase sempre a de outra aba escondida (importação, pré-visualização), que
+  //    mede 0x0 e daria um "está tudo bem" falso.
+  let tab = null;
+  if (vista) {
+    let maior = 0;
+    for (const t of vista.querySelectorAll('table')) {
+      const r = t.getBoundingClientRect();
+      if (r.height < 2 || r.width < 2) continue;
+      if (r.width > maior) { maior = r.width; tab = t; }
+    }
+  }
   if (tab) {
     let cont = tab.parentElement;
     while (cont && cont !== document.body) {
@@ -206,22 +217,44 @@ function medirModal() {
     return m ? m[0] : '?';
   });
 
-  const navegar = async (tela) => {
-    await pagina.evaluate((v) => { try { window.navigateTo(v); } catch (e) { } }, tela);
-    await pagina.waitForTimeout(650);
+  // Clique de verdade quando o botão existe: é o caminho que o usuário faz, e é o
+  // que exercita os ganchos de quem escuta clique (o embrulho do navigateTo cuida
+  // da navegação por programa). O resultado de cada tela diz por onde entramos.
+  const navegar = async (p, tela) => {
+    const modo = await p.evaluate((v) => {
+      const b = document.querySelector('[data-nav="' + v + '"]');
+      if (b && b.offsetParent !== null) { b.click(); return 'clique no menu'; }
+      try { window.navigateTo(v); return 'navigateTo'; } catch (e) { return 'falhou: ' + e.message; }
+    }, tela);
+    await p.waitForTimeout(760);
+    return modo;
   };
 
   for (const tela of TELAS) {
-    await navegar(tela);
+    const modo = await navegar(pagina, tela);
     const medido = await pagina.evaluate(medirTela);
+    medido.entrada = modo;
+    if (tela === 'config') {
+      // a faixa da Nuvem só aparece quando o próprio módulo confere o estado; sem
+      // dar esse empurrão o teste medir uma tela sem faixa e daria ✓ de favor
+      await pagina.evaluate(() => { try { window.v7015ConferirNuvem && window.v7015ConferirNuvem(); } catch (e) { } });
+      await pagina.waitForTimeout(1500);
+      medido.aposEmpurrarFaixa = true;
+    }
     resultados.celular.push(medido);
   }
 
   // o modal de Chamados — é o que o relatório descreveu cortado nas duas bordas
-  await navegar('manutencao');
-  await pagina.evaluate(() => { try { window.abrirHistoricoChamadosGeral(); } catch (e) { } });
-  await pagina.waitForTimeout(700);
+  await navegar(pagina, 'manutencao');
+  resultados.modalAbertura = await pagina.evaluate(() => {
+    if (typeof window.abrirHistoricoChamadosGeral !== 'function') return 'não existe window.abrirHistoricoChamadosGeral';
+    try { window.abrirHistoricoChamadosGeral(); } catch (e) { return 'lançou: ' + e.message; }
+    const r = document.getElementById('modal-root');
+    return r ? (r.classList.contains('hidden') ? 'chamou mas o modal-root continuou escondido' : 'aberto') : 'sem #modal-root na página';
+  });
+  await pagina.waitForTimeout(900);
   resultados.modal = await pagina.evaluate(medirModal);
+  resultados.modal = resultados.modal && Object.assign({}, resultados.modal, { abertura: resultados.modalAbertura });
   if (resultados.modal) await pagina.screenshot({ path: 'modal-celular.png' });
   await pagina.evaluate(() => { try { window.closeModal(); } catch (e) { } });
 
@@ -232,10 +265,10 @@ function medirModal() {
   await paginaD.goto(URL_ALVO, { waitUntil: 'domcontentloaded' });
   await paginaD.waitForTimeout(1200);
   for (const tela of ['clientes', 'impressoras', 'contratos', 'financeiro', 'auditoria']) {
-    await paginaD.evaluate((v) => { try { window.navigateTo(v); } catch (e) { } }, tela);
-    await paginaD.waitForTimeout(500);
+    const modo = await navegar(paginaD, tela);
     const m = await paginaD.evaluate(medirTela);
-    resultados.desktop.push({ tela: m.tela, bilheteNaTabela: !!(m.tabela && m.tabela.bilhete), bilheteNaFaixa: !!(m.faixa && m.faixa.bilhete), faixaPrecisaRolar: !!(m.faixa && m.faixa.naoCabe) });
+    resultados.desktop.push({ pedida: tela, aberta: m.tela, entrada: modo,
+      bilheteNaTabela: !!(m.tabela && m.tabela.bilhete), bilheteNaFaixa: !!(m.faixa && m.faixa.bilhete), faixaPrecisaRolar: !!(m.faixa && m.faixa.naoCabe) });
   }
 
   await contextoD.close();
@@ -255,6 +288,10 @@ function medirModal() {
     if (t) linhas.push('| ' + s.tela + ' | ' + t.colunas + ' | ' + t.largura + ' | ' + t.disponivel + ' | ' + (t.naoCabe ? 'sim' : 'não') + ' | ' + (t.marcado ? '✓' : '—') + ' | ' + (t.bilhete ? '✓' : '—') + ' | ' + (t.ultimaColunaVisivel === undefined ? '—' : (t.ultimaColunaVisivel ? '✓' : '✗')) + ' |');
     else linhas.push('| ' + s.tela + ' | — | — | — | sem tabela | — | — | — |');
     if (temErro(s)) falhas.push(s.tela + ': abriu com o cartaz de tela sem conteúdo');
+  }
+  if (!resultados.modal) falhas.push('o modal de Chamados não abriu para ser medido: ' + (resultados.modalAbertura || '?'));
+  for (const d of resultados.desktop) {
+    if (d.aberta !== 'view-' + d.pedida) falhas.push('desktop: pediu ' + d.pedida + ' e a tela visível foi ' + d.aberta + ' (' + d.entrada + ')');
   }
   if (resultados.modal) {
     if (resultados.modal.vazaEsquerda || resultados.modal.vazaDireita) falhas.push('modal: caixa ' + resultados.modal.caixa.larg + 'px num viewport de ' + resultados.modal.viewport + 'px vazou (' + (resultados.modal.vazaEsquerda ? 'esquerda ' : '') + (resultados.modal.vazaDireita ? 'direita' : '') + ')');
@@ -278,7 +315,7 @@ function medirModal() {
   const md = [
     '## Teste visual no navegador real — ' + resultados.verso,
     '',
-    'Semeadura: `' + JSON.stringify(resultados.semeadura) + '`', '',
+    'Semeadura: `' + JSON.stringify(resultados.semeadura) + '` · modal: `' + String(resultados.modalAbertura) + '`', '',
     'Rodado no GitHub Actions contra `' + URL_ALVO + '` (celular 390×844, desktop 1365×850, base sintética montada na hora, nada de dado real).',
     '',
     '| tela | colunas | tabela | tela cabe? | não cabe | rolável | bilhete | última coluna alcançável |',

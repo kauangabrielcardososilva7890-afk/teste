@@ -3679,3 +3679,41 @@ capturas ficam acessíveis em `https://teste-60f.pages.dev/aaaaaaaaaaaaaaaa/conf
 vez o conteúdo é sintético ("Empresa Sintética QA", CNPJ zerado), mas se uma captura futura for feita na
 base real, print de tela vira página pública. Sugestão: eu tiro a pasta do branch depois de usar (ou
 mudo para fora do repositório) — não fiz nada por conta própria porque foi você que acabou de colocar.
+
+
+### 59.6 O primeiro veredito de navegador de verdade (Actions, issue #35) — e ele me pegou em falta
+
+O dono ligou o workflow (commit `b745c40`). O run rodou inteiro: `npm i playwright` → `playwright install --with-deps chromium` → esperou o Pages publicar o
+mesmo commit → abriu `https://teste-60f.pages.dev/index.html` em **390×844**, semeou a base sintética pelo próprio `saveDB` do app (`{"ok":true,"clientes":3,"equipamentos":4}`),
+passou pelas 14 telas e abriu a issue com a tabela. O job fechou com ❌ porque o teste achou defeito — e o defeito era **meu conserto da r70**:
+
+| tela | tabela | tela | não cabe | `.digi-rola` | bilhete |
+|---|---|---|---|---|---|
+| view-clientes | 720 | 388 | sim | **não** | **não** |
+| view-contratos | 455 | 388 | sim | não | não |
+| view-leituras | 608 | 388 | sim | não | não |
+| view-vendas | 485 | 388 | sim | não | não |
+| view-usuarios | 504 | 388 | sim | não | não |
+| view-auditoria | 441 | 388 | sim | não | não |
+| view-produtos | 502 | 388 | sim | não | não |
+
+Diagnóstico: a varredura que marca a tabela estava presa a **clique, foco, tecla, resize e ao MutationObserver da barra** — e nada disso acontece
+quando a tela é aberta por programa. O usuário comum clica no menu, então o aviso aparecia um instante depois; quem navega por atalho, pela busca,
+ou por programa (qualquer um dos 60 atalhos do app) via a tabela cortada **sem nenhum aviso**. Meu teste fez exatamente isso e por isso a coluna
+ficou vazia. Ou seja: o teste não foi "injusto", ele mostrou um buraco real de primeira pintura.
+
+Corrigido em `menus_tela_pequena_patch.js`: `prenderNavegacao()` abraça `window.navigateTo` (por fora, no padrão do projeto) e chama
+`varrer()` + `varrerAgora()` em 140ms e 800ms **dentro de um `finally`** — assim a medição acontece mesmo se o render da tela lançar erro. Três
+asserções novas no tema 05 (o gancho existe, roda no `finally`, e é preso depois dos `varrer`).
+
+A mesma rodada revelou dois defeitos **do teste** (que teriam produzido ✓ de favor), ambos corrigidos em `ferramentas/teste_visual.js`:
+1. `medirTela` media a **primeira** `<table>` da tela — que em Impressoras/Manutenção/Financeiro é a tabela escondida de outra aba (media 0×0, e o
+   relatório dizia "não precisa rolar" para uma tela que nem estava sendo olhada). Agora escolhe a tabela **visível mais larga**.
+2. O teste abria as telas por `window.navigateTo`. Agora ele **clica no botão do menu** (`[data-nav="<tela>"]`) quando o botão existe — o caminho do
+   usuário — e só cai para `navigateTo` como reserva; o relatório de cada tela diz por qual caminho entrou. E passou a **empurrar**
+   `window.v7015ConferirNuvem()` na tela de Configurações, porque a faixa da Nuvem só existe depois de a própria módulo conferir o estado (sem isso
+   a seção "faixa da Nuvem" media ausência e dava ✓ de favor), a registrar **por que** o modal abriu ou não abriu (o run #1 devolveu `null` mudo), e
+   a falhar se a tela pedida não foi a que abriu (o run #1 mediu `view-financeiro` duas vezes porque a auditoria não abriu, e ninguém percebeu).
+
+Publicado em **v7.3.16** (bundle `0240830ea15aa01e`, 233 scripts, ordem intacta; suíte 11✅/0❌/1 pulada). O push deste commit re-dispara o teste
+sozinho, e o veredito volta como issue.

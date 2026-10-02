@@ -1541,6 +1541,7 @@ const ler = f => fs.readFileSync(__dirname + '/' + f, 'utf8');
 
 // ── 1) o CSS que o celular recebe ───────────────────────────────────────────
 const fonte = ler('menus_tela_pequena_patch.js');
+const telaFonte = fonte;
 const win = { console: { log(){} } };
 win.window = win;
 vm.createContext(win);
@@ -1679,6 +1680,11 @@ ok(/if \(G\.NAV612_PURE\.telaVazia\(t\)\) \{[\s\S]{0,240}G\[fn\]\(\);[\s\S]{0,24
 ok(!/  setInterval\(\(\)=>\{const el=document\.getElementById\('session-time'\)/.test(app), 'showApp() não empilha mais um setInterval cru por login');
 ok(/if \(window\.__sessionTimer\) \{ try \{ clearInterval\(window\.__sessionTimer\); \} catch\(e\)\{\} \}/.test(app), 'o timer anterior é desligado antes de ligar o novo');
 ok((app.match(/getElementById\('session-time'\)/g) || []).length === 1 && (app.match(/window\.__sessionTimer = setInterval/g) || []).length === 1, 'um único lugar escreve o tempo de sessão e um único timer o alimenta');
+
+// ── 6b) a varredura tem de acontecer na TROCA DE TELA, não só no clique ────
+ok(/function prenderNavegacao\(\)/.test(telaFonte) && /__digiRoloNav/.test(telaFonte), 'o patch abraça window.navigateTo (mede assim que a tela muda)');
+ok(/finally \{ varrer\(\); setTimeout\(varrerAgora, 140\); setTimeout\(varrerAgora, 800\); \}/.test(telaFonte), 'a medição acontece mesmo se o render da tela lançar erro, e repetida um frame depois');
+ok(telaFonte.indexOf('prenderNavegacao') > telaFonte.indexOf('function varrerAgora'), 'o gancho é preso depois de os varrer existirem (senão chamaria função de baixo)');
 
 // ── 7) V-05: o aviso de lista vazia não pode ficar fora da tela ────────────
 const fin = ler('finalizacao_sistema_patch.js');

@@ -9,7 +9,7 @@
 
 - Arquivos no bundle: **233**
 - Nomes globais escritos: **1091**
-- Escritas totais (contando as repetições): **2059**
+- Escritas totais (contando as repetições): **2060**
 - Nomes escritos em **2 ou mais** arquivos: **291**
 - Análise sem parser (acorn)? **não**
 
@@ -17,7 +17,7 @@
 
 | Nome | Vezes | Ganha (último a carregar) |
 |---|---|---|
-| `navigateTo` | 37 | ajustes_v6108_lembrar_tela_patch.js:238 (função, no carregamento) |
+| `navigateTo` | 38 | ajustes_v6108_lembrar_tela_patch.js:238 (função, no carregamento) |
 | `__vosIgnorarSair` | 32 | (só troca em uso) |
 | `modalContext` | 23 | (só troca em uso) |
 | `showApp` | 23 | navegacao_fiscal_barra_escuro_patch.js:494 (função, no carregamento) |
@@ -80,7 +80,7 @@
 
 ## A lista completa dos repetidos
 
-### `navigateTo` — 37 escritas
+### `navigateTo` — 38 escritas
 
 - sobrepõe: app.js:543 — função de topo, no carregamento
 - sobrepõe: notinha_patch.js:749 — função, no carregamento
@@ -111,6 +111,7 @@
 - sobrepõe: ajustes_v52260_orcamento_trava_venda_atalho_patch.js:805 — função, no carregamento
 - sobrepõe: ajustes_v52261_orcamento_nao_volta_patch.js:279 — função, no carregamento
 - sobrepõe: ajustes_v52263_exe_completo_patch.js:57 — função, no carregamento
+- sobrepõe: menus_tela_pequena_patch.js:393 — alias, em uso
 - sobrepõe: painel_gerente_patch.js:159 — função, no carregamento
 - sobrepõe: autocura_empresa_central_nf_tela_patch.js:245 — função, no carregamento
 - sobrepõe: menus_fiscais_separados_patch.js:205 — alias, no carregamento

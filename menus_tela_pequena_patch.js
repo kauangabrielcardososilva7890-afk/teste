@@ -372,6 +372,30 @@ if (typeof document === 'undefined') return;
   window.digiRevarrerTelas = varrerAgora;
   setTimeout(varrer, 800);
   setTimeout(varrer, 2500);   // a faixa é montada por outros patches, confere de novo
+
+  // Trocar de tela também é um momento de medir. Sem isto, o aviso de "arraste"
+  // só aparecia depois do primeiro clique DEPOIS de abrir a tela — quem navega
+  // por atalho, pela busca ou por programa (é assim que o teste do Actions
+  // navega) via a tabela cortada sem nenhum aviso. O embrulho é por fora do
+  // núcleo: se outro patch já embrulhou, entra na frente dele e a corrente
+  // inteira continua funcionando.
+  function prenderNavegacao() {
+    var anterior = window.navigateTo;
+    if (typeof anterior !== 'function') return false;
+    if (anterior.__digiRoloNav) return true;
+    var embrulhado = function () {
+      var r;
+      try { r = anterior.apply(this, arguments); }
+      finally { varrer(); setTimeout(varrerAgora, 140); setTimeout(varrerAgora, 800); }
+      return r;
+    };
+    embrulhado.__digiRoloNav = true;
+    window.navigateTo = embrulhado;
+    return true;
+  }
+  if (!prenderNavegacao() && typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', function () { prenderNavegacao(); });
+  }
   if (typeof MutationObserver === 'function') {
     try {
       new MutationObserver(varrer).observe(document.querySelector('.modern-topnav') || document.body,

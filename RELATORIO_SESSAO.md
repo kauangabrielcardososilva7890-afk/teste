@@ -8430,3 +8430,16 @@ público se um dia for feito na base real.
 
 Teste: +2 asserções no tema 05 (o aviso preso e o contêiner que rola). Suíte 11✅/0❌/1 pulada;
 `Bundle OK: 233`; sha `3c66b60e1c67de80`; v7.3.15 publicado.
+
+
+## r71 — 02/10/2026 (v7.3.16) — o navegador de verdade funcionou, e a primeira coisa que ele fez foi me reprovar
+
+O dono ligou o workflow do Actions. Primeiro run completo contra o site publicado (390x844, base sintética semeada pelo `saveDB` do próprio app):
+as 7 tabelas que não cabem estavam marcadas como **sem bilhete** — a varredura só rodava em clique/foco/tecla/resize, então quem navega por atalho,
+pela busca ou por programa via a tabela cortada sem aviso nenhum. Consertado com `prenderNavegacao()` abraçando `window.navigateTo` e medindo no
+`finally` (a medição acontece mesmo se o render lançar erro). 3 asserções novas no tema 05.
+
+O mesmo run expôs dois defeitos no MEU teste, que dariam ✓ de favor: media a primeira `<table>` da tela (em Impressoras/Manutenção/Financeiro é a
+tabela escondida de outra aba, 0x0) em vez da visível mais larga; e abriu tudo por `navigateTo` em vez de clicar no menu. Agora ele clica no botão
+`[data-nav=...]`, empurra `v7015ConferirNuvem()` antes de medir a faixa da Nuvem, registra por que o modal abriu ou não, e falha se a tela pedida
+não foi a que abriu. Detalhe: a verificação de que o Pages publicou o MESMO commit antes de medir já evitou um veredito mentiroso na largada.
