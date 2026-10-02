@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
+const APP_VERSION = require('../package.json').version;
 
 const OUT_DIR = process.env.DIGICOPY_EVIDENCE_DIR || path.join(__dirname, 'test-results', 'personal-ui-audit');
 
@@ -129,7 +130,7 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
     await page.waitForTimeout(1200);
   }
   const releaseNotesAfterReload = await page.locator('#digicopy-patch-notes').count();
-  expect(releaseNotesFirstLogin.version, 'a aplicação deve usar a versão atual').toBe('7.3.15');
+  expect(releaseNotesFirstLogin.version, 'a aplicação deve usar a versão atual').toBe(APP_VERSION);
   expect(releaseNotesFirstLogin.seenForCurrentVersion, 'marcar como visto ao exibir, com chave da versão atual').toBe('1');
   expect(releaseNotesFirstLogin.previousVersionSeen, 'o marcador da versão anterior não suprime as notas atuais').toBe('1');
   expect(releaseNotesAfterReload, 'a nota não deve reaparecer depois de recarregar em modo sem nuvem real').toBe(0);

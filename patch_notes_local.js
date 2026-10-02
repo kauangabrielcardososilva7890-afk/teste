@@ -30,6 +30,12 @@ var NOTAS_POR_VERSAO={
     'Os registros de negócio não são mais gravados em armazenamento permanente do navegador: a nuvem é a cópia oficial.',
     'Uma alteração só aparece como salva depois da confirmação da nuvem. Se a conexão cair, ela fica apenas na memória desta sessão; mantenha a janela aberta até a confirmação.',
     'Uma fila antiga já existente nesta máquina é preservada apenas até a nuvem confirmar o envio, para evitar perder alterações pendentes.'
+  ],
+  '8.0.0':[
+    'A versão 8.0.0 reúne a auditoria final do sistema, com menus e fluxos principais validados em testes automatizados.',
+    'As telas estreitas agora deixam navegação, tabelas, comandos e modais rolarem sem cortar o conteúdo importante.',
+    'Quando algo inesperado acontecer, o sistema avisa claramente que a operação não terminou como esperado e registra detalhes para diagnóstico, sem fingir que salvou.',
+    'O Gerente de Atualizações também passou a registrar falhas inesperadas e avisar quando uma operação ou a janela do programa não conclui corretamente.'
   ]
 };
 function chave(v){return 'digicopy_patch_visto_'+String(v||'').replace(/[^0-9A-Za-z._-]/g,'_');}
