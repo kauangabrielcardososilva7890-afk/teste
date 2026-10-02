@@ -50,8 +50,8 @@ function montarBase() {
   const hoje = new Date().toISOString();
   const dia = new Date(Date.now() - 864e5).toISOString();
   const empresa = { id: 'emp-teste', nome: 'Empresa Sintética QA', fantasia: 'Empresa Sintética QA', cnpj: '00000000000000', telefone: '0000-0000', cidade: 'Montes Claros', estado: 'MG' };
-  const cli = (n) => ({ id: 'cli-' + n, nome: 'Cliente Sintético ' + n, fantasia: 'Fantasia ' + textoFixo(n), documento: '00' + n + '0000000', telefone: '38 0000-000' + n, cidade: 'Montes Claros', bairro: 'Bairro ' + textoFixo(n), estado: 'MG', empresaId: 'emp-teste', ativo: true, criadoEm: hoje });
-  const eq = (n) => ({ id: 'eq-' + n, modelo: 'Impressora Sintética ' + n, serial: 'SN' + n + '000000', patrimonio: 'PAT-' + n, contadorPreto: 100 * n, contadorColor: 50 * n, clienteId: 'cli-1', contratoId: 'ctr-1', departamento: 'Departamento ' + textoFixo(n), local: 'Local ' + textoFixo(n), empresaId: 'emp-teste', status: 'instalado' });
+  const cli = (n) => ({ id: 'cli-' + n, tipo: 'juridica', email: '', nome: 'Cliente Sintético ' + n, fantasia: 'Fantasia ' + textoFixo(n), documento: '00' + n + '0000000', telefone: '38 0000-000' + n, cidade: 'Montes Claros', bairro: 'Bairro ' + textoFixo(n), estado: 'MG', empresaId: 'emp-teste', ativo: true, criadoEm: hoje });
+  const eq = (n) => ({ id: 'eq-' + n, modelo: 'Impressora Sintética ' + n, serial: 'SN' + n + '000000', patrimonio: 'PAT-' + n, contadorPreto: 100 * n, contadorPB: 100 * n, contadorColor: 50 * n, clienteId: 'cli-1', contratoId: 'ctr-1', departamento: 'Departamento ' + textoFixo(n), local: 'Local ' + textoFixo(n), empresaId: 'emp-teste', status: 'instalado' });
   return {
     _montada: true, empresas: [empresa], empresaAtivaId: 'emp-teste',
     // sem 'config' aqui de propósito: o testador mescla em cima do config que o
@@ -62,7 +62,7 @@ function montarBase() {
     contratos: [1, 2].map(n => ({ id: 'ctr-' + n, numero: 'CTR-000' + n, clienteId: 'cli-' + n, status: 'ativo', valor: 100 * n, inicio: dia, fim: hoje, empresaId: 'emp-teste', equipamentos: ['eq-1'] })),
     parque: [1, 2, 3].map(n => ({ id: 'pq-' + n, clienteId: 'cli-' + n, equipamentoId: 'eq-' + n, setor: 'Setor ' + textoFixo(n), status: 'ativo', empresaId: 'emp-teste' })),
     leituras: [1, 2, 3].map(n => ({ id: 'lei-' + n, contratoId: 'ctr-1', codigo: 'L000' + n, periodo: '2026-09', lancadaEm: hoje, preto: 10 * n, color: 5 * n, utilizado: 15 * n, excedente: n, total: 30 * n, empresaId: 'emp-teste' })),
-    os: [1, 2, 3].map(n => ({ id: 'os-' + n, numero: 'CH-000' + n, clienteId: 'cli-1', motivo: 'Motivo sintético ' + textoFixo(n), equipamentoId: 'eq-1', status: 'aberto', dataAbertura: hoje, prioridade: 'media', contratoId: 'ctr-1', empresaId: 'emp-teste' })),
+    os: [1, 2, 3].map(n => ({ id: 'os-' + n, numero: 'CH-000' + n, clienteId: 'cli-1', motivo: 'Motivo sintético ' + textoFixo(n), descricao: 'Chamado sintético ' + n + ' — texto de teste, sem cliente real.', tipo: 'Contrato', criadoPorNome: 'QA Sintético', equipamentoId: 'eq-1', status: 'aberto', dataAbertura: hoje, prioridade: 'media', contratoId: 'ctr-1', empresaId: 'emp-teste' })),
     vendas: [1, 2].map(n => ({ id: 'v-' + n, numero: 'NV-000' + n, clienteId: 'cli-' + n, data: hoje, total: 379.8 * n, status: 'aberta', formaPagamento: 'Dinheiro', empresaId: 'emp-teste', itens: [] })),
     contasReceber: [1, 2, 3].map(n => ({ id: 'cr-' + n, descricao: 'Receber sintético ' + n, valor: 100 * n, vencimento: hoje, status: 'aberto', clienteId: 'cli-' + n, empresaId: 'emp-teste' })),
     contasPagar: [1].map(n => ({ id: 'cp-' + n, descricao: 'Pagar sintético ' + n, valor: 50 * n, vencimento: hoje, status: 'aberto', empresaId: 'emp-teste' })),

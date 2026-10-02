@@ -8443,3 +8443,26 @@ O mesmo run expôs dois defeitos no MEU teste, que dariam ✓ de favor: media a 
 tabela escondida de outra aba, 0x0) em vez da visível mais larga; e abriu tudo por `navigateTo` em vez de clicar no menu. Agora ele clica no botão
 `[data-nav=...]`, empurra `v7015ConferirNuvem()` antes de medir a faixa da Nuvem, registra por que o modal abriu ou não, e falha se a tela pedida
 não foi a que abriu. Detalhe: a verificação de que o Pages publicou o MESMO commit antes de medir já evitou um veredito mentiroso na largada.
+
+
+## r71 bis — 02/10/2026 (v7.3.17) — o navegador me reprovou duas vezes e as duas eram justas
+
+Rodada #3/#4 do teste no Actions (issues #37/#38). O `bilhete` continuava ausente nas 7 telas e a sonda de
+mecânica respondeu o porquê, sem espaço para dúvida: `{"patch":"patch não expôs PURE","ganchoNavigateTo":false,
+"cssInjetado":false,"forcador":"undefined"}` — o `menus_tela_pequena_patch.js` **não chegou a executar no site**.
+A pilha do `pageerror` disse onde: `app.bundle.js:1364` → `o.descricao.slice(0,40)` dentro de um `Array.map` do
+`list-chamados-recentes`. Como o `app.bundle.js` é UM script só, um throw no topo derruba **todos os patches que
+vêm depois** — foi por isso que `window.abrirHistoricoChamadosGeral` também não existia. E o gatilho do throw era
+a MINHA base sintética, que criou chamado sem `descricao` e impressora sem `contadorPB`.
+
+Duas correções, as duas com valor próprio:
+1. `app.js`: `o.descricao.slice(0,40)` → `String(o.descricao||'').slice(0,40)`; `e.contadorPB.toLocaleString` →
+   `Number(e.contadorPB||0).toLocaleString('pt-BR')`. Um registro velho/migrado sem o campo hoje é capaz de
+   desligar 100+ patches do app — é candidato a explicar "botão que não faz nada" de dias anteriores.
+2. `ferramentas/teste_visual.js`: o fixture ganhou `descricao`, `tipo`, `criadoPorNome`, `contadorPB` e `email` —
+   o teste tem de bater com o formato que o app espera, não com o que eu imaginei.
+
+Também: a espera do workflow passou a comparar o **carimbo do bundle** (`app.bundle.js?v=<versão>-<hash>`) e não
+só a versão, e falha o job se o Pages ainda servir outro bundle — sem isso, duas rodadas na mesma versão
+mudando só o bundle dariam veredito sobre o deploy anterior (é o tipo de ✓ de favor que o laço automatizado
+fabrica sozinho). Bundle `0c888e50f4d00ea6` → carimbo `7.3.17-89cea908f044`; suíte 11✅/0❌/1 pulada.
