@@ -154,6 +154,13 @@
       var b = mods[i].querySelector(':scope > button');
       if (ehFiscalBtn(b)) return mods[i];
     }
+    // O renderer de menus pode trocar o onclick do pai por um toggle genérico.
+    // Nesse caso o submenu ainda identifica o módulo pelo rótulo legado ou por
+    // uma das rotas fiscais; não podemos deixar a tela fiscal sem destaque.
+    for (var j = 0; j < mods.length; j++) {
+      var texto = String(mods[j].textContent || '');
+      if (/NF-e\s*\/\s*NFC-e|Nota fiscal|Perfil tributário|NCM e fiscal/i.test(texto)) return mods[j];
+    }
     return null;
   }
 
@@ -323,8 +330,9 @@
     ultimaRota=nome;
     limparPinos();
     Array.prototype.slice.call(document.querySelectorAll('.module.sfo-ativo')).forEach(function(m){ m.classList.remove('sfo-ativo'); });
+    Array.prototype.slice.call(document.querySelectorAll('.module.mod-sel')).forEach(function(m){ m.classList.remove('mod-sel'); });
     var mod=moduloDaView(nome);
-    if(mod) mod.classList.add('sfo-ativo');
+    if(mod) mod.classList.add('sfo-ativo','mod-sel');
     injetaAbasFiscais();
   }
   window.DIGICOPY_MARCA_TELA_ATUAL=marcarTelaAtual;

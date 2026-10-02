@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 237 | sha256: 58232acd0ac89684
+ * scripts: 236 | sha256: df1771032ce3e3cd
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -60344,6 +60344,13 @@ try{
       var b = mods[i].querySelector(':scope > button');
       if (ehFiscalBtn(b)) return mods[i];
     }
+    // O renderer de menus pode trocar o onclick do pai por um toggle genérico.
+    // Nesse caso o submenu ainda identifica o módulo pelo rótulo legado ou por
+    // uma das rotas fiscais; não podemos deixar a tela fiscal sem destaque.
+    for (var j = 0; j < mods.length; j++) {
+      var texto = String(mods[j].textContent || '');
+      if (/NF-e\s*\/\s*NFC-e|Nota fiscal|Perfil tributário|NCM e fiscal/i.test(texto)) return mods[j];
+    }
     return null;
   }
 
@@ -60513,8 +60520,9 @@ try{
     ultimaRota=nome;
     limparPinos();
     Array.prototype.slice.call(document.querySelectorAll('.module.sfo-ativo')).forEach(function(m){ m.classList.remove('sfo-ativo'); });
+    Array.prototype.slice.call(document.querySelectorAll('.module.mod-sel')).forEach(function(m){ m.classList.remove('mod-sel'); });
     var mod=moduloDaView(nome);
-    if(mod) mod.classList.add('sfo-ativo');
+    if(mod) mod.classList.add('sfo-ativo','mod-sel');
     injetaAbasFiscais();
   }
   window.DIGICOPY_MARCA_TELA_ATUAL=marcarTelaAtual;
@@ -62455,8 +62463,9 @@ function precisaSetup(dbLike, temToken){
     var vazia = !Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0 ||
                 !Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0;
     if(!vazia) return false;
-    // r59b: SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
-    // segundos) — mostra o LOGIN, não o setup. Setup é só sem nuvem nenhuma.
+    // SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
+    // segundos) — o contrato puro continua indicando login quando há token.
+    // O gate assíncrono de showLogin faz o pull e decide o setup depois.
     if(temToken) return false;
     return true;
   }catch(e){ return true; }
@@ -62575,6 +62584,17 @@ async function salvarSetup(capa){
     db.config.empresa = { nome: dados.nome, fantasia: dados.fantasia || dados.nome, cnpj: dados.cnpj, fone: '', email: '' };
     db.config.nuvem = { apiUrl: dados.apiUrl || '' };
     saveDB();
+    // No caso pedido pelo dono (nuvem zerada), a criação do primeiro usuário
+    // precisa ser enviada antes do reload. Se a rede cair, a fila permanece
+    // protegida pelo motor e o aviso deixa o operador ciente.
+    try{
+      var sync = window.DIGICOPY_CLOUD_SYNC;
+      if(sync && typeof sync.publishLocalToCloud === 'function' &&
+         window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' &&
+         window.DIGICOPY_CLOUD.token()) await sync.publishLocalToCloud();
+    }catch(eSync){
+      try{ console.warn('[DIGICOPY] primeiro cadastro salvo, publicação pendente:', eSync); }catch(_e){}
+    }
     res.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Instalação concluída! Abrindo o login...</div>';
     setTimeout(function(){ try{ location.reload(); }catch(e){} }, 700);
   }catch(err){
@@ -62633,8 +62653,34 @@ function instalarCardNuvem(){
 // ── intercepta o login: base vazia abre o setup ──
 // SUBSTITUICAO DE PROPOSITO showLogin: base vazia abre o setup; com base, encadeia a anterior.
 var showLoginAnterior = window.showLogin;
+var v5900SetupEmAndamento = false;
 window.showLogin = function(){
-  try{ if(ehSetupPendente()){ renderSetup(); return; } }catch(e){}
+  try{
+    var dbv = (typeof db !== 'undefined') ? db : null;
+    var vazio = precisaSetup(dbv, false);
+    var tok = '';
+    try{ tok = (window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function') ? (window.DIGICOPY_CLOUD.token()||'') : ''; }catch(_t){}
+    if(vazio && tok){
+      if(v5900SetupEmAndamento) return;
+      v5900SetupEmAndamento = true;
+      // A nuvem pode ainda estar descendo o retrato. Não mostramos um login
+      // impossível: fazemos um pull curto; se continuar sem identidade,
+      // apresentamos o cadastro do primeiro usuário.
+      var sync = window.DIGICOPY_CLOUD_SYNC;
+      var p = sync && typeof sync.tick === 'function' ? sync.tick('setup-inicial') : Promise.resolve(false);
+      Promise.race([Promise.resolve(p), new Promise(function(resolve){setTimeout(resolve,12000);})])
+        .catch(function(){})
+        .then(function(){
+          v5900SetupEmAndamento = false;
+          try{
+            if(ehSetupPendente()) { renderSetup(); return; }
+          }catch(_e){}
+          if(typeof showLoginAnterior === 'function') showLoginAnterior.apply(window, arguments);
+        });
+      return;
+    }
+    if(vazio){ renderSetup(); return; }
+  }catch(e){}
   if(typeof showLoginAnterior === 'function') return showLoginAnterior.apply(this, arguments);
 };
 
@@ -63071,20 +63117,9 @@ try{
   window.addEventListener('focus', conferir);
 }catch(e){}
 
-})();
-
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52266_versao_nova_banner_patch.js", e); }
-;
-
-/* ===== ajustes_v8000_limpeza_controles_legados_patch.js ===== */
-try{
-// v8.0.0 — controles temporários de correção não fazem parte do produto final.
-// As rotinas continuam no código para compatibilidade de dados, mas seus
-// botões não devem aparecer na operação normal.
-(function(){
-  'use strict';
-  if(typeof window==='undefined'||typeof document==='undefined'||window.__v8000LimpezaControles) return;
-  window.__v8000LimpezaControles=true;
+  // v8.0.0 — controles temporários de correção não fazem parte do produto final.
+  // Mantemos as rotinas de dados para compatibilidade, mas não exibimos os botões.
+  (function(){
   var IDS={'btn-clientes-duplicados':1,'btn-usuarios-duplicados':1};
   function remover(){
     var shell=document.getElementById('app-shell'), login=document.getElementById('login-screen');
@@ -63115,20 +63150,23 @@ try{
       if(document.activeElement===b || m.matches(':hover') || ms===0) m.classList.add('sfo-pin');
     },ms); });
   },true);
+
+  })();
+
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v8000_limpeza_controles_legados_patch.js", e); }
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52266_versao_nova_banner_patch.js", e); }
 ;
 
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 237;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 236;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 237 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 236 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: 3f13c69edd6d5497
+ * scripts: 236 | sha256: df1771032ce3e3cd
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -35562,6 +35562,10 @@ function htmlModulo(m){
   var wrapId = m.wrapId ? ' id="'+m.wrapId+'"' : '';
   var title = m.title ? ' title="'+esc(m.title)+'"' : '';
   var type = (m.btnId==='btn-backup-top'||m.btnId==='btn-nuvem') ? ' type="button"' : '';
+  // A abertura do menu pai não pode navegar: a repintura da barra apagaria o submenu.
+  var click = (m.items && m.items.length)
+    ? ' onclick="event.preventDefault();event.stopPropagation();this.parentElement.classList.toggle(\'sfo-pin\');return false;"'
+    : ' onclick="'+m.click+'"';
   var menuId = m.menuId ? ' id="'+m.menuId+'"' : '';
   var fade = m.oculto ? ' style="opacity:.55"' : '';
   var sub = '';
@@ -35571,7 +35575,7 @@ function htmlModulo(m){
       return '<button onclick="'+it.click+'"'+f2+'><i class="ph '+it.icon+'"></i>'+esc(it.label)+'</button>';
     }).join('')+'</div>';
   }
-  return '<div class="module"'+wrapId+fade+'><button'+btnId+type+title+' onclick="'+m.click+'"><i class="ph '+m.icon+'"></i>'+esc(limitarNome(m.label, LIMITE_MENU))+'</button>'+sub+'</div>';
+  return '<div class="module"'+wrapId+fade+'><button'+btnId+type+title+click+'><i class="ph '+m.icon+'"></i>'+esc(limitarNome(m.label, LIMITE_MENU))+'</button>'+sub+'</div>';
 }
 
 window.pintarMenus = function(){
@@ -60340,6 +60344,13 @@ try{
       var b = mods[i].querySelector(':scope > button');
       if (ehFiscalBtn(b)) return mods[i];
     }
+    // O renderer de menus pode trocar o onclick do pai por um toggle genérico.
+    // Nesse caso o submenu ainda identifica o módulo pelo rótulo legado ou por
+    // uma das rotas fiscais; não podemos deixar a tela fiscal sem destaque.
+    for (var j = 0; j < mods.length; j++) {
+      var texto = String(mods[j].textContent || '');
+      if (/NF-e\s*\/\s*NFC-e|Nota fiscal|Perfil tributário|NCM e fiscal/i.test(texto)) return mods[j];
+    }
     return null;
   }
 
@@ -60414,10 +60425,8 @@ try{
     var pai = mod && mod.querySelector(':scope > button');
     var menu = mod && mod.querySelector(':scope > .module-menu');
     if (mod && pai && menu && pai.contains(e.target)) {
-      e.preventDefault(); e.stopImmediatePropagation();
-      var estava = mod.classList.contains('sfo-pin');
-      fecharMenus();
-      if (!estava) mod.classList.add('sfo-pin');
+      // O onclick inline do botão faz o cancelamento e o toggle. Se este listener também
+      // alternar a classe, o resultado será sempre fechado.
       return;
     }
     if (e.target && e.target.closest && e.target.closest('.module-menu')) {
@@ -60511,8 +60520,9 @@ try{
     ultimaRota=nome;
     limparPinos();
     Array.prototype.slice.call(document.querySelectorAll('.module.sfo-ativo')).forEach(function(m){ m.classList.remove('sfo-ativo'); });
+    Array.prototype.slice.call(document.querySelectorAll('.module.mod-sel')).forEach(function(m){ m.classList.remove('mod-sel'); });
     var mod=moduloDaView(nome);
-    if(mod) mod.classList.add('sfo-ativo');
+    if(mod) mod.classList.add('sfo-ativo','mod-sel');
     injetaAbasFiscais();
   }
   window.DIGICOPY_MARCA_TELA_ATUAL=marcarTelaAtual;
@@ -62453,8 +62463,9 @@ function precisaSetup(dbLike, temToken){
     var vazia = !Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0 ||
                 !Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0;
     if(!vazia) return false;
-    // r59b: SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
-    // segundos) — mostra o LOGIN, não o setup. Setup é só sem nuvem nenhuma.
+    // SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
+    // segundos) — o contrato puro continua indicando login quando há token.
+    // O gate assíncrono de showLogin faz o pull e decide o setup depois.
     if(temToken) return false;
     return true;
   }catch(e){ return true; }
@@ -62573,6 +62584,17 @@ async function salvarSetup(capa){
     db.config.empresa = { nome: dados.nome, fantasia: dados.fantasia || dados.nome, cnpj: dados.cnpj, fone: '', email: '' };
     db.config.nuvem = { apiUrl: dados.apiUrl || '' };
     saveDB();
+    // No caso pedido pelo dono (nuvem zerada), a criação do primeiro usuário
+    // precisa ser enviada antes do reload. Se a rede cair, a fila permanece
+    // protegida pelo motor e o aviso deixa o operador ciente.
+    try{
+      var sync = window.DIGICOPY_CLOUD_SYNC;
+      if(sync && typeof sync.publishLocalToCloud === 'function' &&
+         window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' &&
+         window.DIGICOPY_CLOUD.token()) await sync.publishLocalToCloud();
+    }catch(eSync){
+      try{ console.warn('[DIGICOPY] primeiro cadastro salvo, publicação pendente:', eSync); }catch(_e){}
+    }
     res.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Instalação concluída! Abrindo o login...</div>';
     setTimeout(function(){ try{ location.reload(); }catch(e){} }, 700);
   }catch(err){
@@ -62631,8 +62653,34 @@ function instalarCardNuvem(){
 // ── intercepta o login: base vazia abre o setup ──
 // SUBSTITUICAO DE PROPOSITO showLogin: base vazia abre o setup; com base, encadeia a anterior.
 var showLoginAnterior = window.showLogin;
+var v5900SetupEmAndamento = false;
 window.showLogin = function(){
-  try{ if(ehSetupPendente()){ renderSetup(); return; } }catch(e){}
+  try{
+    var dbv = (typeof db !== 'undefined') ? db : null;
+    var vazio = precisaSetup(dbv, false);
+    var tok = '';
+    try{ tok = (window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function') ? (window.DIGICOPY_CLOUD.token()||'') : ''; }catch(_t){}
+    if(vazio && tok){
+      if(v5900SetupEmAndamento) return;
+      v5900SetupEmAndamento = true;
+      // A nuvem pode ainda estar descendo o retrato. Não mostramos um login
+      // impossível: fazemos um pull curto; se continuar sem identidade,
+      // apresentamos o cadastro do primeiro usuário.
+      var sync = window.DIGICOPY_CLOUD_SYNC;
+      var p = sync && typeof sync.tick === 'function' ? sync.tick('setup-inicial') : Promise.resolve(false);
+      Promise.race([Promise.resolve(p), new Promise(function(resolve){setTimeout(resolve,12000);})])
+        .catch(function(){})
+        .then(function(){
+          v5900SetupEmAndamento = false;
+          try{
+            if(ehSetupPendente()) { renderSetup(); return; }
+          }catch(_e){}
+          if(typeof showLoginAnterior === 'function') showLoginAnterior.apply(window, arguments);
+        });
+      return;
+    }
+    if(vazio){ renderSetup(); return; }
+  }catch(e){}
   if(typeof showLoginAnterior === 'function') return showLoginAnterior.apply(this, arguments);
 };
 
@@ -63068,6 +63116,42 @@ try{
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) conferir(); });
   window.addEventListener('focus', conferir);
 }catch(e){}
+
+  // v8.0.0 — controles temporários de correção não fazem parte do produto final.
+  // Mantemos as rotinas de dados para compatibilidade, mas não exibimos os botões.
+  (function(){
+  var IDS={'btn-clientes-duplicados':1,'btn-usuarios-duplicados':1};
+  function remover(){
+    var shell=document.getElementById('app-shell'), login=document.getElementById('login-screen');
+    var sessao=typeof window.getSession==='function' ? window.getSession() : null;
+    if(shell && login && sessao && !login.classList.contains('hidden')) login.classList.add('hidden');
+    if(shell && login && login.classList.contains('hidden') && !shell.classList.contains('hidden')){
+      var portao=document.getElementById('v5262-portao');
+      if(portao) portao.remove();
+    }
+    Object.keys(IDS).forEach(function(id){ var el=document.getElementById(id); if(el) el.remove(); });
+    document.querySelectorAll('button').forEach(function(b){
+      var t=String(b.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      if(/^🔗?\s*vincular cliente$/.test(t)||/^desfazer última união/.test(t)||/^unir em 1 cadastro$/.test(t)||/^manter o principal, desativar repetidos$/.test(t)) b.remove();
+    });
+  }
+  remover();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',remover);
+  setTimeout(remover,100); setTimeout(remover,500); setTimeout(remover,1500);
+  try{ new MutationObserver(remover).observe(document.body,{childList:true,subtree:true}); }catch(e){}
+  // Último guard de navegação: alguns patches antigos fecham a classe no
+  // próximo tick. Reaplica somente para o pai clicado, sem impedir itens do submenu.
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest?e.target.closest('.module-row .module > button'):null;
+    if(!b) return;
+    var m=b.parentElement;
+    if(!m||!m.querySelector(':scope > .module-menu')) return;
+    [0,40,140,320].forEach(function(ms){ setTimeout(function(){
+      if(document.activeElement===b || m.matches(':hover') || ms===0) m.classList.add('sfo-pin');
+    },ms); });
+  },true);
+
+  })();
 
 })();
 

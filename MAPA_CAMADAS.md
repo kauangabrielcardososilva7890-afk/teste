@@ -20,7 +20,7 @@
 | `navigateTo` | 37 | ajustes_v6108_lembrar_tela_patch.js:238 (função, no carregamento) |
 | `__vosIgnorarSair` | 32 | (só troca em uso) |
 | `modalContext` | 23 | (só troca em uso) |
-| `showApp` | 23 | navegacao_fiscal_barra_escuro_patch.js:494 (função, no carregamento) |
+| `showApp` | 23 | navegacao_fiscal_barra_escuro_patch.js:492 (função, no carregamento) |
 | `__lcChamFormAberto` | 20 | (só troca em uso) |
 | `renderConfig` | 20 | ajustes_v52234_config_aviso_salvou_patch.js:55 (função, no carregamento) |
 | `renderFinanceiro` | 20 | ajustes_v52245_financeiro_hist_datas_patch.js:155 (função, no carregamento) |
@@ -116,7 +116,7 @@
 - sobrepõe: menus_fiscais_separados_patch.js:205 — alias, no carregamento
 - sobrepõe: permissoes_override_menus_fiscais_patch.js:288 — alias, no carregamento
 - sobrepõe: seis_submenus_velho_patch.js:569 — alias, no carregamento
-- sobrepõe: navegacao_fiscal_barra_escuro_patch.js:442 — função, no carregamento
+- sobrepõe: navegacao_fiscal_barra_escuro_patch.js:440 — função, no carregamento
 - sobrepõe: navegador_embutido_patch.js:502 — função, no carregamento
 - **GANHA →** ajustes_v6108_lembrar_tela_patch.js:238 — função, no carregamento
 
@@ -205,7 +205,7 @@
 - sobrepõe: cloudflare_sync_patch.js:147 — função, no carregamento
 - sobrepõe: ajustes_v52217_menus_arrastar_visibilidade_patch.js:168 — função, no carregamento
 - sobrepõe: ajustes_v52239_menus_imediato_patch.js:87 — função, no carregamento
-- **GANHA →** navegacao_fiscal_barra_escuro_patch.js:494 — função, no carregamento
+- **GANHA →** navegacao_fiscal_barra_escuro_patch.js:492 — função, no carregamento
 
 ### `__lcChamFormAberto` — 20 escritas
 
@@ -300,7 +300,7 @@
 ### `openModalChamadoCompleto` — 16 escritas
 
 - sobrepõe: locacao_contratos_patch.js:1078 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1431 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1432 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:454 — função, no carregamento
 - sobrepõe: locacao_chamados_fix_patch.js:434 — função, no carregamento
 - sobrepõe: ajustes_v5171_patch.js:160 — função, no carregamento
@@ -372,7 +372,7 @@
 
 - sobrepõe: app.js:1210 — função de topo, no carregamento
 - sobrepõe: notinha_patch.js:341 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:798 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:799 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:247 — função, no carregamento
 - sobrepõe: contratos_final_patch.js:435 — função, no carregamento
 - sobrepõe: contratos_visitas_vinculo_patch.js:111 — função, no carregamento
@@ -385,8 +385,8 @@
 
 ### `__chamadoPecasTemp` — 11 escritas
 
-- sobrepõe: fluxos_operacionais_patch.js:1403 — valor, em uso
-- sobrepõe: fluxos_operacionais_patch.js:1439 — valor, em uso
+- sobrepõe: fluxos_operacionais_patch.js:1404 — valor, em uso
+- sobrepõe: fluxos_operacionais_patch.js:1440 — valor, em uso
 - sobrepõe: ajustes_v5172_patch.js:220 — valor, em uso
 - sobrepõe: ajustes_v5174_patch.js:189 — valor, em uso
 - sobrepõe: ajustes_v5175_patch.js:86 — valor, em uso
@@ -414,7 +414,7 @@
 ### `abrirLeiturasContrato` — 11 escritas
 
 - sobrepõe: locacao_contratos_patch.js:791 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1201 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1202 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:371 — função, no carregamento
 - sobrepõe: fluxo_contrato_leitura_corrigido_patch.js:118 — função, no carregamento
 - sobrepõe: leitura_busca_fluxo_patch.js:62 — função, no carregamento
@@ -428,7 +428,7 @@
 ### `openContratoCompleto` — 11 escritas
 
 - sobrepõe: locacao_contratos_patch.js:366 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:961 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:962 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:288 — função, no carregamento
 - sobrepõe: contratos_final_patch.js:454 — função, no carregamento
 - sobrepõe: contratos_visitas_vinculo_patch.js:113 — função, no carregamento
@@ -470,7 +470,7 @@
 ### `abrirModalEquipamentoContrato` — 10 escritas
 
 - sobrepõe: locacao_contratos_patch.js:607 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1074 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1075 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:312 — função, no carregamento
 - sobrepõe: contratos_leituras_definitivo_patch.js:90 — função, no carregamento
 - sobrepõe: fluxo_contrato_leitura_corrigido_patch.js:90 — função, no carregamento
@@ -484,7 +484,7 @@
 
 - sobrepõe: app.js:1467 — função, no carregamento
 - sobrepõe: app.js:964 — função de topo, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1573 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1574 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:603 — função, no carregamento
 - sobrepõe: chamados_avulsos_aberto_patch.js:166 — função, no carregamento
 - sobrepõe: ajustes_pos_final_patch.js:96 — função, no carregamento
@@ -496,7 +496,7 @@
 ### `salvarChamadoCompleto` — 10 escritas
 
 - sobrepõe: locacao_contratos_patch.js:1238 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1489 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1490 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:514 — função, no carregamento
 - sobrepõe: ajustes_v5172_patch.js:304 — função, no carregamento
 - sobrepõe: ajustes_v5175_patch.js:353 — função, no carregamento
@@ -569,7 +569,7 @@
 ### `salvarImpressoraContrato` — 9 escritas
 
 - sobrepõe: locacao_contratos_patch.js:721 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1147 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1148 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:347 — função, no carregamento
 - sobrepõe: contratos_leituras_definitivo_patch.js:95 — função, no carregamento
 - sobrepõe: fluxo_contrato_leitura_corrigido_patch.js:94 — função, no carregamento
@@ -603,7 +603,7 @@
 ### `autoPreencherDadosChamado` — 8 escritas
 
 - sobrepõe: locacao_contratos_patch.js:1217 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1462 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1463 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:472 — função, no carregamento
 - sobrepõe: locacao_chamados_fix_patch.js:425 — função, no carregamento
 - sobrepõe: ajustes_v5171_patch.js:188 — função, no carregamento
@@ -657,7 +657,7 @@
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:192 — função, no carregamento
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:226 — alias, em uso
-- sobrepõe: ajustes_v52216_menus_submenus_patch.js:258 — função, no carregamento
+- sobrepõe: ajustes_v52216_menus_submenus_patch.js:262 — função, no carregamento
 - sobrepõe: ajustes_v52217_menus_arrastar_visibilidade_patch.js:101 — função, no carregamento
 - sobrepõe: ajustes_v52221_menus_dispositivo_patch.js:96 — função, no carregamento
 - sobrepõe: ajustes_v52222_menus_arrastar_patch.js:30 — função, no carregamento
@@ -726,7 +726,7 @@
 ### `pintarMenus` — 7 escritas
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:249 — alias, no carregamento
-- sobrepõe: ajustes_v52216_menus_submenus_patch.js:218 — função, no carregamento
+- sobrepõe: ajustes_v52216_menus_submenus_patch.js:222 — função, no carregamento
 - sobrepõe: ajustes_v52217_menus_arrastar_visibilidade_patch.js:59 — função, no carregamento
 - sobrepõe: ajustes_v52221_menus_dispositivo_patch.js:78 — função, no carregamento
 - sobrepõe: ajustes_v52239_menus_imediato_patch.js:49 — função, no carregamento
@@ -737,7 +737,7 @@
 
 - sobrepõe: app.js:1219 — função de topo, no carregamento
 - sobrepõe: evolucao_patch.js:235 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:875 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:876 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:270 — função, no carregamento
 - sobrepõe: ajustes_relatorio_pai_patch.js:126 — função, no carregamento
 - sobrepõe: contratos_leituras_definitivo_patch.js:79 — função, no carregamento
@@ -906,7 +906,7 @@
 ### `abrirChamadosContrato` — 5 escritas
 
 - sobrepõe: locacao_contratos_patch.js:1026 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1356 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1357 — função, no carregamento
 - sobrepõe: contratos_refino_patch.js:532 — função, no carregamento
 - sobrepõe: locacao_chamados_fix_patch.js:310 — função, no carregamento
 - **GANHA →** ajustes_v5172_patch.js:103 — função, no carregamento
@@ -930,7 +930,7 @@
 ### `deleteLeituraContrato` — 5 escritas
 
 - sobrepõe: locacao_contratos_patch.js:978 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1328 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1329 — função, no carregamento
 - sobrepõe: automacoes_financeiro_estoque_patch.js:269 — função, no carregamento
 - **GANHA →** ajustes_v52245_leitura_apagar_patch.js:26 — função, no carregamento
 - sobrepõe: ajustes_v52249_relatorio_patch.js:174 — função, em uso
@@ -979,14 +979,14 @@
 
 - sobrepõe: app.js:1139 — função de topo, no carregamento
 - sobrepõe: locacao_contratos_patch.js:185 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:629 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:630 — função, no carregamento
 - sobrepõe: ajustes_v52227_ncm_origem_patch.js:139 — função, no carregamento
 - **GANHA →** ajustes_v52228_a1_nuvem_lupa_ncm_patch.js:151 — função, no carregamento
 
 ### `salvarEditorMenus` — 5 escritas
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:229 — função, no carregamento
-- sobrepõe: ajustes_v52216_menus_submenus_patch.js:295 — função, no carregamento
+- sobrepõe: ajustes_v52216_menus_submenus_patch.js:299 — função, no carregamento
 - sobrepõe: ajustes_v52217_menus_arrastar_visibilidade_patch.js:143 — função, no carregamento
 - sobrepõe: ajustes_v52221_menus_dispositivo_patch.js:112 — função, no carregamento
 - **GANHA →** ajustes_v52239_menus_imediato_patch.js:76 — função, no carregamento
@@ -1040,10 +1040,10 @@
 
 ### `__bkRestaurar` — 4 escritas
 
-- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:444 — valor, em uso
-- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:445 — alias, em uso
-- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:453 — valor, em uso
-- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:470 — valor, em uso
+- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:445 — valor, em uso
+- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:446 — alias, em uso
+- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:454 — valor, em uso
+- sobrepõe: ajustes_v52296_backups_nuvem_patch.js:471 — valor, em uso
 
 ### `__cliEditConfirmado` — 4 escritas
 
@@ -1169,7 +1169,7 @@
 - sobrepõe: cloudflare_sync_patch.js:424 — função, no carregamento
 - sobrepõe: ajustes_v5227_nuvem_acompanhamento_patch.js:133 — função, no carregamento
 - sobrepõe: ajustes_v52212_celular_nuvem_patch.js:102 — função, no carregamento
-- **GANHA →** ajustes_v52296_backups_nuvem_patch.js:658 — função, no carregamento
+- **GANHA →** ajustes_v52296_backups_nuvem_patch.js:661 — função, no carregamento
 
 ### `abrirLeituraContratoDetalhe` — 4 escritas
 
@@ -1197,7 +1197,7 @@
 - sobrepõe: app.js:1390 — função de topo, no carregamento
 - sobrepõe: ajustes_v52024_patch.js:40 — função, no carregamento
 - sobrepõe: cloudflare_sync_patch.js:152 — função, no carregamento
-- **GANHA →** ajustes_v52296_backups_nuvem_patch.js:578 — função, no carregamento
+- **GANHA →** ajustes_v52296_backups_nuvem_patch.js:581 — função, no carregamento
 
 ### `imprimirChamadoPDF` — 4 escritas
 
@@ -1246,7 +1246,7 @@
 - sobrepõe: app.js:496 — função de topo, no carregamento
 - sobrepõe: vendas_patch.js:38 — função, no carregamento
 - sobrepõe: login_dados_automaticos_patch.js:158 — função, no carregamento
-- **GANHA →** ajustes_v5900_setup_comercial_patch.js:207 — função, no carregamento
+- **GANHA →** ajustes_v5900_setup_comercial_patch.js:220 — função, no carregamento
 
 ### `toast` — 4 escritas
 
@@ -1351,7 +1351,7 @@
 ### `abrirEditorAtalhos` — 3 escritas
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:269 — função, no carregamento
-- sobrepõe: ajustes_v52216_menus_submenus_patch.js:368 — função, no carregamento
+- sobrepõe: ajustes_v52216_menus_submenus_patch.js:372 — função, no carregamento
 - **GANHA →** ajustes_v52221_menus_dispositivo_patch.js:104 — função, no carregamento
 
 ### `aprovarOrcamentoManual` — 3 escritas
@@ -1375,7 +1375,7 @@
 ### `calcImpressoesChamado` — 3 escritas
 
 - sobrepõe: locacao_contratos_patch.js:1231 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1476 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1477 — função, no carregamento
 - **GANHA →** contratos_refino_patch.js:487 — função, no carregamento
 
 ### `clienteSelecionadoVenda` — 3 escritas
@@ -1393,7 +1393,7 @@
 ### `deleteProduto` — 3 escritas
 
 - sobrepõe: app.js:1058 — função de topo, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:765 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:766 — função, no carregamento
 - **GANHA →** ajustes_v51916_patch.js:82 — função, no carregamento
 
 ### `estornarNotinha` — 3 escritas
@@ -1447,7 +1447,7 @@
 ### `imprimirRelatorioLeiturasPDF` — 3 escritas
 
 - sobrepõe: locacao_contratos_patch.js:988 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1336 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1337 — função, no carregamento
 - **GANHA →** contratos_refino_patch.js:551 — função, no carregamento
 
 ### `lcBuscarImpressoraChamado` — 3 escritas
@@ -1489,13 +1489,13 @@
 ### `pintarAtalhos` — 3 escritas
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:327 — alias, no carregamento
-- sobrepõe: ajustes_v52216_menus_submenus_patch.js:338 — função, no carregamento
+- sobrepõe: ajustes_v52216_menus_submenus_patch.js:342 — função, no carregamento
 - **GANHA →** ajustes_v52221_menus_dispositivo_patch.js:88 — função, no carregamento
 
 ### `reconhecerImpressoraContrato` — 3 escritas
 
 - sobrepõe: locacao_contratos_patch.js:700 — função, no carregamento
-- sobrepõe: fluxos_operacionais_patch.js:1124 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1125 — função, no carregamento
 - **GANHA →** contratos_refino_patch.js:325 — função, no carregamento
 
 ### `recusarOrcamentoManual` — 3 escritas
@@ -1525,7 +1525,7 @@
 ### `salvarEditorAtalhos` — 3 escritas
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:307 — função, no carregamento
-- sobrepõe: ajustes_v52216_menus_submenus_patch.js:421 — função, no carregamento
+- sobrepõe: ajustes_v52216_menus_submenus_patch.js:425 — função, no carregamento
 - **GANHA →** ajustes_v52221_menus_dispositivo_patch.js:126 — função, no carregamento
 
 ### `saveUsuario` — 3 escritas
@@ -1757,7 +1757,7 @@
 
 ### `abrirEditorLeituraContrato` — 2 escritas
 
-- sobrepõe: fluxos_operacionais_patch.js:1221 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1222 — função, no carregamento
 - **GANHA →** contratos_refino_patch.js:376 — função, no carregamento
 
 ### `abrirHistoricoChamadosGeral` — 2 escritas
@@ -1767,12 +1767,12 @@
 
 ### `abrirLancamentoContadorContrato` — 2 escritas
 
-- sobrepõe: fluxos_operacionais_patch.js:1269 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1270 — função, no carregamento
 - **GANHA →** contratos_refino_patch.js:391 — função, no carregamento
 
 ### `abrirListaImpressorasParaLeitura` — 2 escritas
 
-- sobrepõe: fluxos_operacionais_patch.js:1233 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1234 — função, no carregamento
 - **GANHA →** contratos_refino_patch.js:377 — função, no carregamento
 
 ### `avisoSistema` — 2 escritas
@@ -1862,7 +1862,7 @@
 
 ### `excluirContratoOperacional` — 2 escritas
 
-- sobrepõe: fluxos_operacionais_patch.js:944 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:945 — função, no carregamento
 - **GANHA →** ajustes_v51916_patch.js:136 — função, no carregamento
 
 ### `excluirOrcamento` — 2 escritas
@@ -1882,7 +1882,7 @@
 
 ### `fecharModalOperacional` — 2 escritas
 
-- sobrepõe: fluxos_operacionais_patch.js:1557 — alias, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1558 — alias, no carregamento
 - **GANHA →** contratos_refino_patch.js:211 — alias, no carregamento
 
 ### `finAcaoReceber` — 2 escritas
@@ -1917,7 +1917,7 @@
 
 ### `imprimirContratoLocacaoOperacional` — 2 escritas
 
-- sobrepõe: fluxos_operacionais_patch.js:1547 — função, no carregamento
+- sobrepõe: fluxos_operacionais_patch.js:1548 — função, no carregamento
 - **GANHA →** contratos_refino_patch.js:559 — função, no carregamento
 
 ### `imprimirOrcamento` — 2 escritas
@@ -1993,7 +1993,7 @@
 ### `openModalProdutoFromVenda` — 2 escritas
 
 - sobrepõe: vendas_patch.js:293 — função, em uso
-- **GANHA →** fluxos_operacionais_patch.js:1560 — função, no carregamento
+- **GANHA →** fluxos_operacionais_patch.js:1561 — função, no carregamento
 
 ### `openQuickOS` — 2 escritas
 
@@ -2088,7 +2088,7 @@
 ### `scanEstoqueBaixo` — 2 escritas
 
 - sobrepõe: locacao_contratos_patch.js:81 — função, no carregamento
-- **GANHA →** fluxos_operacionais_patch.js:1583 — função, no carregamento
+- **GANHA →** fluxos_operacionais_patch.js:1584 — função, no carregamento
 
 ### `selecionarImpressoraChamadoAvulso` — 2 escritas
 
@@ -2123,16 +2123,16 @@
 ### `uiAtalhoMover` — 2 escritas
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:296 — função, no carregamento
-- **GANHA →** ajustes_v52216_menus_submenus_patch.js:406 — função, no carregamento
+- **GANHA →** ajustes_v52216_menus_submenus_patch.js:410 — função, no carregamento
 
 ### `uiMenuMover` — 2 escritas
 
 - sobrepõe: ajustes_v52213_menus_atalhos_patch.js:219 — função, no carregamento
-- **GANHA →** ajustes_v52216_menus_submenus_patch.js:234 — função, no carregamento
+- **GANHA →** ajustes_v52216_menus_submenus_patch.js:238 — função, no carregamento
 
 ### `uiSubMenuMover` — 2 escritas
 
-- sobrepõe: ajustes_v52216_menus_submenus_patch.js:246 — função, no carregamento
+- sobrepõe: ajustes_v52216_menus_submenus_patch.js:250 — função, no carregamento
 - **GANHA →** ajustes_v52217_menus_arrastar_visibilidade_patch.js:126 — função, no carregamento
 
 ### `usuarioPodeApagar` — 2 escritas
@@ -2148,7 +2148,7 @@
 ### `verificarEstoqueBaixo` — 2 escritas
 
 - sobrepõe: locacao_contratos_patch.js:73 — função, no carregamento
-- **GANHA →** fluxos_operacionais_patch.js:1579 — função, no carregamento
+- **GANHA →** fluxos_operacionais_patch.js:1580 — função, no carregamento
 
 ### `visualizarRegistroDinamico` — 2 escritas
 

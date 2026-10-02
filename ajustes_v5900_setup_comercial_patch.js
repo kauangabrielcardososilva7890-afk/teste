@@ -26,8 +26,9 @@ function precisaSetup(dbLike, temToken){
     var vazia = !Array.isArray(dbLike.empresas) || dbLike.empresas.length === 0 ||
                 !Array.isArray(dbLike.usuarios) || dbLike.usuarios.length === 0;
     if(!vazia) return false;
-    // r59b: SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
-    // segundos) — mostra o LOGIN, não o setup. Setup é só sem nuvem nenhuma.
+    // SÓ NUVEM recarregou com a base ainda vazia (a nuvem devolve em
+    // segundos) — o contrato puro continua indicando login quando há token.
+    // O gate assíncrono de showLogin faz o pull e decide o setup depois.
     if(temToken) return false;
     return true;
   }catch(e){ return true; }
@@ -146,6 +147,17 @@ async function salvarSetup(capa){
     db.config.empresa = { nome: dados.nome, fantasia: dados.fantasia || dados.nome, cnpj: dados.cnpj, fone: '', email: '' };
     db.config.nuvem = { apiUrl: dados.apiUrl || '' };
     saveDB();
+    // No caso pedido pelo dono (nuvem zerada), a criação do primeiro usuário
+    // precisa ser enviada antes do reload. Se a rede cair, a fila permanece
+    // protegida pelo motor e o aviso deixa o operador ciente.
+    try{
+      var sync = window.DIGICOPY_CLOUD_SYNC;
+      if(sync && typeof sync.publishLocalToCloud === 'function' &&
+         window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' &&
+         window.DIGICOPY_CLOUD.token()) await sync.publishLocalToCloud();
+    }catch(eSync){
+      try{ console.warn('[DIGICOPY] primeiro cadastro salvo, publicação pendente:', eSync); }catch(_e){}
+    }
     res.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Instalação concluída! Abrindo o login...</div>';
     setTimeout(function(){ try{ location.reload(); }catch(e){} }, 700);
   }catch(err){
@@ -204,8 +216,34 @@ function instalarCardNuvem(){
 // ── intercepta o login: base vazia abre o setup ──
 // SUBSTITUICAO DE PROPOSITO showLogin: base vazia abre o setup; com base, encadeia a anterior.
 var showLoginAnterior = window.showLogin;
+var v5900SetupEmAndamento = false;
 window.showLogin = function(){
-  try{ if(ehSetupPendente()){ renderSetup(); return; } }catch(e){}
+  try{
+    var dbv = (typeof db !== 'undefined') ? db : null;
+    var vazio = precisaSetup(dbv, false);
+    var tok = '';
+    try{ tok = (window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function') ? (window.DIGICOPY_CLOUD.token()||'') : ''; }catch(_t){}
+    if(vazio && tok){
+      if(v5900SetupEmAndamento) return;
+      v5900SetupEmAndamento = true;
+      // A nuvem pode ainda estar descendo o retrato. Não mostramos um login
+      // impossível: fazemos um pull curto; se continuar sem identidade,
+      // apresentamos o cadastro do primeiro usuário.
+      var sync = window.DIGICOPY_CLOUD_SYNC;
+      var p = sync && typeof sync.tick === 'function' ? sync.tick('setup-inicial') : Promise.resolve(false);
+      Promise.race([Promise.resolve(p), new Promise(function(resolve){setTimeout(resolve,12000);})])
+        .catch(function(){})
+        .then(function(){
+          v5900SetupEmAndamento = false;
+          try{
+            if(ehSetupPendente()) { renderSetup(); return; }
+          }catch(_e){}
+          if(typeof showLoginAnterior === 'function') showLoginAnterior.apply(window, arguments);
+        });
+      return;
+    }
+    if(vazio){ renderSetup(); return; }
+  }catch(e){}
   if(typeof showLoginAnterior === 'function') return showLoginAnterior.apply(this, arguments);
 };
 
