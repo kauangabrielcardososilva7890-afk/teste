@@ -1861,7 +1861,12 @@ window.importarTudoDeUmaVez = function(){
   };
   if(typeof window.confirmSistema==='function'){
     window.confirmSistema(msg,'Importar banco antigo').then(function(ok){ if(ok===true) executar(); });
-  }else if(window.confirm(msg)) executar();
+  }else{
+    // Nunca abrir o confirm nativo do navegador: no Electron ele pode
+    // bloquear a janela e, no navegador, aparece fora do padrão visual do ERP.
+    if(typeof window.lfbAlert==='function') window.lfbAlert('A janela de confirmação do sistema ainda está carregando. Tente novamente em alguns segundos.','Importar banco antigo');
+    else toast('A confirmação visual ainda está carregando. Tente novamente.','info');
+  }
 };
 
 window.copiarSqlExportarTudo = function(){

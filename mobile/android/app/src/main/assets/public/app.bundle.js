@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: db21f87557c42e30
+ * scripts: 236 | sha256: 1969cad5b9eb0952
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2113,7 +2113,12 @@ window.importarTudoDeUmaVez = function(){
   };
   if(typeof window.confirmSistema==='function'){
     window.confirmSistema(msg,'Importar banco antigo').then(function(ok){ if(ok===true) executar(); });
-  }else if(window.confirm(msg)) executar();
+  }else{
+    // Nunca abrir o confirm nativo do navegador: no Electron ele pode
+    // bloquear a janela e, no navegador, aparece fora do padrão visual do ERP.
+    if(typeof window.lfbAlert==='function') window.lfbAlert('A janela de confirmação do sistema ainda está carregando. Tente novamente em alguns segundos.','Importar banco antigo');
+    else toast('A confirmação visual ainda está carregando. Tente novamente.','info');
+  }
 };
 
 window.copiarSqlExportarTudo = function(){
@@ -51497,6 +51502,25 @@ function abrirTelaBackup(){
   if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
 }
 
+// v8.0.0 — trocar de módulo nunca deve deixar o modal Backup preso na frente.
+function fecharBackupAoNavegar(){
+  try{ if(typeof window.bkFecharTelaBackup==='function') window.bkFecharTelaBackup(); }catch(e){}
+}
+if(!window.__v800FecharBackupAoNavegar){
+  window.__v800FecharBackupAoNavegar=true;
+  document.addEventListener('click', function(ev){
+    try{
+      const alvo=ev.target && ev.target.closest ? ev.target.closest('.module, [data-module], #btn-backup-top, #btn-nuvem') : null;
+      if(alvo && !alvo.closest('#bk-overlay') && !alvo.closest('#modal-root')) fecharBackupAoNavegar();
+    }catch(e){}
+  }, true);
+  if(typeof window.navigateTo==='function' && !window.navigateTo.__v800FechaBackup){
+    const _navigateTo=window.navigateTo;
+    window.navigateTo=function(){ fecharBackupAoNavegar(); return _navigateTo.apply(this,arguments); };
+    window.navigateTo.__v800FechaBackup=true;
+  }
+}
+
 // Compatibilidade com auditorias históricas: o fluxo antigo era “📸 Backup manual (nuvem + baixa no PC)”;
 // a interface atual o identifica como download explícito para não confundir exportação com persistência local.
 // 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.
@@ -51868,7 +51892,6 @@ if(typeof document !== 'undefined' && document.addEventListener){
 }
 console.log('[DIGICOPY] recuperação em massa carregada (motor guardado; botão removido na r47)');
 })();
-
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52296_backups_nuvem_patch.js", e); }
 ;

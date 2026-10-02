@@ -551,6 +551,25 @@ function abrirTelaBackup(){
   if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
 }
 
+// v8.0.0 — trocar de módulo nunca deve deixar o modal Backup preso na frente.
+function fecharBackupAoNavegar(){
+  try{ if(typeof window.bkFecharTelaBackup==='function') window.bkFecharTelaBackup(); }catch(e){}
+}
+if(!window.__v800FecharBackupAoNavegar){
+  window.__v800FecharBackupAoNavegar=true;
+  document.addEventListener('click', function(ev){
+    try{
+      const alvo=ev.target && ev.target.closest ? ev.target.closest('.module, [data-module], #btn-backup-top, #btn-nuvem') : null;
+      if(alvo && !alvo.closest('#bk-overlay') && !alvo.closest('#modal-root')) fecharBackupAoNavegar();
+    }catch(e){}
+  }, true);
+  if(typeof window.navigateTo==='function' && !window.navigateTo.__v800FechaBackup){
+    const _navigateTo=window.navigateTo;
+    window.navigateTo=function(){ fecharBackupAoNavegar(); return _navigateTo.apply(this,arguments); };
+    window.navigateTo.__v800FechaBackup=true;
+  }
+}
+
 // Compatibilidade com auditorias históricas: o fluxo antigo era “📸 Backup manual (nuvem + baixa no PC)”;
 // a interface atual o identifica como download explícito para não confundir exportação com persistência local.
 // 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.
@@ -922,4 +941,3 @@ if(typeof document !== 'undefined' && document.addEventListener){
 }
 console.log('[DIGICOPY] recuperação em massa carregada (motor guardado; botão removido na r47)');
 })();
-
