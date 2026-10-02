@@ -63,11 +63,24 @@ function buildManager() {
 }
 function main() {
   const key = process.argv[2];
-  if (!PROFILES[key]) {
-    console.error('Uso: node build_profiles.js <particularExe|particularApk|commercialExe|commercialApk|commercialLocalExe|commercialLocalApk|managerExe>');
+  const keys = Object.keys(PROFILES);
+  if (key !== 'all' && !PROFILES[key]) {
+    console.error('Uso: node build_profiles.js <all|particularExe|particularApk|commercialExe|commercialApk|commercialLocalExe|commercialLocalApk|managerExe>');
     process.exit(2);
   }
   cleanGeneratedReports();
+  const buildOne = (name) => {
+    const spec = PROFILES[name];
+    console.log(`\n===== ${name} =====`);
+    if (spec.kind === 'exe') buildExe(spec);
+    else if (spec.kind === 'apk') buildApk(spec);
+    else buildManager();
+  };
+  if (key === 'all') {
+    for (const name of keys) buildOne(name);
+    console.log('\n===== OS 7 PRODUTOS FORAM GERADOS =====');
+    return;
+  }
   const spec = PROFILES[key];
   if (spec.kind === 'exe') buildExe(spec);
   else if (spec.kind === 'apk') buildApk(spec);
