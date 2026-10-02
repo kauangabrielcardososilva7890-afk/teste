@@ -104,6 +104,27 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 /* fix menu cobrindo botão contrato - dá espaço sem quebrar scroll */
 .view { scroll-margin-top: 80px; }
 
+/* v7.3.15 — auditoria visual: conteúdo estreito deve ser rolável, não cortado. */
+html,body{max-width:100%;overflow-x:hidden}
+.module-row{overflow-x:auto;overflow-y:visible;white-space:nowrap;scrollbar-width:thin}
+.module{flex:0 0 auto}
+.command-row{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}
+.command-row>.quick,.command-row>button,.command-row>input,.command-row>select{flex:0 0 auto}
+.view,.neo-shell,.neo-panel{min-width:0;max-width:100%;overflow-x:hidden}
+.overflow-x-auto,.overflow-auto{max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.overflow-x-auto>table,.overflow-auto>table{min-width:max-content}
+#modal-container>div,#modal-root>div{max-width:calc(100vw - 16px)!important;max-height:calc(100vh - 76px);overflow:auto}
+@media (max-width:640px){
+  .module-row{padding:0 6px;gap:2px}
+  .module>button{padding:0 10px;min-height:36px}
+  .command-row{padding:4px 6px;gap:6px}
+  .command-search{width:190px;flex:0 0 190px}
+  .statusbar{grid-template-columns:1fr 1fr;height:auto;min-height:22px}
+  .statusbar span{min-width:0}
+  #v7015-faixa{left:8px!important;right:8px!important;bottom:28px!important;transform:none!important;max-width:none!important;max-height:26vh!important;overflow:auto!important;font-size:11px!important;line-height:1.3!important;padding:8px 10px!important}
+}
+
+
 </style>
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
@@ -231,6 +252,6 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
 <script>window.__DIGICOPY_FALHAS=[];window.__DIGICOPY_FALHA=function(f,e){try{window.__DIGICOPY_FALHAS.push({arq:String(f),erro:String((e&&e.message)||e).slice(0,160)});}catch(_){}};</script>
     <script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="1.0";</script>
-<script src="./app.bundle.js?v=7.3.15-7d23b25bed1a"></script>
+<script src="./app.bundle.js?v=1.0-8da15a82403e"></script>
 </body>
 </html>
