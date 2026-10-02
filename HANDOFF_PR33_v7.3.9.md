@@ -191,3 +191,34 @@ Prova: tema 05 com 40 asserções novas, suíte 11✅/0❌/1 pulada, `Bundle OK:
 editado no lugar), sha `586235ed4db399b6`, mapa e `mobile/www` regenerados. **Aparência eu não pude
 ver** — sem navegador neste sandbox (o download do Chromium do Playwright falhou); o roteiro de
 conferência visual de 20 segundos está na AUDITORIA_TECNICA §59.4.
+
+---
+
+## v7.3.15 — r70 bis: as capturas dentro do branch mudaram duas conclusões minhas
+
+O dono colocou `aaaaaaaaaaaaaaaa/` (28 PNGs + `capture-metadata.json`) no branch. Com as imagens na mão:
+
+- **V-04 e V-03 estavam exatamente como eu li no código** (faixa com o texto a ~75px de largura, uma
+  palavra por linha, cobrindo campo do formulário; modal de Chamados em 96vw dentro de um vão de 358px
+  com o botão "Novo chamado (fora de contrato)" entrando cortado pela borda esquerda). Nada a mudar no
+  conserto publicado em v7.3.14.
+- **V-05 era nosso, sim** — eu tinha dito que era do fork. A frase de estado vazio de Clientes é
+  `<td colspan="7" class="text-center">` dentro de uma tabela de ~700px: o texto fica centralizado
+  *fora* do recorte do celular. Em `finalizacao_sistema_patch.js` o aviso agora é preso na largura
+  visível (`sticky;left:0`), e o tema 05 cobre isso.
+- **"Máquinas nos clientes" não era item morto.** O `capture-metadata.json` mostra o `view-parque`
+  visível *junto* com `view-impressoras` e o título ainda "Impressoras" — estado que só existe se as
+  telas forem mostradas na mão, porque um clique de menu esconde todas as `.view` e escreve o título.
+  Era a malha anti-tela-branca cobrindo uma tela que o harness nunca pediu para pintar. A repintura
+  única que entrei fica como defesa; o cartaz continua sendo a última palavra quando a tela está vazia
+  de verdade.
+- O resto do metadata é bom sinal: `pageErrors: []` nas 28 telas, e os `/orcamento` bloqueados são o
+  tráfego normal da Nuvem cortado pelo harness, não requisição perdida.
+
+**Alerta que deixei registrado (AUDITORIA §59.5):** a pasta `aaaaaaaaaaaaaaaa/` está na raiz publicada
+pelo Pages — `.../aaaaaaaaaaaaaaaa/config-mobile.png` abre em qualquer navegador. Desta vez era base
+sintética; print de base real viraria página pública. Combina com o dono se eu tiro a pasta depois do
+uso.
+
+Prova da rodada: `Bundle OK: 233` (ordem intacta), sha `3c66b60e1c67de80`, suíte 11✅/0❌/1 pulada,
+v7.3.15 em `package.json`/`index.html`/4 guias NF, `mobile/www` e mapa regenerados.

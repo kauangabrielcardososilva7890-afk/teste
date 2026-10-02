@@ -3595,11 +3595,11 @@ seguimento o veredito claim a claim.
 
 ### 59.2 O que não é defeito deste repo
 
-- **V-05** ("o texto do estado vazio de Clientes parece partir o rótulo na borda"): o elemento que
-  eles descrevem — a fileira de botões "Mais recentes primeiro / Mais antigos primeiro / ..." — **não
-  existe aqui**. Não há `v52215_clientes_vazio_ordenacao_patch.js` nem as etiquetas no repo (só no
-  bundle do fork). Nosso estado vazio de Clientes é `<p class="p-3 text-slate-400">Nenhum cliente
-  encontrado.</p>`, um parágrafo sem botão para cortar. Nada a consertar: é a tela deles.
+- **V-05** ("o texto do estado vazio de Clientes parece partir o rótulo na borda"): **aqui eu errei na
+  primeira leitura** — vi que as etiquetas "Mais recentes / Mais antigos primeiro" não existem neste
+  repo e concluí "é do fork". As capturas (59.5) mostraram o elemento real: a frase longa de vazio é
+  nossa, e estava sim quebrando no celular. Consertado em `finalizacao_sistema_patch.js`. O que **não**
+  é daqui são só os botões de ordenação que eles descreveram (aqui a ordenação é no `<th>`, com ▲▼).
 - Também **não adotei** o sugestão deles de "levar 'Máquinas nos clientes' para Impressoras, onde as
   ações existem": a tela de parque existe e tem conteúdo próprio (filtro por cliente, busca de setor/
   patrimônio, cartões por cliente). O problema era a pintura, não o destino.
@@ -3633,3 +3633,49 @@ Clientes → arrastar a tabela para a esquerda (tem de aparecer "arraste para o 
 arraste); abrir Chamados → "Novo chamado (fora de contrato)" precisa estar **inteiro** dentro da tela;
 e no Configurações, com a faixa da Nuvem no ar, rolar até o fim da página — a última linha da tabela
 tem de ficar acima dela, não atrás.
+
+### 59.5 As capturas chegaram pelo branch (`aaaaaaaaaaaaaaaa/`) — o que elas provam
+
+O dono commitou as 28 imagens + `capture-metadata.json` direto na branch (`3c8f7bd "Add files via
+upload"`). Achei o ponteiro local do sandbox de novo em `e9bb5ec` (r29); resolvido com
+`git fetch && git reset -q FETCH_HEAD` + `git checkout -- aaaaaaaaaaaaaaaa`. Nada das imagens foi
+movido ou apagado por mim.
+
+**Confirmado pixel a pixel (2 imagens bastaram):**
+- `config-mobile.png` — a faixa da Nuvem em 94vw com o texto espremido a ~75px: uma palavra por linha
+  ("Este / computador / não está / conectado…"), cobrindo o campo TELEFONE do formulário. Exatamente a
+  causa que eu tinha lido no `cssText` (`flex:1` entre dois botões `white-space:nowrap`). O layout
+  empilhado da v7.3.14 resolve, e o `padding-bottom` no `<body>` devolve o campo coberto.
+- `manutencao-mobile.png` — o modal de Chamados: a caixa encosta em x=8 e x=382 (374px = **96vw**),
+  o contêiner dá 358px, e `justify-center` reparte o excesso: **"…ovo chamado (fora de contrato)"**
+  entra cortado pela borda esquerda, e o `th` "Equip…" sai cortado pela direita. Os dois consertos
+  (`max-width:100%` + `flex-wrap` no rodapé; `.digi-rola` na tabela do corpo) caem exatamente aí.
+- Barra de cima na mesma imagem: "…Loca" cortado no meio da palavra, sem indício — o bilhete novo.
+
+**O que o `capture-metadata.json` disse sem eles escreverem:**
+- `pageErrors: []` em 28 telas — o app não estourou nenhuma vez, mesmo sem nuvem.
+- `externalRequestsBlocked`: `/orcamento` (×14) e `/v1/app-releases` **não** são requisições perdidas
+  para o próprio site: são as chamadas normais do app ao `digicopy-sync-api…workers.dev`, que o
+  bloqueador do harness cortou pelo caminho. Nada a consertar.
+- `fallbackCheck` de `parque` e `manutencao` traz `active: ["view-impressoras","view-parque"(,…)]` com
+  `title` ainda em "Impressoras". Um clique real em menu passa por `navigateTo`, que **esconde todas as
+  `.view`** antes e escreve o título do destino. Várias views visíveis ao mesmo tempo + título velho é
+  estado de quem mostrou cada `.view` na mão (harness), não de quem usou o menu. Então — correção do que
+  eu escrevi acima — **não havia "item de menu sem renderizador"**: o cartaz foi a malha anti-tela-branca
+  fazendo o trabalho dela diante de uma tela que ninguém pintou. A repintura única que entrei ficou
+  (só age em tela visível e vazia, custo zero no resto), mas o item está saudável: `parque` tem
+  renderizador (`app.js:1237`, `notinha_patch.js:347`) e conteúdo próprio.
+
+**V-05 consertado, com a peça certa.** Em `finalizacao_sistema_patch.js:142-143` o aviso de lista vazia
+é `<td colspan="7" class="text-center …">${vazioMsg}</td>` — parágrafo centralizado **dentro de uma
+tabela de ~700px**. O contêiner é `overflow-auto` (rolava, sim), mas o texto centralizado numa tabela
+larga cai fora do recorte de 390px: o usuário vê o meio da frase cortada nas duas bordas, que é
+literalmente o que o relatório descreveu. Agora o bloco prende a frase na largura visível
+(`width:min(92vw,680px); position:sticky; left:0`), legível com ou sem arraste. Duas asserções novas no
+tema 05.
+
+**Aviso para o dono sobre a pasta.** `aaaaaaaaaaaaaaaa/` está na raiz do que o Pages publica: as
+capturas ficam acessíveis em `https://teste-60f.pages.dev/aaaaaaaaaaaaaaaa/config-mobile.png`. Desta
+vez o conteúdo é sintético ("Empresa Sintética QA", CNPJ zerado), mas se uma captura futura for feita na
+base real, print de tela vira página pública. Sugestão: eu tiro a pasta do branch depois de usar (ou
+mudo para fora do repositório) — não fiz nada por conta própria porque foi você que acabou de colocar.

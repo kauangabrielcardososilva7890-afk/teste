@@ -33,7 +33,7 @@
 
 <header>
   <h1>Passo a passo — publicar o Worker e trocar a branch do site de teste</h1>
-  <p>Sistema Digicopy · branch desta sessão: <code>arena/01a0d9c3-teste</code> · app v7.3.14 · worker do repositório: API 0.4.9 / Worker 5.28.4 · 24/09/2026</p>
+  <p>Sistema Digicopy · branch desta sessão: <code>arena/01a0d9c3-teste</code> · app v7.3.15 · worker do repositório: API 0.4.9 / Worker 5.28.4 · 24/09/2026</p>
 </header>
 
 <div class="caixa">
@@ -132,7 +132,7 @@
       (o repositório é estático puro — não tem passo de build).</li>
   <li>Vá em <b>Deployments</b> → <b>Retry deployment</b> (ou aguarde o push desta branch disparar um novo).</li>
   <li><b>Conferir:</b> abra <code>https://teste-60f.pages.dev</code>, dê <b>Ctrl+F5</b> e olhe o
-      <b>rodapé</b>: tem que mostrar <b>v7.3.14</b>.</li>
+      <b>rodapé</b>: tem que mostrar <b>v7.3.15</b>.</li>
 </ol>
 
 <div class="caixa">
@@ -144,7 +144,7 @@
 <h2>Parte 3 — Depois que você trocar</h2>
 <ul>
   <li>Me avise “troquei”: eu passo a tratar o push nesta branch como <b>publicação</b> (worker e site).</li>
-  <li>Se o <code>/health</code> mostrar 5.28.4 e o rodapé mostar v7.3.14, o cadeado está fechado: site e nuvem desta sessão no ar.</li>
+  <li>Se o <code>/health</code> mostrar 5.28.4 e o rodapé mostar v7.3.15, o cadeado está fechado: site e nuvem desta sessão no ar.</li>
   <li>Qualquer tela estranha: <b>Ctrl+F5</b> antes de tudo (o Pages serve versão em cache).</li>
 </ul>
 
@@ -152,14 +152,14 @@
   <b>Ordem certa desta rodada (r54, senhas com hash) — não pule etapa:</b>
   <ol>
     <li><b>Nuvem primeiro:</b> publique o worker e confira <code>"versao":"5.28.4"</code> no <code>/health</code>. A nuvem nova continua aceitando o app velho — o contrário não vale para tudo (recuperar a senha do CNPJ e backup com hash precisam dela).</li>
-    <li><b>Depois o app:</b> abra o link de teste (rodapé <b>v7.3.14</b>) e entre normalmente — o primeiro login de cada usuário grava o hash sozinho, sem você fazer nada.</li>
+    <li><b>Depois o app:</b> abra o link de teste (rodapé <b>v7.3.15</b>) e entre normalmente — o primeiro login de cada usuário grava o hash sozinho, sem você fazer nada.</li>
     <li><b>Depois a troca:</b> troque a senha de conexão, a dos 7 usuários, e garanta gerente ≠ conexão (é o lembrete de toda mensagem).</li>
     <li><b>Corte por último (bem depois):</b> o botão “🔒 Texto-puro” na tela de Usuários só liga quando <b>todos os PCs já estiverem no app novo e com a senha trocada</b>. Ligar antes trava o login nos PCs velhos.</li>
   </ol>
 </div>
 
 <footer>
-  Guia do responsável · Sistema Digicopy v7.3.14 · branch <code>arena/01a0d9c3-teste</code> ·
+  Guia do responsável · Sistema Digicopy v7.3.15 · branch <code>arena/01a0d9c3-teste</code> ·
   link de teste: <b>https://teste-60f.pages.dev</b> · saúde da nuvem:
   <b>https://digicopy-sync-api.digicopyonline.workers.dev/health</b><br>
   Nunca coloque token, senha, CSC ou certificado neste guia, no chat ou no repositório.

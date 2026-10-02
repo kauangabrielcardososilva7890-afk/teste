@@ -8413,3 +8413,20 @@ tudo. Documentado na AUDITORIA_TECNICA §59.
 Fica com o dono: conferir a aparência no celular/DevTools 390×844 (roteiro na §59.4) — aqui não houve
 como abrir navegador; e as pendências antigas dele (trocar a senha que estava no `patch_relatorio.js`,
 ligar ou não o corte 🔒 Texto-puro, dizer qual tela perdeu dados).
+
+## r70 bis — 02/10/2026 (v7.3.15) — as capturas chegaram pelo branch e corrigiram duas leituras minhas
+
+O dono commitou `aaaaaaaaaaaaaaaa/` com os 28 PNGs e o `capture-metadata.json`. Li as duas imagens que
+testavam minhas hipóteses e elas bateram: a faixa da Nuvem de ~75px de texto (V-04) e o modal de
+Chamados vazando pela borda esquerda (V-03). **Errei em V-05**: o aviso de lista vazia de Clientes é
+nossa (célula `colspan=7` centralizada numa tabela larga, que no celular fica cortada nas duas bordas) —
+consertado em `finalizacao_sistema_patch.js` com o texto preso na largura visível. E o
+"item de menu sem renderizador" que eu suspeitei **não existe**: o `metadata` mostra várias `.view`
+visíveis ao mesmo tempo com o título velho, ou seja, o harness mostrou a tela na mão sem navegar; o
+cartaz foi a malha de tela branca trabalhando. `pageErrors: []` nas 28 telas.
+
+Deixei um alerta para o dono: essa pasta está dentro do que o Pages publica, então print de tela fica
+público se um dia for feito na base real.
+
+Teste: +2 asserções no tema 05 (o aviso preso e o contêiner que rola). Suíte 11✅/0❌/1 pulada;
+`Bundle OK: 233`; sha `3c66b60e1c67de80`; v7.3.15 publicado.

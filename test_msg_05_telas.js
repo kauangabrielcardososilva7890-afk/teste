@@ -1680,6 +1680,11 @@ ok(!/  setInterval\(\(\)=>\{const el=document\.getElementById\('session-time'\)/
 ok(/if \(window\.__sessionTimer\) \{ try \{ clearInterval\(window\.__sessionTimer\); \} catch\(e\)\{\} \}/.test(app), 'o timer anterior é desligado antes de ligar o novo');
 ok((app.match(/getElementById\('session-time'\)/g) || []).length === 1 && (app.match(/window\.__sessionTimer = setInterval/g) || []).length === 1, 'um único lugar escreve o tempo de sessão e um único timer o alimenta');
 
+// ── 7) V-05: o aviso de lista vazia não pode ficar fora da tela ────────────
+const fin = ler('finalizacao_sistema_patch.js');
+ok(/colspan="7"[^>]*><div style="width:min\(92vw,680px\);margin:0 auto;position:sticky;left:0;text-align:center">\$\{vazioMsg\}/.test(fin), 'a frase de "nenhum cliente" fica presa na largura visível, não centralizada numa tabela de 700px');
+ok(fin.indexOf('overflow-auto max-h-[calc(100vh-280px)]') > 0, 'e a tabela de Clientes continua dentro de um bloco que rola (o bilhete de arraste é o que faltava, não a rolagem)');
+
 // ── 7) o que foi para o bundle ──────────────────────────────────────────────
 for (const b of ['app.bundle.js', 'mobile/www/app.bundle.js']) {
   const bb = ler(b);
