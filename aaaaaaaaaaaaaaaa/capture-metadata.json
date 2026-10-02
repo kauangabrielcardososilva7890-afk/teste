@@ -1,0 +1,285 @@
+{
+  "home": {
+    "title": "Início",
+    "active": [
+      "view-dashboard"
+    ],
+    "text": "",
+    "modal": ""
+  },
+  "results": [
+    {
+      "route": "dashboard",
+      "desktop": "dashboard-desktop.png",
+      "mobile": "dashboard-mobile.png",
+      "state": {
+        "title": "Início",
+        "active": [
+          "view-dashboard"
+        ],
+        "text": "",
+        "modal": ""
+      }
+    },
+    {
+      "route": "clientes",
+      "title": "Clientes",
+      "desktopState": {
+        "title": "Clientes",
+        "active": [
+          "view-clientes"
+        ],
+        "body": "Clientes\n\nCadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.\n\nNovo cliente\nExcluir\nNome\nCódigo\nFantasia\nCPF/CNPJ\nTelefone\nCidade\nBairro\nBuscar\nTodos\nFiltro: ativos\nInadimplente",
+        "modal": ""
+      },
+      "desktop": "clientes-desktop.png",
+      "mobile": "clientes-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "produtos",
+      "title": "Estoque",
+      "desktopState": {
+        "title": "Estoque",
+        "active": [
+          "view-produtos"
+        ],
+        "body": "Produtos\nRecargas\nNovo produto\nEstoque baixo\nMostrar todos\nLimpar filtros\nExcluir\nTodas categorias\nProduto\nServiço\nCartucho\nCartucho Vazio\nInsumo\nEquipamento\nImpressoras\nChip\nCompatível\nInformática\nOriginal\nOutros\nAbaixo do mínimo\n\nTOTAL DE",
+        "modal": ""
+      },
+      "desktop": "produtos-desktop.png",
+      "mobile": "produtos-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "impressoras",
+      "title": "Impressoras",
+      "desktopState": {
+        "title": "Impressoras",
+        "active": [
+          "view-impressoras"
+        ],
+        "body": "Impressoras\n\nTodas as impressoras cadastradas nos clientes\n\nSerial\nContador preto\nContador color\nNome cliente\nCod contrato cliente\nDepartamento\nLocal\nBuscar\nMODELO\tSERIAL\tPATRIMÔNIO\tCONTADOR PB\tCOLOR\tCLIENTE\tCONTRATO\tDEPTO\tLOCAL\nImpressora ",
+        "modal": ""
+      },
+      "desktop": "impressoras-desktop.png",
+      "mobile": "impressoras-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "contratos",
+      "title": "Contratos de locação",
+      "desktopState": {
+        "title": "Contratos de locação",
+        "active": [
+          "view-contratos"
+        ],
+        "body": "Novo contrato\nExcluir\nTodos status\nAtivo\nPendente\nVencido\nEncerrado\nHoje (criados ou mexidos hoje)\nTodos\nNome\nCidade\nEquipamento\nPatrimônio\nSerial\nDepartamento\nChamados Abertos\nCod Locação\nCod Cliente\nEndereço Impressora\nContratos Vencidos\n",
+        "modal": ""
+      },
+      "desktop": "contratos-desktop.png",
+      "mobile": "contratos-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "vendas",
+      "title": "Vendas e Notinhas",
+      "desktopState": {
+        "title": "Vender / Orçar",
+        "active": [
+          "view-vendas"
+        ],
+        "body": "Vendas e Notinhas\n\nPor padrão mostra somente hoje. Use busca/data para consultar notinhas antigas.\n\nNova notinha\nEstornar\nExcluir\nHoje\nAbertas\nTodas\n1 de 1\nR$ 379,80\nDE\nATÉ\nSituação: todas\nfaturado\nPagamento: todos\nDinheiro\nCartão\nPix\nPrazo",
+        "modal": ""
+      },
+      "desktop": "vendas-desktop.png",
+      "mobile": "vendas-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "financeiro",
+      "title": "Financeiro",
+      "desktopState": {
+        "title": "Financeiro",
+        "active": [
+          "view-financeiro"
+        ],
+        "body": "Financeiro\n\nContas a receber e a pagar — duplo clique abre o histórico\n\nReceber\nImprimir\nExcluir\nHoje\nAbertos\nTodos\nNome\nCód. Venda\nCód. Parcela\nCód. Cliente\nPor Valor\nCód. Caixa\nCód. Pix\nCód. Leitura\nDE\nATÉ\nReceber + Pagar\nSó a receber\nSó ",
+        "modal": ""
+      },
+      "desktop": "financeiro-desktop.png",
+      "mobile": "financeiro-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "relatorios",
+      "title": "Relatórios",
+      "desktopState": {
+        "title": "Relatórios",
+        "active": [
+          "view-relatorios"
+        ],
+        "body": "Relatórios\n\nResumo visual da operação\n\nBackup\n\nCLIENTES\n\n8\n\nVENDAS\n\n1\n\nCONTRATOS\n\n1\n\nCHAMADOS\n\n1\nRelatórios detalhados serão conectados ao banco em nuvem na próxima etapa.",
+        "modal": ""
+      },
+      "desktop": "relatorios-desktop.png",
+      "mobile": "relatorios-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "config",
+      "title": "Configurações",
+      "desktopState": {
+        "title": "Configurações",
+        "active": [
+          "view-config"
+        ],
+        "body": "Configurações\n\nEmpresa, técnicos e preferências do sistema\n\nSalvar\n Dados da loja para relatórios e notinhas\n\nPreencha uma vez. Estes dados aparecem nas notinhas, chamados e relatórios.\n\nNOME FANTASIA\nRAZÃO SOCIAL\nCNPJ\n Buscar CNPJ\nTELEFONE",
+        "modal": ""
+      },
+      "desktop": "config-desktop.png",
+      "mobile": "config-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "usuarios",
+      "title": "Usuários",
+      "desktopState": {
+        "title": "Usuários",
+        "active": [
+          "view-usuarios"
+        ],
+        "body": "Usuários e permissões\nNovo usuário\nNovo técnico\nNOME\tLOGIN\tPERFIL\tSTATUS\tAÇÕES\nAdministrador QA\tqa-admin\tADMIN\tATIVO\t\n\nTécnico Sintético QA TÉCNICO\t—\tTÉCNICO\t—\t\n🔎 Logins repetidos",
+        "modal": ""
+      },
+      "desktop": "usuarios-desktop.png",
+      "mobile": "usuarios-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "auditoria",
+      "title": "Auditoria",
+      "desktopState": {
+        "title": "Auditoria",
+        "active": [
+          "view-auditoria"
+        ],
+        "body": "Auditoria\n\nRegistro automático de ações por usuário\n\nDATA\tUSUÁRIO\tMÓDULO\tAÇÃO\tDETALHES\n01/10/2026, 10:00:00\tAdministrador QA\nAdministrador QA\tvisual-qa\tFIXTURE\tRegistro sintético, sem persistência.",
+        "modal": ""
+      },
+      "desktop": "auditoria-desktop.png",
+      "mobile": "auditoria-mobile.png",
+      "identity": true
+    },
+    {
+      "route": "leituras",
+      "path": "Contrato sintético > Leituras",
+      "state": {
+        "modal": "Histórico de leituras — Comércio e Serviços Integrados da Região Metropolitana do Vale\nDe \naté \nFiltrar\nTodos\nLeituras realizadas\n\nDê duplo clique em uma leitura para abrir lançamentos, remover/editar e faturar.\n\n\tCódigo\tPeríodo\tLançada em\tUtilizado\tExced.\tTot",
+        "title": "Histórico de leituras — Comércio e Serviços Integrados da Região Metropolitana do Vale",
+        "desktop": "leituras-contract-desktop.png",
+        "mobile": "leituras-contract-mobile.png"
+      }
+    },
+    {
+      "route": "parque",
+      "fallbackCheck": {
+        "title": "Impressoras",
+        "active": [
+          "view-impressoras",
+          "view-parque"
+        ],
+        "modal": "Histórico de leituras — Comércio e Serviços Integrados da Região Metropolitana do Vale\nDe \naté \nFiltrar\nTodos\nLeituras r",
+        "text": [
+          "Impressoras\n\nTodas as impressoras cadastradas nos clientes\n\nSerial\nContador preto\nContador color\nNome cliente\nCod contrato cliente\nDepartamento\nLocal\nBuscar\nMODELO\tSERIAL\tPATRIMÔNIO\tCONTADOR PB\tCOLOR\tCLIENTE\tCONTRATO\tDEPTO\tLOCAL\nImpressora ",
+          "Tela sem conteúdo\n\nO botão funcionou — só faltou a tela carregar\n\nVoltar ao Início\n\nA tela parque foi chamada mas não tinha conteúdo pronto para mostrar. Nada foi apagado: seus dados e as outras telas continuam intactos. Se isso aparecer de"
+        ]
+      }
+    },
+    {
+      "route": "manutencao",
+      "fallbackCheck": {
+        "title": "Impressoras",
+        "active": [
+          "view-impressoras",
+          "view-parque",
+          "view-manutencao"
+        ],
+        "modal": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados",
+        "text": [
+          "Impressoras\n\nTodas as impressoras cadastradas nos clientes\n\nSerial\nContador preto\nContador color\nNome cliente\nCod contrato cliente\nDepartamento\nLocal\nBuscar\nMODELO\tSERIAL\tPATRIMÔNIO\tCONTADOR PB\tCOLOR\tCLIENTE\tCONTRATO\tDEPTO\tLOCAL\nImpressora ",
+          "Tela sem conteúdo\n\nO botão funcionou — só faltou a tela carregar\n\nVoltar ao Início\n\nA tela parque foi chamada mas não tinha conteúdo pronto para mostrar. Nada foi apagado: seus dados e as outras telas continuam intactos. Se isso aparecer de",
+          "Tela sem conteúdo\n\nO botão funcionou — só faltou a tela carregar\n\nVoltar ao Início\n\nA tela manutencao foi chamada mas não tinha conteúdo pronto para mostrar. Nada foi apagado: seus dados e as outras telas continuam intactos. Se isso aparece"
+        ]
+      }
+    }
+  ],
+  "externalRequestsBlocked": [
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/v1/app-releases",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "path": "/v1/app-release",
+      "method": "GET"
+    }
+  ],
+  "pageErrors": [],
+  "fixture": "in-memory-only; no saveDB called"
+}
