@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: ce1d50011645f1f8
+ * scripts: 236 | sha256: f477d5bea8e96e46
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29713,7 +29713,11 @@ normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
 const SO_NUVEM_KEY='digicopy_cf_so_nuvem_v1';
 const BASE_CHAVES=['digicopy_erp_v42_demo_apresentacao','digicopy_erp_backup_pre_sync','digicopy_erp_v20','digicopy_erp_v10'];
 const BASE_IDB='digicopy_erp_storage_v1';
-function modoSoNuvem(){ return true; }
+function perfilDistribuicao(){
+  try{return String(window.DIGICOPY_BUILD_PROFILE||'particular-cloud');}catch(e){return 'particular-cloud';}
+}
+function modoLocalComercial(){ return perfilDistribuicao()==='commercial-local'; }
+function modoSoNuvem(){ return !modoLocalComercial(); }
 function aplicarSoNuvem(){
   const ligado=modoSoNuvem();
   try{ window.DIGICOPY_SO_NUVEM=ligado; }catch(e){}
@@ -30864,6 +30868,7 @@ function indicator(ok,text){
 // Agora: aba escondida e não-líder não faz nada; aba VISÍVEL puxa (só leitura).
 // Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
 async function tickSohLeitura(reason){
+  if(modoLocalComercial())return false;
   if(!authorized())return false;
   if(typeof document==='undefined'||document.hidden)return false;
   busy=true;lastTick=Date.now();
@@ -30886,12 +30891,14 @@ async function tickSohLeitura(reason){
 // nuvem (só leitura: nunca envia, nunca duplica). Com carência de 2,5 s (pular
 // de tela em tela não vira rajada) e sem furar um ciclo em andamento.
 async function puxarAoAbrirTela(){
+  if(modoLocalComercial())return false;
   if(!authorized())return false;
   if(busy) return false;
   if(Date.now()-lastTick<2500) return 'recente';
   return tickSohLeitura('abrir-tela');
 }
 async function tick(reason){
+  if(modoLocalComercial())return false;
   // v7.0.5 — antes de qualquer decisão, aproveita a brecha para aplicar um
   // redesenho que ficou pendente (roda a cada 3 s).
   try{tentarRedesenhoPendente();}catch(e){}

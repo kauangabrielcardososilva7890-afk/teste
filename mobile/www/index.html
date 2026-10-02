@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0a1e8a">
 <script>
 window.DIGICOPY_APP_VERSION = '8.0.0';
+try{window.DIGICOPY_BUILD_PROFILE=new URLSearchParams(location.search).get('profile')||window.DIGICOPY_BUILD_PROFILE||'particular-cloud';}catch(e){window.DIGICOPY_BUILD_PROFILE=window.DIGICOPY_BUILD_PROFILE||'particular-cloud';}
 
 // v6.0.3 — tranca do menu Backup: roda antes de qualquer bundle; por CAPTURA
 // no documento, impede que o clique em Backup baixe arquivo. Se a tela ainda
@@ -97,10 +98,69 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 .neo-shell{padding:18px;background:linear-gradient(180deg,#f8fbff 0,#ffffff 72%);min-height:calc(100vh - 170px);animation:fadeIn .22s ease-out}.neo-panel{background:rgba(255,255,255,.94);border:1px solid #dbe5f1;border-radius:18px;box-shadow:0 12px 35px rgba(15,23,42,.07);overflow:hidden}.neo-head{background:linear-gradient(135deg,#0a1e8a,#0876c9);color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}.neo-head h3{font-size:20px;font-weight:800;letter-spacing:-.02em}.neo-head p{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px}.neo-actions{display:flex;gap:8px;flex-wrap:wrap}.neo-btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid #d9e3ef;background:white;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:7px;transition:.16s}.neo-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(10,30,138,.12);border-color:#0a1e8a;color:#0a1e8a}.neo-btn.primary{background:#0a1e8a;border-color:#0a1e8a;color:white}.neo-btn.danger:hover{border-color:#dc2626;color:#dc2626}.neo-input,.neo-select{height:36px;border:1px solid #cbd5e1;border-radius:10px;background:white;padding:0 11px;font-size:13px;outline:none;transition:.14s}.neo-input:focus,.neo-select:focus{border-color:#0a1e8a;box-shadow:0 0 0 4px rgba(10,30,138,.08)}.neo-label{font-size:11px;text-transform:uppercase;font-weight:800;color:#64748b;display:block;margin-bottom:5px}.neo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;padding:16px}.neo-card{border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:14px;animation:fadeIn .22s ease-out}.neo-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}.neo-table th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.neo-table td{padding:9px;border-bottom:1px solid #eef2f7}.neo-table tr{transition:.12s}.neo-table tbody tr:hover{background:#f5f9ff}.neo-selected{background:#dbeafe!important}.neo-total{font-size:34px;font-weight:900;color:#0a1e8a;letter-spacing:-.04em}.neo-suggest{max-height:160px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:white;margin-top:6px;box-shadow:0 14px 35px rgba(15,23,42,.10);animation:slideIn .16s ease-out}.neo-suggest button{width:100%;padding:9px 11px;text-align:left;font-size:12.5px;border-bottom:1px solid #f1f5f9}.neo-suggest button:hover{background:#eff6ff;color:#0a1e8a}.neo-tabs{display:flex;gap:7px;flex-wrap:wrap}.neo-tab{height:30px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:white;font-size:12px;font-weight:750;color:#475569}.neo-tab.active,.neo-tab:hover{background:#0a1e8a;color:white;border-color:#0a1e8a}.neo-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:800;text-transform:uppercase}.neo-status.ok{background:#dcfce7;color:#166534}.neo-status.wait{background:#fef3c7;color:#92400e}.neo-status.info{background:#dbeafe;color:#1e40af}.neo-float-in{animation:floatIn .22s ease-out}@keyframes floatIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:900px){.neo-grid{grid-template-columns:1fr}.neo-head{align-items:flex-start;flex-direction:column}}
 
 
+/* v8.0.0 — dashboard redesign: organização clara, sem alterar rotas ou ações existentes. */
+.dash-shell{max-width:1480px;margin:0 auto;padding:26px 30px 34px;background:#f8fafc;min-height:calc(100vh - 170px)}
+.dash-breadcrumb{display:flex;align-items:center;gap:8px;color:#94a3b8;font-size:11px;margin-bottom:12px}.dash-breadcrumb i{font-size:12px}.dash-breadcrumb b{color:#475569;font-weight:700}
+.dash-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:22px}.dash-heading h1{color:#123b73;font-size:29px;line-height:1.1;font-weight:850;letter-spacing:-.04em}.dash-heading p{color:#94a3b8;font-size:13px;margin-top:7px}.dash-heading-actions{display:flex;gap:9px;flex-wrap:wrap}.dash-outline{height:38px;padding:0 13px;display:inline-flex;align-items:center;gap:8px;border:1px solid #d7e0ec;border-radius:9px;background:#fff;color:#475569;font-size:12px;font-weight:700;transition:.16s}.dash-outline:hover{border-color:#0a1e8a;color:#0a1e8a;box-shadow:0 4px 13px rgba(10,30,138,.08)}
+.dash-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:18px}.dash-kpi{min-height:112px;border:1px solid #e0e7f0;border-radius:12px;background:#fff;padding:18px;display:flex;align-items:center;gap:14px;text-align:left;box-shadow:0 3px 12px rgba(15,23,42,.035);transition:.16s}.dash-kpi:hover{transform:translateY(-2px);border-color:#c7d7ed;box-shadow:0 9px 22px rgba(15,23,42,.08)}.dash-kpi-icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:24px;flex:none}.dash-kpi-icon.blue{background:#e7f0ff;color:#1771db}.dash-kpi-icon.purple{background:#eee9ff;color:#6745d7}.dash-kpi-icon.orange{background:#fff0e4;color:#df7816}.dash-kpi-icon.green{background:#e4f8ee;color:#159765}.dash-kpi small{display:block;color:#64748b;font-size:11px;font-weight:700;margin-bottom:4px}.dash-kpi strong{display:block;color:#153d70;font-size:25px;line-height:1;font-weight:850;letter-spacing:-.035em}.dash-kpi em{display:block;color:#22a06b;font-size:10px;font-style:normal;font-weight:700;margin-top:7px}
+.dash-columns{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.85fr);gap:16px;margin-bottom:16px}.dash-secondary{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-card{min-width:0;border:1px solid #e0e7f0;border-radius:13px;background:#fff;box-shadow:0 3px 12px rgba(15,23,42,.035);overflow:hidden}.dash-card-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:19px 20px 15px;border-bottom:1px solid #edf2f7}.dash-card-title h2{color:#173f72;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}.dash-card-title h2 i{color:#2476d0;font-size:18px}.dash-card-title p{color:#94a3b8;font-size:11px;margin-top:5px}.dash-card-title>button{color:#2270c4;background:none;border:0;font-size:11px;font-weight:800;white-space:nowrap;padding-top:3px}.dash-card-title>button:hover{color:#0a1e8a}.dash-activity-list{min-height:220px}.dash-activity-list>div{border-bottom:1px solid #f0f3f7!important;background:#fff;transition:.14s}.dash-activity-list>div:hover{background:#f8fbff!important}.dash-action-list{padding:7px 12px 12px}.dash-action-list button{width:100%;min-height:55px;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 9px;border-bottom:1px solid #eef2f7;background:#fff;text-align:left;transition:.14s}.dash-action-list button:last-child{border-bottom:0}.dash-action-list button:hover{background:#f7faff;color:#0a1e8a}.dash-action-list button>span{display:grid;grid-template-columns:30px 1fr;column-gap:8px;align-items:center}.dash-action-list button>span>i{grid-row:span 2;color:#2476d0;font-size:21px}.dash-action-list b{color:#24466f;font-size:12px}.dash-action-list small{display:block;color:#94a3b8;font-size:10px;margin-top:3px}.dash-action-list>button>i{color:#94a3b8;font-size:15px}.dash-footer-note{display:flex;align-items:center;gap:13px;border:1px solid #dce7f4;border-radius:13px;background:linear-gradient(100deg,#f2f7ff,#fff);padding:15px 20px}.dash-note-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#dceaff;color:#2276d7;font-size:21px}.dash-footer-note b{color:#173f72;font-size:14px}.dash-footer-note p{color:#94a3b8;font-size:11px;margin-top:3px}.dash-note-status{margin-left:auto;display:flex;align-items:center;gap:7px;color:#278d65;font-size:10px;font-weight:800}.dash-note-status span{width:7px;height:7px;background:#2bb579;border-radius:50%;box-shadow:0 0 0 4px #dff7eb}.dash-hidden-metrics{display:none!important}
+@media(max-width:1050px){.dash-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-columns{grid-template-columns:1fr}.dash-secondary{grid-template-columns:1fr}}
+@media(max-width:640px){.dash-shell{padding:18px 12px 28px}.dash-heading{align-items:flex-start;flex-direction:column}.dash-heading h1{font-size:25px}.dash-heading-actions{width:100%}.dash-outline{flex:1;justify-content:center}.dash-kpis{gap:9px}.dash-kpi{min-height:100px;padding:12px;gap:10px}.dash-kpi-icon{width:39px;height:39px;font-size:19px}.dash-kpi strong{font-size:20px}.dash-kpi small{font-size:10px}.dash-note-status{display:none}}
+
 /* anti-flash login */
 #app-shell.hidden{display:none!important}
 #login-screen.hidden{display:none!important;pointer-events:none!important}
 #login-screen:not(.hidden){display:flex!important}
+
+/* v8.0.0 — shell completo alinhado ao mockup aprovado. */
+@media (min-width:901px){
+  #sidebar{display:flex!important;position:fixed!important;inset:0 auto 0 0!important;width:220px!important;transform:none!important;background:#f7f9fd!important;color:#173d70!important;border-right:1px solid #e1e8f2!important;z-index:60!important}
+  #sidebar>div:first-child{height:60px!important;padding:0 18px!important;background:#0b3d7d!important;border-bottom:0!important}
+  #sidebar>div:first-child img{height:34px!important;width:auto!important}
+  #sidebar>div:nth-child(2){padding:16px 14px 10px!important}
+  #sidebar>div:nth-child(2)>div:first-child{background:#fff!important;border:1px solid #e2e9f2!important;padding:10px!important;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+  #sidebar>div:nth-child(2) #user-name{color:#173d70!important}
+  #sidebar>div:nth-child(2) #user-perfil{background:#eaf2ff!important;color:#2867a8!important}
+  #sidebar>div:nth-child(2) #user-empresa{color:#94a3b8!important}
+  #sidebar>div:nth-child(2) button{background:#f7faff!important;color:#47637f!important}
+  #sidebar>div:nth-child(2)>div:last-child{color:#94a3b8!important}
+  #sidebar nav{padding:8px 12px 14px!important;gap:18px!important}
+  #sidebar nav p{color:#94a3b8!important;font-size:10px!important;letter-spacing:.12em!important}
+  #sidebar nav button{width:100%!important;min-height:39px!important;padding:0 12px!important;border-radius:9px!important;color:#315273!important;background:transparent!important;font-size:12.5px!important;font-weight:700!important;text-align:left!important}
+  #sidebar nav button:hover,#sidebar nav button.active{background:#eaf2ff!important;color:#0a5eb4!important}
+  #sidebar nav button i{color:#3c76ad!important;font-size:18px!important}
+  #sidebar>nav{display:none!important}
+  #shell-sidebar-links{display:flex!important;flex-direction:column;gap:3px;padding:7px 12px 14px;overflow-y:auto;flex:1}
+  .shell-side-link{width:100%;min-height:39px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:#315273;display:flex;align-items:center;gap:11px;text-align:left;font-size:12.5px;font-weight:700;cursor:pointer;transition:.14s}
+  .shell-side-link:hover,.shell-side-link.active{background:#eaf2ff;color:#0a5eb4}.shell-side-link>i:first-child{font-size:18px;color:#3c76ad;flex:none}.shell-side-link .shell-caret{margin-left:auto;font-size:13px;color:#94a3b8;transition:.14s}.shell-sidebar-links details[open]>.shell-side-link{background:#edf5ff;color:#0a5eb4}.shell-sidebar-links details[open]>.shell-side-link .shell-caret{transform:rotate(90deg)}
+  .shell-side-sub{margin:2px 0 5px 29px;border-left:1px solid #d9e5f2;padding-left:8px;display:grid;gap:2px}.shell-side-sub button{min-height:30px;padding:0 8px;border:0;border-radius:7px;background:transparent;color:#66809a;text-align:left;font-size:11px;cursor:pointer}.shell-side-sub button:hover{background:#f0f6ff;color:#0a5eb4}
+  #sidebar>div:last-child{padding:12px!important;border-top:1px solid #e1e8f2!important}
+  #sidebar>div:last-child>div:first-child{background:#eaf3ff!important;border:1px solid #d5e5f8!important;color:#244e7a!important}
+  #sidebar>div:last-child>div:first-child p,#sidebar>div:last-child>div:first-child span{color:#244e7a!important}
+  #sidebar>div:last-child>div:first-child button{background:#fff!important;color:#0a5eb4!important}
+  #sidebar>div:last-child>div:last-child{color:#94a3b8!important}
+  #app-shell>div>main{margin-left:220px!important;min-height:100vh!important;background:#fff!important}
+  .app-titlebar{display:block!important;height:60px!important;background:#0b3d7d!important;position:sticky!important;top:0!important;z-index:55!important;box-shadow:0 2px 8px rgba(10,30,70,.12)!important}
+  .app-titlebar>div:first-child{height:60px!important;background:#0b3d7d!important;justify-content:flex-start!important;padding:0 24px!important}
+  .app-titlebar img{height:34px!important;width:auto!important}
+  #app-title-version{font-size:13px!important;font-weight:700!important;color:#fff!important;margin-left:8px!important}
+  #page-title{display:none!important}
+  .app-titlebar .absolute.right-2{right:24px!important}
+  .app-titlebar .absolute.right-2 #current-date{color:rgba(255,255,255,.75)!important}
+  .modern-topnav{display:none!important}
+  #app-shell>div>main>.flex-1{padding:0!important;background:#fff!important}
+  #app-shell>div>main>.flex-1>.view{padding:0 30px 36px!important}
+  #app-shell>div>main>.flex-1>#view-dashboard{padding:0!important}
+  .statusbar{display:none!important}
+  #etq-busca-box{margin:18px 30px 0!important;border-color:#e2e9f2!important;box-shadow:0 2px 9px rgba(15,23,42,.04)!important}
+}
+@media (max-width:900px){
+  #sidebar{background:#f7f9fd!important;color:#173d70!important}
+  #sidebar nav button{color:#315273!important}
+  .app-titlebar{display:block!important;background:#0b3d7d!important}
+  #shell-sidebar-links{display:none!important}
+  .modern-topnav{display:block!important}
+}
 
 /* fix menu cobrindo botão contrato - dá espaço sem quebrar scroll */
 .view { scroll-margin-top: 80px; }
@@ -181,9 +241,22 @@ html,body{max-width:100%;overflow-x:hidden}
           <p class="text-[11px] text-white/50 truncate flex items-center gap-1.5"><span id="user-perfil" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase">Admin</span><span id="user-empresa" class="truncate">DIGICOPY</span></p>
         </div>
         <button onclick="exportBackup()" title="Exportar backup (arquivo JSON com todos os dados)" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-download-simple"></i></button>
-        <button onclick="doLogout()" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
+        <button onclick="doLogout()" title="Sair do sistema" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
       </div>
       <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
+    </div>
+    <div id="shell-sidebar-links" class="shell-sidebar-links">
+      <button class="shell-side-link active" onclick="navigateTo('dashboard')"><i class="ph ph-house"></i><span>Início</span></button>
+      <details><summary class="shell-side-link"><i class="ph ph-headset"></i><span>Atendimento</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('vendas')">Consultar notinhas</button><button onclick="navigateTo('orcamentos')">Orçamentos</button><button onclick="openQuickOS()">Abrir chamado</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-cube"></i><span>Produtos</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('produtos')">Produtos e estoque</button><button onclick="navigateTo('impressoras')">Impressoras</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-printer"></i><span>Locação</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('contratos')">Contratos</button><button onclick="navigateTo('parque')">Máquinas nos clientes</button><button onclick="navigateTo('leituras')">Leituras</button><button onclick="navigateTo('impressoras')">Impressoras</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-file-text"></i><span>Fiscal</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('central-nf')">Nota fiscal</button><button onclick="navigateTo('fiscal-perfil')">Perfil tributário</button><button onclick="navigateTo('fiscal-manifestacao')">Manifestação</button><button onclick="navigateTo('fiscal-ncm')">NCM</button><button onclick="navigateTo('fiscal-enviar-xml')">Enviar XML</button></div></details>
+      <details><summary class="shell-side-link"><i class="ph ph-users-three"></i><span>Cadastros</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('clientes')">Clientes</button><button onclick="openModal('cliente')">Novo cliente</button><button onclick="navigateTo('usuarios')">Usuários</button></div></details>
+      <button class="shell-side-link" onclick="navigateTo('financeiro')"><i class="ph ph-chart-line-up"></i><span>Financeiro</span></button>
+      <details><summary class="shell-side-link"><i class="ph ph-gear"></i><span>Configurações</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button onclick="navigateTo('config')">Preferências</button><button onclick="navigateTo('usuarios')">Usuários e permissões</button><button onclick="navigateTo('auditoria')">Auditoria</button></div></details>
+      <button id="btn-backup-top" class="shell-side-link" onclick="abrirTelaBackup()"><i class="ph ph-cloud-arrow-up"></i><span>Backup</span></button>
+      <button id="btn-nuvem" class="shell-side-link" onclick="abrirCloudflareNuvem()"><i class="ph ph-cloud-check"></i><span>Nuvem</span></button>
+      <button class="shell-side-link" onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i><span>Buscador Escola</span></button>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
@@ -221,8 +294,8 @@ html,body{max-width:100%;overflow-x:hidden}
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
-        <div class="module"><button id="btn-backup-top" type="button" onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()" title="Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC"><i class="ph ph-download-simple"></i>Backup</button></div>
-        <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
+        <div class="module"><button id="legacy-btn-backup-top" type="button" onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()" title="Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC"><i class="ph ph-download-simple"></i>Backup</button></div>
+        <div class="module"><button id="legacy-btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><button id="dc-cloud-diag-trigger" type="button" aria-label="Abrir diagnóstico da nuvem" title="Abrir diagnóstico da nuvem" class="inline-flex items-center gap-2 border-0 bg-transparent text-slate-500 cursor-pointer"><span class="pulse-dot" aria-hidden="true"></span><span class="hidden xl:inline">Nuvem</span></button></div>
       </div></div>
     <div class="flex-1 p-4 lg:p-8">
@@ -254,7 +327,7 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
 <script>window.__DIGICOPY_FALHAS=[];window.__DIGICOPY_FALHA=function(f,e){try{window.__DIGICOPY_FALHAS.push({arq:String(f),erro:String((e&&e.message)||e).slice(0,160)});}catch(_){}};</script>
-    <script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="1.0";</script>
+    <script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="1.0";window.DIGICOPY_BUILD_PROFILE="particular-cloud";</script>
 <script src="./app.bundle.js?v=1.0"></script>
 </body>
 </html>

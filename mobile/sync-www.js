@@ -15,6 +15,13 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const dest = path.join(__dirname, 'www');
 const MOBILE_VER = '1.0';
+const PROFILE_ARG = process.argv.indexOf('--profile');
+const BUILD_PROFILE = PROFILE_ARG >= 0 ? String(process.argv[PROFILE_ARG + 1] || 'particular-cloud') : 'particular-cloud';
+const PROFILES = new Set(['particular-cloud', 'commercial-cloud', 'commercial-local']);
+if(!PROFILES.has(BUILD_PROFILE)){
+  console.error('Perfil mobile inválido: '+BUILD_PROFILE);
+  process.exit(1);
+}
 
 // Arquivos que o app precisa mesmo sem aparecer como tag no index.html.
 const EXTRAS = ['logo.png', 'manifest.webmanifest'];
@@ -67,7 +74,7 @@ copyDir(path.join(root,'assets','vendor'), path.join(dest,'assets','vendor'));
 // ── index.html do celular ───────────────────────────────────────────────────
 let html = htmlOrigem.replace(
   /<script src="\.\/app\.bundle\.js\?v=[^"]+"><\/script>/,
-  '<script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="'+MOBILE_VER+'";</script>\n<script src="./app.bundle.js?v='+MOBILE_VER+'"></script>'
+  '<script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="'+MOBILE_VER+'";window.DIGICOPY_BUILD_PROFILE="'+BUILD_PROFILE+'";</script>\n<script src="./app.bundle.js?v='+MOBILE_VER+'"></script>'
 );
 html = html.replace('Sistema Digicopy</span>','Sistema Digicopy '+MOBILE_VER+'</span>');
 html = html.replace('Sistema Digicopy</div>','Sistema Digicopy '+MOBILE_VER+'</div>');

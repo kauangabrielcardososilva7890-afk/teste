@@ -1,0 +1,7 @@
+{
+  "appId": "br.com.digicopy.erp.comercial",
+  "productName": "DIGICOPY Comercial",
+  "directories": { "output": "dist/commercial-exe" },
+  "extraMetadata": { "digicopyProfile": "commercial-cloud" },
+  "artifactName": "Digicopy-Comercial-Setup-${version}.${ext}"
+}

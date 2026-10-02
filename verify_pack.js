@@ -23,16 +23,17 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const versao = String(pkg.version || '').trim();
 
 function acharPastaApp() {
+  const base = process.env.DIGICOPY_DIST ? String(process.env.DIGICOPY_DIST) : 'dist';
   const candidatos = [
-    path.join('dist', 'win-unpacked', 'resources', 'app'),
-    path.join('dist', 'win-ia32-unpacked', 'resources', 'app'),
-    path.join('dist', 'linux-unpacked', 'resources', 'app')
+    path.join(base, 'win-unpacked', 'resources', 'app'),
+    path.join(base, 'win-ia32-unpacked', 'resources', 'app'),
+    path.join(base, 'linux-unpacked', 'resources', 'app')
   ];
   for (const c of candidatos) if (fs.existsSync(c)) return c;
   // procura genérica: dist/*-unpacked/resources/app
-  if (fs.existsSync('dist')) {
-    for (const d of fs.readdirSync('dist')) {
-      const p = path.join('dist', d, 'resources', 'app');
+  if (fs.existsSync(base)) {
+    for (const d of fs.readdirSync(base)) {
+      const p = path.join(base, d, 'resources', 'app');
       if (fs.existsSync(p)) return p;
     }
   }

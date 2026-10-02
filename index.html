@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0a1e8a">
 <script>
 window.DIGICOPY_APP_VERSION = '8.0.0';
+try{window.DIGICOPY_BUILD_PROFILE=new URLSearchParams(location.search).get('profile')||window.DIGICOPY_BUILD_PROFILE||'particular-cloud';}catch(e){window.DIGICOPY_BUILD_PROFILE=window.DIGICOPY_BUILD_PROFILE||'particular-cloud';}
 
 // v6.0.3 — tranca do menu Backup: roda antes de qualquer bundle; por CAPTURA
 // no documento, impede que o clique em Backup baixe arquivo. Se a tela ainda
@@ -326,6 +327,6 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
 <script>window.__DIGICOPY_FALHAS=[];window.__DIGICOPY_FALHA=function(f,e){try{window.__DIGICOPY_FALHAS.push({arq:String(f),erro:String((e&&e.message)||e).slice(0,160)});}catch(_){}};</script>
-    <script src="./app.bundle.js?v=8.0.0-dce4511b6732"></script>
+    <script src="./app.bundle.js?v=8.0.0-306c77955a03"></script>
 </body>
 </html>

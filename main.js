@@ -76,7 +76,12 @@ function createWindow () {
       try{ fs.writeFileSync(marker, APP_FINGERPRINT, 'utf8'); }catch(e){}
     }
   }catch(e){}
-  win.loadFile(path.join(__dirname, 'index.html'));
+  let profile = 'particular-cloud';
+  try {
+    const meta = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+    profile = String(meta.digicopyProfile || profile);
+  } catch (_) {}
+  win.loadFile(path.join(__dirname, 'index.html'), { query: { profile } });
 
   // ── Registro de falhas do bundle (v5.22.65) ───────────────────────────────
   // O app.bundle.js junta ~186 scripts. Cada um roda dentro do seu try/catch,

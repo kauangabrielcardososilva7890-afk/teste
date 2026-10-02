@@ -2,7 +2,9 @@
 node_modules/
 dist/
 !vendor/**
-build/
+build/*
+!build/profiles/
+!build/profiles/*.json
 out/
 coverage/
 playwright-report/
