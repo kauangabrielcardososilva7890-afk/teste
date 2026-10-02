@@ -1,0 +1,111 @@
+# ┌─ COMO LIGAR ESTE TESTE ────────────────────────────────────────────────────
+# │ Este arquivo é um workflow do GitHub Actions, mas o agente NÃO pode criar
+# │ arquivos em .github/ (o App do Arena não tem a permissão `workflows` — o push
+# │ é rejeitado com "refusing to allow a GitHub App to create or update workflow").
+# │ Basta o dono copiar este arquivo uma vez para o lugar certo, pela web:
+# │   1) github.com → este repositório → Add file → Create new file
+# │   2) nome: .github/workflows/teste-visual-navegador.yml
+# │   3) cole o conteúdo deste arquivo, Commit
+# │ Depois disso o teste roda sozinho a cada push da branch e abre uma issue com
+# │ os números (e guarda os prints como artefato do run).
+# │
+# │ Alternativa, se ele não quiser copiar: Settings → Actions → General → Workflow
+# │ permissions → "Read and write permissions" para o App do Arena, e o agente
+# │ publica o arquivo na próxima rodada.
+# └─────────────────────────────────────────────────────────────────────────────
+name: Teste visual no navegador (celular 390x844)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Por que isto roda aqui e não no sandbox do agente: o ambiente dele só tem
+# saída para npm/PyPI/GitHub — não consegue abrir o site publicado nem instalar
+# um Chromium (CDN bloqueado, bibliotecas de sistema ausentes). O runner do
+# GitHub Actions tem internet inteira, abre https://teste-60f.pages.dev num
+# Chromium de verdade, mede o layout das 14 telas em 390x844 (e confere que o
+# desktop de 1365x850 não mudou) e publica o resultado como issue — que o agente
+# lê pela API. Nada de credencial aqui: a base de teste é sintética, montada
+# pelo próprio script dentro da página (ver ferramentas/teste_visual.js).
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches:
+      - 'arena/01a0d9c3-teste'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  telas:
+    name: abrir o site publicado e medir o corte
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # O navegador: mesmo Playwright do teste do dono, instalado de npm (o
+      # --with-deps traz as bibliotecas de sistema que o Chromium exige).
+      - name: playwright + chromium
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      # O Pages publica a partir deste mesmo commit; sem esta espera o teste
+      # mediria a versão anterior e o veredito seria mentira.
+      - name: espera o deploy do Pages
+        run: |
+          alvo="${{ vars.URL_TESTE }}"
+          [ -z "$alvo" ] && alvo="https://teste-60f.pages.dev/index.html?cb="
+          versao=$(node -p "require('./package.json').version")
+          for i in $(seq 1 20); do
+            texto=$(curl -fsSL -m 20 "$alvo?cb=tela-$GITHUB_RUN_ID-$i" 2>/dev/null | grep -o "v${versao}" | head -1 || true)
+            echo "tentativa $i: ${texto:-ainda a versão anterior}"
+            [ -n "$texto" ] && break
+            sleep 20
+          done
+
+      - name: medir as telas no celular e no desktop
+        id: mede
+        run: |
+          versao=$(node -p "require('./package.json').version")
+          url="${{ vars.URL_TESTE }}"
+          [ -z "$url" ] && url="https://teste-60f.pages.dev/index.html"
+          if node ferramentas/teste_visual.js --url "$url" --versao "v${versao}"; then
+            echo "ok=0" >> "$GITHUB_ENV"
+          else
+            echo "ok=1" >> "$GITHUB_ENV"
+          fi
+
+      # O canal de volta para o agente: os números chegam como corpo de issue
+      # (a API do GitHub é alcançável dos dois lados; artefato, não).
+      - name: publicar o resultado como issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          simbolo=$([ "$ok" = "0" ] && echo "✅" || echo "❌")
+          curto="${GITHUB_SHA:0:7}"
+          corpo="resultado.md"
+          [ -f "$corpo" ] || printf '## ❌ Teste visual não chegou a medir\n\nO script falhou antes de escrever o resultado — ver o log do job.\n' > "$corpo"
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "$simbolo Teste visual #${GITHUB_RUN_NUMBER} (${curto})" \
+            --body-file "$corpo" || true
+
+      - name: guardar os prints para o dono ver
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints-teste-visual-${{ github.run_number }}
+          path: |
+            resultado.json
+            resultado.md
+            *.png
+          if-no-files-found: ignore
+
+      - name: fechar o job com o veredito
+        run: exit "$ok"
