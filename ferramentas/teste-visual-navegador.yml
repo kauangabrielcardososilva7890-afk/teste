@@ -55,34 +55,18 @@ jobs:
           npm i --no-save --no-audit --no-fund playwright@1.63.0
           npx playwright install --with-deps chromium
 
-      # O Pages publica a partir deste mesmo commit; sem esta espera o teste
-      # mediria a versão anterior e o veredito seria mentira. A comparação é pelo
-      # CARIMBO DO BUNDLE (app.bundle.js?v=<versao>-<hash>), não só pela versão:
-      # duas rodadas na mesma versão mudando só o bundle passaríam no teste velho
-      # e o veredito seria do bundle de antes.
-      - name: espera o Pages publicar este exato bundle
-        run: |
-          alvo="${{ vars.URL_TESTE }}"
-          # index.html e nao importar.html: so o index carrega <script src="app.bundle.js
-          # ?v=<versao>-<hash>">, que e o que estamos comparando.
-          [ -z "$alvo" ] && alvo="https://teste-60f.pages.dev/index.html"
-          aqui=$(node -p "const fs=require('fs');const h=fs.readFileSync('index.html','utf8');(h.match(/app\.bundle\.js\?v=[0-9.]+-[a-f0-9]+/)||['?'])[0]")
-          echo "bundle deste commit: $aqui"
-          for i in $(seq 1 24); do
-            la=$(curl -fsSL -m 25 "$alvo" 2>/dev/null | grep -o 'app\.bundle\.js?v=[0-9.]*-[a-f0-9]*' | head -1 || true)
-            echo "tentativa $i no ar: ${la:-nada}"
-            [ -n "$la" ] && [ "$la" = "$aqui" ] && break
-            sleep 20
-          done
-          if [ "$la" != "$aqui" ]; then echo "::error::o Pages ainda serve outro bundle ($la != $aqui) — o teste abaixo mediria o deploy anterior"; exit 1; fi
-
       - name: medir as telas no celular e no desktop
         id: mede
         run: |
           versao=$(node -p "require('./package.json').version")
           url="${{ vars.URL_TESTE }}"
           [ -z "$url" ] && url="https://teste-60f.pages.dev/index.html"
-          if node ferramentas/teste_visual.js --url "$url" --versao "v${versao}"; then
+          # O carimbo do bundle deste commit é passado ao teste: ele rola o reload no
+          # navegador até o Pages servir exatamente esse bundle (curl do runner não vê
+          # o HTML de forma confiável — ver rodada #6, em que o guard cego matou o job).
+          stamp=$(grep -o 'app[.]bundle[.]js?v=[0-9.]*-[a-f0-9]*' index.html | head -1)
+          echo "espero no ar: ${stamp:-<nenhum carimbo no index.html>}"
+          if node ferramentas/teste_visual.js --url "$url" --versao "v${versao}" --stamp "$stamp"; then
             echo "ok=0" >> "$GITHUB_ENV"
           else
             echo "ok=1" >> "$GITHUB_ENV"

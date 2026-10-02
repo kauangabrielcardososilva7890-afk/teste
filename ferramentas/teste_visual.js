@@ -34,6 +34,12 @@ function argumento(nome, padrao) {
 }
 const URL_ALVO = argumento('url', 'https://teste-60f.pages.dev/index.html');
 const VERSAO_ESPERADA = argumento('versao', '');
+// Carimbo do bundle que o REPO deste commit serve (lido do index.html pelo workflow).
+// Conferir o deploy DENTRO do navegador: o Cloudflare Pages responde a cliente sem
+// browser o que quiser, então um `curl` no runner fica cego e o guard vira falha falsa
+// (foi o que derrubou a rodada #6, em que o job morreu antes de medir).
+const STAMP_ESPERADO = argumento('stamp', '');
+const TENTATIVAS_DEPLOY = Number(argumento('tentativas', '20'));
 const TELAS = ['dashboard', 'clientes', 'impressoras', 'contratos', 'leituras', 'parque',
   'manutencao', 'vendas', 'financeiro', 'relatorios', 'config', 'usuarios', 'auditoria', 'produtos'];
 
@@ -188,6 +194,27 @@ function medirModal() {
     errosPagina.push('pageerror: ' + String(e && e.message).slice(0, 140) + (st ? ' ⟵ ' + st.slice(0, 260) : ''));
   });
   pagina.on('console', m => { if (m.type() === 'error') errosPagina.push('console: ' + m.text().slice(0, 160)); });
+
+  // O Pages publica a partir do commit; medir antes da publicação viraria veredito do
+  // deploy anterior. Rola o reload até o <script src="app.bundle.js?v=..."> da página
+  // bater com o carimbo deste commit (20 tentativas de 20s ≈ 7 min de build).
+  if (STAMP_ESPERADO) {
+    for (let tentativa = 1; ; tentativa++) {
+      await pagina.goto(URL_ALVO, { waitUntil: 'domcontentloaded' });
+      const visto = await pagina.evaluate(() => {
+        const alvo = document.querySelector('script[src*="app.bundle.js"]');
+        return alvo ? String(alvo.getAttribute('src') || '') : '';
+      }).catch(() => '');
+      if (visto.indexOf(STAMP_ESPERADO) >= 0) {
+        resultados.deploy = { conferido: true, naTentativa: tentativa, site: visto, esperado: STAMP_ESPERADO };
+        break;
+      }
+      const esgotou = tentativa >= TENTATIVAS_DEPLOY;
+      resultados.deploy = { falhou: esgotou, tentativas: tentativa, site: visto || 'nada', esperado: STAMP_ESPERADO };
+      if (esgotou) break;
+      await pagina.waitForTimeout(20000);
+    }
+  }
 
   // login sem credencial: monta a base sintética e salva pelos canos do próprio app
   await pagina.goto(URL_ALVO, { waitUntil: 'domcontentloaded' });
@@ -367,11 +394,13 @@ function medirModal() {
   if (!resultados.semeadura || !resultados.semeadura.ok) falhas.push('a base sintética não entrou: ' + ((resultados.semeadura && resultados.semeadura.motivo) || '?') + ' — as medidas abaixo não valem (nenhuma tela tem linhas para cortar)');
   if (resultados.semeadura && resultados.semeadura.ok && resultados.semeadura.clientes !== 3) falhas.push('clientes semeados = ' + resultados.semeadura.clientes + ' (esperado 3)');
   if (VERSAO_ESPERADA && resultados.verso.indexOf(VERSAO_ESPERADA) < 0) falhas.push('o site publicado não é a versão esperada: ' + resultados.verso + ' ≠ ' + VERSAO_ESPERADA);
+  if (resultados.deploy && resultados.deploy.falhou) falhas.push('o Pages ainda serve OUTRO bundle (' + resultados.deploy.site + ' ≠ ' + resultados.deploy.esperado + ') depois de ' + resultados.deploy.tentativas + ' tentativas — o que está medido abaixo é o deploy anterior, não este commit');
 
   const md = [
     '## Teste visual no navegador real — ' + resultados.verso,
     '',
     'Semeadura: `' + JSON.stringify(resultados.semeadura) + '` · desktop: `' + JSON.stringify(resultados.semeaduraDesktop) + '` · modal: `' + String(resultados.modalAbertura) + '`', '',
+    'Deploy: `' + (resultados.deploy ? JSON.stringify(resultados.deploy) : 'não conferido (sem --stamp)') + '`', '',
     'Mecânica do patch na página: `' + JSON.stringify((resultados.celular[0] || {}).mecanica) + '`', '',
     'Onde o bilhete apareceu ao FORÇAR a varredura (e não antes): `' + (resultados.celular.filter(s => s.tabela && s.depoisDeForcar && s.depoisDeForcar.bilhete && !s.tabela.bilhete).map(s => s.tela).join(', ') || 'nenhuma') + '`', '',
     'Rodado no GitHub Actions contra `' + URL_ALVO + '` (celular 390×844, desktop 1365×850, base sintética montada na hora, nada de dado real).',
