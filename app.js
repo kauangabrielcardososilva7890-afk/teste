@@ -1695,7 +1695,13 @@ window.importarJsonDBeaver = function(dados){
   // Usar a mesma lógica do fbImportToErp
   const rawData = {};
   for(const [tabela, registros] of Object.entries(dadosImportar)){
+    if(!legacyTabelaPermitida(tabela)) continue;
     rawData[tabela] = { data: registros, error: null };
+  }
+
+  if(!Object.keys(rawData).length){
+    toast('Nenhuma tabela possui destino validado no ERP. Nada foi gravado.','info');
+    return;
   }
   
   fbImportToErp(rawData);
@@ -1734,6 +1740,24 @@ window.fbMapNomeTabela = function(nomeArquivo, primeiraLinha){
   }
   return nomeArquivo;
 };
+
+// Migração assistida: somente entidades com destino confirmado no ERP entram
+// no importador automático. As demais ficam fora até receberem um mapeamento
+// específico, evitando criar menus ou gravar dados sem uso.
+window.LEGACY_IMPORT_POLICY = {
+  permitidas: new Set(['CLIENTES','PRODUTOS','EQUIPAMENTOS','VENDAS','ITENS_VENDA','CONTAS_RECEBER','LOCACAO','LEITURAS']),
+  ignoradas: new Set(['CONTAS_PAGAR']),
+  destino: {
+    CLIENTES:'Cadastros > Clientes', PRODUTOS:'Produtos', EQUIPAMENTOS:'Locação > Cadastro de impressoras',
+    VENDAS:'Atendimento > Notinhas', ITENS_VENDA:'Atendimento > Notinhas (itens)',
+    CONTAS_RECEBER:'Financeiro > Contas a receber', LOCACAO:'Locação > Contratos', LEITURAS:'Locação > Leituras'
+  }
+};
+
+function legacyTabelaPermitida(nome){
+  const n=String(nome||'').toUpperCase();
+  return window.LEGACY_IMPORT_POLICY.permitidas.has(n);
+}
 
 // Upload de múltiplos arquivos JSON de uma vez
 window.handleMultipleUpload = async function(files, inputEl){
@@ -1781,6 +1805,13 @@ window.handleMultipleUpload = async function(files, inputEl){
           const nomeArquivo = file.name.replace(/\.json$/i,'').toUpperCase();
           const nomeTabela = window.fbMapNomeTabela(nomeArquivo, imported.length > 0 ? imported[0] : null);
 
+          if(!legacyTabelaPermitida(nomeTabela)){
+            const motivo=window.LEGACY_IMPORT_POLICY.ignoradas.has(nomeTabela)?'sem uso no ERP atual':'sem destino validado';
+            if(log) log.innerHTML += '<div class="text-slate-500">↷ '+file.name+' ignorado ('+motivo+')</div>';
+            processados++;
+            continue;
+          }
+
           // Se a tabela já foi carregada de outro arquivo, JUNTAR os registros (não sobrescrever)
           if(rawData[nomeTabela] && Array.isArray(rawData[nomeTabela].data)){
             rawData[nomeTabela].data = rawData[nomeTabela].data.concat(imported);
@@ -1795,10 +1826,16 @@ window.handleMultipleUpload = async function(files, inputEl){
           const dadosObj = imported.tabelas || imported.data || imported.resultado || imported;
           for(const [key, value] of Object.entries(dadosObj)){
             if(Array.isArray(value) && value.length > 0){
-              rawData[key.toUpperCase()] = { data: value, error: null };
-              tabelasImportadas[key.toUpperCase()] = value.length;
-              totalRegistros += value.length;
-              if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+key+'</b> ('+value.length+' registros)</div>';
+            const tabelaKey=key.toUpperCase();
+            if(!legacyTabelaPermitida(tabelaKey)){
+              const motivo=window.LEGACY_IMPORT_POLICY.ignoradas.has(tabelaKey)?'sem uso no ERP atual':'sem destino validado';
+              if(log) log.innerHTML += '<div class="text-slate-500">↷ '+file.name+' → <b>'+tabelaKey+'</b> ignorada ('+motivo+')</div>';
+              continue;
+            }
+            rawData[tabelaKey] = { data: value, error: null };
+            tabelasImportadas[tabelaKey] = value.length;
+            totalRegistros += value.length;
+            if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+tabelaKey+'</b> ('+value.length+' registros)</div>';
             }
           }
         }
@@ -2199,19 +2236,20 @@ function fbImportToErp(rawData){
   const rawProdutos = findTable(rawData, ['PRODUTOS','CARTUCHOS']);
   if(rawProdutos && rawProdutos.length){
     rawProdutos.forEach(row => {
+      if(String(row.DEL||'').toUpperCase()==='S') return;
       const nome = row.DESCRICAO || row.NOME || row.PRODUTO || '';
       if(!nome.trim()) return;
-      const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || uid('prd');
+      const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || row.NOSSO_CODIGO || uid('prd');
       const existing = db.produtos.find(p => p.empresaId === empId && String(p.sku) === String(sku));
       const dadosProd = {
         sku: String(sku),
         nome: nome.trim(),
-        categoria: row.CATEGORIA || row.TIPO || 'Geral',
-        fabricante: row.FABRICANTE || row.MARCA || '',
-        estoque: parseInt(row.ESTOQUE || row.QTD || row.QUANTIDADE || 0) || 0,
-        estoqueMin: parseInt(row.ESTOQUE_MINIMO || row.ESTOQUE_MIN || 0) || 0,
-        custo: parseFloat(row.CUSTO || row.PRECO_CUSTO || 0) || 0,
-        preco: parseFloat(row.PRECO || row.VALOR || row.PRECO_VENDA || 0) || 0,
+        categoria: row.CATEGORIA || row.PR_DESCRICAO_CATEGORIA || row.TIPO || 'Geral',
+        fabricante: row.FABRICANTE || row.PR_MARCA || row.MARCA || '',
+        estoque: parseInt(row.ESTOQUE || row.QTD || row.QTDE || row.QUANTIDADE || 0) || 0,
+        estoqueMin: parseInt(row.ESTOQUE_MINIMO || row.ESTOQUE_MIN || row.QTDE_MINIMA || 0) || 0,
+        custo: parseFloat(row.CUSTO || row.PRECO_CUSTO || row.VALOR_CUSTO || 0) || 0,
+        preco: parseFloat(row.PRECO || row.VALOR || row.PRECO_VENDA || row.VALOR_TOTAL || 0) || 0,
         local: row.LOCALIZACAO || row.LOCAL || '',
         status: 'ativo'
       };
@@ -2226,18 +2264,20 @@ function fbImportToErp(rawData){
   const rawEquip = findTable(rawData, ['EQUIPAMENTOS']);
   if(rawEquip && rawEquip.length){
     rawEquip.forEach(row => {
+      if(String(row.EQ_DEL||row.DEL||'').toUpperCase()==='S') return;
       const modelo = row.MODELO || row.DESCRICAO || row.EQUIPAMENTO || '';
       if(!modelo.trim()) return;
-      const serie = row.SERIE || row.NUMERO_SERIE || row.PATRIMONIO || uid('eq');
+      const serie = row.SERIE || row.NUMERO_SERIE || row.N_SERIE || row.PATRIMONIO || `LEG-${row.COD_EQUIPAMENTO||uid('eq')}`;
       const existing = db.equipamentos.find(e => e.empresaId === empId && String(e.serie) === String(serie));
       const dadosEq = {
         modelo: modelo.trim(),
-        tipo: row.TIPO || 'Laser',
+        tipo: row.TIPO || row.EQ_TIPO || 'Laser',
         serie: String(serie),
         patrimonio: row.PATRIMONIO || String(serie),
         contadorPB: parseInt(row.CONTADOR_PB || row.CONTADOR || 0) || 0,
         contadorCor: parseInt(row.CONTADOR_COR || 0) || 0,
-        status: row.STATUS || 'disponivel'
+        status: row.STATUS || 'disponivel',
+        codigoAntigo: sStr(row.COD_EQUIPAMENTO||'')
       };
       if(existing && ehMigracao(existing)){ Object.assign(existing, dadosEq); result.equipamentos++; return; }
       if(existing) return;
@@ -2264,7 +2304,7 @@ function fbImportToErp(rawData){
     const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
     const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || ir.VALOR_ITEM || ir.TOTAL || 0) || (qtd*unit);
     (itensPorVenda[codV] = itensPorVenda[codV] || []).push({
-      _seq: parseInt(ir.COD_ITEM || ir.CODIGO || ir.ID || 0) || 0,
+        _seq: parseInt(ir.COD_ITEM || ir.COD_ITENS_VENDA || ir.CODIGO || ir.ID || 0) || 0,
       produtoId: prodVinc ? prodVinc.id : null,
       descricao: sStr(ir.DESCRICAO || (rawProd && (rawProd.DESCRICAO || rawProd.NOME || rawProd.PRODUTO)) || (prodVinc && prodVinc.nome) || ''),
       qtd, preco: unit, subtotal: sub
@@ -2273,6 +2313,7 @@ function fbImportToErp(rawData){
   Object.values(itensPorVenda).forEach(l=>l.sort((a,b)=>a._seq-b._seq));
   if(rawVendas && rawVendas.length){
     rawVendas.forEach(row => {
+      if(String(row.DEL||'')==='1' || String(row.ESTORNAR||'').toUpperCase()==='S') return;
       const numero = sStr(row.NUMERO || row.CODIGO || row.ID || row.COD_VENDA || row.COD_NOTA || '');
       if(!numero) return;
       const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA || row.CODIGO_CLIENTE);
@@ -2305,7 +2346,7 @@ function fbImportToErp(rawData){
         desconto: parseFloat(row.DESCONTO || 0) || 0,
         total: totalFinal,
         formaPagamento: row.FORMA_PAGAMENTO || row.PAGAMENTO || '',
-        status: normStatusVenda(row.STATUS || row.SITUACAO),
+        status: normStatusVenda(row.STATUS || row.SITUACAO || (String(row.FINALIZADA||'').toUpperCase()==='S'?'FINALIZADA':'ABERTA')),
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || null,
         criadoPorNome: vendedor,
         os: osObj
@@ -2322,17 +2363,17 @@ function fbImportToErp(rawData){
   const rawCR = findTable(rawData, ['CONTAS_RECEBER']);
   if(rawCR && rawCR.length){
     rawCR.forEach(row => {
-      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_TITULO || '');
+      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_TITULO || row.COD_PARCELA || '');
       const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA);
       const dadosCR = {
         legadoCodigo,
         clienteId: idClientePorCodigo(codCli),
         clienteNomeAntigo: nomeClientePorCodigo(codCli),
-        descricao: row.DESCRICAO || row.HISTORICO || `Título migrado ${row.CODIGO || row.ID || ''}`,
-        valor: parseFloat(row.VALOR || 0) || 0,
+        descricao: row.DESCRICAO || row.HISTORICO || row.OBS || `Título migrado ${row.CODIGO || row.ID || row.COD_PARCELA || ''}`,
+        valor: parseFloat(row.VALOR || row.VALOR_PARCELA || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
-        status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
+        status: String(row.STATUS || row.CR_SITUACAO || '').toLowerCase().includes('pag') || row.DATA_PAGAMENTO ? 'pago' : 'aberto',
       };
       // Match por código legado; rows antigas (import sem código) caem pela chave natural
       let existing = (legadoCodigo && db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
@@ -2345,18 +2386,21 @@ function fbImportToErp(rawData){
     });
   }
 
-  const rawCP = findTable(rawData, ['CONTAS_PAGAR']);
+  // CONTAS_PAGAR fica deliberadamente fora da migração automática: o módulo
+  // não é usado no fluxo atual e os registros do legado não devem ocupar a
+  // nuvem nem aparecer no Financeiro sem revisão manual do usuário.
+  const rawCP = [];
   if(rawCP && rawCP.length){
     rawCP.forEach(row => {
-      const legadoCodigo = sStr(row.CODIGO || row.ID || '');
+      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_PAGAR || '');
       const dadosCP = {
         legadoCodigo,
         descricao: row.DESCRICAO || row.HISTORICO || `Conta migrada ${row.CODIGO || row.ID || ''}`,
-        valor: parseFloat(row.VALOR || 0) || 0,
+        valor: parseFloat(row.VALOR || row.VALOR_PARCELA || row.VALOR_TOTAL || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
         status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
-        categoria: row.CATEGORIA || row.TIPO || 'Geral'
+        categoria: row.CATEGORIA || row.COD_CAT_CONTAS_PAGAR || row.TIPO || 'Geral'
       };
       const existing = (legadoCodigo && db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
         || db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
