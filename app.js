@@ -2156,9 +2156,9 @@ function fbImportToErp(rawData){
   const rawClientes = findTable(rawData, ['CLIENTES','CLIENTE','CADASTRO_CLIENTES','CAD_CLIENTES','TB_CLIENTES','TB_CLIENTE','CLI','PESSOAS','V_CLIENTES','VW_CLIENTES','VIEW_CLIENTES']);
   if(rawClientes && rawClientes.length){
     rawClientes.forEach(row => {
-      const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || row.NOME_CLIENTE || row.CLIENTE || row.RAZAO || row.DESCRICAO || '';
+      const nome = row.NOME || row.NOME_RAZAOSOCIAL || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || row.NOME_CLIENTE || row.CLIENTE || row.RAZAO || row.DESCRICAO || '';
       if(!nome.trim()) return;
-      const doc = row.CNPJ || row.CPF || row.DOCUMENTO || row.DOC || '';
+      const doc = row.CNPJ || row.CPF || row.CPF_CNPJ || row.DOCUMENTO || row.DOC || '';
       const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || row.CODIGO_CLIENTE || row.COD_CLI || row.NUMERO || '');
       // Upsert: por código antigo, senão por documento válido (mínimo 8 dígitos para não mesclar "0"/"-"/"S/N")
       let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo)) : null;
@@ -2174,7 +2174,7 @@ function fbImportToErp(rawData){
         tipo: (row.TIPO || (doc.length > 11 ? 'PJ' : 'PF')),
         email: row.EMAIL || row.EMAIL_CONTATO || '',
         telefone: row.FONE || row.TELEFONE || row.CELULAR || '',
-        endereco: row.ENDERECO || row.ENDERECO_COMPLETO || '',
+        endereco: row.ENDERECO || row.ENDERECO_COMPLETO || row.RUA || '',
         cidade: row.CIDADE || '',
         estado: row.ESTADO || row.UF || '',
         cep: row.CEP || '',
