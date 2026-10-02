@@ -1840,8 +1840,28 @@ window.importarTudoDeUmaVez = function(){
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   const tabelas = Object.keys(rawData);
   const totalReg = tabelas.reduce(function(s,t){return s+(rawData[t].data?.length||0)},0);
-  if(!confirm('Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nTabelas sem correspondência viram menus novos no sidebar.')) return;
-  fbImportToErp(rawData);
+  if(window.__importacaoLegadoEmAndamento){
+    toast('Já existe uma importação em andamento. Aguarde o resultado antes de enviar outro lote.','info');
+    return;
+  }
+  const msg='Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nTabelas sem correspondência viram menus novos no sidebar.';
+  const executar = function(){
+    window.__importacaoLegadoEmAndamento=true;
+    const botao=document.querySelector('#upload-status button');
+    if(botao){ botao.disabled=true; botao.textContent='Importando… aguarde'; botao.classList.add('opacity-60','cursor-not-allowed'); }
+    try{
+      // Devolve o controle ao navegador antes do processamento para a tela não
+      // parecer congelada e para o usuário acompanhar o resultado do lote.
+      setTimeout(function(){
+        try{ fbImportToErp(rawData); }
+        catch(e){ console.error('[IMPORT] falha ao gravar lote',e); toast('Falha ao gravar o lote: '+(e.message||e),'error'); }
+        finally{ window.__importacaoLegadoEmAndamento=false; }
+      },0);
+    }catch(e){ window.__importacaoLegadoEmAndamento=false; toast('Falha ao iniciar a importação: '+(e.message||e),'error'); }
+  };
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema(msg,'Importar banco antigo').then(function(ok){ if(ok===true) executar(); });
+  }else if(window.confirm(msg)) executar();
 };
 
 window.copiarSqlExportarTudo = function(){
