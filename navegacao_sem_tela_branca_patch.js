@@ -23,7 +23,8 @@ CORREÇÃO (sem tocar no miolo do app.js — padrão histórico do projeto):
       c) se o destino ficou SEM CONTEÚDO (view sem render), em vez de branco
          mostra tela honesta com botão "Voltar ao Início" — nada de branco nunca.
   • Atalhos/flyouts/menus continuam chamando navigateTo normal (onclick inline
-    resolve em runtime → cai neste wrap). */
+    resolve em runtime → cai neste wrap).
+  • v7.3.14 (r70): tela visível e vazia ganha UMA repintura antes do cartaz. */
 (function () {
   var G = typeof window !== 'undefined' ? window : globalThis;
   if (G.__v60012nav) return;
@@ -42,7 +43,39 @@ CORREÇÃO (sem tocar no miolo do app.js — padrão histórico do projeto):
       'Se isso aparecer de novo, anote o nome acima e avise.</p>' +
       '</div></div></div>';
   }
-  G.NAV612_PURE = { avisoVazio: navAvisoVazio };
+  // v7.3.14 (r70 — o 'Máquinas nos clientes' que abriu com o cartaz): cada tela
+  // tem UMA função de pintura, chamada pelo núcleo no instante da navegação
+  // (app.js, os 'if(view===\'x\') renderY()'). Se essa chamada não produziu
+  // nada — porque o portão de render (render_gate_patch.js) pulou, porque outro
+  // patch ainda não tinha trocado a função, porque a tela foi a primeira da
+  // sessão — o cartaz era o fim da linha. Agora há uma tentativa a mais, e ela
+  // acontece no único momento em que se sabe que a tela está VISÍVEL: depois de
+  // des-esconder. Custo zero em tela que já tem conteúdo (não entra aqui).
+  // A lista espelha o dispatch do app.js; o teste confere os dois lado a lado.
+  var RENDER_DA_TELA = {
+    'dashboard': 'renderDashboard',
+    'clientes': 'renderClientes',
+    'produtos': 'renderProdutos',
+    'impressoras': 'renderEquipamentos',
+    'contratos': 'renderContratos',
+    'parque': 'renderParque',
+    'leituras': 'renderLeituras',
+    'manutencao': 'renderOs',
+    'vendas': 'renderVendas',
+    'financeiro': 'renderFinanceiro',
+    'relatorios': 'renderRelatorios',
+    'config': 'renderConfig',
+    'buscador-escola': 'renderBuscadorEscola',
+    'usuarios': 'renderUsuarios',
+    'auditoria': 'renderAuditoria'
+  };
+  function nomeDoRender(view) { return RENDER_DA_TELA[String(view || '')] || ''; }
+  function telaVazia(el) {
+    if (!el) return false;
+    try { return !el.innerHTML || !String(el.innerHTML).trim(); } catch (e) { return false; }
+  }
+
+  G.NAV612_PURE = { avisoVazio: navAvisoVazio, nomeDoRender: nomeDoRender, telaVazia: telaVazia, RENDER_DA_TELA: RENDER_DA_TELA };
 
   // Views com criação sob demanda que sofriam a tela branca (documentação viva)
   var NAV_SOB_DEMANDA = ['buscador-escola', 'central-nf', 'config-fiscal', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'fiscal-historico', 'fiscal-inutilizar', 'fiscal-ferramentas'];
@@ -61,7 +94,13 @@ CORREÇÃO (sem tocar no miolo do app.js — padrão histórico do projeto):
         var t = G.document ? G.document.getElementById('view-' + view) : null;
         if (t) {
           t.classList.remove('hidden');
-          if (!t.innerHTML || !String(t.innerHTML).trim()) {
+          // b2) ficou vazia com a tela visível? dá uma chance ao render dela,
+          // uma única vez por navegação, antes de reclamar.
+          if (G.NAV612_PURE.telaVazia(t)) {
+            var fn = G.NAV612_PURE.nomeDoRender(view);
+            if (fn && typeof G[fn] === 'function') { try { G[fn](); } catch (e2) { } }
+          }
+          if (G.NAV612_PURE.telaVazia(t)) {
             t.innerHTML = G.NAV612_PURE.avisoVazio(view, 'Tela sem conteúdo');
           }
         }

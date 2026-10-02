@@ -1479,7 +1479,7 @@ const cssJunto = P.TELA_APERTADA.replace(/\s*\+\s*'/g, '').replace(/'/g, '');
 const oitocentos = cssJunto.slice(cssJunto.indexOf('@media (max-width:820px){'));
 ok(oitocentos.startsWith('@media (max-width:820px){') && /\.grid\{grid-template-columns:1fr\}/.test(oitocentos), 'em tela de celular o modal vira coluna única');
 ok(!/background:#fff/.test(P.TELA_APERTADA) && !/color:#/.test(P.TELA_APERTADA), 'nada de cor fixa no CSS novo (modo escuro segue inteiro)');
-ok(P.VERSAO === '5.22.69', 'carimbo do patch sobe para 5.22.69');
+ok(P.VERSAO === '5.22.70', 'carimbo do patch sobe para 5.22.70 (r70 — corte no celular)');
 
 // ── 2) BOTÕES MORTOS: o resto do corte da r46 (Financeiro) ──────────────────
 const app = ler('app.js');
@@ -1529,4 +1529,165 @@ ok(els['o-equip-sel'].value === 'eq1', 'equipamento inexistente não apaga a esc
 if (falhas) { console.error('\n' + falhas + ' FALHA(S) — telas apertadas + botões mortos (r66)'); process.exit(1); }
 console.log('\nRESULTADO: modal cabe na tela, botões órfãos fora e seletor da OS religado');
 //<<<<SECAO:test_r66_telas_e_botoes.js:FIM>>>>
+}
+
+if (false) { // ═══ test_r70_corte_no_mobile.js (inerte: só parse, nunca executa)
+//<<<<SECAO:test_r70_corte_no_mobile.js:INICIO>>>>
+const fs = require('fs');
+const vm = require('vm');
+let falhas = 0;
+function ok(cond, msg){ if(cond) console.log('  ok - '+msg); else { falhas++; console.error('  FALHA - '+msg); } }
+const ler = f => fs.readFileSync(__dirname + '/' + f, 'utf8');
+
+// ── 1) o CSS que o celular recebe ───────────────────────────────────────────
+const fonte = ler('menus_tela_pequena_patch.js');
+const win = { console: { log(){} } };
+win.window = win;
+vm.createContext(win);
+vm.runInContext(fonte, win);
+const P = win.MENUS_TELA_PEQUENA_PURE;
+// O patch roda na página; aqui ele é dirigido com um DOM falso. O document do
+// contexto é um objeto nosso com createElement honesto e uma lista de alvos que
+// cada bloco do teste troca — assim conferirTabelas() é exercitada de verdade.
+const alvos = { lista: [], seletor: '' };
+win.document = {
+  createElement: () => no('div'),
+  body: null,
+  querySelectorAll: sel => { alvos.seletor = sel; return alvos.lista; },
+};
+const css = P.TELA_APERTADA;
+ok(P.VERSAO === '5.22.70', 'carimbo do patch sobe para 5.22.70');
+ok(/\.digi-rola\{overflow-x:auto/.test(css), 'bloco marcado como rolável de fato rola (V-01)');
+ok(/-webkit-overflow-scrolling:touch/.test(css), 'iPhone solta a rolagem no fim (inércia), não trava o dedo');
+ok(/\.digi-rola-dica\{/.test(css), 'existe o bilhete de "arraste"');
+ok(/@media \(min-width:821px\)\{\.digi-rola-dica\{display:none\}\}/.test(css), 'em tela grande o bilhete não aparece: nada novo na frente de quem já tinha espaço');
+const oitocentos = css.slice(css.indexOf('@media (max-width:820px){'));
+ok(oitocentos.startsWith('@media (max-width:820px){'), 'o bloco de celular continua sendo o último (mais específico por ordem)');
+ok(/#modal-root #modal-box\{[^}]*max-width:100%/.test(oitocentos), 'modal do celular cabe no espaço com respiro (V-03: 96vw estourava os 16px de folga e cortava nas duas bordas)');
+ok(/#modal-root #modal-footer\{flex-wrap:wrap/.test(oitocentos), 'rodapé do modal quebra linha em vez de empurrar botão para fora (V-03)');
+ok(!/color:#/.test(css) && !/background:#fff/.test(css), 'cor nenhuma no CSS compartilhado (modo escuro intacto)');
+ok(!/position:fixed/.test(css), 'o patch de tela não prende nada na janela');
+
+// ── 2) a decisão, dirigida com DOM falso ────────────────────────────────────
+function no(nome){
+  const n = {
+    nome, children: [], attrs: {}, _cls: {}, listeners: 0, style: {}, parentNode: null,
+    classList: {
+      add: c => { n._cls[c] = 1; },
+      remove: c => { delete n._cls[c]; },
+      contains: c => !!n._cls[c],
+    },
+    setAttribute(k, v){ n.attrs[k] = String(v); },
+    getAttribute(k){ return k in n.attrs ? n.attrs[k] : null; },
+    appendChild(x){ x.parentNode = n; n.children.push(x); return x; },
+    insertBefore(x, ref){ x.parentNode = n; const i = ref ? n.children.indexOf(ref) : -1; if (i < 0) n.children.push(x); else n.children.splice(i, 0, x); return x; },
+    removeChild(x){ const i = n.children.indexOf(x); if (i >= 0) n.children.splice(i, 1); x.parentNode = null; return x; },
+    addEventListener(){ n.listeners++; },
+    ownerDocument: null,
+    getBoundingClientRect(){ return { width: n.width || 0, height: n.height == null ? 40 : n.height, left: 0, top: 0 }; },
+    querySelector(){ return null; },
+  };
+  Object.defineProperty(n, 'className', {
+    get(){ return Object.keys(n._cls).join(' '); },
+    set(v){ n._cls = {}; String(v).split(/\s+/).filter(Boolean).forEach(c => { n._cls[c] = 1; }); },
+    configurable: true,
+  });
+  Object.defineProperty(n, 'parentElement', {
+    get(){ return n.parentNode; }, configurable: true,
+  });
+  Object.defineProperty(n, 'nextElementSibling', {
+    get(){ const p = n.parentNode; if (!p) return null; const i = p.children.indexOf(n); return i >= 0 ? (p.children[i+1] || null) : null; },
+    configurable: true,
+  });
+  return n;
+}
+function criar(){ return no('div'); }
+const dicas = c => c.parentNode.children.filter(x => x._cls && x._cls['digi-rola-dica']);
+
+const caixa = no('caixa'); caixa.clientWidth = 300; caixa.width = 300;
+const tabela = no('table'); tabela.scrollWidth = 980; tabela.width = 980; tabela.height = 200;
+const tela = no('section'); tela.appendChild(caixa); caixa.appendChild(tabela);
+tabela.parentNode = caixa;   // appendChild já fez, reforçado para o caminho de subida
+
+ok(P.marcarRolagem(tabela, caixa, P.DICA_TABELA) === true, 'tabela mais larga que o bloco é marcada como rolável');
+ok(caixa._cls['digi-rola'] === 1, 'a marca vai para o bloco que segura a tabela, não para a tabela');
+ok(dicas(caixa).length === 1, 'aparece um bilhete só');
+ok(dicas(caixa)[0].textContent === P.DICA_TABELA, 'o bilhete diz o que fazer, com as palavras do texto do relatório');
+for (let i = 0; i < 7; i++) P.marcarRolagem(tabela, caixa, P.DICA_TABELA);
+ok(dicas(caixa).length === 1, 'rodar a varredura sete vezes não acumula bilhete');
+ok(caixa.listeners === 1, 'nem acumula listener de scroll (foi a classe de defeito da rodada passada)');
+caixa.clientWidth = 1200; caixa.width = 1200;
+ok(P.marcarRolagem(tabela, caixa, P.DICA_TABELA) === false, 'cabe: a varredura devolve o que fez');
+ok(!caixa._cls['digi-rola'] && dicas(caixa).length === 0, 'sem marca e sem bilhete quando sobra espaço');
+
+const folgado = no('div'); folgado.clientWidth = 300; folgado.width = 300;
+const estreita = no('table'); estreita.scrollWidth = 280; estreita.width = 280; estreita.height = 40;
+folgado.appendChild(estreita); estreita.parentNode = folgado;
+ok(P.marcarRolagem(estreita, folgado, P.DICA_TABELA) === false, 'tabela que já cabe não ganha barra de rolagem à toa');
+
+// containerDeRolagem: sobe até a caixa que corta
+const avo = no('div'); const paiVisivel = no('div'); const paiQueCorta = no('div');
+avo.appendChild(paiVisivel); paiVisivel.parentNode = avo;
+paiVisivel.appendChild(paiQueCorta); paiQueCorta.parentNode = paiVisivel;
+paiQueCorta.appendChild(estreita); estreita.parentNode = paiQueCorta;
+win.getComputedStyle = el => (el === paiQueCorta ? { overflowX: 'visible' } : el === paiVisivel ? { overflowX: 'hidden' } : { overflowX: 'visible' });
+win.window.getComputedStyle = win.getComputedStyle;
+ok(P.containerDeRolagem(estreita, avo) === paiVisivel, 'a rolagem é dada ao ancestral que está cortando, não ao pai imediato');
+win.window.getComputedStyle = () => ({});
+ok(P.containerDeRolagem(estreita, avo) === paiQueCorta, 'sem caixa de corte nenhuma, fica com o pai direto');
+
+// ── 3) a varredura só olha a tela aberta ────────────────────────────────────
+const caixaAberta = no('div'); caixaAberta.clientWidth = 300; caixaAberta.width = 300;
+const tabLarga = no('table'); tabLarga.scrollWidth = 900; tabLarga.width = 900; tabLarga.height = 120;
+caixaAberta.appendChild(tabLarga); tabLarga.parentNode = caixaAberta;
+win.document.body = no('body');
+tabLarga.ownerDocument = win.document;
+alvos.lista = [tabLarga];
+const marcadas = P.conferirTabelas();
+ok(/:not\(\.hidden\)/.test(alvos.seletor), 'a varredura pede só as telas abertas (tela fechada não é tocada)');
+ok(/#modal-root/.test(alvos.seletor), 'e as tabelas que estão dentro de modal também');
+ok(marcadas === 1 && caixaAberta._cls['digi-rola'] === 1, 'a tabela larga do teste virou rolável de fato');
+alvos.lista = [];
+ok(P.conferirTabelas() === 0, 'sem tabela na tela, a varredura não inventa nada');
+
+// ── 4) a faixa da Nuvem no celular (V-04) ───────────────────────────────────
+const f = ler('ajustes_v7015_nuvem_explica_patch.js');
+ok(/function faixaEstreita\(\)\{ return \(window\.innerWidth \|\| 1200\) <= 560; \}/.test(f), 'a faixa sabe quando a tela é de celular');
+ok(/flex-direction:column;align-items:stretch/.test(f), 'no celular ela empilha (texto em cima, botões embaixo) em vez de espremer a frase');
+ok(/left:0;right:0;bottom:0;max-width:none/.test(f), 'no celular ela encosta na borda de baixo: não sobra bloco estreito flutuando no meio da tabela');
+ok(/left:50%;transform:translateX\(-50%\);bottom:16px;max-width:min\(760px,94vw\)/.test(f), 'no desktop o layout é o de sempre, byte por byte');
+ok(/b\.style\.paddingBottom = \(h \+ 12\) \+ 'px'/.test(f), 'o corpo do app ganha respiro da altura da faixa, para nenhuma linha ficar escondida atrás dela');
+ok(/respiracao\(null\);/.test(f) && f.indexOf('respiracao(null)') < f.indexOf('function faixaEstreita') + 900, 'esconder() devolve o respiro (não deixa a página com um vão embaixo)');
+ok(/if \(!h\) return;/.test(f), 'sem medida não se mexe no corpo: a reserva não some quando o navegador é estranho');
+
+// ── 5) "Máquinas nos clientes": repintura antes do cartaz ──────────────────
+const nav = ler('navegacao_sem_tela_branca_patch.js');
+const wnav = { console: { log(){} } };
+new Function('window', 'document', 'console', nav)(wnav, undefined, console);
+const N = wnav.NAV612_PURE;
+ok(typeof N.nomeDoRender === 'function' && N.nomeDoRender('parque') === 'renderParque', 'o item de menu que abriu vazio tem renderizador registrado');
+ok(N.telaVazia({ innerHTML: '   ' }) === true && N.telaVazia({ innerHTML: '<table></table>' }) === false, 'vazio é vazio, pintado é pintado');
+const app = ler('app.js');
+const dispatch = [...app.matchAll(/if\(view==='([a-z-]+)'\)\s*\{?\s*(?:if\(typeof\s+)?([A-Za-z0-9_]+)\s*\(\s*\)/g)];
+ok(dispatch.length >= 12, 'o dispatch do app.js foi lido (' + dispatch.length + ' telas)');
+let divergentes = 0;
+for (const m of dispatch) { if (N.nomeDoRender(m[1]) !== m[2]) divergentes++; }
+ok(divergentes === 0, 'a lista do patch espelha o dispatch do app.js: ninguém adiciona tela sem que a repintura conheça (foi assim que "Máquinas nos clientes" virou cartaz)');
+ok(/if \(G\.NAV612_PURE\.telaVazia\(t\)\) \{[\s\S]{0,240}G\[fn\]\(\);[\s\S]{0,240}avisoVazio/.test(nav), 'primeiro tenta pintar de novo; o cartaz é a última coisa, não a primeira');
+
+// ── 6) timer da sessão: um por login ───────────────────────────────────────
+ok(!/  setInterval\(\(\)=>\{const el=document\.getElementById\('session-time'\)/.test(app), 'showApp() não empilha mais um setInterval cru por login');
+ok(/if \(window\.__sessionTimer\) \{ try \{ clearInterval\(window\.__sessionTimer\); \} catch\(e\)\{\} \}/.test(app), 'o timer anterior é desligado antes de ligar o novo');
+ok((app.match(/getElementById\('session-time'\)/g) || []).length === 1 && (app.match(/window\.__sessionTimer = setInterval/g) || []).length === 1, 'um único lugar escreve o tempo de sessão e um único timer o alimenta');
+
+// ── 7) o que foi para o bundle ──────────────────────────────────────────────
+for (const b of ['app.bundle.js', 'mobile/www/app.bundle.js']) {
+  const bb = ler(b);
+  ok(/\.digi-rola\{overflow-x:auto/.test(bb), b + ': a rolagem lateral das tabelas está publicada');
+  ok(/function faixaEstreita\(\)/.test(bb), b + ': o celular recebe a faixa da Nuvem empilhada');
+}
+
+if (falhas) { console.error('\n' + falhas + ' FALHA(S) — corte no celular (r70)'); process.exit(1); }
+console.log('\nRESULTADO: tabela que não cabe passa a rolar com aviso, modal e faixa da Nuvem cabem no celular e tela vazia é repintada antes de reclamar');
+//<<<<SECAO:test_r70_corte_no_mobile.js:FIM>>>>
 }

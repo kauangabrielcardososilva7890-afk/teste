@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: fabe343b504d530d
+ * scripts: 233 | sha256: 586235ed4db399b6
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -729,8 +729,12 @@ function showApp(){
   document.getElementById('session-cnpj').innerText=sess.cnpj;
   document.getElementById('footer-session').innerText=sess.empresaNome+' • '+sess.usuarioNome+' ('+sess.perfil+')';
   document.getElementById('audit-user').innerText=sess.usuarioNome;
-  // timer session
-  setInterval(()=>{const el=document.getElementById('session-time'); if(el){const diff=Math.floor((Date.now()-new Date(sess.loginAt))/(1000*60)); el.innerText=diff+'m online'}},60000);
+  // timer session — um só por sessão de trabalho. Antes havia um setInterval
+  // novo a cada showApp(): login, logout e login de novo = timers empilhados,
+  // cada um escrevendo no mesmo <span> a cada minuto (e sem nexo depois do
+  // logout, porque cada um carregava o `sess` da sua própria entrada).
+  if (window.__sessionTimer) { try { clearInterval(window.__sessionTimer); } catch(e){} }
+  window.__sessionTimer = setInterval(()=>{const el=document.getElementById('session-time'); if(el){const diff=Math.floor((Date.now()-new Date(sess.loginAt))/(1000*60)); el.innerText=diff+'m online'}},60000);
   // init app
   if(typeof initTemplates==='function') initTemplates();
   if(typeof buildNav==='function') buildNav();
@@ -50274,6 +50278,22 @@ try{
 // de campos caem para 1 coluna. Em tela grande nada muda: as regras novas ficam
 // dentro de media queries (só a rolagem do corpo vale sempre, e ela é invisível
 // quando o conteúdo cabe).
+//
+// v5.22.70 (r70 — relatório 'conteúdo cortado ou encoberto', 14 telas no
+// celular 390x844): o que estava vivo aqui.
+//   · TABELA — sete telas (Clientes, Impressoras, Contratos, Leituras,
+//     Chamados, Financeiro, Auditoria) têm mais colunas do que a largura do
+//     aparelho. O contêiner cortava e o botão 'Editar' da última linha ficava
+//     do lado de fora, sem jeito de alcançar. Agora: se a tabela é mais larga
+//     que o bloco que a segura, o bloco ganha rolagem lateral e um bilhete
+//     'arraste para o lado'. O bilhete some no primeiro empurrão e tudo é
+//     desfeito quando passa a caber — em desktop nada é tocado.
+//   · FAIXA DE MENUS — a rolagem já existava (v5.22.68), o que faltava era o
+//     aviso: 'Locação' aparecia como 'Loca…' e nada dizia que a lista continua.
+//   · MODAL — o limite era 96vw, mas a janela do modal tem 16px de respiro de
+//     cada lado: em 390px sobrariam 358px e a caixa, mais larga que isso, era
+//     centralizada e cortada nas DUAS bordas. O limite em celular passa a ser
+//     100% do espaço disponível e o rodapé pode quebrar linha.
 // ═══════════════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
@@ -50308,6 +50328,108 @@ try{
     return Number(larguraConteudo || 0) > Number(larguraVisivel || 0) + 2;
   }
 
+  // ── r70: rolagem lateral para o que não cabe na largura ──────────────────
+  // Medida real do conteúdo: scrollWidth ignora o corte do contêiner, e o
+  // retângulo pega a largura que o navegador de fato usou. O maior dos dois.
+  function larguraDe(el) {
+    if (!el) return 0;
+    var n = Number(el.scrollWidth) || 0;
+    try {
+      var r = el.getBoundingClientRect ? el.getBoundingClientRect().width : 0;
+      if (r > n) n = Math.round(r);
+    } catch (e) {}
+    return n;
+  }
+
+  // O bloco que deve receber a barra de rolagem: subindo a partir do conteúdo,
+  // o primeiro ancestral que já se comporta como caixa (overflow auto/hidden/
+  // scroll) — é o que está cortando hoje. Sem ele, o pai direto.
+  function containerDeRolagem(el, raiz) {
+    var p = el && el.parentElement;
+    while (p && p !== raiz) {
+      var cs = null;
+      try { cs = window.getComputedStyle ? window.getComputedStyle(p) : null; } catch (e) {}
+      var ox = String((cs && (cs.overflowX || cs.overflow)) || '');
+      if (/auto|hidden|scroll/.test(ox)) return p;
+      if (p === document.body || !p.parentElement) break;
+      p = p.parentElement;
+    }
+    return (el && el.parentElement) || null;
+  }
+
+  function proximoBilhete(container) {
+    var p = container && container.nextElementSibling;
+    return (p && p.classList && p.classList.contains('digi-rola-dica')) ? p : null;
+  }
+
+  // Bilhete 'arraste'. As cores vão no estilo do elemento, nunca no CSS
+  // compartilhado (regra da r66: cor fixa no CSS injetado mata o modo escuro).
+  function bilhete(container, texto) {
+    var atual = proximoBilhete(container);
+    if (!texto) {
+      if (atual && atual.parentNode) atual.parentNode.removeChild(atual);
+      return;
+    }
+    if (!container || !container.parentNode) return;
+    if (typeof document === 'undefined' || !document || !document.createElement) return;   // sem DOM (teste), nada a criar
+    if (!atual) {
+      atual = document.createElement('div');
+      atual.className = 'digi-rola-dica';
+      atual.setAttribute('role', 'note');
+      atual.style.cssText = 'color:#0a1e8a;background:#eef3ff;border-color:#b9c8e6';
+      container.parentNode.insertBefore(atual, container.nextSibling);
+      // some no primeiro arraste. O listener é preso uma vez só (marcado no
+      // próprio bloco) — varrer() roda a cada clique e não pode empilhar.
+      if (!container.getAttribute('data-digi-rolo-escuta')) {
+        container.setAttribute('data-digi-rolo-escuta', '1');
+        container.addEventListener('scroll', function () {
+          if ((container.scrollLeft || 0) > 8) {
+            var d = proximoBilhete(container);
+            if (d && d.parentNode) d.parentNode.removeChild(d);
+          }
+        }, { passive: true });
+      }
+    }
+    if (atual.textContent !== texto) atual.textContent = texto;
+  }
+
+  // true = não cabe (rolagem ligada + bilhete); false = cabe (tudo desfeito).
+  function marcarRolagem(conteudo, container, texto) {
+    if (!container || !container.classList) return false;
+    var disponivel = Number(container.clientWidth) || 0;
+    if (!disponivel) {   // bloco fechado/sem largura medida: não inventa, e tira o que ficou de antes
+      container.classList.remove('digi-rola');
+      bilhete(container, null);
+      return false;
+    }
+    var precisa = precisaRolar(larguraDe(conteudo), disponivel);
+    if (precisa) container.classList.add('digi-rola');
+    else container.classList.remove('digi-rola');
+    bilhete(container, precisa ? texto : null);
+    return precisa;
+  }
+
+  var DICA_TABELA = 'arraste para o lado para ver as últimas colunas';
+  var DICA_FAIXA = 'arraste para o lado para ver os outros menus';
+
+  // Varre as tabelas da tela aberta (e das janelas de modal) marcando as que
+  // não cabem. Roda dentro do varrer() — mesma hora do resto — e é exportada
+  // para o teste poder exercitar com um DOM falso.
+  function conferirTabelas() {
+    if (typeof document === 'undefined' || !document || !document.querySelectorAll) return 0;
+    var alvos = [];
+    try { alvos = document.querySelectorAll('.view:not(.hidden) table, #modal-root:not(.hidden) table'); } catch (e) { return 0; }
+    var marcadas = 0;
+    for (var i = 0; i < alvos.length; i++) {
+      var t = alvos[i];
+      if (!t.getBoundingClientRect || t.getBoundingClientRect().height < 2) continue;   // tela fechada não é tocada
+      var cont = containerDeRolagem(t, t.ownerDocument && t.ownerDocument.body);
+      if (!cont) continue;
+      if (marcarRolagem(t, cont, DICA_TABELA)) marcadas++;
+    }
+    return marcadas;
+  }
+
   // Onde colocar o menu que desce, já preso dentro da tela.
   function posicaoDoMenu(botao, menu, janela, folga) {
     folga = folga == null ? FOLGA : folga;
@@ -50325,6 +50447,10 @@ try{
     '#modal-root #modal-box{max-height:94vh}' +
     '#modal-root #modal-body{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}' +
     '#modal-root #modal-footer{flex:0 0 auto}' +
+    '.digi-rola{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin}' +
+    '.digi-rola::-webkit-scrollbar{height:7px}' +
+    '.digi-rola-dica{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;line-height:1.3;padding:4px 8px;margin:6px 0 0;border:1px dashed;border-radius:9px}' +
+    '@media (min-width:821px){.digi-rola-dica{display:none}}' +
     '@media (max-width:1200px){' +
       '#modal-root #modal-box{max-width:96vw}' +
       '#modal-root #modal-body .grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}' +
@@ -50333,15 +50459,23 @@ try{
     '}' +
     '@media (max-width:820px){' +
       '#modal-root #modal-body .grid{grid-template-columns:1fr}' +
-      '#modal-root #modal-box{max-height:96vh}' +
+      '#modal-root #modal-box{max-height:96vh;max-width:100%;min-width:0}' +
+      '#modal-root #modal-footer{flex-wrap:wrap;row-gap:6px}' +
     '}';
   window.MENUS_TELA_PEQUENA_PURE = {
     ajusteNecessario: ajusteNecessario,
     precisaRolar: precisaRolar,
     posicaoDoMenu: posicaoDoMenu,
+    larguraDe: larguraDe,
+    containerDeRolagem: containerDeRolagem,
+    marcarRolagem: marcarRolagem,
+    bilhete: bilhete,
+    conferirTabelas: conferirTabelas,
+    DICA_TABELA: DICA_TABELA,
+    DICA_FAIXA: DICA_FAIXA,
     FOLGA: FOLGA,
     MIN_ALTURA: MIN_ALTURA,
-    VERSAO: '5.22.69',
+    VERSAO: '5.22.70',
     TELA_APERTADA: CSS_TELA_APERTADA,
   };
 
@@ -50374,11 +50508,19 @@ if (typeof document === 'undefined') return;
     if (row.classList.contains('digi-row-rola')) {
       // já rolando: só tira a rolagem se voltar a caber sem ela
       row.classList.remove('digi-row-rola');
-      if (precisaRolar(row.scrollWidth, row.clientWidth)) { row.classList.add('digi-row-rola'); return true; }
-      return false;
+      if (precisaRolar(row.scrollWidth, row.clientWidth)) { row.classList.add('digi-row-rola'); return avisoDaFaixa(row, true); }
+      return avisoDaFaixa(row, false);
     }
-    if (precisaRolar(row.scrollWidth, row.clientWidth)) { row.classList.add('digi-row-rola'); return true; }
-    return false;
+    if (precisaRolar(row.scrollWidth, row.clientWidth)) { row.classList.add('digi-row-rola'); return avisoDaFaixa(row, true); }
+    return avisoDaFaixa(row, false);
+  }
+
+  // v5.22.70: rolar a faixa já rolava desde a v5.22.68 — o que ninguém via é
+  // que ela rolava. 'Loca…' no canto direito era o único indício.
+  function avisoDaFaixa(row, rolando) {
+    if (rolando) row.classList.add('digi-rola');
+    bilhete(row, rolando ? DICA_FAIXA : null);
+    return rolando;
   }
 
   function colarMenuNoBotao(mod) {
@@ -50451,12 +50593,22 @@ if (typeof document === 'undefined') return;
   }
 
   var agendado = false;
-  function varrer() {
+  var ultimaPassadaDeTabela = 0;
+  // A varredura de tabela é a parte cara (mede cada bloco e o estilo de cada
+  // ancestral). O MutationObserver da barra dispara a cada mudança de DOM, e em
+  // PC fraco isso aconteceria dezenas de vezes por segundo: no máximo uma
+  // passada a cada 400ms. O próximo clique, resize ou troca de tela refaz.
+  function agenda(forcar) {
     if (agendado) return;
     agendado = true;
     requestAnimationFrame(function () {
       agendado = false;
       try { css(); conferirFaixa(); } catch (e) {}
+      var agora = Date.now();
+      if (forcar || agora - ultimaPassadaDeTabela > 400) {
+        ultimaPassadaDeTabela = agora;
+        try { conferirTabelas(); } catch (e) {}
+      }
       try {
         var menus = document.querySelectorAll(SELETOR);
         for (var i = 0; i < menus.length; i++) ajustar(menus[i]);
@@ -50465,6 +50617,9 @@ if (typeof document === 'undefined') return;
   }
 
   // dispara nos momentos em que um menu pode abrir ou mudar de tamanho
+  function varrer() { agenda(false); }
+  function varrerAgora() { agenda(true); }
+
   document.addEventListener('click', varrer, true);
   document.addEventListener('mouseover', function (ev) {
     if (ev.target && ev.target.closest && ev.target.closest('.module, .modern-topnav')) varrer();
@@ -50472,6 +50627,8 @@ if (typeof document === 'undefined') return;
   document.addEventListener('focusin', varrer, true);
   document.addEventListener('keyup', varrer, true);
   window.addEventListener('resize', varrer);
+  document.addEventListener('digest-tela-pintada', varrerAgora, false);
+  window.digiRevarrerTelas = varrerAgora;
   setTimeout(varrer, 800);
   setTimeout(varrer, 2500);   // a faixa é montada por outros patches, confere de novo
   if (typeof MutationObserver === 'function') {
@@ -57718,7 +57875,8 @@ CORREÇÃO (sem tocar no miolo do app.js — padrão histórico do projeto):
       c) se o destino ficou SEM CONTEÚDO (view sem render), em vez de branco
          mostra tela honesta com botão "Voltar ao Início" — nada de branco nunca.
   • Atalhos/flyouts/menus continuam chamando navigateTo normal (onclick inline
-    resolve em runtime → cai neste wrap). */
+    resolve em runtime → cai neste wrap).
+  • v7.3.14 (r70): tela visível e vazia ganha UMA repintura antes do cartaz. */
 (function () {
   var G = typeof window !== 'undefined' ? window : globalThis;
   if (G.__v60012nav) return;
@@ -57737,7 +57895,39 @@ CORREÇÃO (sem tocar no miolo do app.js — padrão histórico do projeto):
       'Se isso aparecer de novo, anote o nome acima e avise.</p>' +
       '</div></div></div>';
   }
-  G.NAV612_PURE = { avisoVazio: navAvisoVazio };
+  // v7.3.14 (r70 — o 'Máquinas nos clientes' que abriu com o cartaz): cada tela
+  // tem UMA função de pintura, chamada pelo núcleo no instante da navegação
+  // (app.js, os 'if(view===\'x\') renderY()'). Se essa chamada não produziu
+  // nada — porque o portão de render (render_gate_patch.js) pulou, porque outro
+  // patch ainda não tinha trocado a função, porque a tela foi a primeira da
+  // sessão — o cartaz era o fim da linha. Agora há uma tentativa a mais, e ela
+  // acontece no único momento em que se sabe que a tela está VISÍVEL: depois de
+  // des-esconder. Custo zero em tela que já tem conteúdo (não entra aqui).
+  // A lista espelha o dispatch do app.js; o teste confere os dois lado a lado.
+  var RENDER_DA_TELA = {
+    'dashboard': 'renderDashboard',
+    'clientes': 'renderClientes',
+    'produtos': 'renderProdutos',
+    'impressoras': 'renderEquipamentos',
+    'contratos': 'renderContratos',
+    'parque': 'renderParque',
+    'leituras': 'renderLeituras',
+    'manutencao': 'renderOs',
+    'vendas': 'renderVendas',
+    'financeiro': 'renderFinanceiro',
+    'relatorios': 'renderRelatorios',
+    'config': 'renderConfig',
+    'buscador-escola': 'renderBuscadorEscola',
+    'usuarios': 'renderUsuarios',
+    'auditoria': 'renderAuditoria'
+  };
+  function nomeDoRender(view) { return RENDER_DA_TELA[String(view || '')] || ''; }
+  function telaVazia(el) {
+    if (!el) return false;
+    try { return !el.innerHTML || !String(el.innerHTML).trim(); } catch (e) { return false; }
+  }
+
+  G.NAV612_PURE = { avisoVazio: navAvisoVazio, nomeDoRender: nomeDoRender, telaVazia: telaVazia, RENDER_DA_TELA: RENDER_DA_TELA };
 
   // Views com criação sob demanda que sofriam a tela branca (documentação viva)
   var NAV_SOB_DEMANDA = ['buscador-escola', 'central-nf', 'config-fiscal', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'fiscal-historico', 'fiscal-inutilizar', 'fiscal-ferramentas'];
@@ -57756,7 +57946,13 @@ CORREÇÃO (sem tocar no miolo do app.js — padrão histórico do projeto):
         var t = G.document ? G.document.getElementById('view-' + view) : null;
         if (t) {
           t.classList.remove('hidden');
-          if (!t.innerHTML || !String(t.innerHTML).trim()) {
+          // b2) ficou vazia com a tela visível? dá uma chance ao render dela,
+          // uma única vez por navegação, antes de reclamar.
+          if (G.NAV612_PURE.telaVazia(t)) {
+            var fn = G.NAV612_PURE.nomeDoRender(view);
+            if (fn && typeof G[fn] === 'function') { try { G[fn](); } catch (e2) { } }
+          }
+          if (G.NAV612_PURE.telaVazia(t)) {
             t.innerHTML = G.NAV612_PURE.avisoVazio(view, 'Tela sem conteúdo');
           }
         }
@@ -61551,6 +61747,30 @@ try{
   function esconder(){
     const el = document.getElementById('v7015-faixa');
     if (el) el.remove();
+    respiracao(null);
+  }
+
+  // ── celular (r70, item V-04 do relatório de telas cortadas) ──────────────
+  // A faixa é position:fixed, então ela SEMPRE pisa no que está embaixo. Em
+  // desktop isso não atrapalha; no celular de 390px ela tapava as últimas
+  // linhas da tabela e — pior — com o texto em `flex:1` entre dois botões que
+  // não quebram, sobravam ~80px para a frase, que virava uma coluna de uma
+  // palavra por linha. Em tela estreita ela vira painel colado na borda de
+  // baixo (texto em cima, botões embaixo) e o corpo do app ganha respiro da
+  // mesma altura, para nenhuma linha ficar escondida atrás dela.
+  function faixaEstreita(){ return (window.innerWidth || 1200) <= 560; }
+  function respiracao(el){
+    const b = document.body;
+    if (!b || !b.style) return;
+    if (!el){
+      if (b.getAttribute('data-v7015-respiro')) { b.style.paddingBottom = ''; b.removeAttribute('data-v7015-respiro'); }
+      return;
+    }
+    let h = 0;
+    try { h = Math.round(el.getBoundingClientRect().height) || 0; } catch (e) {}
+    if (!h) return;                       // sem medida não se mexe no corpo
+    b.style.paddingBottom = (h + 12) + 'px';
+    b.setAttribute('data-v7015-respiro', '1');
   }
   function mostrar(msg, botoes, cor){
     let el = document.getElementById('v7015-faixa');
@@ -61559,11 +61779,19 @@ try{
       el.id = 'v7015-faixa';
       document.body.appendChild(el);
     }
-    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:' + Z +
-      ';max-width:min(760px,94vw);background:' + (cor || '#0a1e8a') + ';color:#fff;border-radius:14px;' +
-      'box-shadow:0 14px 40px rgba(2,10,40,.35);padding:11px 12px 11px 14px;display:flex;gap:10px;' +
-      'align-items:center;font-size:12.5px;line-height:1.45;font-weight:600;font-family:inherit';
-    el.innerHTML = '<span style="flex:1">' + msg + '</span>';
+    const estreita = faixaEstreita();
+    el.style.cssText = 'position:fixed;z-index:' + Z + ';background:' + (cor || '#0a1e8a') +
+      ';color:#fff;box-shadow:0 14px 40px rgba(2,10,40,.35);display:flex;font-size:12.5px;' +
+      'line-height:1.45;font-weight:600;font-family:inherit;' + (estreita
+        ? 'left:0;right:0;bottom:0;max-width:none;border-radius:14px 14px 0 0;padding:10px 12px 12px;flex-direction:column;align-items:stretch;gap:8px'
+        : 'left:50%;transform:translateX(-50%);bottom:16px;max-width:min(760px,94vw);border-radius:14px;padding:11px 12px 11px 14px;flex-direction:row;align-items:center;gap:10px');
+    el.innerHTML = '<span style="' + (estreita ? 'flex:0 0 auto' : 'flex:1') + '">' + msg + '</span>';
+    let alvo = el;
+    if (estreita){
+      alvo = document.createElement('div');
+      alvo.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap';
+      el.appendChild(alvo);
+    }
     (botoes || []).forEach(function(b){
       const bt = document.createElement('button');
       bt.type = 'button';
@@ -61574,13 +61802,14 @@ try{
           ? 'background:rgba(255,255,255,.16);color:#fff'
           : 'background:#fff;color:' + (cor || '#0a1e8a'));
       bt.onclick = function(ev){ ev.preventDefault(); try { b.acao(); } catch (e) {} };
-      el.appendChild(bt);
+      alvo.appendChild(bt);
     });
     const x = document.createElement('button');
     x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Esconder aviso');
     x.style.cssText = 'height:34px;width:34px;border-radius:9px;border:0;cursor:pointer;background:transparent;color:#fff;opacity:.75;font-weight:900';
     x.onclick = function(ev){ ev.preventDefault(); fechadoAte = Date.now() + 10 * 60000; esconder(); };
-    el.appendChild(x);
+    alvo.appendChild(x);
+    respiracao(estreita ? el : null);
     return el;
   }
   function irConectar(){

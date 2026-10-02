@@ -477,8 +477,12 @@ function showApp(){
   document.getElementById('session-cnpj').innerText=sess.cnpj;
   document.getElementById('footer-session').innerText=sess.empresaNome+' • '+sess.usuarioNome+' ('+sess.perfil+')';
   document.getElementById('audit-user').innerText=sess.usuarioNome;
-  // timer session
-  setInterval(()=>{const el=document.getElementById('session-time'); if(el){const diff=Math.floor((Date.now()-new Date(sess.loginAt))/(1000*60)); el.innerText=diff+'m online'}},60000);
+  // timer session — um só por sessão de trabalho. Antes havia um setInterval
+  // novo a cada showApp(): login, logout e login de novo = timers empilhados,
+  // cada um escrevendo no mesmo <span> a cada minuto (e sem nexo depois do
+  // logout, porque cada um carregava o `sess` da sua própria entrada).
+  if (window.__sessionTimer) { try { clearInterval(window.__sessionTimer); } catch(e){} }
+  window.__sessionTimer = setInterval(()=>{const el=document.getElementById('session-time'); if(el){const diff=Math.floor((Date.now()-new Date(sess.loginAt))/(1000*60)); el.innerText=diff+'m online'}},60000);
   // init app
   if(typeof initTemplates==='function') initTemplates();
   if(typeof buildNav==='function') buildNav();

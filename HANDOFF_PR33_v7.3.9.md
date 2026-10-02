@@ -153,3 +153,41 @@ O que entrei e já está publicado:
 - Continua **com o dono**: trocar a senha daquele login (item acima) e ligar o corte 🔒 Texto-puro quando todos os PCs estiverem na versão nova e as senhas trocadas; os prints das telas que cortam informação (o guia para quem testa está em `HANDOFF_TESTE_TELAS_CORTE.md`). Continua **fora por ordem dele**: celular/APK e frente comercial.
 
 - **Addendum do reenvio (mesmo relatório, 2ª vez):** chequei a classe do *listener preso a nó que a barra recria* no nosso código — nada (todos os pontos que tocam `btn-nuvem`/`btn-backup-top` rebuscam o nó depois do render, os módulos plantados usam `onclick` na string, e as visibilidades têm wrapper do `showApp` + heartbeat de 2 s). E o `patch_notes_local.js` dele duplica o aviso de versão que existe desde a v5.24.34 (`ajustes_v52239…:111`, `digicopy_upd_visto_<versão>`) — dois "já vi" competindo seria o mesmo erro das duas fontes de verdade da r68. (§58.6)
+
+---
+
+## Reforço r70 (01/10/2026) — v7.3.14: o mobile para de cortar
+
+Chegaram os prints do "conteúdo cortado ou encoberto" (14 telas × 1365×850 e 390×844). As imagens **não
+vieram no workspace** — o que chegou foi o texto do relatório; e ele foi rodado em `v7.3.11`, dois
+deploys atrás do publicado. Reconfirmei item a item contra a árvore atual e consertei o que era nosso:
+
+- **Tabela que não cabe passa a rolar, com aviso.** `menus_tela_pequena_patch.js` (v5.22.70) ganhou
+  `conferirTabelas()` + `marcarRolagem()`: o bloco que segura a tabela recebe `.digi-rola` e um bilhete
+  "arraste para o lado para ver as últimas colunas", que morre no primeiro arraste. Só em tela estreita
+  (`@media (min-width:821px){.digi-rola-dica{display:none}}`) e só quando `scrollWidth` passa o
+  `clientWidth` em mais de 2px — no desktop das capturas, nada muda.
+- **A barra de cima avisa que continua.** A rolagem já existia desde a v5.22.68; o "Loca…" sem indício
+  era falta de aviso, não de função. `avisoDaFaixa()` cuida disso sem tocar na decisão antiga.
+- **Modal de Chamados cabe.** A causa era nossa e é de régua: `max-width:96vw` dentro de um contêiner
+  com `p-4` — em 390px sobram 358px e `justify-center` jogava o excesso para fora **dos dois lados**.
+  Agora, em celular, `#modal-box{max-width:100%;min-width:0}` e `#modal-footer{flex-wrap:wrap}`.
+- **A faixa da Nuvem no celular** (item V-04, nosso desde a v7.0.15): `faixaEstreita()` (≤560px) a
+  transforma em painel colado na borda de baixo — texto em cima, botões embaixo — e `respiracao()` dá
+  ao `<body>` um `padding-bottom` da altura dela, para nenhuma linha ficar escondida atrás. Em desktop
+  a string de estilo continua idêntica (asserção cobre os dois lados).
+- **"Máquinas nos clientes"**: o cartaz "Tela sem conteúdo" era a nossa malha contra tela branca
+  assumindo o lugar de uma tela que o render não pintou. Agora há **uma repintura** com a tela visível
+  antes do cartaz, guiada por `RENDER_DA_TELA` — e o teste confere essa lista contra o dispatch do
+  `app.js`, para a lista não envelhecer no próximo menu adicionado.
+- **Timer da sessão**: `app.js` empilhava um `setInterval` por `showApp()`; virou um só, religado com
+  `clearInterval` do anterior.
+
+O item **V-05** (rótulos cortados no estado vazio de Clientes) **não é este repo**: a fileira de botões
+"Mais recentes/Mais antigos primeiro" não existe aqui — é do checkout do fork. Também não adotei a
+sugestão de redirecionar o item de parque para Impressoras: a tela existe e tem conteúdo próprio.
+
+Prova: tema 05 com 40 asserções novas, suíte 11✅/0❌/1 pulada, `Bundle OK: 233` (ordem intacta, tudo
+editado no lugar), sha `586235ed4db399b6`, mapa e `mobile/www` regenerados. **Aparência eu não pude
+ver** — sem navegador neste sandbox (o download do Chromium do Playwright falhou); o roteiro de
+conferência visual de 20 segundos está na AUDITORIA_TECNICA §59.4.

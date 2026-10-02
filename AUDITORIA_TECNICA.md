@@ -3562,3 +3562,74 @@ O relatório veio de novo, igual. Aproveitei a única coisa dele que eu ainda n�
 Varredura no que **este** repo tem de código mexendo na barra recriada — resultado: **nada desse tipo**. Os quatro pontos que tocam `#btn-nuvem`/`#btn-backup-top` rebuscam o nó dentro de uma função chamada depois do render (`cloudflare_data_sync_patch.js:1515` `indicator()`, `ajustes_v52217…:36` `aplicarVisibilidadeBarra()`, `ajustes_v52296…:634` `aplicarVisibilidadeMenusNuvemBackup()`); os módulos plantados na barra usam `onclick` **no próprio HTML da string** (`navegador_embutido_patch.js:530-536`, `finalizacao_sistema_patch.js:59`, `autocura_empresa_central_nf_tela_patch.js:267`, e a faixa do `ajustes_v7015…:112` liga os botões do banner que ela mesma criou). E as duas visibilidades têm cinto: `ajustes_v52217…:168` embrulha `showApp` e remarca, e `ajustes_v52296…:653` roda a cada 2 s. Registrado para ninguém refazer este exame.
 
 O segundo achado do reenvio: o `patch_notes_local.js` dele **duplica recurso que existe desde a v5.24.34** — `ajustes_v52239_avisos_erro_auditoria_patch.js:111` já define a chave de "visto" por versão (`digicopy_upd_visto_<versão>`, um aviso por versão por aparelho, `localStorage`), com a nota vindo do release da nuvem. Adotar o arquivo dele deixaria o app com **duas chaves de "já vi"** competindo — exatamente o padrão de duas fontes de verdade que causou o bug da busca de Contratos (r68). O motivo de recusa, que antes era de superfície de carga, agora é de consistência.
+
+
+---
+
+## 59. r70 — o relatório de telas cortadas (os prints chegaram) e o que era vivo aqui
+
+O dono mandou o **"Relatório de auditoria visual — conteúdo cortado ou encoberto"** (rodada deles:
+14 telas × desktop 1365×850 + mobile 390×844). Duas coisas precisam ficar registradas antes das
+conclusões:
+
+1. **As imagens não estão no workspace.** Nada foi extraído em `/home/user/uploads/` — o diretório não
+   existe neste sandbox. Trabalhei sobre o **texto** do relatório + o código servido. Onde o texto dele
+   mesmo admite que print não prova (rolagem horizontal), fui buscar a prova no CSS/JS.
+2. **A captura foi rodada em v7.3.11** (o rodapé de uma das imagens, citado no relatório, diz
+   `v7.3.11 • cce6f1d8`) — dois deploys antes do `v7.3.13` publicado. Cada item foi reconfirmado contra
+   a árvore atual antes de mexer.
+
+Eles escreveram: *"nenhuma alteração de código foi feita nesta rodada"* — de fato, é só diagnóstico. A
+seguimento o veredito claim a claim.
+
+### 59.1 O que era defeito vivo meu (corrigido)
+
+| Item | Causa raiz (lida no código, não achismo) | Conserto |
+|---|---|---|
+| **V-01** — tabelas de Clientes, Impressoras, Contratos, Leituras, Chamados, Financeiro e Auditoria não cabem em 390px | Cada tela pinta sua tabela num `<div>` que corta (`overflow-hidden`) ou que já rola mas sem aviso nenhum. Não havia nada no app que tratasse **largura** de tabela — o `menus_tela_pequena_patch.js` só cuidava de **altura** de menu e de modal | Nova varredura `conferirTabelas()`: mede a tabela contra o ancestral que a segura; se não cabe, o bloco ganha `.digi-rola` (`overflow-x:auto` + inércia no iOS) e um bilhete **"arraste para o lado para ver as últimas colunas"**. O bilhete morre no primeiro arraste e tudo é desfeito quando passa a caber. Roda no mesmo `varrer()` de sempre, com trava de 400ms (o `MutationObserver` da barra dispara muito; em PC fraco não pode medir estilo de ancestral a cada Mutation) |
+| **V-02** — "Locação" aparece como "Loca…" na barra de cima, sem indicação de que a lista continua | A rolagem lateral da faixa **já existia** desde a v5.22.68 (`digi-row-rola`). O que faltava era o aviso: cortada no meio da palavra, a barra parece apenas quebrada | `conferirFaixa()` mantém a decisão antiga byte por byte e passa a chamar `avisoDaFaixa()`, que põe o mesmo bilhete ("arraste para o lado para ver os outros menus") enquanto a faixa precisa rolar |
+| **V-03** — modal de Chamados mais largo que a tela, com o botão "Novo chamado (fora de contrato)" saindo pela borda esquerda | `CSS_TELA_APERTADA` limita a caixa a `max-width:96vw`, mas a janela do modal tem `p-4` (16px de cada lado): em 390px sobram **358px** e 96vw = 374px. A caixa, maior que o espaço, é centralizada por `justify-center` — aí o excesso vaza **nas duas bordas** e some (o contêiner tem `overflow-auto`, mas ninguém arrasta um modal). O rodapé com `white-space:nowrap` nos botões ainda empurra o rótulo comprido para fora | No bloco `@media (max-width:820px)`: `#modal-box{max-width:100%;min-width:0}` (100% do espaço **com respiro**, não da janela) e `#modal-footer{flex-wrap:wrap;row-gap:6px}`. O botão desce de linha em vez de vazar |
+| **V-04** — a faixa da Nuvem encobrindo tabela/formulário no celular e quebrando em coluna estreita | Nosso, e a conta é simples: `position:fixed` com `display:flex`, texto em `flex:1` entre dois botões `white-space:nowrap` + ✕ → em 94vw sobravam ~80px para a frase: uma palavra por linha. E o card flutuando embaixo pisa no que estiver ali | Em `ajustes_v7015_nuvem_explica_patch.js`: `faixaEstreita()` (`innerWidth ≤ 560`) troca o layout para **painel colado na borda de baixo** (texto em cima, botões embaixo, `flex-wrap`), e `respiracao()` acrescenta ao `<body>` um `padding-bottom` igual à altura da faixa enquanto ela está no ar — devolvido em `esconder()`. Sem medida de altura, não se mexe no corpo. **Em desktop a string de estilo é a mesma de antes, byte por byte** (asserido) |
+| extra — **"Máquinas nos clientes"** abriu com o cartaz "Tela sem conteúdo" (o achado deles fora do eixo) | O cartaz é nosso (`navegacao_sem_tela_branca_patch.js`, a malha contra tela branca). Ele aparece quando a tela foi mostrada e **ninguém a pintou**: o `navigateTo` chama `renderParque()` e, se o render sai pela tangente (gate de render, troca de função em outro patch, sessão ainda não montada), o resultado é a vista vazia + o aviso. O item de menu existe desde `ajustes_v52239_menus_imediato_patch.js:19`; o renderizador também (`app.js:1237`, `notinha_patch.js:347`) — não é "menu sem renderizador" | `navegacao_sem_tela_branca_patch.js`: antes de reclamar, **uma repintura** agora que a tela está visível, guiada por `RENDER_DA_TELA` (espelho do dispatch do `app.js`; o teste confere os dois lado a lado para a lista não envelhecer). O cartaz continua sendo a última palavra — vazio de verdade ainda é dito, não escondido |
+| meu, latente — `app.js` empilhava um `setInterval` de `session-time` a cada `showApp()` | Login, logout e login de novo = timers acumulados escrevendo no mesmo `<span>`, cada um preso ao `sess` da sua própria entrada (e o do logout continuava rodando) | `window.__sessionTimer`: o anterior é desligado antes de ligar o novo. Um lugar escreve o tempo de sessão, um timer o alimenta (asserido) |
+
+### 59.2 O que não é defeito deste repo
+
+- **V-05** ("o texto do estado vazio de Clientes parece partir o rótulo na borda"): o elemento que
+  eles descrevem — a fileira de botões "Mais recentes primeiro / Mais antigos primeiro / ..." — **não
+  existe aqui**. Não há `v52215_clientes_vazio_ordenacao_patch.js` nem as etiquetas no repo (só no
+  bundle do fork). Nosso estado vazio de Clientes é `<p class="p-3 text-slate-400">Nenhum cliente
+  encontrado.</p>`, um parágrafo sem botão para cortar. Nada a consertar: é a tela deles.
+- Também **não adotei** o sugestão deles de "levar 'Máquinas nos clientes' para Impressoras, onde as
+  ações existem": a tela de parque existe e tem conteúdo próprio (filtro por cliente, busca de setor/
+  patrimônio, cartões por cliente). O problema era a pintura, não o destino.
+
+### 59.3 Custo e risco do que foi mexido
+
+- `digi-rola` só é adicionado quando `scrollWidth` passa o `clientWidth` do bloco em mais de 2px — em
+  1365px nenhuma tabela das 14 telas do relatório é marcada, então **o desktop não muda nada**.
+- O bilhete é `display:none` acima de 821px (media query) **e** só existe enquanto a varredura o
+  escreve: duas independências contra "aparecer coisa nova na tela de quem já tinha espaço".
+- Cor nenhuma vai para `CSS_TELA_APERTADA` (a asserção da r66 continua valendo); o bilhete recebe a
+  cor no `style` do próprio elemento.
+- `respiracao()` é a única mudança de layout que toca o documento inteiro, e é desfeita por `esconder()`
+  — que já era chamado em todos os caminhos de saída da faixa.
+
+### 59.4 Prova
+
+| Verificação | Resultado |
+|---|---|
+| `node --check` nos 4 arquivos + o tema | OK |
+| `node test_msg_05_telas.js` (seção nova, 40 asserções: CSS, decisão dirigida com DOM falso, varredura, faixa, cartaz, timer, os dois bundles) | ok, sem falhas |
+| Suíte completa (`npm test`) | **11 ✅ / 0 ❌ / 1 pulada** (`test_msg_11_jsdom.js`, só no PC dele) |
+| `build_bundle.js` + `sync_build.js` | Bundle OK: **233 scripts** (ordem intacta — tudo foi editado no lugar), sha `586235ed4db399b6` |
+| `mapa_camadas.js` / `mobile/sync-www.js` | regenerados; 4 arquivos, 0 referências quebradas |
+| Versão | `v7.3.13 → v7.3.14`, carimbo nos 4 guias NF |
+
+**O que eu não consegui provar aqui**: aparência. Este sandbox não tem navegador (o download do
+Chromium do Playwright falhou), então a medição que fiz é estática + a decisão exercitada com DOM falso.
+Para o dono confirmar em 20 segundos, no celular ou no DevTools com a janela em 390×844: abrir
+Clientes → arrastar a tabela para a esquerda (tem de aparecer "arraste para o lado…" antes do primeiro
+arraste); abrir Chamados → "Novo chamado (fora de contrato)" precisa estar **inteiro** dentro da tela;
+e no Configurações, com a faixa da Nuvem no ar, rolar até o fim da página — a última linha da tabela
+tem de ficar acima dela, não atrás.

@@ -87,6 +87,30 @@
   function esconder(){
     const el = document.getElementById('v7015-faixa');
     if (el) el.remove();
+    respiracao(null);
+  }
+
+  // ── celular (r70, item V-04 do relatório de telas cortadas) ──────────────
+  // A faixa é position:fixed, então ela SEMPRE pisa no que está embaixo. Em
+  // desktop isso não atrapalha; no celular de 390px ela tapava as últimas
+  // linhas da tabela e — pior — com o texto em `flex:1` entre dois botões que
+  // não quebram, sobravam ~80px para a frase, que virava uma coluna de uma
+  // palavra por linha. Em tela estreita ela vira painel colado na borda de
+  // baixo (texto em cima, botões embaixo) e o corpo do app ganha respiro da
+  // mesma altura, para nenhuma linha ficar escondida atrás dela.
+  function faixaEstreita(){ return (window.innerWidth || 1200) <= 560; }
+  function respiracao(el){
+    const b = document.body;
+    if (!b || !b.style) return;
+    if (!el){
+      if (b.getAttribute('data-v7015-respiro')) { b.style.paddingBottom = ''; b.removeAttribute('data-v7015-respiro'); }
+      return;
+    }
+    let h = 0;
+    try { h = Math.round(el.getBoundingClientRect().height) || 0; } catch (e) {}
+    if (!h) return;                       // sem medida não se mexe no corpo
+    b.style.paddingBottom = (h + 12) + 'px';
+    b.setAttribute('data-v7015-respiro', '1');
   }
   function mostrar(msg, botoes, cor){
     let el = document.getElementById('v7015-faixa');
@@ -95,11 +119,19 @@
       el.id = 'v7015-faixa';
       document.body.appendChild(el);
     }
-    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:' + Z +
-      ';max-width:min(760px,94vw);background:' + (cor || '#0a1e8a') + ';color:#fff;border-radius:14px;' +
-      'box-shadow:0 14px 40px rgba(2,10,40,.35);padding:11px 12px 11px 14px;display:flex;gap:10px;' +
-      'align-items:center;font-size:12.5px;line-height:1.45;font-weight:600;font-family:inherit';
-    el.innerHTML = '<span style="flex:1">' + msg + '</span>';
+    const estreita = faixaEstreita();
+    el.style.cssText = 'position:fixed;z-index:' + Z + ';background:' + (cor || '#0a1e8a') +
+      ';color:#fff;box-shadow:0 14px 40px rgba(2,10,40,.35);display:flex;font-size:12.5px;' +
+      'line-height:1.45;font-weight:600;font-family:inherit;' + (estreita
+        ? 'left:0;right:0;bottom:0;max-width:none;border-radius:14px 14px 0 0;padding:10px 12px 12px;flex-direction:column;align-items:stretch;gap:8px'
+        : 'left:50%;transform:translateX(-50%);bottom:16px;max-width:min(760px,94vw);border-radius:14px;padding:11px 12px 11px 14px;flex-direction:row;align-items:center;gap:10px');
+    el.innerHTML = '<span style="' + (estreita ? 'flex:0 0 auto' : 'flex:1') + '">' + msg + '</span>';
+    let alvo = el;
+    if (estreita){
+      alvo = document.createElement('div');
+      alvo.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap';
+      el.appendChild(alvo);
+    }
     (botoes || []).forEach(function(b){
       const bt = document.createElement('button');
       bt.type = 'button';
@@ -110,13 +142,14 @@
           ? 'background:rgba(255,255,255,.16);color:#fff'
           : 'background:#fff;color:' + (cor || '#0a1e8a'));
       bt.onclick = function(ev){ ev.preventDefault(); try { b.acao(); } catch (e) {} };
-      el.appendChild(bt);
+      alvo.appendChild(bt);
     });
     const x = document.createElement('button');
     x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Esconder aviso');
     x.style.cssText = 'height:34px;width:34px;border-radius:9px;border:0;cursor:pointer;background:transparent;color:#fff;opacity:.75;font-weight:900';
     x.onclick = function(ev){ ev.preventDefault(); fechadoAte = Date.now() + 10 * 60000; esconder(); };
-    el.appendChild(x);
+    alvo.appendChild(x);
+    respiracao(estreita ? el : null);
     return el;
   }
   function irConectar(){

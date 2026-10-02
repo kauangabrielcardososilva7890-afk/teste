@@ -8386,3 +8386,30 @@ Declinei os arquivos novos dele (modal de diagnostico, patch_notes_local, rotulo
 da Nuvem): recurso, nao defeito; e new file mexe no manifest fiscalizado. Teste
 novo test_r69_hash_vence_texto_e_prova_honesta.js (tema 09, 24 assercoes, 4
 dirigindo saveUsuarioFinal num vm com DOM de mentirinha). Suite 11-0-1.
+
+## r70 — 01/10/2026 (v7.3.14) — o relatório de telas cortadas virou conserto
+
+Os prints da auditoria visual deles chegaram como texto (as imagens não estavam no workspace) e o
+checkout deles era o `v7.3.11`. Reconfirmado item a item contra a árvore atual, o que era defeito vivo
+meu foi consertado dentro dos arquivos existentes — nada de patch novo, nada de mexer na ordem do
+`bundle-manifest.json`:
+
+| Item deles | Estado | Onde |
+|---|---|---|
+| V-01 tabelas não cabem em 390px (7 telas) | **consertado** — rolagem + bilhete "arraste" | `menus_tela_pequena_patch.js` |
+| V-02 "Loca…" sem indicação de arraste | **consertado** — o mesmo bilhete na barra de menus | idem |
+| V-03 modal de Chamados cortado nas duas bordas | **consertado** — `max-width:100%` no espaço com respiro + rodapé quebra linha | idem |
+| V-04 faixa da Nuvem cobrindo/quebrando no celular | **conserto** — painel na borda de baixo + respiro no `<body>` | `ajustes_v7015_nuvem_explica_patch.js` |
+| V-05 rótulos cortados no vazio de Clientes | **não é daqui** — os botões citados só existem no fork | — |
+| "Máquinas nos clientes" abriu com cartaz | **mitigado** — uma repintura antes do cartaz, lista conferida contra o `app.js` | `navegacao_sem_tela_branca_patch.js` |
+| `setInterval` de sessão empilhando a cada login (achado meu) | **consertado** | `app.js` |
+
+Teste novo: seção `test_r70_corte_no_mobile.js` dentro do tema 05, 40 asserções (CSS lido da constante
+que vai para a página, `marcarRolagem`/`containerDeRolagem`/`conferirTabelas` dirigidos com DOM falso,
+os dois layouts da faixa da Nuvem, o espelho do dispatch, o timer e os dois bundles publicados).
+Suíte 11✅/0❌/1 pulada; `Bundle OK: 233` (ordem intacta); sha `586235ed4db399b6`; versão v7.3.14 em
+tudo. Documentado na AUDITORIA_TECNICA §59.
+
+Fica com o dono: conferir a aparência no celular/DevTools 390×844 (roteiro na §59.4) — aqui não houve
+como abrir navegador; e as pendências antigas dele (trocar a senha que estava no `patch_relatorio.js`,
+ligar ou não o corte 🔒 Texto-puro, dizer qual tela perdeu dados).
