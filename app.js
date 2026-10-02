@@ -2248,7 +2248,9 @@ function fbImportToErp(rawData){
 
   // ── VENDAS / OS (com cliente, vendedor original, ITENS e OS da notinha) ──
   const PROIBIDO_VENDAS = /ITENS|ITEM|PARAM|CONFIG|LOG|STATUS|ORDENS|USUARIO|FUNCIONARIO|VENDEDOR|DEPARTAMENTO|CAIXA|PERMISSAO|AUDIT|TEMP|MIGR|PRODUTO|CLIENTE|EQUIPAMENTO|LEITURA|LOCACAO|CONTRATO|PARQUE/i;
-  db.vendas = (db.vendas||[]).filter(v => !(v.empresaId === empId && ehMigracao(v)));
+  // v8.0.1 — o arquivo legado é importado em lotes para não estourar a fila da
+  // nuvem. Nunca apagar aqui as vendas de migração já gravadas: cada novo lote
+  // deve fazer upsert apenas das suas próprias vendas.
   const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS','V_VENDAS','VW_VENDAS','VIEW_VENDAS','V_NOTAS','VW_NOTAS'], PROIBIDO_VENDAS);
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};

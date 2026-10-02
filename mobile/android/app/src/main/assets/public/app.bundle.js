@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: fcb0176ecf034680
+ * scripts: 236 | sha256: 67ae8df14f53b6fc
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2500,7 +2500,9 @@ function fbImportToErp(rawData){
 
   // ── VENDAS / OS (com cliente, vendedor original, ITENS e OS da notinha) ──
   const PROIBIDO_VENDAS = /ITENS|ITEM|PARAM|CONFIG|LOG|STATUS|ORDENS|USUARIO|FUNCIONARIO|VENDEDOR|DEPARTAMENTO|CAIXA|PERMISSAO|AUDIT|TEMP|MIGR|PRODUTO|CLIENTE|EQUIPAMENTO|LEITURA|LOCACAO|CONTRATO|PARQUE/i;
-  db.vendas = (db.vendas||[]).filter(v => !(v.empresaId === empId && ehMigracao(v)));
+  // v8.0.1 — o arquivo legado é importado em lotes para não estourar a fila da
+  // nuvem. Nunca apagar aqui as vendas de migração já gravadas: cada novo lote
+  // deve fazer upsert apenas das suas próprias vendas.
   const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS','V_VENDAS','VW_VENDAS','VIEW_VENDAS','V_NOTAS','VW_NOTAS'], PROIBIDO_VENDAS);
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
@@ -31686,6 +31688,10 @@ const TELAS_AO_VIVO={
   usuarios:'renderUsuarios', auditoria:'renderAuditoria',
   vendas:'renderVendas', leituras:'renderLeituras'
 };
+// v8.0.1 — a sincronização da nuvem continua silenciosa, mas a tela não pode
+// piscar nem trocar o retrato enquanto o usuário trabalha. A atualização visual
+// ocorre somente por ação explícita (busca, troca de menu ou recarga da página).
+const ATUALIZACAO_TELA_AUTOMATICA=false;
 const INTERVALO_REDESENHO=4000;
 let ultimoRedesenho=0;
 // v7.0.5 — REDESENHO PENDENTE: se a tela não pôde ser atualizada na hora (pessoa
@@ -31697,6 +31703,7 @@ let ultimoRedesenho=0;
 let redesenhoPendente=false;
 function temRedesenhoPendente(){return redesenhoPendente;}
 function tentarRedesenhoPendente(){
+  if(!ATUALIZACAO_TELA_AUTOMATICA){redesenhoPendente=false;return false;}
   if(!redesenhoPendente)return false;
   if(!redesenharTelaAtual())return false;
   redesenhoPendente=false;
@@ -31721,6 +31728,7 @@ function telaDaFrente(){
   return '';
 }
 function redesenharTelaAtual(){
+  if(!ATUALIZACAO_TELA_AUTOMATICA)return false;
   if(typeof document==='undefined')return false;
   const tela=telaDaFrente();
   const render=TELAS_AO_VIVO[tela];

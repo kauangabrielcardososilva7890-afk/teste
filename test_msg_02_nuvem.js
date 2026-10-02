@@ -1483,10 +1483,10 @@ ok('lista de telas ao vivo existe', Object.keys(telas).length >= 8);
 ok('redesenha chamando o render da tela (não o navigateTo, que rola a página)',
    !/redesenharTelaAtual[\s\S]{0,900}navigateTo\(/.test(code));
 
-console.log('\n== 4) O REDESENHO SÓ ACONTECE SE A LEITURA TROUXE MUDANÇA ==');
-ok('o retorno do pullAll é considerado', /const mudouNaTela=await pullAll\(\)/.test(code) && /pedirCarga\(!state\.initialPull/.test(code));
-ok('o redesenho é chamado no fim do ciclo, sob a decisão e sem se perder',
-   /if\(mudouNaTela\)\{redesenhoPendente=true;tentarRedesenhoPendente\(\);\}/.test(code));
+console.log('\n== 4) A SINCRONIZAÇÃO É SILENCIOSA E A TELA SÓ ATUALIZA POR AÇÃO ==');
+ok('o retorno do pullAll continua sendo considerado', /const mudouNaTela=await pullAll\(\)/.test(code) && /pedirCarga\(!state\.initialPull/.test(code));
+ok('a atualização automática da tela fica explicitamente desligada', /const ATUALIZACAO_TELA_AUTOMATICA=false/.test(code));
+ok('o redesenho pendente não roda em segundo plano', /if\(!ATUALIZACAO_TELA_AUTOMATICA\)\{redesenhoPendente=false;return false;\}/.test(code));
 
 console.log('\n== 5) PUXAR AO ABRIR (v7.0.26, voto do dono) ==');
 ok('leitura exposta para a navegação', typeof S.puxarAoAbrirTela === 'function');

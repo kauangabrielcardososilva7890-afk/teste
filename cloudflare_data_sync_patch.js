@@ -2352,6 +2352,10 @@ const TELAS_AO_VIVO={
   usuarios:'renderUsuarios', auditoria:'renderAuditoria',
   vendas:'renderVendas', leituras:'renderLeituras'
 };
+// v8.0.1 — a sincronização da nuvem continua silenciosa, mas a tela não pode
+// piscar nem trocar o retrato enquanto o usuário trabalha. A atualização visual
+// ocorre somente por ação explícita (busca, troca de menu ou recarga da página).
+const ATUALIZACAO_TELA_AUTOMATICA=false;
 const INTERVALO_REDESENHO=4000;
 let ultimoRedesenho=0;
 // v7.0.5 — REDESENHO PENDENTE: se a tela não pôde ser atualizada na hora (pessoa
@@ -2363,6 +2367,7 @@ let ultimoRedesenho=0;
 let redesenhoPendente=false;
 function temRedesenhoPendente(){return redesenhoPendente;}
 function tentarRedesenhoPendente(){
+  if(!ATUALIZACAO_TELA_AUTOMATICA){redesenhoPendente=false;return false;}
   if(!redesenhoPendente)return false;
   if(!redesenharTelaAtual())return false;
   redesenhoPendente=false;
@@ -2387,6 +2392,7 @@ function telaDaFrente(){
   return '';
 }
 function redesenharTelaAtual(){
+  if(!ATUALIZACAO_TELA_AUTOMATICA)return false;
   if(typeof document==='undefined')return false;
   const tela=telaDaFrente();
   const render=TELAS_AO_VIVO[tela];
