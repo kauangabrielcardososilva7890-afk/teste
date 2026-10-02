@@ -460,7 +460,7 @@ async function doLoginUser(){
       }catch(e){ okU=(user.senha===senha); }
     }else okU=(user.senha===senha);
   }
-  if(!okU){alert('Usuário ou senha incorreto'); return;}
+  if(!okU){ if(typeof window.lfbAlert==='function') window.lfbAlert('Usuário ou senha incorreto','Não foi possível entrar'); else toast('Usuário ou senha incorreto','error'); return; }
   const session={empresaId:emp.id, empresaNome:emp.fantasia||emp.nome, cnpj:emp.cnpj||'', cnpjDigits:onlyDigits(emp.cnpj||''), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
   setSession(session);
   db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login ${user.login} perfil ${user.perfil}`});
@@ -530,7 +530,8 @@ function listUsuariosDemo(){
   // gerado e nas cópias do celular) — ou seja, não mostrar nada NÃO quebra
   // nada. O nome fica de pé só para que, se algum dia alguém a chamar, ela
   // responda sem vazar dado nenhum.
-  alert('Listagem de usuários desativada por segurança.\n\nOs usuários do sistema ficam em "Usuários e permissões".');
+  const aviso='Listagem de usuários desativada por segurança.\n\nOs usuários do sistema ficam em "Usuários e permissões".';
+  if(typeof window.lfbAlert==='function') window.lfbAlert(aviso,'Acesso protegido'); else toast(aviso,'info');
 }
 function closeModal(){document.getElementById('modal-root').classList.add('hidden')}
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
@@ -546,8 +547,12 @@ function navigateTo(view){
 
   const target=document.getElementById('view-'+view);
   if(target) target.classList.remove('hidden');
-  document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
-  const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
+  document.querySelectorAll('[data-nav],[data-side-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10','active'); b.classList.add('text-white/60')});
+  const act=document.querySelector(`#shell-sidebar-links [data-nav="${view}"], #shell-sidebar-links [data-side-nav="${view}"], [data-nav="${view}"]`);
+  if(act){
+    act.classList.add('bg-white/[0.12]','text-white','border','border-white/10','active'); act.classList.remove('text-white/60');
+    const group=act.closest('details'); if(group) group.open=true;
+  }
   const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito'],'buscador-escola':['Buscador Escola','Orçamentos escolares Caixa Escolar MG']};
   const t=titles[view]||[view,'']; setPageHeader(t[0], t[1]);
   if(view==='dashboard') renderDashboard();
@@ -1507,6 +1512,7 @@ function renderBanco(){
             <p class="text-[12px] text-slate-500">Dados importados do banco para o ERP</p>
           </div>
         </div>
+        <p id="fb-import-progress" class="text-[12px] text-slate-500 mb-3">Aguardando confirmação para gravar.</p>
         <div id="fb-import-result" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>
       </div>
 
@@ -1804,7 +1810,7 @@ window.importarTudoDeUmaVez = function(){
     toast('Já existe uma importação em andamento. Aguarde o resultado antes de enviar outro lote.','info');
     return;
   }
-  const msg='Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nTabelas sem correspondência viram menus novos no sidebar.';
+  const msg='Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nSomente tabelas com destino validado serão gravadas. As demais serão ignoradas sem criar menus.';
   const executar = function(){
     window.__importacaoLegadoEmAndamento=true;
     const botao=document.querySelector('#upload-status button');
@@ -1835,7 +1841,8 @@ window.copiarSqlExportarTudo = function(){
   navigator.clipboard.writeText(sql).then(function(){
     toast('SQL copiado! Cole no DBeaver, execute, e exporte cada tabela clicando com botão direito','success');
     setTimeout(function(){
-      alert('INSTRUÇÕES:\n\n1. Cole o SQL no DBeaver e execute\n2. Vai aparecer a lista de tabelas\n3. Para cada tabela importante:\n   - Clique com botão direito na tabela (na árvore à esquerda)\n   - Escolha "Exportar Dados"\n   - Selecione "JSON"\n   - Salve o arquivo\n\nTabelas importantes:\n• CLIENTES\n• PRODUTOS\n• VENDAS\n• ITENS_VENDA\n• EQUIPAMENTOS\n• CONTAS_RECEBER\n• CONTAS_PAGAR\n\nDepois selecione todos os .json aqui no ERP.');
+      const instrucoes='INSTRUÇÕES:\n\n1. Cole o SQL no DBeaver e execute\n2. Vai aparecer a lista de tabelas\n3. Para cada tabela importante, use Exportar Dados > JSON e salve o arquivo.\n\nTabelas aproveitadas automaticamente:\n• CLIENTES\n• PRODUTOS\n• VENDAS\n• ITENS_VENDA\n• EQUIPAMENTOS\n• CONTAS_RECEBER\n\nCONTAS_PAGAR fica fora da migração automática por política. Depois selecione todos os .json aqui no ERP.';
+      if(typeof window.lfbAlert==='function') window.lfbAlert(instrucoes,'Como exportar o banco antigo'); else toast(instrucoes,'info');
     }, 500);
   }).catch(function(){
     const box = document.getElementById('supabase-schema-sql-box');
@@ -1926,7 +1933,7 @@ async function fbListTables(){
     document.getElementById('fb-tables-count').textContent = `${r.tables.length} tabelas encontradas • ${totalRegs.toLocaleString('pt-BR')} registros no total`;
 
     const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
-      'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
+      'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','RECIBOS_EMITIDOS',
       'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
 
     const grid = document.getElementById('fb-tables-grid');
@@ -2001,7 +2008,7 @@ async function fbPreviewTable(tableName){
 
 function fbSelectMigrationTables(){
   const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
-    'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
+    'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','RECIBOS_EMITIDOS',
     'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
   document.querySelectorAll('.fb-table-check').forEach(cb => {
     cb.checked = migrationTables.some(m => cb.value.toUpperCase().includes(m));
@@ -2020,7 +2027,7 @@ async function fbExtractAll(){
     tables = Array.from(checks).map(cb => cb.value);
   } else {
     // Se não listou tabelas ainda, usar padrões
-    tables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','FORMA_PAGAMENTO','EMPRESA','FORNECEDORES','FUNCIONARIOS'];
+    tables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','FORMA_PAGAMENTO','EMPRESA','FORNECEDORES','FUNCIONARIOS'];
   }
 
   if(!confirm(`Extrair dados de ${tables.length} tabelas e importar para o ERP?\n\nTabelas: ${tables.join(', ')}`)) return;
@@ -2061,14 +2068,41 @@ function fbImportToErp(rawData){
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
   const userName = sess.usuarioNome || sess.login || 'Migração Firebird';
+  const importProgress = document.getElementById('fb-import-progress');
+  const reportProgress = text => { if(importProgress) importProgress.textContent=text; };
+  reportProgress('Preparando índices rápidos para a carga…');
 
-  const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
+  const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0, ignoradas:0 };
 
   // ── ÍNDICES DE VÍNCULO (sistema antigo → ERP novo) ──
   // Reimportação = modo "upsert/cura": registros migrados existentes são ATUALIZADOS,
   // nunca duplicados. Manuais (criadoPor!=='migracao') nunca são tocados.
   const ehMigracao = r => r && (r.criadoPor==='migracao' || r.origem==='migracao');
   const sStr = v => (v===undefined||v===null) ? '' : String(v).trim();
+  // Carga grande: nunca procurar com .find() dentro de cada linha importada.
+  // O banco particular pode ter dezenas de milhares de vendas/parcelas; mapas
+  // deixam o custo praticamente linear e também tornam o lote repetível.
+  const idx = (arr, keyFn) => {
+    const m = new Map();
+    (arr||[]).forEach(item => {
+      const key = keyFn(item);
+      if(key && !m.has(key)) m.set(key, item);
+    });
+    return m;
+  };
+  const clientesEmpresa = (db.clientes||[]).filter(c=>c && c.empresaId===empId);
+  const produtosEmpresa = (db.produtos||[]).filter(p=>p && p.empresaId===empId);
+  const equipamentosEmpresa = (db.equipamentos||[]).filter(e=>e && e.empresaId===empId);
+  const vendasEmpresa = (db.vendas||[]).filter(v=>v && v.empresaId===empId);
+  const receberEmpresa = (db.contasReceber||[]).filter(c=>c && c.empresaId===empId);
+  const idxClienteCodigo = idx(clientesEmpresa, c=>sStr(c.codigoAntigo||c.codigo));
+  const idxClienteDoc = idx(clientesEmpresa, c=>onlyDigits(c.documento||c.cnpj||c.cpf));
+  const idxClienteCodigoMigracao = idx(clientesEmpresa.filter(ehMigracao), c=>sStr(c.codigoAntigo||c.codigo));
+  const idxProdutoSku = idx(produtosEmpresa, p=>sStr(p.sku));
+  const idxEquipSerie = idx(equipamentosEmpresa, e=>sStr(e.serie));
+  const idxVendaNumero = idx(vendasEmpresa, v=>sStr(v.numero));
+  const idxReceberCodigo = idx(receberEmpresa.filter(ehMigracao), c=>sStr(c.legadoCodigo));
+  const idxReceberNatural = idx(receberEmpresa.filter(c=>ehMigracao(c)&&!c.legadoCodigo), c=>`${sStr(c.descricao)}|${Number(c.valor||0).toFixed(2)}|${sStr(c.vencimento).slice(0,10)}`);
   const rawCliAll = findTable(rawData, ['CLIENTES']) || [];
   const idxRawCliPorCodigo = {};
   rawCliAll.forEach(r=>{ const k=sStr(r.CODIGO||r.ID||r.COD_CLIENTE); if(k) idxRawCliPorCodigo[k]=r; });
@@ -2092,13 +2126,13 @@ function fbImportToErp(rawData){
   });
   const nomeClientePorCodigo = cod => {
     const k=sStr(cod); if(!k) return '';
-    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); if(vinc) return vinc.nome;
+    const vinc=idxClienteCodigo.get(k); if(vinc) return vinc.nome;
     const raw=idxRawCliPorCodigo[k]; if(raw) return sStr(raw.NOME||raw.RAZAO_SOCIAL||raw.NOME_FANTASIA||raw.FANTASIA);
     return '';
   };
   const idClientePorCodigo = cod => {
     const k=sStr(cod); if(!k) return null;
-    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); return vinc?vinc.id:null;
+    const vinc=idxClienteCodigo.get(k); return vinc?vinc.id:null;
   };
   const nomeVendedor = row => {
     const cod=sStr(row.COD_ENTREGADOR||row.COD_VENDEDOR||row.COD_FUNCIONARIO||row.COD_USUARIO||row.COD_ATENDENTE);
@@ -2118,6 +2152,7 @@ function fbImportToErp(rawData){
     return s.toLowerCase();
   };
 
+  reportProgress('Importando clientes, produtos e equipamentos…');
   // ── CLIENTES ──
   const rawClientes = findTable(rawData, ['CLIENTES','CLIENTE','CADASTRO_CLIENTES','CAD_CLIENTES','TB_CLIENTES','TB_CLIENTE','CLI','PESSOAS','V_CLIENTES','VW_CLIENTES','VIEW_CLIENTES']);
   if(rawClientes && rawClientes.length){
@@ -2127,10 +2162,10 @@ function fbImportToErp(rawData){
       const doc = row.CNPJ || row.CPF || row.CPF_CNPJ || row.DOCUMENTO || row.DOC || '';
       const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || row.CODIGO_CLIENTE || row.COD_CLI || row.NUMERO || '');
       // Upsert: por código antigo, senão por documento válido (mínimo 8 dígitos para não mesclar "0"/"-"/"S/N")
-      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo)) : null;
+      let existing = codAntigo ? idxClienteCodigoMigracao.get(codAntigo) : null;
       const digDoc = onlyDigits(doc);
       if(!existing && digDoc && digDoc.length >= 8){
-        existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === digDoc);
+        existing = idxClienteDoc.get(digDoc) || null;
       }
       const dados = {
         codigoAntigo: codAntigo, codigo: codAntigo || (existing && existing.codigo) || '',
@@ -2148,9 +2183,12 @@ function fbImportToErp(rawData){
         mensalidade: parseFloat(row.MENSALIDADE || row.VALOR_MENSAL || 0) || 0,
       };
       if(existing){ Object.assign(existing, dados); result.clientes++; return; }
-      if(codAntigo && db.clientes.find(c => c.empresaId === empId && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo))) return; // manual com mesmo código: não duplica
+      if(codAntigo && idxClienteCodigo.has(codAntigo)) return; // manual com mesmo código: não duplica
       const id = uid('cli');
-      db.clientes.push(Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados));
+      const novoCliente = Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados);
+      db.clientes.push(novoCliente);
+      if(codAntigo){ idxClienteCodigo.set(codAntigo, novoCliente); idxClienteCodigoMigracao.set(codAntigo, novoCliente); }
+      if(digDoc && digDoc.length >= 8) idxClienteDoc.set(digDoc, novoCliente);
       result.clientes++;
     });
   }
@@ -2163,7 +2201,7 @@ function fbImportToErp(rawData){
       const nome = row.DESCRICAO || row.NOME || row.PRODUTO || '';
       if(!nome.trim()) return;
       const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || row.NOSSO_CODIGO || uid('prd');
-      const existing = db.produtos.find(p => p.empresaId === empId && String(p.sku) === String(sku));
+      const existing = idxProdutoSku.get(String(sku));
       const dadosProd = {
         sku: String(sku),
         nome: nome.trim(),
@@ -2178,7 +2216,9 @@ function fbImportToErp(rawData){
       };
       if(existing && ehMigracao(existing)){ Object.assign(existing, dadosProd); result.produtos++; return; }
       if(existing) return; // produto manual: não mexe
-      db.produtos.push(Object.assign({id: uid('prd'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosProd));
+      const novoProduto = Object.assign({id: uid('prd'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosProd);
+      db.produtos.push(novoProduto);
+      idxProdutoSku.set(String(sku), novoProduto);
       result.produtos++;
     });
   }
@@ -2191,7 +2231,7 @@ function fbImportToErp(rawData){
       const modelo = row.MODELO || row.DESCRICAO || row.EQUIPAMENTO || '';
       if(!modelo.trim()) return;
       const serie = row.SERIE || row.NUMERO_SERIE || row.N_SERIE || row.PATRIMONIO || `LEG-${row.COD_EQUIPAMENTO||uid('eq')}`;
-      const existing = db.equipamentos.find(e => e.empresaId === empId && String(e.serie) === String(serie));
+      const existing = idxEquipSerie.get(String(serie));
       const dadosEq = {
         modelo: modelo.trim(),
         tipo: row.TIPO || row.EQ_TIPO || 'Laser',
@@ -2204,7 +2244,9 @@ function fbImportToErp(rawData){
       };
       if(existing && ehMigracao(existing)){ Object.assign(existing, dadosEq); result.equipamentos++; return; }
       if(existing) return;
-      db.equipamentos.push(Object.assign({id: uid('eq'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosEq));
+      const novoEquipamento = Object.assign({id: uid('eq'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosEq);
+      db.equipamentos.push(novoEquipamento);
+      idxEquipSerie.set(String(serie), novoEquipamento);
       result.equipamentos++;
     });
   }
@@ -2215,6 +2257,7 @@ function fbImportToErp(rawData){
   // nuvem. Nunca apagar aqui as vendas de migração já gravadas: cada novo lote
   // deve fazer upsert apenas das suas próprias vendas.
   const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS','V_VENDAS','VW_VENDAS','VIEW_VENDAS','V_NOTAS','VW_NOTAS'], PROIBIDO_VENDAS);
+  reportProgress('Importando vendas e itens sem duplicar registros…');
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
   rawItensAll.forEach(ir => {
@@ -2222,7 +2265,7 @@ function fbImportToErp(rawData){
     if(!codV) return;
     const codProd = sStr(ir.COD_PRODUTO || ir.PRODUTO_ID || ir.COD_CARTUCHO || ir.COD_ITEM_PRODUTO);
     const rawProd = idxRawProdPorCodigo[codProd];
-    const prodVinc = codProd ? db.produtos.find(p=>p.empresaId===empId && String(p.sku)===codProd) : null;
+    const prodVinc = codProd ? idxProdutoSku.get(codProd) || null : null;
     const qtd = parseFloat(ir.QUANTIDADE || ir.QTD || ir.QTDE || 1) || 1;
     const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
     const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || ir.VALOR_ITEM || ir.TOTAL || 0) || (qtd*unit);
@@ -2274,16 +2317,19 @@ function fbImportToErp(rawData){
         criadoPorNome: vendedor,
         os: osObj
       };
-      const existing = db.vendas.find(v => v.empresaId === empId && v.numero === numero);
+      const existing = idxVendaNumero.get(numero);
       if(existing && !ehMigracao(existing)) return; // venda manual: não mexe
       if(existing){ Object.assign(existing, dadosV); result.vendas++; return; }
-      db.vendas.push(Object.assign({id: uid('vda'), empresaId: empId, criadoPor: 'migracao', criadoEm: new Date().toISOString()}, dadosV));
+      const novaVenda = Object.assign({id: uid('vda'), empresaId: empId, criadoPor: 'migracao', criadoEm: new Date().toISOString()}, dadosV);
+      db.vendas.push(novaVenda);
+      idxVendaNumero.set(numero, novaVenda);
       result.vendas++;
     });
   }
 
   // ── FINANCEIRO (CONTAS_RECEBER + CONTAS_PAGAR) ──
   const rawCR = findTable(rawData, ['CONTAS_RECEBER']);
+  reportProgress('Importando contas a receber…');
   if(rawCR && rawCR.length){
     rawCR.forEach(row => {
       const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_TITULO || row.COD_PARCELA || '');
@@ -2299,12 +2345,13 @@ function fbImportToErp(rawData){
         status: String(row.STATUS || row.CR_SITUACAO || '').toLowerCase().includes('pag') || row.DATA_PAGAMENTO ? 'pago' : 'aberto',
       };
       // Match por código legado; rows antigas (import sem código) caem pela chave natural
-      let existing = (legadoCodigo && db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
-        || db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
-            && c.descricao === dadosCR.descricao && Math.abs((c.valor||0)-dadosCR.valor) < 0.005
-            && String(c.vencimento||'').slice(0,10) === String(dadosCR.vencimento||'').slice(0,10));
+      const chaveNatural = `${sStr(dadosCR.descricao)}|${Number(dadosCR.valor||0).toFixed(2)}|${sStr(dadosCR.vencimento).slice(0,10)}`;
+      let existing = (legadoCodigo && idxReceberCodigo.get(legadoCodigo)) || idxReceberNatural.get(chaveNatural);
       if(existing){ Object.assign(existing, dadosCR); result.financeiro++; return; }
-      db.contasReceber.push(Object.assign({id: uid('cr'), empresaId: empId, origem: 'migracao', contratoId: null, leituraId: null, vendaId: null, criadoPor: 'migracao', criadoPorNome: userName}, dadosCR));
+      const novaConta = Object.assign({id: uid('cr'), empresaId: empId, origem: 'migracao', contratoId: null, leituraId: null, vendaId: null, criadoPor: 'migracao', criadoPorNome: userName}, dadosCR);
+      db.contasReceber.push(novaConta);
+      if(legadoCodigo) idxReceberCodigo.set(legadoCodigo, novaConta);
+      idxReceberNatural.set(chaveNatural, novaConta);
       result.financeiro++;
     });
   }
@@ -2356,52 +2403,22 @@ function fbImportToErp(rawData){
     </div>
   `).join('');
 
-  // ── MÓDULOS DINÂMICOS — tabelas sem mapeamento direto ──
-  const tabelasMapeadas = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','FORMA_PAGAMENTO'];
-  const resultDinamico = {};
-  for(const [nome, info] of Object.entries(rawData)){
-    if(!info.data || !info.data.length) continue;
-    const jaMapeada = tabelasMapeadas.some(m => nome.toUpperCase().includes(m));
-    if(jaMapeada) continue;
-    // Criar módulo dinâmico
-    const icone = sugerirIcone(nome);
-    db.modulosDinamicos[nome] = {
-      label: formatarNomeTabela(nome),
-      icone: icone,
-      origem: 'Firebird',
-      importadoEm: new Date().toISOString(),
-      colunas: Object.keys(info.data[0]),
-      dados: info.data
-    };
-    resultDinamico[nome] = info.data.length;
-  }
-
-  // Se criou módulos dinâmicos, mostrar no resultado
-  const dinKeys = Object.keys(resultDinamico);
-  if(dinKeys.length > 0){
-    const dinTotal = Object.values(resultDinamico).reduce((s,v)=>s+v,0);
-    const panel = document.getElementById('fb-import-panel');
-    panel.classList.remove('hidden');
+  // ── TABELAS SEM DESTINO VALIDADO ──
+  // Não criar menus dinamicamente: isso poluía a navegação e podia gravar
+  // estruturas auxiliares em entidades que ainda não foram aprovadas.
+  const tabelasMapeadas = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER'];
+  const ignoradas = Object.entries(rawData).filter(([nome,info]) => info.data && info.data.length && !tabelasMapeadas.some(m=>nome.toUpperCase().includes(m)));
+  result.ignoradas = ignoradas.reduce((s,[,info])=>s+(info.data||[]).length,0);
+  if(ignoradas.length){
     const existResult = document.getElementById('fb-import-result');
-    existResult.innerHTML += `
-      <div class="sm:col-span-2 xl:col-span-4 rounded-xl border bg-purple-50 border-purple-200 p-4">
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-purple-100 grid place-items-center"><i class="ph ph-puzzle-piece text-[16px] text-purple-600"></i></div>
-          <p class="text-[13px] font-bold text-purple-800">Módulos novos criados automaticamente (${dinKeys.length} tabelas → ${dinTotal} registros)</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          ${dinKeys.map(k=>`<span class="px-3 py-1.5 rounded-lg bg-purple-100 border border-purple-200 text-[12px] font-bold text-purple-700">${formatarNomeTabela(k)} (${resultDinamico[k]})</span>`).join('')}
-        </div>
-        <p class="text-[11px] text-purple-600 mt-3">Esses módulos aparecem no menu lateral com badge roxo. Você pode visualizar, buscar e exportar os dados.</p>
-      </div>
-    `;
+    existResult.innerHTML += `<div class="sm:col-span-2 xl:col-span-4 rounded-xl border bg-slate-50 border-slate-200 p-4"><p class="text-[13px] font-bold text-slate-700"><i class="ph ph-info"></i> ${ignoradas.length} tabela(s) fora do escopo não foram gravadas (${result.ignoradas.toLocaleString('pt-BR')} registros)</p><p class="text-[11px] text-slate-500 mt-1">Sem destino validado no ERP atual; nenhum menu foi criado. Consulte a matriz de adaptação antes de pedir um novo mapeamento.</p></div>`;
   }
 
   db.meta = Object.assign({}, db.meta||{}, {importadoEm:new Date().toISOString(), importadoTabelas:Object.keys(rawData||{}).length});
   saveDB();
-  logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${dinKeys.length} módulos dinâmicos`);
-  buildNav(); // Atualizar menu para mostrar módulos dinâmicos
+  logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${result.ignoradas} registros ignorados por política`);
   renderDashboard();
+  reportProgress(`Importação concluída. A sincronização da nuvem continuará em lotes de até 50.`);
 }
 
 // Utilitário: encontrar tabela no raw data (case insensitive e combinando múltiplas tabelas)

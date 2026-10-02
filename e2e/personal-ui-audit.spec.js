@@ -201,7 +201,10 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
       } else if (trigger.selector) {
         target = page.locator(trigger.selector).first();
       } else {
-        target = page.locator('#shell-sidebar-links > .shell-side-link').filter({ hasText: trigger.label }).first();
+        const direct = { backup: '#btn-backup-top', nuvem: '#btn-nuvem' }[id];
+        target = direct
+          ? page.locator(`#shell-sidebar-links ${direct}`).first()
+          : page.locator(`#shell-sidebar-links [data-nav="${id}"], #shell-sidebar-links [data-side-nav="${id}"]`).filter({ hasText: trigger.label }).first();
       }
       const targetCount = await target.count();
       const targetVisible = targetCount ? await target.isVisible() : false;

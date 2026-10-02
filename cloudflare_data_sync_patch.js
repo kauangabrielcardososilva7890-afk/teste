@@ -17,7 +17,9 @@ const TAB_ID='tab_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(
 // e o que ele gravasse depois só entrava conforme a fila escoava (ficava na tela). 400
 // mudanças cabem folgado no navegador (~400 KB) e continuam escoando de 10 em 10.
 const MAX_OUTBOX=400;
-const PUSH_BATCH=10;
+// Importações grandes precisam de menos viagens à API. O motor reduz este
+// valor pela metade automaticamente se a nuvem responder sobrecarregada.
+const PUSH_BATCH=50;
 // v7.0.6 — PÁGINA DO DIÁRIO: 1.000 mudanças por consulta (o teto do motor da
 // nuvem). Fica aqui em cima porque agora serve a DOIS caminhos: a leitura
 // completa do diário e o passe rápido da abertura (ver passeRapidoInicial).
