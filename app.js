@@ -2100,6 +2100,7 @@ function fbImportToErp(rawData){
   const sess = getSession();
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
+  const userName = sess.usuarioNome || sess.login || 'Migração Firebird';
 
   const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
 

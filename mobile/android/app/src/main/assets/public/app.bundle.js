@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: 30e85749b64d056b
+ * scripts: 236 | sha256: fcb0176ecf034680
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2352,6 +2352,7 @@ function fbImportToErp(rawData){
   const sess = getSession();
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
+  const userName = sess.usuarioNome || sess.login || 'Migração Firebird';
 
   const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
 
