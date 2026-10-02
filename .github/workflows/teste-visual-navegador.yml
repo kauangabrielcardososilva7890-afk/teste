@@ -53,11 +53,11 @@ jobs:
           # o HTML de forma confiável — ver rodada #6, em que o guard cego matou o job).
           stamp=$(grep -o 'app[.]bundle[.]js?v=[0-9.]*-[a-f0-9]*' index.html | head -1)
           echo "espero no ar: ${stamp:-<nenhum carimbo no index.html>}"
-          if node ferramentas/teste_visual.js --url "$url" --versao "v${versao}" --stamp "$stamp"; then
-            echo "ok=0" >> "$GITHUB_ENV"
-          else
-            echo "ok=1" >> "$GITHUB_ENV"
-          fi
+          # stderr junto com stdout: quando o script aborta, é isso que a issue vai
+          # citar; sem o tee o veredito seria "não chegou a medir" e nada mais.
+          mkdir -p teste-visual
+          node ferramentas/teste_visual.js --url "$url" --versao "v${versao}" --stamp "$stamp" 2>&1 | tee teste-visual/stderr.log
+          echo "ok=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
 
       # O canal de volta para o agente: os números chegam como corpo de issue
       # (a API do GitHub é alcançável dos dois lados; artefato, não).
@@ -69,7 +69,12 @@ jobs:
           simbolo=$([ "$ok" = "0" ] && echo "✅" || echo "❌")
           curto="${GITHUB_SHA:0:7}"
           corpo="resultado.md"
-          [ -f "$corpo" ] || printf '## ❌ Teste visual não chegou a medir\n\nO script falhou antes de escrever o resultado — ver o log do job.\n' > "$corpo"
+          # Sem resultado.md o corpo da issue traz o que o script cuspiu: uma issue que só
+          # diz 'não chegou a medir' obriga a caçar log, e o log do Actions nem sempre abre.
+          [ -f "$corpo" ] || {
+            printf '## ❌ Teste visual abortou antes do veredito\n\nÚltimas 40 linhas de stdout+stderr do passo:\n\n```\n%s\n```\n\nNada aqui foi medido; os problemas das issues anteriores continuam abertos.\n' \
+              "$(tail -40 teste-visual/stderr.log 2>/dev/null || echo '(sem log — o passo nem chegou a rodar)')" > "$corpo"
+          }
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --title "$simbolo Teste visual #${GITHUB_RUN_NUMBER} (${curto})" \
             --body-file "$corpo" || true
@@ -82,6 +87,7 @@ jobs:
           path: |
             resultado.json
             resultado.md
+            teste-visual/stderr.log
             *.png
           if-no-files-found: ignore
 

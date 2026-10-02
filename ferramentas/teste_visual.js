@@ -199,18 +199,30 @@ function medirModal() {
   // deploy anterior. Rola o reload até o <script src="app.bundle.js?v=..."> da página
   // bater com o carimbo deste commit (20 tentativas de 20s ≈ 7 min de build).
   if (STAMP_ESPERADO) {
+    // Cada tentativa é protegida: uma falha de rede do Pages (403/EOF num momento de
+    // pico) não pode derrubar o run inteiro — isso custou as rodadas #6 e #7, em que o
+    // job morreu em 23s sem nem medir, porque o `goto` de espera não tinha catch.
     for (let tentativa = 1; ; tentativa++) {
-      await pagina.goto(URL_ALVO, { waitUntil: 'domcontentloaded' });
-      const visto = await pagina.evaluate(() => {
-        const alvo = document.querySelector('script[src*="app.bundle.js"]');
-        return alvo ? String(alvo.getAttribute('src') || '') : '';
-      }).catch(() => '');
+      let visto = '';
+      let erro = '';
+      try {
+        await pagina.goto(URL_ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        visto = await pagina.evaluate(() => {
+          const alvo = document.querySelector('script[src*="app.bundle.js"]');
+          return alvo ? String(alvo.getAttribute('src') || '') : '';
+        });
+      } catch (e) {
+        erro = String((e && e.message) || e).split('\n')[0].slice(0, 120);
+      }
       if (visto.indexOf(STAMP_ESPERADO) >= 0) {
         resultados.deploy = { conferido: true, naTentativa: tentativa, site: visto, esperado: STAMP_ESPERADO };
         break;
       }
       const esgotou = tentativa >= TENTATIVAS_DEPLOY;
-      resultados.deploy = { falhou: esgotou, tentativas: tentativa, site: visto || 'nada', esperado: STAMP_ESPERADO };
+      resultados.deploy = {
+        falhou: esgotou, tentativas: tentativa, site: visto || 'nada',
+        esperado: STAMP_ESPERADO, ultimoErro: erro || undefined,
+      };
       if (esgotou) break;
       await pagina.waitForTimeout(20000);
     }
@@ -425,4 +437,24 @@ function medirModal() {
   fs.writeFileSync('resultado.md', md);
   console.log(md.replace(/\n<!-- teste-visual-json:.*?-->/s, ''));
   process.exit(falhas.length ? 1 : 0);
-})();
+})().catch(async (e) => {
+  // Se qualquer passo estourar, a issue ainda tem de explicar o quê. Sem isto o veredito
+  // era "não chegou a medir" e o log do Actions, nem sempre legível, era a única pista.
+  const motivo = String((e && e.stack) || e).split('\n').slice(0, 6).join('\n')
+    .replace(/https:\/\/[^ )]*\//g, '~/');
+  const md = [
+    '## ❌ Teste visual abortou antes do veredito',
+    '',
+    'Motivo (primeiras linhas da pilha, host cortado):',
+    '```', motivo, '```',
+    '',
+    'Nada do que estava abaixo nas issues anteriores deve ser lido como aprovado: este run',
+    'não mediu as telas. Os problemas conhecidos ficam abertos até um run concluir.',
+  ].join('\n');
+  try {
+    fs.writeFileSync('resultado.json', JSON.stringify({ abortado: true, motivo }, null, 1));
+    fs.writeFileSync('resultado.md', md);
+  } catch (e2) { /* o disk pode estar ocupado; o console abaixo ainda chega ao log */ }
+  console.error('\n[teste_visual] ABORTOU: ' + motivo);
+  process.exit(1);
+});
