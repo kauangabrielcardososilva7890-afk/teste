@@ -406,7 +406,7 @@ function medirModal() {
     if (t && t.naoCabe) {
       const ok = t.marcado && t.rola !== 'hidden' && t.atingeOFim && t.ultimaColunaVisivel;
       if (!ok) falhas.push(s.tela + ': tabela de ' + t.largura + 'px em ' + t.disponivel + 'px sem rolagem útil (marcado=' + t.marcado + ', overflow=' + t.overflowX + ', chega ao fim=' + t.atingeOFim + ', última coluna visível=' + t.ultimaColunaVisivel + ')');
-      if (mudanca) falhas.push('celular: pediu ' + s.pedida + ' e a tela visível foi ' + s.tela + ' — o que está medido na linha é da tela errada');
+      if (s.mudanca) falhas.push('celular: pediu ' + s.pedida + ' e a tela visível foi ' + s.tela + ' — o que está medido na linha é da tela errada');
     if (!t.bilheteVisivel && t.naoCabe) falhas.push(s.tela + ': tabela não cabe e o bilhete de arraste não apareceu' +
         (s.depoisDeForcar && s.depoisDeForcar.bilhete ? ' — MAS aparece ao forçar a varredura, logo é a hora de medir que está errada, não a medição' : '') +
         ' · mecânica: ' + JSON.stringify(s.mecanica));
