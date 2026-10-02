@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: 25f47b26e8e6faf2
+ * scripts: 236 | sha256: dbe02fb9cd30fcc2
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -50428,6 +50428,7 @@ if (typeof document === 'undefined') return;
       '.module-row.digi-row-rola::-webkit-scrollbar-track{background:transparent}' +
       '.module-row.digi-row-rola > *{flex:0 0 auto}' +
       '.module-row.digi-row-rola .module-menu{position:fixed;top:auto;left:auto;z-index:1200}' +
+      '@media (min-width:641px){.module-row.digi-row-rola{overflow:visible !important}.module-row.digi-row-rola .module-menu{position:absolute !important;top:39px !important;left:0 !important}}' +
       CSS_TELA_APERTADA;
     document.head.appendChild(st);
   }
