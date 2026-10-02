@@ -613,7 +613,7 @@ ok('duplicidade usa nfxConfirmar (abrir DANFE)', trx.indexOf("nfxConfirmar('Nota
 ok('senha pedida com await (popup assim é Promise)', trx.indexOf('await nfxPedirSenha()') >= 3);
 
 console.log('== INTEGRAÇÃO + CARIMBO 6.0.2 ==');
-ok('patch na 208; perfis 209; permissões 210; menu fiscal v6.0.6; Início clicável v6.0.7; menus fiscais separados v6.0.8 na 212; override v6.0.9 na 214; 6 submenus v6.0.10 na 215; hover NF-e/NFC-e v6.0.11 fecha a fila (216)', manifest.length >= 225 && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[208] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[209] === 'permissoes_estorno_venda_patch.js' && manifest[210] === 'fiscal_menu_completo_patch.js' && manifest[211] === 'dashboard_inicio_clicavel_patch.js' && manifest[212] === 'menus_fiscais_separados_patch.js' && manifest[213] === 'permissoes_override_menus_fiscais_patch.js' && manifest[214] === 'seis_submenus_velho_patch.js' && manifest[215] === 'submenu_hover_nfe_patch.js');
+ok('patch na 208; perfis 209; permissões 210; menu fiscal v6.0.6; Início clicável v6.0.7; menus fiscais separados v6.0.8 na 212; override v6.0.9 na 214; 6 submenus v6.0.10 na 215; hover NF-e/NFC-e v6.0.11 fecha a fila (216)', manifest.length >= 225 && manifest[208] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[209] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[210] === 'permissoes_estorno_venda_patch.js' && manifest[211] === 'fiscal_menu_completo_patch.js' && manifest[212] === 'dashboard_inicio_clicavel_patch.js' && manifest[213] === 'menus_fiscais_separados_patch.js' && manifest[214] === 'permissoes_override_menus_fiscais_patch.js' && manifest[215] === 'seis_submenus_velho_patch.js' && manifest[216] === 'submenu_hover_nfe_patch.js');
 ok('cura + tela no bundle gerado', bundle.indexOf('v6.0.2') >= 0 && bundle.indexOf('Curei ') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6002ac') >= 0);
 ok('package.json na 6.0.2', pkg.version === VERSAO_APP);
@@ -687,7 +687,7 @@ ok('a placa que apareceu no console é mencionada no rótulo', src.indexOf('save
 console.log('== CARIMBO 6.0.3 ==');
 ok('package.json na 6.0.3', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('manifesto já é 233 (v6.1.3 fechava a fila; v7.0.20 soma o mandar-erro, v7.0.22 o portão, v7.0.24 a função única, r59 o setup no fim; r60 o login-retry no fim; r64 o banner de versão no fim)', manifest.length >= 225 && manifest[manifest.length - 25] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 24] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 23] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 22] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 21] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 20] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 19] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 18] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 17] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 16] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 15] === 'fiscal_catalogo_completo_patch.js' && manifest[manifest.length - 14] === 'menu_fiscal_oficial_patch.js');
+ok('manifesto tem 236 scripts (inclui o guard r68; cauda histórica preservada)', manifest.length === 236 && manifest[manifest.length - 27] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 26] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 25] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 24] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 23] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 22] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 21] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 20] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 19] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 18] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 17] === 'fiscal_catalogo_completo_patch.js' && manifest[manifest.length - 16] === 'menu_fiscal_oficial_patch.js');
 ok('worker atualizado 5.28.4 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');
@@ -715,7 +715,7 @@ const P = require('./dashboard_inicio_clicavel_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 213; menus fiscais separados v6.0.8 fecha a fila',
-  man.length >= 225 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length >= 225 && man[213] === 'menus_fiscais_separados_patch.js' && man[214] === 'permissoes_override_menus_fiscais_patch.js' && man[215] === 'seis_submenus_velho_patch.js' && man[216] === 'submenu_hover_nfe_patch.js' && man[212] === 'dashboard_inicio_clicavel_patch.js' && man[211] === 'fiscal_menu_completo_patch.js' && man[210] === 'permissoes_estorno_venda_patch.js' && man[206] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('DHC607_PURE_START') >= 0 && bundle.indexOf('v6.0.7 — INÍCIO SEM UNDEFINED + CLICÁVEL') >= 0);
 
@@ -813,7 +813,7 @@ const P = require('./menus_fiscais_separados_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 213; menus separados fecha a fila',
-  man.length >= 225 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length >= 225 && man[213] === 'menus_fiscais_separados_patch.js' && man[214] === 'permissoes_override_menus_fiscais_patch.js' && man[215] === 'seis_submenus_velho_patch.js' && man[216] === 'submenu_hover_nfe_patch.js' && man[212] === 'dashboard_inicio_clicavel_patch.js' && man[211] === 'fiscal_menu_completo_patch.js' && man[206] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('MFS608_PURE_START') >= 0 && bundle.indexOf('v6.0.8 — MENUS FISCAIS SEPARADOS') >= 0);
 
@@ -902,7 +902,7 @@ const pode = (u, a) => { if (u.perfil === 'Admin' || u.perfil === 'Dono') return
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 214; override+menus fecha a fila',
-  man.length >= 225 && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length >= 225 && man[214] === 'permissoes_override_menus_fiscais_patch.js' && man[215] === 'seis_submenus_velho_patch.js' && man[216] === 'submenu_hover_nfe_patch.js' && man[213] === 'menus_fiscais_separados_patch.js' && man[212] === 'dashboard_inicio_clicavel_patch.js' && man[206] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('POM609_PURE_START') >= 0 && bundle.indexOf('v6.0.9 — PERMISSÃO SÓ NO EDITAR + AUTORIZAÇÃO NA HORA') >= 0);
 
@@ -987,7 +987,7 @@ const P = require('./seis_submenus_velho_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 215; 6 submenus do antigo fecha a fila',
-  man.length >= 225 && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length >= 225 && man[215] === 'seis_submenus_velho_patch.js' && man[216] === 'submenu_hover_nfe_patch.js' && man[214] === 'permissoes_override_menus_fiscais_patch.js' && man[206] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (guard + PURE + banner)',
   bundle.indexOf('__v60010sxv') >= 0 && bundle.indexOf('SXV_PURE_START') >= 0 && bundle.indexOf('SEIS_SUBMENUS_VELHO_PATCH v6.0.10 ativo') >= 0);
 
@@ -1109,7 +1109,7 @@ const P = require('./navegacao_sem_tela_branca_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 217; anti-tela-branca fecha a fila (é o último, wrap por cima de todos)',
-  man.length >= 225 && man[216] === 'navegacao_sem_tela_branca_patch.js' && man[215] === 'submenu_hover_nfe_patch.js');
+  man.length >= 225 && man[217] === 'navegacao_sem_tela_branca_patch.js' && man[216] === 'submenu_hover_nfe_patch.js');
 ok('bundle contém o patch (guard + PURE)',
   bundle.indexOf('__v60012nav') >= 0 && bundle.indexOf('NAV612_PURE') >= 0);
 

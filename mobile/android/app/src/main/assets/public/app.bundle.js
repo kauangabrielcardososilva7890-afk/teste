@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: e8ad73a6382555fd
+ * scripts: 236 | sha256: ab048aa002299b32
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -835,6 +835,18 @@ function toggleSidebar(forceClose=false){
   if(forceClose===true||!isClosed){sb.classList.add('-translate-x-full'); ov.classList.add('hidden');}
   else{sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden');}
 }
+function reporMenusDinamicos(catsOrdem){
+  const grupos=Array.isArray(catsOrdem)?catsOrdem:(window.__migCategorias||[]);
+  const destinos={locacao:'menu-outsourcing',movimentacao:'menu-outsourcing',financeiro:'menu-financeiro',produtos:'menu-cadastros',cadastros:'menu-cadastros',fiscal:'menu-cadastros',sistema:'menu-config',outros:'menu-cadastros'};
+  const rotulos={locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'};
+  Object.entries(rotulos).forEach(([id,label])=>{
+    const menu=document.getElementById(destinos[id]); if(!menu) return;
+    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
+    const grupo=grupos.find(g=>g.cat.id===id); if(!grupo) return;
+    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
+    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.dataset.nav=item.id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
+  });
+}
 function buildNav(){
   const sess=getSession();
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
@@ -873,19 +885,7 @@ function buildNav(){
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
   
   // Distribui módulos migrados diretamente nas áreas principais, sem uma aba separada.
-  const destinos={
-    locacao:'menu-outsourcing', movimentacao:'menu-outsourcing',
-    financeiro:'menu-financeiro', produtos:'menu-cadastros',
-    cadastros:'menu-cadastros', fiscal:'menu-cadastros',
-    sistema:'menu-config', outros:'menu-cadastros'
-  };
-  Object.entries({locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'}).forEach(([id,label])=>{
-    const menu=document.getElementById(destinos[id]); if(!menu) return;
-    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
-    const grupo=catsOrdem.find(g=>g.cat.id===id); if(!grupo) return;
-    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
-    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
-  });
+  reporMenusDinamicos(catsOrdem);
   const obsolete=document.getElementById('topmod-migrados'); if(obsolete) obsolete.remove();
 
   // Renderizar seção de módulos dinâmicos se houver
@@ -1196,7 +1196,7 @@ function initTemplates(){
 
   document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
 
-  document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select><button onclick="baixarMultiplasCR()" id="btn-baixa-multi" class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hidden">Baixa múltipla</button></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-8"><input type="checkbox" id="cr-select-all" onchange="toggleSelectAllCR()"></th><th class="px-5 py-3">Datas / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
+  document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-24"></th><th class="px-5 py-3">Datas / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
@@ -1595,7 +1595,7 @@ function renderFinanceiro(){
     if(cr.contratoId) return "navigateTo('contratos')";
     return '';
   }
-  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago' && cr.status!=='estornado'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200', estornado:'bg-slate-100 text-slate-500 border-slate-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3">'+(cr.status==='estornado'?'<span class="text-[10px] font-bold text-slate-400">EXTORNADO</span>':'<input type="checkbox" class="cr-check" data-id="'+cr.id+'" onchange="updateBaixaMulti()">')+'</td><td class="px-5 py-3"><p class="text-[12px] font-semibold">Vence '+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[11px] text-slate-500">Criado '+fmtDate(dataCriacaoCR(cr))+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
+  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago' && cr.status!=='estornado'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200', estornado:'bg-slate-100 text-slate-500 border-slate-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3">'+(cr.status==='estornado'?'<span class="text-[10px] font-bold text-slate-400">EXTORNADO</span>':'')+'</td><td class="px-5 py-3"><p class="text-[12px] font-semibold">Vence '+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[11px] text-slate-500">Criado '+fmtDate(dataCriacaoCR(cr))+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
   const dreRows=[{label:'Receita Bruta - Locações', valor: db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0)*1.1},{label:'Receita - Excedentes', valor: db.leituras.filter(l=>l.empresaId===sess.empresaId).reduce((s,l)=>s+l.valorExcedente,0)},{label:'Receita - Vendas', valor: db.vendas.filter(v=>v.empresaId===sess.empresaId).reduce((s,v)=>s+v.total,0)},{label:'(=) Lucro Bruto', valor: 0, isTotal:true}];
   dreRows[3].valor=dreRows[0].valor+dreRows[1].valor+dreRows[2].valor;
   const dreEl=document.getElementById('dre-table'); if(dreEl) dreEl.innerHTML=dreRows.map(r=>'<div class="flex justify-between py-2 px-3 rounded-xl '+(r.isTotal?'bg-[#0a1e8a] text-white font-bold':'hover:bg-slate-50')+' text-[13px]"><span>'+r.label+'</span><span class="'+(r.isTotal?'text-white':'')+'">'+fmtMoney(r.valor)+'</span></div>').join('');
@@ -10042,6 +10042,27 @@ window.openModalChamadoCompleto = function(osId, contratoId){
   }
 };
 
+// ── r66 — o "escolha a impressora" da OS ficou com dois botoes 6os quando o
+// <select> virou lista de bot6es (auditoria de bot6es mortos, rodadas 46/66).
+// Nenhuma regra nova: selecionar = chamar o autoPreencherDadosChamado de sempre
+// e pintar a escolha; editar = reabrir a lista.
+window.selecionarEquipamentoOS=function(eqId){
+  const alvo=(db.equipamentos||[]).find(e=>String(e.id)===String(eqId));
+  if(!alvo){ if(typeof toast==='function') toast('Impressora não encontrada','error'); return; }
+  const sel=document.getElementById('o-equip-sel'); if(sel) sel.value=alvo.id;
+  const nome=document.getElementById('o-equip-nome'); if(nome) nome.innerText=alvo.modelo||'Impressora';
+  const caixa=document.getElementById('o-equip-escolhida'); if(caixa) caixa.classList.remove('hidden');
+  const lista=document.getElementById('o-equip-lista'); if(lista) lista.classList.add('hidden');
+  if(typeof autoPreencherDadosChamado==='function'){ try{ autoPreencherDadosChamado(alvo.id); }catch(e){} }
+};
+window.editarEquipamentoOS=function(){
+  const lista=document.getElementById('o-equip-lista');
+  const caixa=document.getElementById('o-equip-escolhida');
+  if(!lista) return;
+  lista.classList.remove('hidden'); if(caixa) caixa.classList.add('hidden');
+  const primeiro=lista.querySelector('button'); if(primeiro) primeiro.focus();
+};
+
 window.mudarAbaChamado = function(aba){
   ['geral', 'finais', 'eq'].forEach(a => {
     const p = document.getElementById('painel-os-' + a);
@@ -11967,7 +11988,9 @@ function bindEnter(id, cb){
 function btnBusca(onclick){ return `<button type="button" onclick="${onclick}" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>`; }
 
 function ocultarLeiturasSeparadas(){
-  document.querySelectorAll("button[onclick=\"navigateTo('leituras')\"], button[data-nav='leituras']").forEach(el => { el.style.display = 'none'; });
+  // Preserva a entrada do menu dinâmico: ela encaminha o usuário ao contrato
+  // e explica o fluxo novo. Oculta apenas o atalho legado explicitamente marcado.
+  document.querySelectorAll("button[data-nav='leituras']").forEach(el => { el.style.display = 'none'; });
 }
 const oldNavigateToRefino = window.navigateTo;
 if(typeof oldNavigateToRefino === 'function'){
@@ -18917,11 +18940,13 @@ console.log('[DIGICOPY] leitura_busca_fluxo_patch.js v4.9.46 carregado');
 /* ===== leitura_detalhada_departamentos_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.47 — Leitura detalhada por departamento e lançamentos editáveis
+// PATCH v4.9.48 — Leitura detalhada por departamento e lançamentos editáveis
 // • Histórico de leituras só abre no duplo clique
 // • Detalhe da leitura mostra impressoras lançadas, permite editar/remover
 // • Novo lançamento mostra impressoras pendentes e remanejadas separadas
 // • Impressão da leitura agrupa por departamento e soma subtotais/total geral
+// • v4.9.48 (auditoria §47): o lançamento do contador falha fechado — vazio, letra,
+//   decimal, negativo ou ABAIXO do anterior não salvam e não rebaixam o parque vivo
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -19050,19 +19075,43 @@ window.buscarImpressorasLancamento=function(leituraId){
 };
 window.abrirLancamentoContador=function(leituraId, idx=null){
   const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l) return; if(leituraBloqueada(l)) return toastMsg('Leitura faturada. Estorne para alterar.','error'); const edit=idx!=null && l.itens&&l.itens[idx]; const item=edit?l.itens[idx]:null; const c=contratoLeitura(l); const rem=maquinasRemanejadas(c);
-  setModal(edit?'Editar lançamento':'Novo lançamento de contador',`<input type="hidden" id="lan-leitura-id" value="${l.id}"><input type="hidden" id="lan-edit-idx" value="${edit?idx:''}"><div class="space-y-4 text-[13px]"><div class="rounded-xl border bg-slate-50 p-3"><b>Buscar impressora</b><p class="text-[11px] text-slate-500">Busque por modelo, serial, patrimônio ou departamento/localização. Só aparecem medidores ainda pendentes.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2"><select id="lan-filtro-campo" class="h-10 px-3 rounded-xl border"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento/Localização</option></select><input id="lan-filtro-texto" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarImpressorasLancamento('${l.id}') }" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite o termo da busca"><button onclick="buscarImpressorasLancamento('${l.id}')" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i> Buscar</button></div><p id="lan-busca-info" class="text-[11px] text-slate-500 mt-2">${filtrarPendentes(leituraId).length} impressora(s) com medidor pendente — dois cliques para escolher</p></div><div class="font-bold text-slate-600">Impressora<input type="hidden" id="lan-prq" ${edit?'disabled':''} value="${edit?esc(item.parqueId):''}"><div id="lan-prq-lista" role="listbox" class="mt-1 w-full rounded-xl border bg-white" style="max-height:200px;overflow-y:auto">${listaImpressorasHtml((edit?[prq(item.parqueId)]:filtrarPendentes(leituraId)).filter(Boolean))}</div><div class="flex items-center gap-2 mt-1"><p id="lan-prq-nome" class="text-[11px] text-slate-500">${edit?'Impressora do lançamento em edição.':'Nenhuma impressora escolhida ainda. Dê <b>dois cliques</b> no nome para escolher.'}</p><button type="button" id="lan-prq-editar" onclick="editarImpressoraLancamento()" class="${edit?'':'hidden'} w-7 h-7 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div></div><label class="font-bold text-slate-600">Tipo de impressão ativo<select id="lan-med" ${edit?'disabled':''} class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Escolha a impressora</option></select></label><label class="font-bold text-slate-600">Contador atual<input id="lan-cont" type="number" value="${edit?item.atual:''}" autofocus class="mt-1 w-full h-12 px-3 rounded-xl border text-[18px] font-mono font-bold" placeholder="Digite somente o contador"></label>${rem.length?`<div class="rounded-xl border bg-amber-50 p-3"><b>Remanejadas neste contrato</b><p class="text-[11px] text-amber-800">Aparecem só para histórico e não podem receber leitura.</p>${rem.map(p=>{const e=eq(p.equipamentoId)||{}; return `<div class="mt-1 text-[12px]">${esc(e.patrimonio||p.patrimonio||'-')} — ${esc(e.modelo||'')}</div>`;}).join('')}</div>`:''}</div>`,`<button onclick="abrirLeituraContratoDetalhe('${l.id}')" class="neo-btn">Voltar</button><button onclick="salvarLancamentoContador('${l.id}')" class="neo-btn primary">Salvar lançamento</button>`,'820px');
+  setModal(edit?'Editar lançamento':'Novo lançamento de contador',`<input type="hidden" id="lan-leitura-id" value="${l.id}"><input type="hidden" id="lan-edit-idx" value="${edit?idx:''}"><div class="space-y-4 text-[13px]"><div class="rounded-xl border bg-slate-50 p-3"><b>Buscar impressora</b><p class="text-[11px] text-slate-500">Busque por modelo, serial, patrimônio ou departamento/localização. Só aparecem medidores ainda pendentes.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2"><select id="lan-filtro-campo" class="h-10 px-3 rounded-xl border"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento/Localização</option></select><input id="lan-filtro-texto" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarImpressorasLancamento('${l.id}') }" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite o termo da busca"><button onclick="buscarImpressorasLancamento('${l.id}')" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i> Buscar</button></div><p id="lan-busca-info" class="text-[11px] text-slate-500 mt-2">${filtrarPendentes(leituraId).length} impressora(s) com medidor pendente — dois cliques para escolher</p></div><div class="font-bold text-slate-600">Impressora<input type="hidden" id="lan-prq" ${edit?'disabled':''} value="${edit?esc(item.parqueId):''}"><div id="lan-prq-lista" role="listbox" class="mt-1 w-full rounded-xl border bg-white" style="max-height:200px;overflow-y:auto">${listaImpressorasHtml((edit?[prq(item.parqueId)]:filtrarPendentes(leituraId)).filter(Boolean))}</div><div class="flex items-center gap-2 mt-1"><p id="lan-prq-nome" class="text-[11px] text-slate-500">${edit?'Impressora do lançamento em edição.':'Nenhuma impressora escolhida ainda. Dê <b>dois cliques</b> no nome para escolher.'}</p><button type="button" id="lan-prq-editar" onclick="editarImpressoraLancamento()" class="${edit?'':'hidden'} w-7 h-7 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div></div><label class="font-bold text-slate-600">Tipo de impressão ativo<select id="lan-med" ${edit?'disabled':''} class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Escolha a impressora</option></select></label><label class="font-bold text-slate-600">Contador atual<input id="lan-cont" type="number" min="0" step="1" inputmode="numeric" value="${edit?item.atual:''}" oninput="this.classList.remove('border-red-500','ring-1','ring-red-400')" autofocus class="mt-1 w-full h-12 px-3 rounded-xl border text-[18px] font-mono font-bold" placeholder="Digite somente o contador"></label>${rem.length?`<div class="rounded-xl border bg-amber-50 p-3"><b>Remanejadas neste contrato</b><p class="text-[11px] text-amber-800">Aparecem só para histórico e não podem receber leitura.</p>${rem.map(p=>{const e=eq(p.equipamentoId)||{}; return `<div class="mt-1 text-[12px]">${esc(e.patrimonio||p.patrimonio||'-')} — ${esc(e.modelo||'')}</div>`;}).join('')}</div>`:''}</div>`,`<button onclick="abrirLeituraContratoDetalhe('${l.id}')" class="neo-btn">Voltar</button><button onclick="salvarLancamentoContador('${l.id}')" class="neo-btn primary">Salvar lançamento</button>`,'820px');
   if(edit){ document.getElementById('lan-prq').value=item.parqueId; pintarLinhaEscolhida(item.parqueId, true); atualizarTiposLancamento(); document.getElementById('lan-med').value=item.medidor; }
 };
 window.atualizarTiposLancamento=function(){ const l=(db.leituras||[]).find(x=>x.id===document.getElementById('lan-leitura-id')?.value)||{itens:[]}; const idx=document.getElementById('lan-edit-idx')?.value; const p=prq(document.getElementById('lan-prq')?.value); const sel=document.getElementById('lan-med'); if(!sel) return; let meds=p?medPendentes(p,l):[]; if(idx!==''&&p){ const item=l.itens[Number(idx)]; const old=medAtivos(p).find(m=>m.key===item.medidor); if(old&&!meds.find(m=>m.key===old.key)) meds=[old,...meds]; } sel.innerHTML=p?meds.map(m=>`<option value="${m.key}">${esc(m.label)} — ${esc(m.modalidade)}</option>`).join('')||'<option value="">Todos os tipos ativos já lançados</option>':'<option value="">Escolha a impressora</option>'; };
 window.editarLancamentoLeitura=function(leituraId,idx){ abrirLancamentoContador(leituraId,idx); };
 window.removerLancamentoLeitura=function(leituraId,idx){ const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l||leituraBloqueada(l)) return toastMsg('Leitura faturada. Estorne para alterar.','error'); if(!confirm('Remover este lançamento? Ele voltará para pendente.')) return; l.itens.splice(idx,1); l.valorTotal=l.itens.reduce((s,x)=>s+n(x.valorTotal),0); l.valorExcedente=l.valorTotal; salvar(); abrirLeituraContratoDetalhe(leituraId); };
-window.salvarLancamentoContador=function(leituraId){ const l=(db.leituras||[]).find(x=>x.id===leituraId); const p=prq(document.getElementById('lan-prq')?.value); if(!l||!p) return toastMsg('Selecione a impressora','error'); if(leituraBloqueada(l)) return toastMsg('Leitura faturada. Estorne para alterar.','error'); const key=document.getElementById('lan-med')?.value; const med=medAtivos(p).find(m=>m.key===key); if(!med) return toastMsg('Selecione um tipo ativo','error'); const atual=n(document.getElementById('lan-cont')?.value); const e=eq(p.equipamentoId)||{}; p.contadores=p.contadores||{}; const anterior=n(p.contadores[key] ?? med.contadorInicial); const r=calc(med,anterior,atual); p.contadores[key]=atual; const item={parqueId:p.id,equipamentoId:p.equipamentoId,impressora:`${e.patrimonio||''} ${e.modelo||''}`.trim(),modelo:e.modelo||'',patrimonio:e.patrimonio||p.patrimonio||'',serial:e.serie||'',departamento:p.setor||'Sem departamento',setor:p.setor||'Sem departamento',localizacao:p.localInstalacao||'',medidor:key,medidorLabel:med.label,modalidade:med.modalidade,franquia:n(med.franquia),valorUnitario:r.valorUnitario,anterior,atual,utilizado:r.usado,excedente:r.excedente,acrescimo:n(med.acrescimo),valorExcedente:n(med.valorExcedente),valorTotal:r.valorTotal}; const idx=document.getElementById('lan-edit-idx')?.value; l.itens=l.itens||[]; if(idx!=='') l.itens[Number(idx)]=item; else l.itens.push(item); l.valorTotal=l.itens.reduce((s,x)=>s+n(x.valorTotal),0); l.valorExcedente=l.valorTotal; salvar(); toastMsg('Lançamento salvo','success'); abrirLeituraContratoDetalhe(l.id); };
+window.salvarLancamentoContador=function(leituraId){ const l=(db.leituras||[]).find(x=>x.id===leituraId); const p=prq(document.getElementById('lan-prq')?.value); if(!l||!p) return toastMsg('Selecione a impressora','error'); if(leituraBloqueada(l)) return toastMsg('Leitura faturada. Estorne para alterar.','error'); const key=document.getElementById('lan-med')?.value; const med=medAtivos(p).find(m=>m.key===key); if(!med) return toastMsg('Selecione um tipo ativo','error'); const e=eq(p.equipamentoId)||{}; p.contadores=p.contadores||{}; const anterior=n(p.contadores[key] ?? med.contadorInicial); const chk=validarContadorLancamento(document.getElementById('lan-cont')?.value, anterior); if(!chk.ok){ const campo=document.getElementById('lan-cont'); if(campo){ campo.focus(); campo.classList.add('border-red-500','ring-1','ring-red-400'); } return toastMsg(chk.msg,'error'); } const atual=chk.atual; const r=calc(med,anterior,atual); p.contadores[key]=atual; const item={parqueId:p.id,equipamentoId:p.equipamentoId,impressora:`${e.patrimonio||''} ${e.modelo||''}`.trim(),modelo:e.modelo||'',patrimonio:e.patrimonio||p.patrimonio||'',serial:e.serie||'',departamento:p.setor||'Sem departamento',setor:p.setor||'Sem departamento',localizacao:p.localInstalacao||'',medidor:key,medidorLabel:med.label,modalidade:med.modalidade,franquia:n(med.franquia),valorUnitario:r.valorUnitario,anterior,atual,utilizado:r.usado,excedente:r.excedente,acrescimo:n(med.acrescimo),valorExcedente:n(med.valorExcedente),valorTotal:r.valorTotal}; const idx=document.getElementById('lan-edit-idx')?.value; l.itens=l.itens||[]; if(idx!=='') l.itens[Number(idx)]=item; else l.itens.push(item); l.valorTotal=l.itens.reduce((s,x)=>s+n(x.valorTotal),0); l.valorExcedente=l.valorTotal; salvar(); toastMsg('Lançamento salvo','success'); abrirLeituraContratoDetalhe(l.id); };
 window.estornarLeituraContrato=function(leituraId){ const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l) return; if(!confirm('Estornar esta leitura para permitir edição?')) return; l.status='estornada'; (db.contasReceber||[]).forEach(c=>{ if(c.leituraId===l.id){ c.status='estornado'; c.pagamentoData=null; }}); salvar(); abrirLeituraContratoDetalhe(l.id); };
 window.faturarLeituraContrato=function(leituraId){ const s=sess(); const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!s||!l) return; const c=contratoLeitura(l); const r=linhaLeitura(l); let cr=(db.contasReceber||[]).find(x=>x.leituraId===l.id); const dados={empresaId:s.empresaId,origem:'leitura',clienteId:r.cl.id,descricao:`Leitura ${l.numero||''} — ${r.cl.nome||''}`,valor:r.total,vencimento:new Date().toISOString(),pagamentoData:null,status:'aberto',contratoId:c&&c.id,leituraId:l.id,vendaId:null,criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome}; if(cr) Object.assign(cr,dados); else db.contasReceber.push({id:uidSafe('cr'),...dados}); l.status='faturado'; salvar(); toastMsg('Leitura faturada no financeiro','success'); abrirLeituraContratoDetalhe(l.id); };
 window.imprimirLeituraContrato=function(leituraId){ const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l) return; const r=linhaLeitura(l); const c=r.c; const grupos=agruparPorDepartamento(l.itens||[]); const totalGeral={usado:r.usado,excedente:r.exc,total:r.total}; const html=`<!doctype html><html><head><meta charset="utf-8"><title>Leitura ${esc(l.numero)}</title><style>body{font-family:Arial;margin:24px;color:#111}h1{color:#0a1e8a;margin:0 0 6px}.top{border-bottom:3px solid #0a1e8a;padding-bottom:10px;margin-bottom:14px}.dept{margin-top:16px;border:1px solid #ccc}.dept h2{margin:0;background:#eaf0ff;color:#0a1e8a;font-size:15px;padding:8px}.item{border-top:1px solid #ddd;padding:8px 10px}.item-head{display:grid;grid-template-columns:90px 70px 1fr;background:#e5e5e5;border:1px solid #222;font-weight:bold;font-size:14px;padding:2px 8px}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 18px;font-size:12px;margin-top:6px}.subtotal,.total{font-weight:bold;text-align:right;padding:8px}.total{font-size:20px;color:#0a1e8a}.no-print{margin-bottom:12px}@media print{.no-print{display:none}}</style></head><body><button class="no-print" onclick="window.print()">Imprimir / Salvar PDF</button><div class="top"><h1>DIGICOPY — Notinha de leitura</h1><div><b>Cliente:</b> ${esc(r.cl.nome||'')} • <b>Contrato:</b> ${esc(c&&c.numero||'')} • <b>Período:</b> ${esc(l.dataInicio||'')} a ${esc(l.dataFim||'')}</div></div>${grupos.map(g=>`<div class="dept"><h2>Departamento: ${esc(g.departamento)}</h2>${g.itens.map(it=>`<div class="item"><div class="item-head"><span>${esc((it.medidorLabel||'').replace(' A4','').replace(' A3','').toUpperCase())}</span><span>${esc(cod(it.patrimonio)||'')}</span><span>${esc(it.modelo||it.impressora||'')}</span></div><div class="grid"><div><b>Serial:</b> ${esc(it.serial||'')}</div><div><b>Vlr Qtde:</b> ${n(it.valorUnitario).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div><b>Anterior:</b> ${it.anterior}</div><div><b>Depart:</b> ${esc(it.departamento||'')}</div><div><b>Excedeu:</b> ${it.excedente}</div><div><b>Qtde Atual:</b> ${it.atual}</div><div><b>Franquia:</b> ${it.franquia||0}</div><div><b>Vlr Exc:</b> ${n(it.valorExcedente).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div><b>Utilizado:</b> ${it.utilizado}</div><div></div><div></div><div><b>Acrésc:</b> ${money(it.acrescimo||0)}<br><b>Vlr Exced:</b> ${money((it.excedente||0)*(it.valorExcedente||it.valorUnitario||0))}<br><b>Valor Total:</b> ${money(it.valorTotal)}</div></div></div>`).join('')}<div class="subtotal">Subtotal ${esc(g.departamento)} — Utilizado: ${g.utilizado} • Excedente: ${g.excedente} • ${money(g.total)}</div></div>`).join('')}<div class="total">TOTAL GERAL — Utilizado: ${totalGeral.usado} • Excedente: ${totalGeral.excedente} • ${money(totalGeral.total)}</div></body></html>`; const w=window.open('','_blank'); w.document.write(html); w.document.close(); };
 
-window.LEITURA_DETALHADA_DEPARTAMENTOS_PURE={ agruparPorDepartamento, medPendentes, calc };
-console.log('[DIGICOPY] leitura_detalhada_departamentos_patch.js v4.9.47 carregado');
+/* LDP_CONTADOR_PURE_START */
+// ── v4.9.48 — validação do lançamento de contador (AUDITORIA_TECNICA §47) ──────────
+// Fail closed: sem número, com letra, decimal, negativo ou ABAIXO do anterior o
+// lançamento não é gravado. `anterior` é o mesmo número que a tela mostra; na
+// edição pós-estorno o v5.24.36 já alinha o parque vivo ao anterior congelado do
+// item, então a régua continua certa nos dois caminhos (novo e editar).
+// Bloco autocontido (sem depender de txt/n) e marcado para o teste extrair e rodar.
+function validarContadorLancamento(bruto, anterior){
+  const s=String(bruto ?? '').trim();
+  if(!s) return { ok:false, motivo:'vazio', msg:'Digite o contador atual. Sem número, o lançamento não é gravado.' };
+  if(!/^\+?\d+$/.test(s)){
+    if(/^-\d+$/.test(s)) return { ok:false, motivo:'negativo', msg:'Contador não pode ser negativo.' };
+    if(/^\+?\d+[.,]\d+$/.test(s)) return { ok:false, motivo:'fracionário', msg:'Contador de página é número inteiro: sem vírgula e sem ponto decimal.' };
+    return { ok:false, motivo:'inválido', msg:'Contador inválido: digite somente números, sem letra e sem símbolo.' };
+  }
+  const atual=Number(s);
+  if(!Number.isSafeInteger(atual) || atual<0) return { ok:false, motivo:'grande', msg:'Contador grande demais para ser lançado aqui.' };
+  const convertido=Number(String(anterior ?? '').replace(',','.'));
+  const ant=Number.isFinite(convertido) && convertido>0 ? convertido : 0;
+  if(atual<ant) return { ok:false, motivo:'menor', anterior:ant, msg:'O contador não pode ser menor que o anterior ('+ant.toLocaleString('pt-BR')+'). Se o medidor foi trocado ou zerado, ajuste o medidor na impressora antes de lançar.' };
+  return { ok:true, atual, anterior:ant };
+}
+/* LDP_CONTADOR_PURE_END */
+
+window.LEITURA_DETALHADA_DEPARTAMENTOS_PURE={ agruparPorDepartamento, medPendentes, calc, validarContadorLancamento };
+console.log('[DIGICOPY] leitura_detalhada_departamentos_patch.js v4.9.48 carregado');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("leitura_detalhada_departamentos_patch.js", e); }
@@ -22459,6 +22508,7 @@ function hoje(){ return new Date().toISOString().slice(0,10); }
 function dia(v){ return String(v||'').slice(0,10); }
 function sess(){ return typeof getSession==='function'?getSession():null; }
 function toastMsg(m,t){ if(typeof window.lfbAlert==='function') window.lfbAlert(m,'Aviso'); else if(typeof toast==='function') toast(m,t||'info'); }
+function toastAtalhoLocacao(m,t){ if(typeof window.toast==='function') window.toast(m,t||'info'); else toastMsg(m,t||'info'); }
 function clienteTemContrato(clienteId){
   return (db.contratos||[]).some(c => c.clienteId===clienteId && c.status!=='excluido' && c.status!=='encerrado');
 }
@@ -22526,19 +22576,22 @@ function montarMenuLocacao(){
   if(!menu) return;
   menu.innerHTML =
     '<button onclick="navigateTo(\'contratos\')"><i class="ph ph-file-text"></i>Contratos</button>'+
+    '<button onclick="navigateTo(\'parque\')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button>'+
+    '<button onclick="navigateTo(\'leituras\')"><i class="ph ph-speedometer"></i>Leituras</button>'+
     '<button onclick="navigateTo(\'impressoras\')"><i class="ph ph-printer"></i>Impressoras</button>';
-  // v5.22.81: Chamados NÃO é submenu de Locação. Era esta função que recolocava
-  // o botão a cada navegação, por isso ele voltava mesmo depois de removido dos
-  // outros lugares. Os chamados continuam em Atendimento e dentro do contrato.
+  // Chamados continuam em Atendimento e dentro do contrato. Parque encaminha
+  // à tela unificada de Impressoras; Leituras abre Contratos, pois o fluxo
+  // antigo de leitura avulsa foi aposentado em favor da leitura por contrato.
 }
 const _nav = window.navigateTo;
 if(typeof _nav==='function' && !_nav.__lcMenu){
   window.navigateTo = function(view){
     if(view==='parque' || view==='leituras'){
       if(view==='leituras'){
-        toastMsg('As leituras ficam dentro do contrato. Abra Locação > Contratos.','info');
+        toastAtalhoLocacao('As leituras ficam dentro do contrato. Abra Locação > Contratos.','info');
         return _nav.call(this, 'contratos');
       }
+      toastAtalhoLocacao('O parque de máquinas está integrado à tela Impressoras.','info');
       return _nav.call(this, 'impressoras');
     }
     if(view==='manutencao'){
@@ -27558,7 +27611,7 @@ window.renderUsuarios = function(){
 
   view.innerHTML = `<div class="neo-shell"><div class="neo-panel neo-float-in">
     <div class="neo-head">
-      <div><h3>Usuários e permissões</h3><p>Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div>
+      <div><h3>Usuários e permissões</h3></div>
       <div class="neo-actions">
         <button onclick="openModalCriarUsuario()" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo usuário</button>
         <button onclick="openModalNovoTecnico()" class="neo-btn"><i class="ph ph-plus-circle"></i>Novo técnico</button>
@@ -27666,13 +27719,12 @@ window.saveUsuarioFinal = async function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  // v5.24.34 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
-  // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
-  // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
-  // por onde "salvei e o login não entra" escapava em silêncio.
-  var provaLogin = (db.usuarios || []).some(function(x){ return x && fold(x.login) === login && txt(x.senha) === senha && x.ativo; });
+  // v5.24.34 — PROVA DE GRAVAÇÃO. Confere se os dados salvos correspondem ao
+  // estado escolhido no formulário. Um usuário inativo também foi salvo com
+  // sucesso; a inatividade só impede login e não deve gerar falso alerta.
+  var provaLogin = (db.usuarios || []).some(function(x){ return x && x.empresaId === s.empresaId && fold(x.login) === login && txt(x.senha) === senha && !!x.ativo === ativo && perfilEfetivo(x) === perfil; });
   if(provaLogin){
-    toastMsg('Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.', 'success');
+    toastMsg(ativo ? 'Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.' : 'Usuário salvo como inativo; o login está desativado.', 'success');
   } else if(typeof window.lfbAlert === 'function'){
     window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
   } else {
@@ -30761,6 +30813,7 @@ function indicator(ok,text){
 // Agora: aba escondida e não-líder não faz nada; aba VISÍVEL puxa (só leitura).
 // Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
 async function tickSohLeitura(reason){
+  if(!authorized())return false;
   if(typeof document==='undefined'||document.hidden)return false;
   busy=true;lastTick=Date.now();
   const geracao=estadoGeracao;
@@ -30782,6 +30835,7 @@ async function tickSohLeitura(reason){
 // nuvem (só leitura: nunca envia, nunca duplica). Com carência de 2,5 s (pular
 // de tela em tela não vira rajada) e sem furar um ciclo em andamento.
 async function puxarAoAbrirTela(){
+  if(!authorized())return false;
   if(busy) return false;
   if(Date.now()-lastTick<2500) return 'recente';
   return tickSohLeitura('abrir-tela');
@@ -34469,6 +34523,8 @@ function menusPadrao(){
     ]},
     {id:'locacao', icon:'ph-printer', label:'Locação', click:'navigateTo(\'contratos\')', menuId:'menu-outsourcing', items:[
       {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
+      {id:'parque', icon:'ph-map-pin', label:'Máquinas nos clientes', click:'navigateTo(\'parque\')'},
+      {id:'leituras', icon:'ph-speedometer', label:'Leituras', click:'navigateTo(\'leituras\')'},
       {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'}
     ]},
     // v5.24.34 — MENU DE NF DE VERDADE (relatório dele: 'os menus de NF não estão
@@ -35481,6 +35537,9 @@ window.pintarMenus = function(){
   if(status) html += status.outerHTML;
   row.innerHTML = html;
   try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
+  // row.innerHTML recria a faixa e remove links migrados; restaurar só os
+  // submenus do topo, sem rebuild da navegação lateral.
+  try{ if(typeof window.reporMenusDinamicos==='function') window.reporMenusDinamicos(window.__migCategorias); }catch(e){}
 };
 
 window.uiMenuMover = function(btn, dir){
@@ -40272,6 +40331,16 @@ if(typeof document==='undefined') return;
 
 var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'hoje', q:'' });
 
+// v7.3.14 — o filtro e o renderer principal tinham estados de busca separados.
+// Sincronize até quando a busca foi apagada (string vazia é um valor explícito).
+function sincronizarBusca(q){
+  q = q == null ? '' : String(q);
+  STATE.q = q;
+  var estadoFinal = window.__CONTRATOS_FINAL_STATE__;
+  if(estadoFinal) estadoFinal.busca = q;
+  return q;
+}
+
 function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
 }
@@ -40315,10 +40384,13 @@ function injetar(){
     btnTodos.innerHTML='<i class="ph ph-list"></i> Mostrar todos';
     btnTodos.title='Mostra todos os contratos (o padrão novo da tela é só os de hoje)';
     btnTodos.onclick=function(){
-      STATE.campo='todos'; STATE.q='';
+      STATE.campo='todos'; sincronizarBusca('');
       var selEl=document.getElementById('ctr-filtro-campo'); if(selEl) selEl.value='todos';
       var bx=document.getElementById('search-contratos'); if(bx) bx.value='';
-      if(typeof window.renderContratos==='function') window.renderContratos();
+      var statusEl=document.getElementById('filter-contrato-status'); if(statusEl) statusEl.value='';
+      var estadoFinal=window.__CONTRATOS_FINAL_STATE__; if(estadoFinal) estadoFinal.status='';
+      if(typeof window.contratosFinalBuscar==='function') window.contratosFinalBuscar();
+      else if(typeof window.renderContratos==='function') window.renderContratos();
     };
     pai.insertBefore(btnTodos, busca);
   }
@@ -40328,9 +40400,14 @@ if(typeof window.renderContratos==='function' && !window.renderContratos.__v5223
   var old=window.renderContratos;
   window.renderContratos=function(){
     var s=typeof getSession==='function'?getSession():null;
-    var campo=(document.getElementById('ctr-filtro-campo')||{}).value || STATE.campo || 'todos';
-    var q=(document.getElementById('search-contratos')||{}).value || STATE.q || '';
-    STATE.campo=campo; STATE.q=q;
+    var campoEl=document.getElementById('ctr-filtro-campo');
+    var buscaEl=document.getElementById('search-contratos');
+    var campo=campoEl ? campoEl.value : (STATE.campo || 'todos');
+    var q=buscaEl ? buscaEl.value : (STATE.q || '');
+    STATE.campo=campo; sincronizarBusca(q);
+    var statusEl=document.getElementById('filter-contrato-status');
+    var estadoFinal=window.__CONTRATOS_FINAL_STATE__;
+    if(statusEl && estadoFinal) estadoFinal.status=statusEl.value || '';
     if(s && typeof db!=='undefined'){
       var orig=db.contratos;
       try{
@@ -40352,8 +40429,10 @@ if(typeof window.renderContratos==='function' && !window.renderContratos.__v5223
 if(typeof window.contratosFinalBuscar==='function' && !window.contratosFinalBuscar.__v52237fil){
   var oldB=window.contratosFinalBuscar;
   window.contratosFinalBuscar=function(){
-    STATE.q=document.getElementById('search-contratos')&&document.getElementById('search-contratos').value||'';
-    STATE.campo=document.getElementById('ctr-filtro-campo')&&document.getElementById('ctr-filtro-campo').value||'todos';
+    var buscaEl=document.getElementById('search-contratos');
+    if(buscaEl) sincronizarBusca(buscaEl.value);
+    var campoEl=document.getElementById('ctr-filtro-campo');
+    if(campoEl) STATE.campo=campoEl.value;
     return oldB.apply(this, arguments);
   };
   window.contratosFinalBuscar.__v52237fil=true;
@@ -43645,6 +43724,8 @@ function rotasDoModulo(mod){
     if(pai) partes.push(pai.getAttribute('onclick') || '');
     mod.querySelectorAll(':scope > .module-menu > button, :scope > .module-menu a').forEach(function(item){
       partes.push(item.getAttribute('onclick') || item.getAttribute('href') || '');
+      var destino = item.getAttribute('data-nav');
+      if(destino) partes.push("navigateTo('"+destino+"')");
     });
   }catch(e){
     // :scope não existe em alguns WebViews antigos; ainda assim nunca use o
@@ -45661,7 +45742,11 @@ try{
         var uN = fold(u.nome);
         var uP = uN.split(/\s+/)[0];
         var matchLogin = (dL === uL || dL === uN || dL === uP);
-        var matchSenha = (txt(u.senha) === dS);
+        // Com hash+salt, o hash é a fonte de verdade. Não aceitar `senha`
+        // em texto nesse caso: cópias antigas/atrasadas podem manter a senha
+        // anterior nesse campo, mesmo depois da troca para um hash novo.
+        var temHashAtivo = !!(u.senhaHash && u.senhaSalt);
+        var matchSenha = !temHashAtivo && (txt(u.senha) === dS);
         return matchLogin && matchSenha;
       });
       if(found) return found;
@@ -50184,6 +50269,13 @@ try{
 //
 // Vale para os menus da faixa azul (.module-menu), sugestões (.neo-suggest)
 // e qualquer lista marcada com data-menu-flutuante.
+//
+// v5.22.69 (r66 — 'telas apertadas', adiamento que ele liberou): o mesmo
+// cuidado agora vale para o MODAL. O corpo rola sozinho e o rodapé continua
+// vivo embaixo, o modal largo respeita a janela e, em tela estreita, as grades
+// de campos caem para 1 coluna. Em tela grande nada muda: as regras novas ficam
+// dentro de media queries (só a rolagem do corpo vale sempre, e ela é invisível
+// quando o conteúdo cabe).
 // ═══════════════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
@@ -50228,16 +50320,35 @@ try{
     return { left: Math.round(left), top: Math.round(botao.top + botao.altura + 2) };
   }
 
+  // Regras da rodada 66 ('telas apertadas'). Ficam numa constante para que o
+  // teste confira exatamente o que vai para a página — e para o css() abaixo não
+  // duplicar nada.
+  var CSS_TELA_APERTADA =
+    '#modal-root #modal-box{max-height:94vh}' +
+    '#modal-root #modal-body{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}' +
+    '#modal-root #modal-footer{flex:0 0 auto}' +
+    '@media (max-width:1200px){' +
+      '#modal-root #modal-box{max-width:96vw}' +
+      '#modal-root #modal-body .grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}' +
+      '#modal-root #modal-body .flex.items-center.justify-end{flex-wrap:wrap;gap:6px}' +
+      '#modal-root #modal-footer button{white-space:nowrap}' +
+    '}' +
+    '@media (max-width:820px){' +
+      '#modal-root #modal-body .grid{grid-template-columns:1fr}' +
+      '#modal-root #modal-box{max-height:96vh}' +
+    '}';
   window.MENUS_TELA_PEQUENA_PURE = {
     ajusteNecessario: ajusteNecessario,
     precisaRolar: precisaRolar,
     posicaoDoMenu: posicaoDoMenu,
     FOLGA: FOLGA,
     MIN_ALTURA: MIN_ALTURA,
-    VERSAO: '5.22.67'
+    VERSAO: '5.22.69',
+    TELA_APERTADA: CSS_TELA_APERTADA,
   };
 
-  if (typeof document === 'undefined') return;
+
+if (typeof document === 'undefined') return;
 
   var SELETOR = '.module-menu, .neo-suggest, [data-menu-flutuante]';
 
@@ -50252,7 +50363,8 @@ try{
       '.module-row.digi-row-rola::-webkit-scrollbar-thumb{background:#c7d2e4;border-radius:6px}' +
       '.module-row.digi-row-rola::-webkit-scrollbar-track{background:transparent}' +
       '.module-row.digi-row-rola > *{flex:0 0 auto}' +
-      '.module-row.digi-row-rola .module-menu{position:fixed;top:auto;left:auto;z-index:1200}';
+      '.module-row.digi-row-rola .module-menu{position:fixed;top:auto;left:auto;z-index:1200}' +
+      CSS_TELA_APERTADA;
     document.head.appendChild(st);
   }
 
@@ -53829,6 +53941,107 @@ try{
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5264_chamado_data_grande_patch.js", e); }
+;
+
+/* ===== orcamento_cloud_guard_patch.js ===== */
+try{
+// v5.22.94 — barreira de autorização e deduplicação do polling de orçamentos.
+// Várias camadas legadas iniciavam verificações simultâneas de /orcamento?c=.
+// Em modo local/desconectado a consulta responde como pendente sem sair do aparelho;
+// quando a Nuvem está autorizada e ativa, chamadas idênticas são deduplicadas.
+(function(root){
+  'use strict';
+  if(!root || typeof root.fetch !== 'function') return;
+  if(root.fetch.__digicopyOrcamentoCloudGuard) return;
+
+  var originalFetch = root.fetch;
+  var inflight = new Map();
+  var DEDUPE_MS = 1500;
+
+  function autorizado(){
+    try{
+      var sync = root.DIGICOPY_CLOUD_SYNC;
+      if(sync && typeof sync.info === 'function'){
+        var info = sync.info() || {};
+        return !!info.authorized && !info.paused;
+      }
+    }catch(e){ return false; }
+    try{
+      var cloud = root.DIGICOPY_CLOUD;
+      return !!(cloud && typeof cloud.token === 'function' && cloud.token());
+    }catch(e){ return false; }
+  }
+
+  function requestMeta(input, init){
+    var rawUrl = '';
+    var method = '';
+    try{ rawUrl = typeof input === 'string' ? input : (input && input.url) || String(input || ''); }catch(e){}
+    try{ method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase(); }catch(e){ method = 'GET'; }
+    try{
+      var url = new URL(rawUrl, root.location && root.location.href || 'http://localhost/');
+      if(method === 'GET' && /(?:^|\/)orcamento$/.test(url.pathname) && url.searchParams.has('c')) return { key:url.href };
+    }catch(e){}
+    return null;
+  }
+
+  function response(body){
+    var json = JSON.stringify(body);
+    var Ctor = root.Response || (typeof Response === 'function' ? Response : null);
+    if(Ctor){
+      try{ return new Ctor(json, {status:200, headers:{'Content-Type':'application/json'}}); }catch(e){}
+    }
+    return {ok:true,status:200,json:function(){return Promise.resolve(body);},text:function(){return Promise.resolve(json);}};
+  }
+
+  function snapshot(res){
+    if(!res || typeof res.clone !== 'function') return Promise.resolve({original:res});
+    return res.clone().text().then(function(body){
+      var headers=[];
+      try{ if(res.headers && typeof res.headers.forEach === 'function') res.headers.forEach(function(v,k){headers.push([k,v]);}); }catch(e){}
+      return {body:body,status:res.status||200,statusText:res.statusText||'',headers:headers};
+    });
+  }
+
+  function replay(item){
+    if(item && Object.prototype.hasOwnProperty.call(item,'original')) return item.original;
+    var Ctor = root.Response || (typeof Response === 'function' ? Response : null);
+    if(Ctor){
+      try{
+        var noBody = item.status === 204 || item.status === 205 || item.status === 304;
+        return new Ctor(noBody ? null : item.body, {status:item.status||200,statusText:item.statusText||'',headers:item.headers||[]});
+      }catch(e){}
+    }
+    return {ok:(item.status||200) >= 200 && (item.status||200) < 300,status:item.status||200,json:function(){try{return Promise.resolve(JSON.parse(item.body||'{}'));}catch(e){return Promise.resolve({});}},text:function(){return Promise.resolve(item.body||'');}};
+  }
+
+  function guardedFetch(input, init){
+    var context = this;
+    var args = arguments;
+    var meta = requestMeta(input, init);
+    if(!meta) return originalFetch.apply(context, args);
+    if(!autorizado()) return Promise.resolve(response({ok:true,status:'aberto',localOnly:true}));
+
+    var now = Date.now();
+    var current = inflight.get(meta.key);
+    if(current && current.expiresAt >= now) return current.promise.then(replay);
+
+    var entry = {expiresAt:now + DEDUPE_MS, promise:null};
+    entry.promise = Promise.resolve().then(function(){ return originalFetch.apply(context, args); }).then(snapshot).catch(function(err){
+      if(inflight.get(meta.key) === entry) inflight.delete(meta.key);
+      throw err;
+    });
+    inflight.set(meta.key, entry);
+    var timer = setTimeout(function(){ if(inflight.get(meta.key) === entry) inflight.delete(meta.key); }, DEDUPE_MS);
+    if(timer && typeof timer.unref === 'function') timer.unref();
+    return entry.promise.then(replay);
+  }
+  guardedFetch.__digicopyOrcamentoCloudGuard = true;
+  guardedFetch.__originalFetch = originalFetch;
+  root.fetch = guardedFetch;
+  root.DIGICOPY_ORCAMENTO_CLOUD_GUARD = {authorized:autorizado,isQuotePoll:function(input,init){return !!requestMeta(input,init);}};
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("orcamento_cloud_guard_patch.js", e); }
 ;
 
 /* ===== painel_gerente_patch.js ===== */
@@ -57916,7 +58129,7 @@ try{
   var IMPRESSORA_TIPO = [['0', '0 - Mini impressora (térmica)'], ['1', '1 - Laser/Tinta (Spooler)']];
   var FCP_UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
   var VENDA_NF_ABAS = ['Gerais', 'Destinatário', 'Itens da Nota', 'Informações Adicionais', 'Transporte', 'Correções', 'Reforma Tributária', 'Referenciar', 'Log'];
-  var CONFIG_ABAS = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma'];
+  var CONFIG_ABAS = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma', 'Log Fiscal'];
 
   function fxCfgPadrao() {
     return {
@@ -57933,7 +58146,21 @@ try{
     };
   }
   function fxItemVazio(n) {
-    return { n: n || 1, gtin: '', cprod: '', descricao: '', ncm: '', cest: '', cfop: '5102', csosn: '102', qtd: 1, un: 'UN', vunit: 0, vtotal: 0, tipo: 'PRODUTO', desconto: 0, bc: 0, perfilCod: '', trib: { icmsBase: 0, icmsValor: 0, stBase: 0, stPerc: 0, stValor: 0, ipiCst: '99', ipiPerc: 0, ipiValor: 0, pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, beneficio: '', icmsDeson: 0, fcpPerc: 0, fcpValor: 0, efetBase: 0, efetValor: 0, pedido: '', pedidoItem: '', refCst: '000', refClassif: '000001', refIbsUfPerc: 0.1, refIbsMunPerc: 0, refCbsPerc: 0.9, imp: { di: '', dtReg: '', codExp: '', via: '', afrmm: 0, forma: '', desembData: '', desembUf: '', desembLocal: '', iof: 0, despAduan: 0, ii: 0, pais: '1058 BRASIL' } } };
+    return {
+      n: n || 1, gtin: '', cprod: '', descricao: '', ncm: '', cest: '', cfop: '5102', csosn: '102',
+      qtd: 1, un: 'UN', vunit: 0, vtotal: 0, tipo: 'PRODUTO', desconto: 0, bc: 0, perfilCod: '',
+      trib: {
+        icmsBase: 0, icmsPerc: 0, icmsValor: 0, icmsDif: 0, icmsUfRemet: 0, icmsUfDest: 0,
+        stBase: 0, stPerc: 0, stValor: 0, stValorRet: 0, stValorDest: 0, stFcpPercMaisSt: 0, stValorSubstituido: 0,
+        ipiCst: '99', ipiPerc: 0, ipiValor: 0, pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0,
+        beneficio: '', icmsDeson: 0, fcpBase: 0, fcpPerc: '', fcpValor: 0, fcpDestBase: 0, fcpDestPerc: '', fcpDestValor: 0,
+        fcpStBase: 0, fcpStPerc: '', fcpStValor: 0, efetBase: 0, efetPerc: 0, efetValor: 0, efetReducao: 0, pedido: '', pedidoItem: '',
+        icmsComUn: '', icmsComQtd: '', icmsComVUnit: '', icmsComVTotal: '', icmsTribUn: '', icmsTribQtd: '', icmsTribVUnit: '', icmsTribVTotal: '',
+        refCst: '', refClassif: '', refIbsUfPerc: '', refIbsMunPerc: '', refCbsPerc: '', refReformaRevisado: false,
+        refDevIbsUf: '', refDevIbsMun: '', refDevCbs: '',
+        imp: { di: '', dtReg: '', codExp: '', via: '', afrmm: 0, forma: '', desembData: '', desembUf: '', desembLocal: '', adicaoNumero: '', codFabricante: '', desconto: '', base: '', iof: 0, despAduan: 0, ii: 0, codPais: '', nomePais: '', pais: '' }
+      }
+    };
   }
   function fxPagamentoVazio() { return { forma: '01', valor: 0 }; }
   function fxNotaVazia(numero, usuario) {
@@ -57945,7 +58172,7 @@ try{
       totais: { despAcess: 0, produtos: 0, servicos: 0, ipi: 0, icmsST: 0, frete: 0, seletivo: 0, ibs: 0, cbs: 0, descontos: 0, total: 0, tribAprox: 0 },
       frete: { modalidade: '9', transportadora: { doc: '', nome: '', ie: '', endereco: '', cidade: '', uf: '', email: '' }, veiculo: { placa: '', uf: '', rntc: '' }, volumes: [] },
       infos: { preConfig: '', complementares: '', geradasAuto: '', empenho: '', pedido: '', contrato: '' },
-      refs: [], reforma: { cst: '000', classif: '000001', base: 0 },
+      refs: [], reforma: { cst: '', classif: '', base: 0 },
       creditoIcms: 0, status: 'Não Gerada', ambiente: '', emailMarcado: false, log: [], criadoEm: new Date().toISOString()
     };
   }
@@ -57953,6 +58180,13 @@ try{
     var b = Number(base) || 0;
     var r = function (v) { return Math.round(v * 100) / 100; };
     return { ibsUf: r(b * (Number(aliUf) || 0) / 100), ibsMun: r(b * (Number(aliMun) || 0) / 100), cbs: r(b * (Number(aliCbs) || 0) / 100) };
+  }
+  function fxTaxaInformada(v) { return v !== '' && v !== null && v !== undefined && isFinite(Number(v)); }
+  function fxCodeInput(path, label, options, maxLength, placeholder, id) {
+    var opts = (options || []).map(function (p) {
+      return p && p[0] ? '<option value="' + fxEsc(p[0]) + '">' + fxEsc(p[1]) + '</option>' : '';
+    }).join('');
+    return '<label class="fx-lb">' + fxEsc(label) + '<input class="fx-in" type="text" data-fx="' + fxEsc(path) + '" list="' + fxEsc(id) + '" maxlength="' + Number(maxLength || 6) + '" placeholder="' + fxEsc(placeholder || '') + '"></label><datalist id="' + fxEsc(id) + '">' + opts + '</datalist>';
   }
   function fxBRL(v) { return (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function fxEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -57967,7 +58201,7 @@ try{
     MANIF_TIPO_FILTRO: MANIF_TIPO_FILTRO, MANIF_STATUS_NF: MANIF_STATUS_NF, MANIF_STATUS: MANIF_STATUS, EVENTOS_MANIF: EVENTOS_MANIF, MANIF_COLS: MANIF_COLS, MANIF_BUSCAS: MANIF_BUSCAS,
     PERFIS_SEED: PERFIS_SEED, CSOSN_LISTA: CSOSN_LISTA, PISCOFINS_CST: PISCOFINS_CST, IPI_CST: IPI_CST, REFORMA_CST: REFORMA_CST, REFORMA_CLASSIF: REFORMA_CLASSIF,
     VEQR: VEQR, IMPRESSORA_TIPO: IMPRESSORA_TIPO, FCP_UFS: FCP_UFS, VENDA_NF_ABAS: VENDA_NF_ABAS, CONFIG_ABAS: CONFIG_ABAS,
-    cfgPadrao: fxCfgPadrao, itemVazio: fxItemVazio, pagamentoVazio: fxPagamentoVazio, notaVazia: fxNotaVazia, ibsCbs: fxIbsCbs, brl: fxBRL, esc: fxEsc, dig: fxDig, dataBR: fxDataBR
+    cfgPadrao: fxCfgPadrao, itemVazio: fxItemVazio, pagamentoVazio: fxPagamentoVazio, notaVazia: fxNotaVazia, ibsCbs: fxIbsCbs, taxaInformada: fxTaxaInformada, codeInput: fxCodeInput, brl: fxBRL, esc: fxEsc, dig: fxDig, dataBR: fxDataBR
   };
   G.__v6014fxcInfo = 'FXCatalogo pronto';
 })();
@@ -57987,6 +58221,7 @@ try{
       var d = fxDb(); d.config = d.config || {}; d.config.fxLogFiscal = d.config.fxLogFiscal || [];
       d.config.fxLogFiscal.push({ acao: acao, detalhe: detalhe || '', em: new Date().toISOString(), usuario: (fxSess() || {}).usuario || '' });
       if (d.config.fxLogFiscal.length > 400) d.config.fxLogFiscal = d.config.fxLogFiscal.slice(-400);
+      fxSave();
     } catch (e) { }
   }
   function fxCfg() {
@@ -57999,7 +58234,7 @@ try{
     var d = fxDb();
     if (!d.perfisNf) {
       d.perfisNf = P.PERFIS_SEED.map(function (s) {
-        return { cod: s.cod, descricao: s.descricao, tipo: 'ICMS', cfop: s.cfop, csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '000', refClassif: '000001', ibsUf: 0.1, ibsMun: 0, cbs: 0.9, seed: true };
+        return { cod: s.cod, descricao: s.descricao, tipo: 'ICMS', cfop: s.cfop, csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '', refClassif: '', ibsUf: '', ibsMun: '', cbs: '', reformaRevisado: false, seed: true };
       });
       fxSave();
       fxLog('perfis-seed', '5 perfis reais da loja semeados (uma vez)');
@@ -58360,11 +58595,17 @@ try{
     }
     return h;
   }
+  function fxCampo(path, label, value, attrs) {
+    return '<label class="fx-lb">' + P.esc(label) + '<input class="fx-in" data-fx="' + P.esc(path) + '" value="' + P.esc(value == null ? '' : value) + '" ' + (attrs || '') + '></label>';
+  }
   function fxRenderTribItem(it) {
     var t = it.trib;
     G.__fxTribAba = G.__fxTribAba || 'Tributação';
     var abas = ['Tributação', 'Importação', 'Outros', 'Reforma Tributária'];
-    var h = '<div class="fx-tabs">' + abas.map(function (a) {
+    var h = '<div class="fx-card" style="margin:0 0 8px;background:#f8fafc"><h4 style="margin:0 0 7px">Dados do Produto</h4><div class="fx-grid" style="grid-template-columns:110px 130px minmax(180px,1.6fr) 110px 110px 90px 90px;gap:6px;align-items:end">' +
+      I.inp('tribItem.gtin', 'GTIN/EAN') + I.inp('tribItem.cprod', 'Cód. Produto') + I.inp('tribItem.descricao', 'Descrição') +
+      I.inp('tribItem.vunit', 'Valor', 'type="number" step="0.01"') + I.inp('tribItem.ncm', 'NCM') + I.inp('tribItem.cest', 'CEST') + I.inp('tribItem.cfop', 'CFOP', 'maxlength="4"') +
+      '</div><div style="text-align:right;margin-top:5px"><button class="fx-btn" onclick="fxAcao(\'nf-item-cfop-todos\')">Alterar para Todos</button></div></div><div class="fx-tabs">' + abas.map(function (a) {
       return '<div class="fx-tab' + (G.__fxTribAba === a ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-aba\',\'' + a + '\')">' + a + '</div>';
     }).join('') + '</div>';
     if (G.__fxTribAba === 'Tributação') {
@@ -58372,7 +58613,7 @@ try{
         /* ICMS */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">ICMS</h4>' +
         I.sel('tribItem.trib2.csosn', 'CST/CSOSN (Simples Nacional)', P.CSOSN_LISTA) +
-        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.icmsBase', 'Base ICMS R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.icmsValor', 'Valor ICMS R$', 'type="number" step="0.01"') + '</div>' +
+        '<div class="fx-grid fx-g3" style="margin-top:6px">' + I.inp('tribItem.trib2.icmsBase', 'Base ICMS R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.icmsPerc', 'Alíquota ICMS %', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.icmsValor', 'Valor ICMS R$', 'type="number" step="0.01"') + '</div>' +
         '<button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'icms\')">Zerar ICMS</button></div>' +
         /* ICMS ST */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">ICMS ST</h4><div class="fx-grid fx-g2">' +
@@ -58386,55 +58627,99 @@ try{
         /* PIS */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">PIS</h4>' +
         I.sel('tribItem.trib2.pisCst', 'CST', P.PISCOFINS_CST) +
-        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.pisAli', 'Alíquota %', 'type="number" step="0.01"') + '<label class="fx-lb"> </label></div></div>' +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.pisAli', 'Alíquota %', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.pisValor', 'Valor PIS R$', 'type="number" step="0.01"') + '</div><button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'pis\')">Zerar PIS</button></div>' +
         /* COFINS */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">COFINS</h4>' +
         I.sel('tribItem.trib2.cofinsCst', 'CST', P.PISCOFINS_CST) +
-        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.cofinsAli', 'Alíquota %', 'type="number" step="0.01"') + '</div></div>' +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.cofinsAli', 'Alíquota %', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.cofinsValor', 'Valor COFINS R$', 'type="number" step="0.01"') + '</div><button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'cofins\')">Zerar COFINS</button></div>' +
         '</div>';
     } else if (G.__fxTribAba === 'Importação') {
-      var imp = t.imp;
-      h += '<div class="fx-grid fx-g3">' +
-        I.inp('tribItem.imp2.di', 'Documento (DI/DSI/DA/DRI-E)') +
-        I.inp('tribItem.imp2.dtReg', 'Data de Registro', 'type="date"') +
-        I.inp('tribItem.imp2.codExp', 'Código do Exportador') +
-        I.inp('tribItem.imp2.via', 'Via de Transporte') +
-        I.inp('tribItem.imp2.afrmm', 'AFRMM R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.forma', 'Forma de Importação') +
-        I.inp('tribItem.imp2.desembData', 'Desembaraço — Data', 'type="date"') +
-        I.inp('tribItem.imp2.desembUf', 'Desembaraço — UF', 'maxlength="2"') +
-        I.inp('tribItem.imp2.desembLocal', 'Desembaraço — Local') +
-        I.inp('tribItem.imp2.iof', 'IOF R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.despAduan', 'Despesas Aduaneiras R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.ii', 'Imposto de Importação R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.pais', 'País') + '</div>' +
-        '<p class="fx-mini">Adições (nº/fabricante/desconto) entram quando a nota tiver importação de verdade.</p>';
+      var imp = t.imp || {}, paisAntigo = String(imp.pais || '').match(/^(\d{4})\s*(.*)$/);
+      var codPais = imp.codPais || (paisAntigo ? paisAntigo[1] : ''), nomePais = imp.nomePais || (paisAntigo ? paisAntigo[2] : '');
+      h += '<div class="fx-card"><h4 style="margin:0 0 8px">Dados para Declaração</h4><div class="fx-grid fx-g3">' +
+        I.inp('tribItem.imp2.di', 'Núm. DI/DSI/DA/DRI-E') + I.inp('tribItem.imp2.dtReg', 'Data Registro', 'type="date"') +
+        I.inp('tribItem.imp2.codExp', 'Código do Exportador') + I.inp('tribItem.imp2.via', 'Via de Transporte') +
+        I.inp('tribItem.imp2.afrmm', 'AFRMM R$', 'type="number" step="0.01"') + I.inp('tribItem.imp2.forma', 'Forma de Importação') + '</div></div>' +
+        '<div class="fx-grid fx-g2"><div class="fx-card"><h4 style="margin:0 0 8px">Desembaraço Aduaneiro</h4><div class="fx-grid fx-g3">' +
+        I.inp('tribItem.imp2.desembData', 'Data', 'type="date"') + I.inp('tribItem.imp2.desembUf', 'UF', 'maxlength="2"') + I.inp('tribItem.imp2.desembLocal', 'Local Desembaraço') + '</div></div>' +
+        '<div class="fx-card"><h4 style="margin:0 0 8px">Adições</h4><div class="fx-grid fx-g3">' +
+        I.inp('tribItem.imp2.adicaoNumero', 'Número', 'type="number" step="1"') + I.inp('tribItem.imp2.codFabricante', 'Cód. Fabricante') + I.inp('tribItem.imp2.desconto', 'Desconto R$', 'type="number" step="0.01"') + '</div></div></div>' +
+        '<div class="fx-grid fx-g2"><div class="fx-card"><h4 style="margin:0 0 8px">Valores</h4><div class="fx-grid fx-g4">' +
+        I.inp('tribItem.imp2.base', 'Base de Cálculo R$', 'type="number" step="0.01"') + I.inp('tribItem.imp2.iof', 'Valor IOF', 'type="number" step="0.01"') +
+        I.inp('tribItem.imp2.despAduan', 'Desp. Aduan.', 'type="number" step="0.01"') + I.inp('tribItem.imp2.ii', 'Valor II', 'type="number" step="0.01"') + '</div></div>' +
+        '<div class="fx-card"><h4 style="margin:0 0 8px">Dados do País</h4><div class="fx-grid fx-g2">' +
+        fxCampo('tribItem.imp2.codPais', 'Cód. País', codPais) + fxCampo('tribItem.imp2.nomePais', 'Nome do País', nomePais) + '</div></div></div>' +
+        '<p class="fx-mini">Os campos são armazenados no rascunho por item. Uma adição por item; para mais adições, separe os itens. Não há validação de código de país nem integração comprovada destes campos ao XML nesta versão.</p>';
     } else if (G.__fxTribAba === 'Outros') {
-      h += '<div class="fx-grid fx-g3">' +
-        I.inp('tribItem.trib2.icmsDeson', 'ICMS Desonerado R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.beneficio', 'Cód. Benefício Fiscal') +
-        I.inp('tribItem.trib2.fcpPerc', 'FCP %', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.fcpValor', 'FCP R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.efetBase', 'Base % Efetivo', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.efetValor', 'Valor Efetivo R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.pedido', 'Nº do Pedido') +
-        I.inp('tribItem.trib2.pedidoItem', 'Item do Pedido') +
-        '<label class="fx-lb">Par Comercial/Tributável<input class="fx-in" value="' + P.esc(it.un) + ' × ' + P.brl(it.qtd) + ' × ' + P.brl(it.vunit) + ' = ' + P.brl(it.vtotal) + '" readonly style="background:#f8fafc"></label>' +
-        '</div><p class="fx-mini">Outros → CSOSN ICMS (DIF/UF remetente-dest.), ICMS ST retido/substituído e FCP por UF ficam nestes campos — completa o mapa das 18 fotos.</p>';
+      var outrosAba = G.__fxTribOutrosAba || 'CSOSN ICMS';
+      var abasOutros = ['CSOSN ICMS', 'Icms ST', 'Fcp', 'Efetivo', 'Outros'];
+      h += '<div class="fx-tabs">' + abasOutros.map(function (s) { return '<div class="fx-tab' + (outrosAba === s ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-outros-sub\',\'' + s + '\')">' + s + '</div>'; }).join('') + '</div>';
+      if (outrosAba === 'CSOSN ICMS') {
+        h += '<div class="fx-card"><div class="fx-grid fx-g3">' +
+          I.inp('tribItem.trib2.icmsDeson', 'Valor ICMS Deson. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.icmsDif', 'Valor DIF. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.icmsUfRemet', 'Valor UF Remet. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.icmsUfDest', 'Valor UF Dest. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.beneficio', 'Cód. Benefício Fiscal') + '</div>' +
+          '<p class="fx-mini">Valores estruturais editáveis do item. A aplicação e o tratamento fiscal dependem da operação e da validação contábil.</p></div>';
+      } else if (outrosAba === 'Icms ST') {
+        h += '<div class="fx-card" style="max-width:620px"><h4 style="margin:0 0 8px">ICMS ST</h4><div class="fx-grid fx-g2">' +
+          I.inp('tribItem.trib2.stValorRet', 'Valor ST Ret. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.stValorDest', 'Valor ST Dest. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.stFcpPercMaisSt', '% FCP + % ST', 'type="number" step="0.0001"') +
+          I.inp('tribItem.trib2.stValorSubstituido', 'Vlr. Substituído R$', 'type="number" step="0.01"') + '</div></div>';
+      } else if (outrosAba === 'Fcp') {
+        h += '<div class="fx-card"><div class="fx-grid fx-g3">' +
+          '<div><h4 style="margin:0 0 8px">FCP</h4>' + I.inp('tribItem.trib2.fcpBase', 'V. B.C. FCP R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.fcpPerc', '%', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.fcpValor', 'V. FCP R$', 'type="number" step="0.01"') + '</div>' +
+          '<div><h4 style="margin:0 0 8px">FCP UF Dest.</h4>' + I.inp('tribItem.trib2.fcpDestBase', 'V. B.C. FCP UF Dest. R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.fcpDestPerc', '%', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.fcpDestValor', 'V. FCP UF Dest. R$', 'type="number" step="0.01"') + '</div>' +
+          '<div><h4 style="margin:0 0 8px">FCP ST</h4>' + I.inp('tribItem.trib2.fcpStBase', 'V. B.C. FCP ST R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.fcpStPerc', '%', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.fcpStValor', 'V. FCP ST R$', 'type="number" step="0.01"') + '</div>' +
+          '</div><p class="fx-mini">FCP por item: próprio, UF de destino e ST. A tabela global de UF não é aplicada automaticamente a estes campos.</p></div>';
+      } else if (outrosAba === 'Efetivo') {
+        h += '<div class="fx-card" style="max-width:620px"><h4 style="margin:0 0 8px">Efetivo</h4><div class="fx-grid fx-g3">' +
+          I.inp('tribItem.trib2.efetBase', 'Base Cálculo Efetivo R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.efetPerc', 'Alíquota Efetiva %', 'type="number" step="0.0001"') +
+          I.inp('tribItem.trib2.efetValor', 'Valor Efetivo R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.efetReducao', '% Redução Efetivo', 'type="number" step="0.0001"') + '</div></div>';
+      } else {
+        var comUn = t.icmsComUn !== undefined ? t.icmsComUn : it.un;
+        var comQtd = t.icmsComQtd !== undefined ? t.icmsComQtd : it.qtd;
+        var comVU = t.icmsComVUnit !== undefined ? t.icmsComVUnit : it.vunit;
+        var comTotal = (Number(comQtd) || 0) * (Number(comVU) || 0);
+        var tribTotal = (Number(t.icmsTribQtd) || 0) * (Number(t.icmsTribVUnit) || 0);
+        h += '<div class="fx-card"><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.pedido', 'Núm. do Pedido') + I.inp('tribItem.trib2.pedidoItem', 'Núm. Item Pedido') + '</div>' +
+          '<h4 style="margin:10px 0 6px">Comercial</h4><div class="fx-grid fx-g4">' +
+          fxCampo('tribItem.trib2.icmsComUn', 'Un. Comercial', comUn) + fxCampo('tribItem.trib2.icmsComQtd', 'Qtde. Comercial', comQtd, 'type="number" step="0.0001"') + fxCampo('tribItem.trib2.icmsComVUnit', 'Valor Unit. Comercial', comVU, 'type="number" step="0.01"') +
+          '<label class="fx-lb">Total Parcial Comercial<input class="fx-in" value="' + P.brl(comTotal) + '" readonly style="background:#f8fafc"></label></div>' +
+          '<h4 style="margin:10px 0 6px">Tributável</h4><div class="fx-grid fx-g4">' +
+          fxCampo('tribItem.trib2.icmsTribUn', 'Un. Tributável', t.icmsTribUn) + fxCampo('tribItem.trib2.icmsTribQtd', 'Qtde. Tributável', t.icmsTribQtd, 'type="number" step="0.0001"') + fxCampo('tribItem.trib2.icmsTribVUnit', 'Valor Unit. Tributável', t.icmsTribVUnit, 'type="number" step="0.01"') +
+          '<label class="fx-lb">Total Parcial Tributável<input class="fx-in" value="' + P.brl(tribTotal) + '" readonly style="background:#f8fafc"></label></div>' +
+          '<p class="fx-mini">Totais parciais exibidos como quantidade × valor unitário; não alteram o total fiscal da nota. Revise os dados da operação antes de emitir.</p></div>';
+      }
     } else {
+      var refAba = G.__fxTribReformaAba || 'Padrão';
       var cofre = P.ibsCbs(it.vtotal, t.refIbsUfPerc, t.refIbsMunPerc, t.refCbsPerc);
+      var baseRef = Number(it.vtotal) || 0;
+      var legadoAuto = !t.refReformaRevisado && Number(t.refIbsUfPerc) === 0.1 && Number(t.refIbsMunPerc) === 0 && Number(t.refCbsPerc) === 0.9;
       h += '<div class="fx-grid fx-g3">' +
-        I.sel('tribItem.trib2.refCst', 'CST (Reforma)', P.REFORMA_CST) +
-        I.sel('tribItem.trib2.refClassif', 'Classificação', P.REFORMA_CLASSIF) +
-        I.inp('tribItem.trib2.refIbsUfPerc', 'IBS Estadual %', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.refIbsMunPerc', 'IBS Municipal %', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.refCbsPerc', 'CBS %', 'type="number" step="0.01"') +
-        '</div>' +
-        '<div class="fx-cofre" style="margin-top:8px">' +
-        '<div><span class="fx-mini">IBS Estadual</span><b>R$ ' + P.brl(cofre.ibsUf) + '</b></div>' +
-        '<div><span class="fx-mini">IBS Municipal</span><b>R$ ' + P.brl(cofre.ibsMun) + '</b></div>' +
-        '<div><span class="fx-mini">CBS</span><b>R$ ' + P.brl(cofre.cbs) + '</b></div></div>' +
-        '<p class="fx-mini">Os cofrinhos verdes calculam sozinhos sobre o valor do item (' + P.brl(it.vtotal) + ') com as alíquotas acima — devolução de tributos usa os mesmos campos na nota de devolução.</p>';
+        P.codeInput('tribItem.trib2.refCst', 'Código CST-IBS/CBS (3 dígitos)', P.REFORMA_CST, 3, 'Selecione ou digite o código oficial', 'fx-cst-ibs-opcoes') +
+        P.codeInput('tribItem.trib2.refClassif', 'Classificação cClassTrib (6 dígitos)', P.REFORMA_CLASSIF, 6, 'Selecione ou digite o código oficial', 'fx-cclasstrib-opcoes') +
+        '<label class="fx-lb">Base de Cálculo<input class="fx-in" value="R$ ' + P.brl(baseRef) + '" readonly style="background:#f8fafc"></label></div>' +
+        '<div class="fx-tabs" style="margin-top:8px"><div class="fx-tab' + (refAba === 'Padrão' ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-reforma-sub\',\'Padrão\')">Padrão</div><div class="fx-tab' + (refAba === 'Devolução de Tributos' ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-reforma-sub\',\'Devolução de Tributos\')">Devolução de Tributos</div></div>';
+      if (refAba === 'Devolução de Tributos') {
+        h += '<div class="fx-grid fx-g3">' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Estadual</h4>' + I.inp('tribItem.trib2.refDevIbsUf', 'Valor do Tributo Devolvido R$', 'type="number" step="0.01"') + '</div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Municipal</h4>' + I.inp('tribItem.trib2.refDevIbsMun', 'Valor do Tributo Devolvido R$', 'type="number" step="0.01"') + '</div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">CBS</h4>' + I.inp('tribItem.trib2.refDevCbs', 'Valor do Tributo Devolvido R$', 'type="number" step="0.01"') + '</div>' +
+          '</div><p class="fx-mini">Informe os valores a devolver conforme o documento de origem e a orientação fiscal. Este campo não busca nem calcula o tributo da nota referenciada.</p>';
+      } else {
+        h += '<div class="fx-grid fx-g3" style="margin-top:8px">' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Estadual</h4><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.refIbsUfPerc', 'Alíquota (%)', 'type="number" min="0" step="0.0001"') + '<label class="fx-lb">Valor do IBS R$<input class="fx-in" value="' + (P.taxaInformada(t.refIbsUfPerc) ? P.brl(cofre.ibsUf) : '—') + '" readonly style="background:#f8fafc"></label></div></div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Municipal</h4><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.refIbsMunPerc', 'Alíquota (%)', 'type="number" min="0" step="0.0001"') + '<label class="fx-lb">Valor do IBS R$<input class="fx-in" value="' + (P.taxaInformada(t.refIbsMunPerc) ? P.brl(cofre.ibsMun) : '—') + '" readonly style="background:#f8fafc"></label></div></div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">CBS</h4><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.refCbsPerc', 'Alíquota (%)', 'type="number" min="0" step="0.0001"') + '<label class="fx-lb">Valor da CBS R$<input class="fx-in" value="' + (P.taxaInformada(t.refCbsPerc) ? P.brl(cofre.cbs) : '—') + '" readonly style="background:#f8fafc"></label></div></div>' +
+          '</div>' + I.chk('tribItem.trib2.refReformaRevisado', 'Campos conferidos na tabela oficial e com o responsável fiscal') +
+          (legadoAuto ? '<p class="fx-mini" style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:8px">Este item já contém as antigas alíquotas automáticas 0,1% / 0% / 0,9%. Revise e marque a conferência antes de reutilizá-las.</p>' : '') +
+          '<p class="fx-mini">Alíquota em branco não calcula valor. Os códigos sugeridos são exemplos; digite outro código se necessário. Os campos são guardados no rascunho, mas ainda não foram validados nem mapeados para o XML de emissão desta versão.</p>';
+      }
     }
     return h;
   }
@@ -58486,17 +58771,18 @@ try{
       '<span class="fx-mini" style="align-self:center">CC-e nova se faz pela LISTAGEM da Central (botão da nota autorizada) — carta não altera valor/item.</span></div></div>';
   }
   function fxRenderReforma(n) {
-    var base = (n.totais && n.totais.produtos) || 0;
-    var cofre = P.ibsCbs(base, 0.1, 0, 0.9);
-    return '<div class="fx-card"><div class="fx-grid fx-g2">' +
-      I.sel('nota.reforma.cst', 'Tributação Padrão — CST', P.REFORMA_CST) +
-      I.sel('nota.reforma.classif', 'Classificação', P.REFORMA_CLASSIF) +
-      I.inp('nota.reforma.base', 'Base R$', 'type="number" step="0.01"') + '</div>' +
-      '<div class="fx-cofre" style="margin-top:8px">' +
-      '<div><span class="fx-mini">IBS Estadual 0,1%</span><b>R$ ' + P.brl(cofre.ibsUf) + '</b></div>' +
-      '<div><span class="fx-mini">IBS Municipal 0%</span><b>R$ ' + P.brl(cofre.ibsMun) + '</b></div>' +
-      '<div><span class="fx-mini">CBS 0,9%</span><b>R$ ' + P.brl(cofre.cbs) + '</b></div></div>' +
-      '<p class="fx-mini">Vigência por UF/data fica nas Configurações &gt; Reforma (o "Alterar NFe → Cidades / Datas" do sistema antigo virou os parâmetros da aba Reforma). <a href="javascript:void(0)" onclick="navigateTo(\'config-fiscal\')">Abrir Configurações</a></p></div>';
+    var base = 0, ibsUf = 0, ibsMun = 0, cbs = 0, rows = '';
+    (n.itens || []).forEach(function (it) {
+      var b = Number(it.vtotal) || 0, t = it.trib || {}, c = P.ibsCbs(b, t.refIbsUfPerc, t.refIbsMunPerc, t.refCbsPerc);
+      base += b; ibsUf += c.ibsUf; ibsMun += c.ibsMun; cbs += c.cbs;
+      rows += '<tr><td>' + P.esc(it.descricao || ('Item ' + it.n)) + '</td><td>' + P.esc(t.refCst || '—') + '</td><td>' + P.esc(t.refClassif || '—') + '</td><td style="text-align:right">R$ ' + P.brl(b) + '</td><td style="text-align:right">' + (P.taxaInformada(t.refIbsUfPerc) ? 'R$ ' + P.brl(c.ibsUf) : '—') + '</td><td style="text-align:right">' + (P.taxaInformada(t.refIbsMunPerc) ? 'R$ ' + P.brl(c.ibsMun) : '—') + '</td><td style="text-align:right">' + (P.taxaInformada(t.refCbsPerc) ? 'R$ ' + P.brl(c.cbs) : '—') + '</td></tr>';
+    });
+    return '<div class="fx-card"><h4 style="margin:0 0 6px">Resumo IBS/CBS por item</h4>' +
+      '<p class="fx-mini">As alíquotas não são preenchidas automaticamente. Informe CST, cClassTrib e percentuais em <b>Itens da Nota &gt; Tributação &gt; Reforma Tributária</b>; esta tela só resume os valores já lançados.</p>' +
+      '<div class="fx-cofre" style="margin:8px 0"><div><span class="fx-mini">Base informada dos itens</span><b>R$ ' + P.brl(base) + '</b></div><div><span class="fx-mini">IBS total</span><b>R$ ' + P.brl(ibsUf + ibsMun) + '</b></div><div><span class="fx-mini">CBS total</span><b>R$ ' + P.brl(cbs) + '</b></div></div>' +
+      '<div style="overflow:auto"><table class="fx-tb"><thead><tr><th>Item</th><th>CST</th><th>cClassTrib</th><th>Base</th><th>IBS Estadual</th><th>IBS Municipal</th><th>CBS</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:14px">Adicione itens à nota para ver o resumo.</td></tr>') + '</tbody></table></div>' +
+      '<p class="fx-mini" style="margin-top:8px">Campos desta versão são registrados no rascunho, mas ainda não têm integração de XML fiscal comprovada; não use este resumo como validação de emissão real. <a href="javascript:void(0)" onclick="navigateTo(\'config-fiscal\')">Abrir Configurações</a></p></div>';
   }
   function fxRenderReferenciar(n) {
     return '<div class="fx-card"><h4 style="margin:0 0 8px">🔗 Notas Fiscais Referenciadas</h4>' +
@@ -58508,8 +58794,7 @@ try{
   }
   function fxRenderLog(n) {
     var regs = (n.log || []).slice().reverse();
-    return '<div class="fx-card"><div class="fx-tabs">' +
-      ['Respostas', 'XML Resposta', 'Log'].map(function (s) { return '<div class="fx-tab' + (s === 'Log' ? ' on' : '') + '">' + s + '</div>'; }).join('') + '</div>' +
+    return '<div class="fx-card"><h4 style="margin:0 0 6px">Histórico desta nota</h4>' +
       '<p class="fx-mini">Retorno completo WS / dados SEFAZ aparecem aqui depois da 1ª transmissão real. Antes disso: o log local da nota.</p>' +
       '<table class="fx-tb"><thead><tr><th>Quando</th><th>O que aconteceu</th><th>Quem</th></tr></thead><tbody>' +
       (regs.length ? regs.map(function (l) { return '<tr><td>' + P.esc((l.em || '').replace('T', ' ').slice(0, 19)) + '</td><td>' + P.esc(l.acao + (l.detalhe ? ' — ' + l.detalhe : '')) + '</td><td>' + P.esc(l.usuario || '') + '</td></tr>'; }).join('') :
@@ -58689,8 +58974,14 @@ try{
     if (a === 'PIS') return '<div class="fx-grid fx-g2">' + I.sel('pf.pisCst', 'CST PIS', P.PISCOFINS_CST) + I.inp('pf.pisAli', 'Alíquota PIS %', 'type="number" step="0.01"') + '</div>';
     if (a === 'COFINS') return '<div class="fx-grid fx-g2">' + I.sel('pf.cofinsCst', 'CST COFINS', P.PISCOFINS_CST) + I.inp('pf.cofinsAli', 'Alíquota COFINS %', 'type="number" step="0.01"') + '</div>';
     if (a === 'IPI') return '<div class="fx-grid fx-g2">' + I.sel('pf.ipiCst', 'CST IPI', P.IPI_CST) + I.inp('pf.ipiAli', 'Alíquota IPI %', 'type="number" step="0.01"') + '</div>';
-    return '<div class="fx-grid fx-g2">' + I.sel('pf.refCst', 'CST (novo modelo)', P.REFORMA_CST) + I.sel('pf.refClassif', 'Classificação', P.REFORMA_CLASSIF) +
-      I.inp('pf.ibsUf', 'IBS UF %', 'type="number" step="0.01"') + I.inp('pf.ibsMun', 'IBS MUN %', 'type="number" step="0.01"') + I.inp('pf.cbs', 'CBS %', 'type="number" step="0.01"') + '</div>';
+    var avisoLegado = !pf.reformaRevisado && Number(pf.ibsUf) === 0.1 && Number(pf.ibsMun) === 0 && Number(pf.cbs) === 0.9
+      ? '<p class="fx-mini" style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:8px">Este perfil ainda pode conter as antigas alíquotas automáticas 0,1% / 0% / 0,9%. Revise-as antes de marcar como conferido.</p>' : '';
+    return '<div class="fx-grid fx-g2">' +
+      P.codeInput('pf.refCst', 'Código CST-IBS/CBS (3 dígitos)', P.REFORMA_CST, 3, 'Selecione ou digite o código oficial', 'fx-pf-cst-ibs-opcoes') +
+      P.codeInput('pf.refClassif', 'Classificação cClassTrib (6 dígitos)', P.REFORMA_CLASSIF, 6, 'Selecione ou digite o código oficial', 'fx-pf-cclasstrib-opcoes') +
+      I.inp('pf.ibsUf', 'IBS Estadual %', 'type="number" min="0" step="0.0001"') + I.inp('pf.ibsMun', 'IBS Municipal %', 'type="number" min="0" step="0.0001"') + I.inp('pf.cbs', 'CBS %', 'type="number" min="0" step="0.0001"') + '</div>' +
+      I.chk('pf.reformaRevisado', 'Aplicar estes dados de Reforma aos próximos itens após revisão fiscal') + avisoLegado +
+      '<p class="fx-mini">Sem a confirmação acima, o perfil não preenche CST, cClassTrib ou alíquotas nos itens novos. Os códigos sugeridos são exemplos; digite outro código se necessário.</p>';
   }
 
   /* ══════════════ PARTE 5 — MANIFESTAÇÃO DESTINATÁRIO (7 fotos) ══════════════ */
@@ -58930,10 +59221,20 @@ try{
       h += '<div class="fx-card"><div class="fx-grid fx-g2">' +
         I.chk('cfg.reforma.ativa', 'Ativar Reforma Tributária (IBS/CBS 2026)') +
         I.sel('cfg.reforma.intermediador', 'Indicador de Intermediador/Marketplace', [['0', '0 - Site próprio / teleatendimento / venda direta'], ['1', '1 - Marketplace / plataforma / app parceiro']]) +
-        '</div><p class="fx-mini">O dele vende direto: indicador 0. Os cofrinhos da nota (IBS UF/MUN/CBS) usam as alíquotas do perfil/item.</p>' +
+        '</div><p class="fx-mini">Os percentuais de perfil/item nunca são preenchidos automaticamente. Informe-os depois de confirmar a classificação da operação e o regime tributário.</p>' +
         '<h4 style="margin:10px 0 8px">🗓️ Parâmetros de vigência (Cidades / Datas)</h4>' +
         I.inp('cfg.reforma.vigenciaUF', 'UF de referência', 'maxlength="2" style="width:70px" value="MG"') +
-        I.inp('cfg.reforma.vigenciaData', 'Vigente a partir de', 'type="date"') + '</div>';
+        I.inp('cfg.reforma.vigenciaData', 'Vigente a partir de', 'type="date"') + '</div>' +
+        '<div class="fx-card"><h4 style="margin:0 0 8px">Alíquotas padrão publicadas — Informe Técnico 2025.002 v1.70</h4>' +
+        '<div style="overflow:auto"><table class="fx-tb"><thead><tr><th>Ano</th><th>IBS Estadual</th><th>IBS Municipal</th><th>CBS</th></tr></thead><tbody>' +
+        '<tr><td>2026</td><td>0,1%</td><td>0%</td><td>0,9%</td></tr><tr><td>2027</td><td>0,05%</td><td>0,05%</td><td>Aguardar legislação</td></tr><tr><td>2028</td><td>0,05%</td><td>0,05%</td><td>Aguardar legislação</td></tr><tr><td>2029 em diante</td><td colspan="3">Definição por legislação/alíquota de referência</td></tr>' +
+        '</tbody></table></div><p class="fx-mini" style="margin-top:8px"><b>Referência, não preenchimento automático:</b> o IT publica alíquotas padrão por ano, mas isso não decide sozinho CST, cClassTrib, regime ou tratamento de cada item. Esta tela não certifica conformidade nem integra estes valores ao XML de emissão. Consulte <a href="https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=h9o7idH%20OcI=" target="_blank" rel="noopener">o Informe Técnico</a> e a <a href="https://dfe-portal.svrs.rs.gov.br/DFE/TabelaClassificacaoTributaria" target="_blank" rel="noopener">tabela oficial de classificação</a>.</p></div>';
+    } else if (aba === 'Log Fiscal') {
+      var logs = ((d.config && d.config.fxLogFiscal) || []).slice().reverse();
+      h += '<div class="fx-card"><h4 style="margin:0 0 6px">Auditoria Fiscal local</h4><p class="fx-mini">Últimos ' + logs.length + ' eventos guardados neste banco local (limite de 400). São ações do sistema, não respostas da SEFAZ. Senhas e CSC não são exibidos aqui.</p>' +
+        '<div style="overflow:auto;max-height:calc(100vh - 390px)"><table class="fx-tb"><thead><tr><th>Quando</th><th>Ação</th><th>Detalhe</th><th>Usuário</th></tr></thead><tbody>' +
+        (logs.length ? logs.map(function (l) { return '<tr><td>' + P.esc(String(l.em || '').replace('T', ' ').slice(0, 19)) + '</td><td>' + P.esc(l.acao || '') + '</td><td>' + P.esc(l.detalhe || '') + '</td><td>' + P.esc(l.usuario || '') + '</td></tr>'; }).join('') : '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:14px">Ainda não há eventos fiscais registrados.</td></tr>') +
+        '</tbody></table></div></div>';
     }
     return h;
   }
@@ -59118,20 +59419,31 @@ try{
         it.qtd = Number((document.getElementById('fx-it-qtd') || {}).value) || 1;
         it.un = (document.getElementById('fx-it-un') || {}).value || 'UN';
         it.vunit = Number((document.getElementById('fx-it-vu') || {}).value) || (prod ? (prod.preco || prod.precoVenda || 0) : 0);
+        it.trib.icmsComUn = it.un; it.trib.icmsComQtd = it.qtd; it.trib.icmsComVUnit = it.vunit; it.trib.icmsComVTotal = it.qtd * it.vunit;
         it.perfilCod = (document.getElementById('fx-it-perfil') || {}).value || I.cfg().trib.perfilDentro;
         var pf = I.perfis().find(function (x) { return x.cod === it.perfilCod; });
-        if (pf) { it.cfop = pf.cfop; it.csosn = pf.csosn; it.trib.pisCst = pf.pisCst; it.trib.pisAli = pf.pisAli; it.trib.cofinsCst = pf.cofinsCst; it.trib.cofinsAli = pf.cofinsAli; it.trib.ipiCst = pf.ipiCst; it.trib.ipiPerc = pf.ipiAli; it.trib.refCst = pf.refCst; it.trib.refClassif = pf.refClassif; it.trib.refIbsUfPerc = pf.ibsUf; it.trib.refIbsMunPerc = pf.ibsMun; it.trib.refCbsPerc = pf.cbs; }
+        if (pf) {
+          it.cfop = pf.cfop; it.csosn = pf.csosn; it.trib.pisCst = pf.pisCst; it.trib.pisAli = pf.pisAli;
+          it.trib.cofinsCst = pf.cofinsCst; it.trib.cofinsAli = pf.cofinsAli; it.trib.ipiCst = pf.ipiCst; it.trib.ipiPerc = pf.ipiAli;
+          if (pf.reformaRevisado === true) {
+            it.trib.refCst = pf.refCst || ''; it.trib.refClassif = pf.refClassif || '';
+            it.trib.refIbsUfPerc = pf.ibsUf; it.trib.refIbsMunPerc = pf.ibsMun; it.trib.refCbsPerc = pf.cbs; it.trib.refReformaRevisado = true;
+          }
+        }
         if (!it.descricao) return I.toast2('Descreva o item ou escolha do estoque', 'info');
         n.itens.push(it); R1.totaisAuto(n);
         n.log.push({ acao: 'item-lancado', detalhe: it.descricao + ' x' + it.qtd, em: new Date().toISOString() });
         fxLimpaAliases(); I.save(); return fxReRender('central-nf');
       }
       if (acao === 'nf-item-del') { n.itens.splice(Number(a), 1); R1.totaisAuto(n); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
-      if (acao === 'nf-item-trib') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: Number(a), sub: 'Tributação' }; G.__fxTribAba = 'Tributação'; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
-      if (acao === 'nf-trib-sub') { G.__fxTrib.sub = a; return fxReRender('central-nf'); }
+      if (acao === 'nf-item-trib') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: Number(a), sub: 'Tributação' }; G.__fxTribAba = 'Tributação'; G.__fxTribReformaAba = 'Padrão'; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-sub') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib.sub = a; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
       if (acao === 'nf-trib-fechar') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: -1, sub: 'Tributação' }; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
       if (acao === 'nf-trib-aba') { I.aplica(fxRaizDe('central-nf')); G.__fxTribAba = a; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-reforma-sub') { I.aplica(fxRaizDe('central-nf')); G.__fxTribReformaAba = a === 'Devolução de Tributos' ? a : 'Padrão'; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-outros-sub') { I.aplica(fxRaizDe('central-nf')); G.__fxTribOutrosAba = a; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
       if (acao === 'nf-item-cfop-todos') {
+        I.aplica(fxRaizDe('central-nf'));
         var itAberto = (G.__fxTrib && G.__fxTrib.idx >= 0) ? n.itens[G.__fxTrib.idx] : null;
         if (itAberto) { var cf = (document.querySelector('[data-fx="tribItem.cfop"]') || {}).value || itAberto.cfop; n.itens.forEach(function (x) { x.cfop = cf; }); I.toast2('CFOP ' + cf + ' aplicado a todos os itens'); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
         return;
@@ -59142,6 +59454,8 @@ try{
         if (a === 'icms') { itZ.trib.icmsBase = 0; itZ.trib.icmsValor = 0; }
         if (a === 'st') { itZ.trib.stBase = 0; itZ.trib.stPerc = 0; itZ.trib.stValor = 0; }
         if (a === 'ipi') { itZ.trib.ipiPerc = 0; itZ.trib.ipiValor = 0; }
+        if (a === 'pis') { itZ.trib.pisAli = 0; itZ.trib.pisValor = 0; }
+        if (a === 'cofins') { itZ.trib.cofinsAli = 0; itZ.trib.cofinsValor = 0; }
         fxLimpaAliases(); I.save(); return fxReRender('central-nf');
       }
       /* pagamentos/duplicatas/volumes (edição inline já vem pronta) */
@@ -59186,7 +59500,7 @@ try{
       if (acao === 'pf-novo') {
         var usados = I.perfis().map(function (x) { return x.cod; });
         var livre = 1; while (usados.indexOf(String(livre).padStart(5, '0')) >= 0) livre++;
-        var pf2 = { cod: String(livre).padStart(5, '0'), descricao: '', tipo: 'ICMS', cfop: '5102', csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '000', refClassif: '000001', ibsUf: 0.1, ibsMun: 0, cbs: 0.9 };
+        var pf2 = { cod: String(livre).padStart(5, '0'), descricao: '', tipo: 'ICMS', cfop: '5102', csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '', refClassif: '', ibsUf: '', ibsMun: '', cbs: '', reformaRevisado: false };
         I.perfis().push(pf2); G.__fxPfEd = I.perfis().length - 1; G.__fxPfObj = pf2; G.__fxPfAba = 'ICMS';
         return fxReRender('fiscal-perfil');
       }
@@ -61643,7 +61957,7 @@ try{
   // r58: puro em cima (testável em node) — o resto precisa de janela
   // segredo nunca viaja: chave=valor vira chave=***
   var RE_BEARER_SOOLTO=/\bBearer\s+[A-Za-z0-9\-._~+/=]{4,}/g;
-  // r58 (auditoria, item 6): aceita aspas antes/depois do separador — JSON ("senha":"6132") também é redação
+  // r58 (auditoria, item 6): aceita aspas antes/depois do separador — JSON ("senha":"qa-only-not-secret") também é redação
   var RE_CHAVE_VALOR=/(senha|password|passwd|token|authorization|bearer|api[_-]?key|secret|client[_-]?secret)(["']?\s*[:=]\s*["']?)([^\s&;"']+)/gi;
   function redigir(s){
     return String(s==null?'':s).replace(RE_BEARER_SOOLTO,'Bearer ***').replace(RE_CHAVE_VALOR,'$1$2***');
@@ -62387,6 +62701,200 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5901_login_retry_nuvem_patch.js", e); }
 ;
 
+/* ===== ajustes_v52267_diagnostico_nuvem_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.67 — Diagnóstico rápido da Nuvem no indicador pulsante.
+// Só consulta estado local e endpoints GET de saúde/status; nunca grava,
+// autoriza dispositivo, envia registros ou mostra dados de clientes.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window==='undefined'||typeof document==='undefined') return;
+if(window.__DIGICOPY_DIAG_NUVEM_V1) return;
+window.__DIGICOPY_DIAG_NUVEM_V1=true;
+
+function node(tag, text, css){
+  var el=document.createElement(tag);
+  if(text!=null) el.textContent=String(text);
+  if(css) el.style.cssText=css;
+  return el;
+}
+function dataLocal(){
+  try{
+    var sync=window.DIGICOPY_CLOUD_SYNC;
+    return sync&&typeof sync.info==='function'?sync.info():{};
+  }catch(e){ return {erroLocal:String(e&&e.message||e)}; }
+}
+function formatarHora(ts){
+  var n=Number(ts)||0;
+  if(!n) return 'Ainda não houve confirmação nesta sessão';
+  try{return new Date(n).toLocaleString('pt-BR');}catch(e){return 'Horário indisponível';}
+}
+function criarLinha(rotulo, valor){
+  var row=node('div',null,'display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid #eef2f7;font-size:13px;');
+  var a=node('span',rotulo,'color:#64748b');
+  var b=node('b',valor,'color:#0f172a;text-align:right;max-width:65%;overflow-wrap:anywhere');
+  row.appendChild(a);row.appendChild(b);return row;
+}
+function abrirDiagnosticoNuvem(){
+  var existente=document.getElementById('dc-cloud-diagnostic');
+  if(existente){ existente.style.display='flex'; return; }
+  var overlay=node('div',null,'position:fixed;inset:0;z-index:100001;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:16px;');
+  overlay.id='dc-cloud-diagnostic';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','dc-cloud-diagnostic-title');
+  var card=node('section',null,'width:min(520px,96vw);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.28);padding:20px 22px;font-family:inherit;');
+  var top=node('div',null,'display:flex;align-items:flex-start;justify-content:space-between;gap:12px;');
+  var title=node('h2','Diagnóstico da Nuvem','margin:0;font-size:18px;font-weight:900;color:#0a1e8a;');title.id='dc-cloud-diagnostic-title';
+  var close=node('button','Fechar','border:0;border-radius:9px;background:#f1f5f9;color:#334155;padding:7px 10px;font-weight:800;cursor:pointer;');close.type='button';close.setAttribute('aria-label','Fechar diagnóstico');
+  top.appendChild(title);top.appendChild(close);card.appendChild(top);
+  card.appendChild(node('p','Resumo desta máquina e da resposta do serviço. Este diagnóstico não altera nem envia registros.','margin:7px 0 12px;color:#64748b;font-size:12px;line-height:1.5;'));
+  var status=node('div','Consultando status…','padding:11px 12px;border-radius:11px;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:800;');status.id='dc-cloud-diagnostic-status';card.appendChild(status);
+  var rows=node('div');rows.id='dc-cloud-diagnostic-rows';card.appendChild(rows);
+  var error=node('p','','margin:10px 0 0;color:#b91c1c;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;');error.id='dc-cloud-diagnostic-error';card.appendChild(error);
+  var actions=node('div',null,'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;');
+  var refresh=node('button','Atualizar diagnóstico','border:0;border-radius:10px;background:#0a1e8a;color:#fff;padding:9px 13px;font-weight:800;cursor:pointer;');refresh.type='button';refresh.id='dc-cloud-diagnostic-refresh';
+  var config=node('button','Configurações da nuvem','border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;padding:9px 13px;font-weight:800;cursor:pointer;');config.type='button';
+  actions.appendChild(config);actions.appendChild(refresh);card.appendChild(actions);overlay.appendChild(card);document.body.appendChild(overlay);
+  function fechar(){overlay.remove();document.removeEventListener('keydown',onKey);}
+  function onKey(e){if(e.key==='Escape')fechar();}
+  close.onclick=fechar;overlay.addEventListener('click',function(e){if(e.target===overlay)fechar();});document.addEventListener('keydown',onKey);
+  config.onclick=function(){fechar();if(typeof window.abrirCloudflareNuvem==='function')window.abrirCloudflareNuvem();};
+  refresh.onclick=atualizar;atualizar();
+
+  async function atualizar(){
+    refresh.disabled=true;refresh.textContent='Verificando…';status.textContent='Consultando a saúde do serviço…';status.style.background='#eff6ff';status.style.color='#1d4ed8';error.textContent='';rows.innerHTML='';
+    var local=dataLocal(), cloud=null, falha='';
+    try{
+      var api=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;
+      if(typeof api==='function') cloud=await api('/health',{method:'GET'});
+      else falha='Conector da nuvem não está carregado nesta sessão.';
+    }catch(e){falha=String(e&&e.message||e||'Não foi possível consultar a nuvem.');}
+    var autorizado=!!local.authorized;
+    var pronto=!!(cloud&&(cloud.ready===true||cloud.ok===true));
+    var erroSync=String(local.lastError||'').trim();
+    var fila=Number(local.outbox)||0;
+    var saudavel=pronto&&autorizado&&!erroSync&&fila===0;
+    status.textContent=saudavel?'Tudo certo: computador autorizado e nuvem respondendo.':(pronto&&!autorizado?'Serviço respondendo; este computador ainda não está autorizado.':(pronto?'Serviço responde; há itens que precisam de atenção.':(falha?'Não consegui confirmar a resposta da nuvem.':'Nuvem respondeu, mas o serviço ainda não está pronto.')));
+    status.style.background=saudavel?'#ecfdf5':(pronto?'#fffbeb':'#fef2f2');
+    status.style.color=saudavel?'#047857':(pronto?'#92400e':'#b91c1c');
+    var versaoServico=String((cloud&&(cloud.versao||cloud.workerVersao||cloud.version))||'Não informada');
+    rows.appendChild(criarLinha('Autorização deste computador',autorizado?'Sim':'Não'));
+    rows.appendChild(criarLinha('Serviço da nuvem',cloud?(pronto?'Respondendo e pronto':'Respondendo, configuração pendente'):'Sem resposta confirmada'));
+    rows.appendChild(criarLinha('Fila aguardando envio',fila+' alteração(ões)'));
+    rows.appendChild(criarLinha('Última sincronização confirmada',formatarHora(local.emDiaAte||local.lastOk)));
+    rows.appendChild(criarLinha('Versão do sistema',String(window.DIGICOPY_APP_VERSION||'—')));
+    rows.appendChild(criarLinha('Versão da nuvem',versaoServico));
+    if(falha)error.textContent=falha;
+    else if(erroSync)error.textContent='Último erro de sincronização: '+erroSync;
+    refresh.disabled=false;refresh.textContent='Atualizar diagnóstico';
+  }
+}
+window.abrirDiagnosticoNuvem=abrirDiagnosticoNuvem;
+var clickDelegadoLigado=false;
+function ligar(){
+  if(clickDelegadoLigado) return;
+  clickDelegadoLigado=true;
+  // A barra pode ser recriada por showApp; a delegação continua valendo para o novo nó.
+  document.addEventListener('click',function(e){
+    var alvo=e.target;
+    var botao=alvo&&typeof alvo.closest==='function'?alvo.closest('#dc-cloud-diag-trigger'):null;
+    if(!botao) return;
+    e.preventDefault();
+    abrirDiagnosticoNuvem();
+  },true);
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ligar); else ligar();
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52267_diagnostico_nuvem_patch.js", e); }
+;
+
+/* ===== patch_notes_local.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH NOTES LOCAIS — aparecem depois da atualização, sem depender da nuvem.
+// A chave inclui a versão e fica no armazenamento deste navegador/dispositivo.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+var NOTAS_POR_VERSAO={
+  '7.3.11':[
+    'A senha antiga não deve mais ser aceita quando o cadastro já tem uma senha protegida por hash.',
+    'Desativar um usuário agora mostra a confirmação correta, sem avisar por engano que o cadastro não foi salvo.',
+    'O indicador no canto agora se chama Nuvem. Clique nele para abrir um diagnóstico simples da sincronização.',
+    'O diagnóstico mostra autorização, fila de envio, última sincronização e resposta do serviço; não altera nem envia registros.',
+    'Em Usuários e permissões, removemos a frase técnica que aparecia logo abaixo do nome do menu.'
+  ],
+  '7.3.12':[
+    'No menu Locação, voltaram os atalhos Máquinas nos clientes e Leituras.',
+    'Máquinas nos clientes abre a tela unificada de Impressoras; Leituras leva a Contratos, onde cada leitura é feita dentro do contrato do cliente.'
+  ],
+  '7.3.13':[
+    'A tela de Tributação mantém os dados do produto visíveis e organiza Importação, ICMS ST, FCP, Efetivo e os valores comercial e tributável.',
+    'Os campos IBS/CBS continuam sem percentuais automáticos: preencha os códigos e alíquotas após conferir a orientação oficial e o responsável fiscal.',
+    'As informações fiscais novas ficam no rascunho. Elas ainda não são calculadas nem foram ligadas ao XML de emissão; nada é transmitido automaticamente.',
+    'Ao trocar de subaba ou aplicar CFOP aos itens, o sistema agora salva as alterações feitas antes da troca.'
+  ],
+  '7.3.14':[
+    'Em Contratos, quando você apaga o texto da busca e escolhe Mostrar todos, o texto antigo não volta.',
+    'Mostrar todos também limpa o filtro de situação e exibe novamente os contratos da empresa atual.'
+  ]
+};
+function chave(v){return 'digicopy_patch_visto_'+String(v||'').replace(/[^0-9A-Za-z._-]/g,'_');}
+function deveMostrar(v,valorSalvo){return !!NOTAS_POR_VERSAO[String(v||'')]&&!valorSalvo;}
+try{window.DIGICOPY_PATCH_NOTES_PURE={notas:NOTAS_POR_VERSAO,chave:chave,deveMostrar:deveMostrar};}catch(e){}
+if(typeof window==='undefined'||typeof document==='undefined')return;
+var versao=String(window.DIGICOPY_APP_VERSION||'');
+if(!deveMostrar(versao,''))return;
+var jaMostrou=false;
+try{jaMostrou=localStorage.getItem(chave(versao))==='1';}catch(e){}
+if(jaMostrou)return;
+
+function fechar(card){
+  if(card&&card.parentNode)card.parentNode.removeChild(card);
+  try{document.removeEventListener('keydown',tecla);}catch(e){}
+}
+function tecla(e){if(e.key==='Escape'){var card=document.getElementById('digicopy-patch-notes');if(card)fechar(card);}}
+function appAberto(){
+  try{
+    var s=typeof getSession==='function'?getSession():null;
+    var app=document.getElementById('app-shell');
+    var modal=document.getElementById('modal-root');
+    return !!(s&&app&&!app.classList.contains('hidden')&&(!modal||modal.classList.contains('hidden')));
+  }catch(e){return false;}
+}
+function mostrar(){
+  if(jaMostrou||!appAberto()||document.getElementById('digicopy-patch-notes'))return false;
+  var notas=NOTAS_POR_VERSAO[versao];if(!notas||!notas.length)return false;
+  var overlay=document.createElement('div');overlay.id='digicopy-patch-notes';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','digicopy-patch-notes-title');
+  overlay.style.cssText='position:fixed;inset:0;z-index:100002;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+  var card=document.createElement('section');
+  card.style.cssText='width:min(520px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.3);padding:24px;font-family:inherit;';
+  var eyebrow=document.createElement('div');eyebrow.textContent='ATUALIZAÇÃO APLICADA';eyebrow.style.cssText='font-size:10px;font-weight:900;letter-spacing:.12em;color:#0a1e8a;';
+  var title=document.createElement('h2');title.id='digicopy-patch-notes-title';title.textContent='O que mudou nesta versão';title.style.cssText='margin:7px 0 2px;font-size:21px;font-weight:900;color:#0f172a;';
+  var subtitle=document.createElement('p');subtitle.textContent='Versão '+versao+' — resumo em linguagem simples.';subtitle.style.cssText='margin:0 0 14px;color:#64748b;font-size:12px;';
+  var list=document.createElement('ul');list.style.cssText='margin:0;padding:14px 16px 14px 32px;border:1px solid #e2e8f0;border-radius:13px;background:#f8fafc;color:#334155;font-size:13px;line-height:1.55;';
+  notas.forEach(function(n){var li=document.createElement('li');li.textContent=n;li.style.margin='0 0 7px';list.appendChild(li);});
+  var footer=document.createElement('div');footer.style.cssText='display:flex;justify-content:flex-end;margin-top:16px;';
+  var close=document.createElement('button');close.type='button';close.textContent='Entendi';close.style.cssText='border:0;border-radius:11px;background:#0a1e8a;color:#fff;padding:10px 20px;font-weight:900;cursor:pointer;';
+  footer.appendChild(close);card.appendChild(eyebrow);card.appendChild(title);card.appendChild(subtitle);card.appendChild(list);card.appendChild(footer);overlay.appendChild(card);document.body.appendChild(overlay);
+  // Marcar ao exibir: a nota não volta após passar o dia, desconectar a nuvem ou recarregar.
+  try{localStorage.setItem(chave(versao),'1');}catch(e){}
+  jaMostrou=true;close.onclick=function(){fechar(overlay);};
+  overlay.addEventListener('click',function(e){if(e.target===overlay)fechar(overlay);});
+  document.addEventListener('keydown',tecla);
+  return true;
+}
+var timer=setInterval(function(){
+  if(mostrar())clearInterval(timer);
+},1000);
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("patch_notes_local.js", e); }
+;
+
 /* ===== ajustes_v52266_versao_nova_banner_patch.js ===== */
 try{
 // ════════════════════════════════════════════════════
@@ -62486,11 +62994,11 @@ try{
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 233;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 236;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 233 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 236 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

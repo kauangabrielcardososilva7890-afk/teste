@@ -716,7 +716,7 @@ ok('o botão de backup continua de pé', /window\.exportBackup\s*=/.test(fonte))
 
 // jsonBackupLimpo: tira _rt, mantém o resto
 {
-  const db = { empresas:[{id:'emp_digicopy', senha:'segredo-cnpj'}], usuarios:[{id:'u1', login:'kauan', senha:'6132', senhaHash:'h', senhaSalt:'s'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x', escolaAuth:{usuario:'x',senha:'segredo'} } };
+  const db = { empresas:[{id:'emp_digicopy', senha:'segredo-cnpj'}], usuarios:[{id:'u1', login:'qa-user-redaction-test', senha:'qa-only-not-secret', senhaHash:'h', senhaSalt:'s'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x', escolaAuth:{usuario:'x',senha:'segredo'} } };
   const j = JSON.parse(P.jsonBackupLimpo(db));
   ok('_rt removido dos registros', j.clientes[0]._rt === undefined && j.config._rt === undefined);
   ok('conteúdo preservado', j.clientes[0].nome === 'A' && j.config.loja.fantasia === 'DIGICOPY' && j.empresas.length === 1);
@@ -2839,7 +2839,7 @@ ok(contador.indexOf("request.method === 'OPTIONS'") >= 0, 'contador responde pre
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 38] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 37] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 36] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 35] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 34] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 33] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 32] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 31] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 30] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 29] === 'painel_gerente_patch.js' && man[man.length - 28] === 'fiscal_guard_patch.js' && man[man.length - 27] === 'nf_transmissao_patch.js' && man[man.length - 26] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (18º a partir do fim (v7.0.20 soma o mandar-erro no fim; r60 soma o login-retry no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
+ok(man[man.length - 41] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 40] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 39] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 38] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 37] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 36] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 35] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 34] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length - 33] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length - 32] === 'orcamento_cloud_guard_patch.js' && man[man.length - 31] === 'painel_gerente_patch.js' && man[man.length - 30] === 'fiscal_guard_patch.js' && man[man.length - 29] === 'nf_transmissao_patch.js' && man[man.length - 28] === 'autocura_empresa_central_nf_tela_patch.js', 'patch de backups no fim do bundle (18º a partir do fim (v7.0.20 soma o mandar-erro no fim; r60 soma o login-retry no fim); v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, v5.26.2 login da nuvem primeiro, v5.26.5 data grande do chamado e Painel do Gerente v6.0.6 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
@@ -3526,7 +3526,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 
 console.log('== PATCH: existência, guarda e trilha ==');
 ok('patch existe com guard próprio (__v5264cd)', patch.indexOf('window.__v5264cd') >= 0);
-ok('manifesto: chamado na 204, Painel na 205, Portão na 206; v6.0.6 menu fiscal; hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila (217; login-nuvem na 203)', manifest.length >= 225 && manifest[203] === PATCH && manifest[204] === 'painel_gerente_patch.js' && manifest[205] === 'fiscal_guard_patch.js' && manifest[206] === 'nf_transmissao_patch.js');
+ok('manifesto: chamado na 204, Painel na 205, Portão na 206; v6.0.6 menu fiscal; hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila (217; login-nuvem na 203)', manifest.length >= 225 && manifest[203] === PATCH && manifest[205] === 'painel_gerente_patch.js' && manifest[206] === 'fiscal_guard_patch.js' && manifest[207] === 'nf_transmissao_patch.js');
 ok('patch está dentro do bundle gerado', bundle.indexOf(PATCH) >= 0 && bundle.indexOf('__v5264cd') >= 0);
 ok('patch do relatório v5.18.6 intocado (nada some)', antigo.indexOf('Atendimento:') >= 0 && antigo.indexOf('Dados de Atendimento') >= 0);
 ok('wrap SÓ durante a impressão + window.open restaurada (finally)', patch.indexOf('finally') >= 0 && patch.indexOf('window.open = _open') >= 0);
@@ -3755,7 +3755,7 @@ ok('botão no nav-gest (Painel Gerente, primeiro da gestão)', src.indexOf("nav-
 ok('botão na tool bar clássica (topmod-painel-gerente)', src.indexOf('topmod-painel-gerente') >= 0);
 ok('navigateTo envolvido (core intocado) e render chama no view novo', src.indexOf('window.navigateTo=function(view)') >= 0 && src.indexOf('_navPG.apply') >= 0);
 ok('reinstala a cada 2s se o menu for redesenhado (padrão escola)', src.indexOf('setInterval(') >= 0 && src.indexOf('pgInstalarMenu') >= 0);
-ok('painel na 205, fila fecha com navegação fiscal firme + escuro íntegro v6.1.3 (v7.0.24: +1 no fim, função única; r59: +1 no fim, setup; r60: +1 no fim, login-retry; r64: +1 no fim, banner)', manifest[manifest.length - 29] === 'painel_gerente_patch.js' && manifest[manifest.length - 28] === 'fiscal_guard_patch.js' && manifest[manifest.length - 27] === 'nf_transmissao_patch.js' && manifest[manifest.length - 26] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 25] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 24] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 23] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 22] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 21] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 20] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 19] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 18] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 17] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 16] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 15] === 'fiscal_catalogo_completo_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
+ok('painel na 205, fila fecha com navegação fiscal firme + escuro íntegro v6.1.3 (v7.0.24: +1 no fim, função única; r59: +1 no fim, setup; r60: +1 no fim, login-retry; r64: +1 no fim, banner)', manifest[manifest.length - 31] === 'painel_gerente_patch.js' && manifest[manifest.length - 30] === 'fiscal_guard_patch.js' && manifest[manifest.length - 29] === 'nf_transmissao_patch.js' && manifest[manifest.length - 28] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 27] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 26] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 25] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 24] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 23] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 22] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 21] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 20] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 19] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 18] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 17] === 'fiscal_catalogo_completo_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
 ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasReceber|parque|contratos|clientes)\.push/.test(src) && src.indexOf('db.save(') < 0);
 
 console.log('== CARIMBO 6.0.9 ==');
@@ -3888,7 +3888,7 @@ console.log('== HISTÓRICO + CARIMBO 6.0.1 ==');
 ok('histórico na Central: tabela com DANFE/XML/Cancelar por nota', src.indexOf('nfxRenderHistorico') >= 0 && src.indexOf("data-nfx=\"danfe\"") >= 0 && src.indexOf("data-nfx=\"xml\"") >= 0 && src.indexOf("data-nfx=\"cancelar\"") >= 0);
 ok('histórico herda a trava: render só quando a central abre (wrap do abrirCentralNfe)', src.indexOf('window.abrirCentralNfe=function') >= 0 && src.indexOf('_cen1.apply') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6001nfx') >= 0);
-ok('patch na 207 (autocura 208; perfis 209; permissões 210; menu fiscal v6.0.6 na 211; Início clicável v6.0.7 na 212; menus fiscais separados v6.0.8 na 212; override v6.0.9 na 214; 6 submenus v6.0.10 na 215; hover NF-e/NFC-e v6.0.11 fecha na 216)', manifest.length >= 225 && manifest[206] === 'nf_transmissao_patch.js' && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[208] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[209] === 'permissoes_estorno_venda_patch.js' && manifest[210] === 'fiscal_menu_completo_patch.js' && manifest[211] === 'dashboard_inicio_clicavel_patch.js' && manifest[212] === 'menus_fiscais_separados_patch.js' && manifest[213] === 'permissoes_override_menus_fiscais_patch.js' && manifest[214] === 'seis_submenus_velho_patch.js' && manifest[215] === 'submenu_hover_nfe_patch.js');
+ok('patch na 207 (autocura 208; perfis 209; permissões 210; menu fiscal v6.0.6 na 211; Início clicável v6.0.7 na 212; menus fiscais separados v6.0.8 na 212; override v6.0.9 na 214; 6 submenus v6.0.10 na 215; hover NF-e/NFC-e v6.0.11 fecha na 216)', manifest.length >= 225 && manifest[207] === 'nf_transmissao_patch.js' && manifest[208] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[209] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[210] === 'permissoes_estorno_venda_patch.js' && manifest[211] === 'fiscal_menu_completo_patch.js' && manifest[212] === 'dashboard_inicio_clicavel_patch.js' && manifest[213] === 'menus_fiscais_separados_patch.js' && manifest[214] === 'permissoes_override_menus_fiscais_patch.js' && manifest[215] === 'seis_submenus_velho_patch.js' && manifest[216] === 'submenu_hover_nfe_patch.js');
 ok('motor no bundle gerado', bundle.indexOf('MOTOR FISCAL v6.0.1') >= 0);
 ok('package.json na 6.0.1', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.1', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
@@ -5441,8 +5441,10 @@ ok(v5196.includes('v5.24.34'), 'v5196: carimbo da prova de gravação');
 ok(v5196.includes('provaLogin'), 'v5196: verifica o registro salvo (provaLogin)');
 ok(v5196.includes('Login pra testar: '), 'v5196: sucesso CONFIRMA o login exato pra ele');
 ok(v5196.includes('O usuário NÃO ficou gravado como deveria'), 'v5196: falha silenciosa agora Grita (lfbAlert)');
-ok(v5196.includes('fold(x.login) === login && txt(x.senha) === senha && x.ativo'),
-   'v5196: prova compara do MESMO jeito que o login procura (login+senha+ativo)');
+ok(v5196.includes('fold(x.login) === login && txt(x.senha) === senha && !!x.ativo === ativo && perfilEfetivo(x) === perfil'),
+   'v5196: prova compara login, senha, perfil e status escolhido, inclusive inativo');
+ok(v5196.includes('Usuário salvo como inativo; o login está desativado.'),
+   'v5196: desativação confirmada sem falso alerta de falha');
 
 const v52253 = fs.readFileSync('ajustes_v52253_login_tela_branca_patch.js', 'utf8');
 ok(v52253.includes('v5.24.34'), 'v52253: carimbo do diagnóstico partido');
@@ -6111,7 +6113,7 @@ console.log('\nRESULTADO: função única + bloco 2 passaram!');
 if (false) { // ═══ test_r58_redacao_json.js (inerte: só parse, nunca executa)
 //<<<<SECAO:test_r58_redacao_json.js:INICIO>>>>
 // TESTE r58 (auditoria, item 6) — redação do "mandar o que quebrou" pega JSON.
-// Antes: "senha":"6132" (com aspas) vazava. Agora: aspas antes/depois do : ou = também redigem.
+// Antes: "senha":"qa-only-not-secret" (com aspas) vazava. Agora: aspas antes/depois do : ou = também redigem.
 const fs = require('fs');
 function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
 const code7020 = fs.readFileSync('ajustes_v7020_mandar_erro_patch.js', 'utf8');
@@ -6120,9 +6122,9 @@ new Function('window', code7020)(ctx7.window);
 const R = ctx7.window.AJUSTES_V7020_PURE.redigir;
 console.log('== REDAÇÃO JSON (r58) ==');
 ok('export puro existe (testável)', typeof R === 'function');
-ok('chave=valor redige', R('senha=6132') === 'senha=***');
-ok('JSON com aspas duplas redige', R('"senha":"6132"') === '"senha":"***"');
-ok('JSON com aspas simples redige', R("'senha':'6132'") === "'senha':'***'");
+ok('chave=valor redige', R('senha=qa-only-not-secret') === 'senha=***');
+ok('JSON com aspas duplas redige', R('"senha":"qa-only-not-secret"') === '"senha":"***"');
+ok('JSON com aspas simples redige', R("'senha':'qa-only-not-secret'") === "'senha':'***'");
 ok('token em JSON redige', R('{"token":"abc","x":1}') === '{"token":"***","x":1}');
 ok('Bearer solto redige', R('falhou com Bearer abc123XYZ') === 'falhou com Bearer ***');
 ok('texto limpo passa intacto', R('erro normal sem segredo') === 'erro normal sem segredo');

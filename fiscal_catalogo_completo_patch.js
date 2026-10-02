@@ -83,7 +83,7 @@
   var IMPRESSORA_TIPO = [['0', '0 - Mini impressora (térmica)'], ['1', '1 - Laser/Tinta (Spooler)']];
   var FCP_UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
   var VENDA_NF_ABAS = ['Gerais', 'Destinatário', 'Itens da Nota', 'Informações Adicionais', 'Transporte', 'Correções', 'Reforma Tributária', 'Referenciar', 'Log'];
-  var CONFIG_ABAS = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma'];
+  var CONFIG_ABAS = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma', 'Log Fiscal'];
 
   function fxCfgPadrao() {
     return {
@@ -100,7 +100,21 @@
     };
   }
   function fxItemVazio(n) {
-    return { n: n || 1, gtin: '', cprod: '', descricao: '', ncm: '', cest: '', cfop: '5102', csosn: '102', qtd: 1, un: 'UN', vunit: 0, vtotal: 0, tipo: 'PRODUTO', desconto: 0, bc: 0, perfilCod: '', trib: { icmsBase: 0, icmsValor: 0, stBase: 0, stPerc: 0, stValor: 0, ipiCst: '99', ipiPerc: 0, ipiValor: 0, pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, beneficio: '', icmsDeson: 0, fcpPerc: 0, fcpValor: 0, efetBase: 0, efetValor: 0, pedido: '', pedidoItem: '', refCst: '000', refClassif: '000001', refIbsUfPerc: 0.1, refIbsMunPerc: 0, refCbsPerc: 0.9, imp: { di: '', dtReg: '', codExp: '', via: '', afrmm: 0, forma: '', desembData: '', desembUf: '', desembLocal: '', iof: 0, despAduan: 0, ii: 0, pais: '1058 BRASIL' } } };
+    return {
+      n: n || 1, gtin: '', cprod: '', descricao: '', ncm: '', cest: '', cfop: '5102', csosn: '102',
+      qtd: 1, un: 'UN', vunit: 0, vtotal: 0, tipo: 'PRODUTO', desconto: 0, bc: 0, perfilCod: '',
+      trib: {
+        icmsBase: 0, icmsPerc: 0, icmsValor: 0, icmsDif: 0, icmsUfRemet: 0, icmsUfDest: 0,
+        stBase: 0, stPerc: 0, stValor: 0, stValorRet: 0, stValorDest: 0, stFcpPercMaisSt: 0, stValorSubstituido: 0,
+        ipiCst: '99', ipiPerc: 0, ipiValor: 0, pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0,
+        beneficio: '', icmsDeson: 0, fcpBase: 0, fcpPerc: '', fcpValor: 0, fcpDestBase: 0, fcpDestPerc: '', fcpDestValor: 0,
+        fcpStBase: 0, fcpStPerc: '', fcpStValor: 0, efetBase: 0, efetPerc: 0, efetValor: 0, efetReducao: 0, pedido: '', pedidoItem: '',
+        icmsComUn: '', icmsComQtd: '', icmsComVUnit: '', icmsComVTotal: '', icmsTribUn: '', icmsTribQtd: '', icmsTribVUnit: '', icmsTribVTotal: '',
+        refCst: '', refClassif: '', refIbsUfPerc: '', refIbsMunPerc: '', refCbsPerc: '', refReformaRevisado: false,
+        refDevIbsUf: '', refDevIbsMun: '', refDevCbs: '',
+        imp: { di: '', dtReg: '', codExp: '', via: '', afrmm: 0, forma: '', desembData: '', desembUf: '', desembLocal: '', adicaoNumero: '', codFabricante: '', desconto: '', base: '', iof: 0, despAduan: 0, ii: 0, codPais: '', nomePais: '', pais: '' }
+      }
+    };
   }
   function fxPagamentoVazio() { return { forma: '01', valor: 0 }; }
   function fxNotaVazia(numero, usuario) {
@@ -112,7 +126,7 @@
       totais: { despAcess: 0, produtos: 0, servicos: 0, ipi: 0, icmsST: 0, frete: 0, seletivo: 0, ibs: 0, cbs: 0, descontos: 0, total: 0, tribAprox: 0 },
       frete: { modalidade: '9', transportadora: { doc: '', nome: '', ie: '', endereco: '', cidade: '', uf: '', email: '' }, veiculo: { placa: '', uf: '', rntc: '' }, volumes: [] },
       infos: { preConfig: '', complementares: '', geradasAuto: '', empenho: '', pedido: '', contrato: '' },
-      refs: [], reforma: { cst: '000', classif: '000001', base: 0 },
+      refs: [], reforma: { cst: '', classif: '', base: 0 },
       creditoIcms: 0, status: 'Não Gerada', ambiente: '', emailMarcado: false, log: [], criadoEm: new Date().toISOString()
     };
   }
@@ -120,6 +134,13 @@
     var b = Number(base) || 0;
     var r = function (v) { return Math.round(v * 100) / 100; };
     return { ibsUf: r(b * (Number(aliUf) || 0) / 100), ibsMun: r(b * (Number(aliMun) || 0) / 100), cbs: r(b * (Number(aliCbs) || 0) / 100) };
+  }
+  function fxTaxaInformada(v) { return v !== '' && v !== null && v !== undefined && isFinite(Number(v)); }
+  function fxCodeInput(path, label, options, maxLength, placeholder, id) {
+    var opts = (options || []).map(function (p) {
+      return p && p[0] ? '<option value="' + fxEsc(p[0]) + '">' + fxEsc(p[1]) + '</option>' : '';
+    }).join('');
+    return '<label class="fx-lb">' + fxEsc(label) + '<input class="fx-in" type="text" data-fx="' + fxEsc(path) + '" list="' + fxEsc(id) + '" maxlength="' + Number(maxLength || 6) + '" placeholder="' + fxEsc(placeholder || '') + '"></label><datalist id="' + fxEsc(id) + '">' + opts + '</datalist>';
   }
   function fxBRL(v) { return (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function fxEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -134,7 +155,7 @@
     MANIF_TIPO_FILTRO: MANIF_TIPO_FILTRO, MANIF_STATUS_NF: MANIF_STATUS_NF, MANIF_STATUS: MANIF_STATUS, EVENTOS_MANIF: EVENTOS_MANIF, MANIF_COLS: MANIF_COLS, MANIF_BUSCAS: MANIF_BUSCAS,
     PERFIS_SEED: PERFIS_SEED, CSOSN_LISTA: CSOSN_LISTA, PISCOFINS_CST: PISCOFINS_CST, IPI_CST: IPI_CST, REFORMA_CST: REFORMA_CST, REFORMA_CLASSIF: REFORMA_CLASSIF,
     VEQR: VEQR, IMPRESSORA_TIPO: IMPRESSORA_TIPO, FCP_UFS: FCP_UFS, VENDA_NF_ABAS: VENDA_NF_ABAS, CONFIG_ABAS: CONFIG_ABAS,
-    cfgPadrao: fxCfgPadrao, itemVazio: fxItemVazio, pagamentoVazio: fxPagamentoVazio, notaVazia: fxNotaVazia, ibsCbs: fxIbsCbs, brl: fxBRL, esc: fxEsc, dig: fxDig, dataBR: fxDataBR
+    cfgPadrao: fxCfgPadrao, itemVazio: fxItemVazio, pagamentoVazio: fxPagamentoVazio, notaVazia: fxNotaVazia, ibsCbs: fxIbsCbs, taxaInformada: fxTaxaInformada, codeInput: fxCodeInput, brl: fxBRL, esc: fxEsc, dig: fxDig, dataBR: fxDataBR
   };
   G.__v6014fxcInfo = 'FXCatalogo pronto';
 })();
@@ -154,6 +175,7 @@
       var d = fxDb(); d.config = d.config || {}; d.config.fxLogFiscal = d.config.fxLogFiscal || [];
       d.config.fxLogFiscal.push({ acao: acao, detalhe: detalhe || '', em: new Date().toISOString(), usuario: (fxSess() || {}).usuario || '' });
       if (d.config.fxLogFiscal.length > 400) d.config.fxLogFiscal = d.config.fxLogFiscal.slice(-400);
+      fxSave();
     } catch (e) { }
   }
   function fxCfg() {
@@ -166,7 +188,7 @@
     var d = fxDb();
     if (!d.perfisNf) {
       d.perfisNf = P.PERFIS_SEED.map(function (s) {
-        return { cod: s.cod, descricao: s.descricao, tipo: 'ICMS', cfop: s.cfop, csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '000', refClassif: '000001', ibsUf: 0.1, ibsMun: 0, cbs: 0.9, seed: true };
+        return { cod: s.cod, descricao: s.descricao, tipo: 'ICMS', cfop: s.cfop, csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '', refClassif: '', ibsUf: '', ibsMun: '', cbs: '', reformaRevisado: false, seed: true };
       });
       fxSave();
       fxLog('perfis-seed', '5 perfis reais da loja semeados (uma vez)');
@@ -527,11 +549,17 @@
     }
     return h;
   }
+  function fxCampo(path, label, value, attrs) {
+    return '<label class="fx-lb">' + P.esc(label) + '<input class="fx-in" data-fx="' + P.esc(path) + '" value="' + P.esc(value == null ? '' : value) + '" ' + (attrs || '') + '></label>';
+  }
   function fxRenderTribItem(it) {
     var t = it.trib;
     G.__fxTribAba = G.__fxTribAba || 'Tributação';
     var abas = ['Tributação', 'Importação', 'Outros', 'Reforma Tributária'];
-    var h = '<div class="fx-tabs">' + abas.map(function (a) {
+    var h = '<div class="fx-card" style="margin:0 0 8px;background:#f8fafc"><h4 style="margin:0 0 7px">Dados do Produto</h4><div class="fx-grid" style="grid-template-columns:110px 130px minmax(180px,1.6fr) 110px 110px 90px 90px;gap:6px;align-items:end">' +
+      I.inp('tribItem.gtin', 'GTIN/EAN') + I.inp('tribItem.cprod', 'Cód. Produto') + I.inp('tribItem.descricao', 'Descrição') +
+      I.inp('tribItem.vunit', 'Valor', 'type="number" step="0.01"') + I.inp('tribItem.ncm', 'NCM') + I.inp('tribItem.cest', 'CEST') + I.inp('tribItem.cfop', 'CFOP', 'maxlength="4"') +
+      '</div><div style="text-align:right;margin-top:5px"><button class="fx-btn" onclick="fxAcao(\'nf-item-cfop-todos\')">Alterar para Todos</button></div></div><div class="fx-tabs">' + abas.map(function (a) {
       return '<div class="fx-tab' + (G.__fxTribAba === a ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-aba\',\'' + a + '\')">' + a + '</div>';
     }).join('') + '</div>';
     if (G.__fxTribAba === 'Tributação') {
@@ -539,7 +567,7 @@
         /* ICMS */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">ICMS</h4>' +
         I.sel('tribItem.trib2.csosn', 'CST/CSOSN (Simples Nacional)', P.CSOSN_LISTA) +
-        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.icmsBase', 'Base ICMS R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.icmsValor', 'Valor ICMS R$', 'type="number" step="0.01"') + '</div>' +
+        '<div class="fx-grid fx-g3" style="margin-top:6px">' + I.inp('tribItem.trib2.icmsBase', 'Base ICMS R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.icmsPerc', 'Alíquota ICMS %', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.icmsValor', 'Valor ICMS R$', 'type="number" step="0.01"') + '</div>' +
         '<button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'icms\')">Zerar ICMS</button></div>' +
         /* ICMS ST */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">ICMS ST</h4><div class="fx-grid fx-g2">' +
@@ -553,55 +581,99 @@
         /* PIS */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">PIS</h4>' +
         I.sel('tribItem.trib2.pisCst', 'CST', P.PISCOFINS_CST) +
-        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.pisAli', 'Alíquota %', 'type="number" step="0.01"') + '<label class="fx-lb"> </label></div></div>' +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.pisAli', 'Alíquota %', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.pisValor', 'Valor PIS R$', 'type="number" step="0.01"') + '</div><button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'pis\')">Zerar PIS</button></div>' +
         /* COFINS */
         '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">COFINS</h4>' +
         I.sel('tribItem.trib2.cofinsCst', 'CST', P.PISCOFINS_CST) +
-        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.cofinsAli', 'Alíquota %', 'type="number" step="0.01"') + '</div></div>' +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.cofinsAli', 'Alíquota %', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.cofinsValor', 'Valor COFINS R$', 'type="number" step="0.01"') + '</div><button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'cofins\')">Zerar COFINS</button></div>' +
         '</div>';
     } else if (G.__fxTribAba === 'Importação') {
-      var imp = t.imp;
-      h += '<div class="fx-grid fx-g3">' +
-        I.inp('tribItem.imp2.di', 'Documento (DI/DSI/DA/DRI-E)') +
-        I.inp('tribItem.imp2.dtReg', 'Data de Registro', 'type="date"') +
-        I.inp('tribItem.imp2.codExp', 'Código do Exportador') +
-        I.inp('tribItem.imp2.via', 'Via de Transporte') +
-        I.inp('tribItem.imp2.afrmm', 'AFRMM R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.forma', 'Forma de Importação') +
-        I.inp('tribItem.imp2.desembData', 'Desembaraço — Data', 'type="date"') +
-        I.inp('tribItem.imp2.desembUf', 'Desembaraço — UF', 'maxlength="2"') +
-        I.inp('tribItem.imp2.desembLocal', 'Desembaraço — Local') +
-        I.inp('tribItem.imp2.iof', 'IOF R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.despAduan', 'Despesas Aduaneiras R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.ii', 'Imposto de Importação R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.imp2.pais', 'País') + '</div>' +
-        '<p class="fx-mini">Adições (nº/fabricante/desconto) entram quando a nota tiver importação de verdade.</p>';
+      var imp = t.imp || {}, paisAntigo = String(imp.pais || '').match(/^(\d{4})\s*(.*)$/);
+      var codPais = imp.codPais || (paisAntigo ? paisAntigo[1] : ''), nomePais = imp.nomePais || (paisAntigo ? paisAntigo[2] : '');
+      h += '<div class="fx-card"><h4 style="margin:0 0 8px">Dados para Declaração</h4><div class="fx-grid fx-g3">' +
+        I.inp('tribItem.imp2.di', 'Núm. DI/DSI/DA/DRI-E') + I.inp('tribItem.imp2.dtReg', 'Data Registro', 'type="date"') +
+        I.inp('tribItem.imp2.codExp', 'Código do Exportador') + I.inp('tribItem.imp2.via', 'Via de Transporte') +
+        I.inp('tribItem.imp2.afrmm', 'AFRMM R$', 'type="number" step="0.01"') + I.inp('tribItem.imp2.forma', 'Forma de Importação') + '</div></div>' +
+        '<div class="fx-grid fx-g2"><div class="fx-card"><h4 style="margin:0 0 8px">Desembaraço Aduaneiro</h4><div class="fx-grid fx-g3">' +
+        I.inp('tribItem.imp2.desembData', 'Data', 'type="date"') + I.inp('tribItem.imp2.desembUf', 'UF', 'maxlength="2"') + I.inp('tribItem.imp2.desembLocal', 'Local Desembaraço') + '</div></div>' +
+        '<div class="fx-card"><h4 style="margin:0 0 8px">Adições</h4><div class="fx-grid fx-g3">' +
+        I.inp('tribItem.imp2.adicaoNumero', 'Número', 'type="number" step="1"') + I.inp('tribItem.imp2.codFabricante', 'Cód. Fabricante') + I.inp('tribItem.imp2.desconto', 'Desconto R$', 'type="number" step="0.01"') + '</div></div></div>' +
+        '<div class="fx-grid fx-g2"><div class="fx-card"><h4 style="margin:0 0 8px">Valores</h4><div class="fx-grid fx-g4">' +
+        I.inp('tribItem.imp2.base', 'Base de Cálculo R$', 'type="number" step="0.01"') + I.inp('tribItem.imp2.iof', 'Valor IOF', 'type="number" step="0.01"') +
+        I.inp('tribItem.imp2.despAduan', 'Desp. Aduan.', 'type="number" step="0.01"') + I.inp('tribItem.imp2.ii', 'Valor II', 'type="number" step="0.01"') + '</div></div>' +
+        '<div class="fx-card"><h4 style="margin:0 0 8px">Dados do País</h4><div class="fx-grid fx-g2">' +
+        fxCampo('tribItem.imp2.codPais', 'Cód. País', codPais) + fxCampo('tribItem.imp2.nomePais', 'Nome do País', nomePais) + '</div></div></div>' +
+        '<p class="fx-mini">Os campos são armazenados no rascunho por item. Uma adição por item; para mais adições, separe os itens. Não há validação de código de país nem integração comprovada destes campos ao XML nesta versão.</p>';
     } else if (G.__fxTribAba === 'Outros') {
-      h += '<div class="fx-grid fx-g3">' +
-        I.inp('tribItem.trib2.icmsDeson', 'ICMS Desonerado R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.beneficio', 'Cód. Benefício Fiscal') +
-        I.inp('tribItem.trib2.fcpPerc', 'FCP %', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.fcpValor', 'FCP R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.efetBase', 'Base % Efetivo', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.efetValor', 'Valor Efetivo R$', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.pedido', 'Nº do Pedido') +
-        I.inp('tribItem.trib2.pedidoItem', 'Item do Pedido') +
-        '<label class="fx-lb">Par Comercial/Tributável<input class="fx-in" value="' + P.esc(it.un) + ' × ' + P.brl(it.qtd) + ' × ' + P.brl(it.vunit) + ' = ' + P.brl(it.vtotal) + '" readonly style="background:#f8fafc"></label>' +
-        '</div><p class="fx-mini">Outros → CSOSN ICMS (DIF/UF remetente-dest.), ICMS ST retido/substituído e FCP por UF ficam nestes campos — completa o mapa das 18 fotos.</p>';
+      var outrosAba = G.__fxTribOutrosAba || 'CSOSN ICMS';
+      var abasOutros = ['CSOSN ICMS', 'Icms ST', 'Fcp', 'Efetivo', 'Outros'];
+      h += '<div class="fx-tabs">' + abasOutros.map(function (s) { return '<div class="fx-tab' + (outrosAba === s ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-outros-sub\',\'' + s + '\')">' + s + '</div>'; }).join('') + '</div>';
+      if (outrosAba === 'CSOSN ICMS') {
+        h += '<div class="fx-card"><div class="fx-grid fx-g3">' +
+          I.inp('tribItem.trib2.icmsDeson', 'Valor ICMS Deson. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.icmsDif', 'Valor DIF. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.icmsUfRemet', 'Valor UF Remet. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.icmsUfDest', 'Valor UF Dest. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.beneficio', 'Cód. Benefício Fiscal') + '</div>' +
+          '<p class="fx-mini">Valores estruturais editáveis do item. A aplicação e o tratamento fiscal dependem da operação e da validação contábil.</p></div>';
+      } else if (outrosAba === 'Icms ST') {
+        h += '<div class="fx-card" style="max-width:620px"><h4 style="margin:0 0 8px">ICMS ST</h4><div class="fx-grid fx-g2">' +
+          I.inp('tribItem.trib2.stValorRet', 'Valor ST Ret. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.stValorDest', 'Valor ST Dest. R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.stFcpPercMaisSt', '% FCP + % ST', 'type="number" step="0.0001"') +
+          I.inp('tribItem.trib2.stValorSubstituido', 'Vlr. Substituído R$', 'type="number" step="0.01"') + '</div></div>';
+      } else if (outrosAba === 'Fcp') {
+        h += '<div class="fx-card"><div class="fx-grid fx-g3">' +
+          '<div><h4 style="margin:0 0 8px">FCP</h4>' + I.inp('tribItem.trib2.fcpBase', 'V. B.C. FCP R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.fcpPerc', '%', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.fcpValor', 'V. FCP R$', 'type="number" step="0.01"') + '</div>' +
+          '<div><h4 style="margin:0 0 8px">FCP UF Dest.</h4>' + I.inp('tribItem.trib2.fcpDestBase', 'V. B.C. FCP UF Dest. R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.fcpDestPerc', '%', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.fcpDestValor', 'V. FCP UF Dest. R$', 'type="number" step="0.01"') + '</div>' +
+          '<div><h4 style="margin:0 0 8px">FCP ST</h4>' + I.inp('tribItem.trib2.fcpStBase', 'V. B.C. FCP ST R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.fcpStPerc', '%', 'type="number" step="0.0001"') + I.inp('tribItem.trib2.fcpStValor', 'V. FCP ST R$', 'type="number" step="0.01"') + '</div>' +
+          '</div><p class="fx-mini">FCP por item: próprio, UF de destino e ST. A tabela global de UF não é aplicada automaticamente a estes campos.</p></div>';
+      } else if (outrosAba === 'Efetivo') {
+        h += '<div class="fx-card" style="max-width:620px"><h4 style="margin:0 0 8px">Efetivo</h4><div class="fx-grid fx-g3">' +
+          I.inp('tribItem.trib2.efetBase', 'Base Cálculo Efetivo R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.efetPerc', 'Alíquota Efetiva %', 'type="number" step="0.0001"') +
+          I.inp('tribItem.trib2.efetValor', 'Valor Efetivo R$', 'type="number" step="0.01"') +
+          I.inp('tribItem.trib2.efetReducao', '% Redução Efetivo', 'type="number" step="0.0001"') + '</div></div>';
+      } else {
+        var comUn = t.icmsComUn !== undefined ? t.icmsComUn : it.un;
+        var comQtd = t.icmsComQtd !== undefined ? t.icmsComQtd : it.qtd;
+        var comVU = t.icmsComVUnit !== undefined ? t.icmsComVUnit : it.vunit;
+        var comTotal = (Number(comQtd) || 0) * (Number(comVU) || 0);
+        var tribTotal = (Number(t.icmsTribQtd) || 0) * (Number(t.icmsTribVUnit) || 0);
+        h += '<div class="fx-card"><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.pedido', 'Núm. do Pedido') + I.inp('tribItem.trib2.pedidoItem', 'Núm. Item Pedido') + '</div>' +
+          '<h4 style="margin:10px 0 6px">Comercial</h4><div class="fx-grid fx-g4">' +
+          fxCampo('tribItem.trib2.icmsComUn', 'Un. Comercial', comUn) + fxCampo('tribItem.trib2.icmsComQtd', 'Qtde. Comercial', comQtd, 'type="number" step="0.0001"') + fxCampo('tribItem.trib2.icmsComVUnit', 'Valor Unit. Comercial', comVU, 'type="number" step="0.01"') +
+          '<label class="fx-lb">Total Parcial Comercial<input class="fx-in" value="' + P.brl(comTotal) + '" readonly style="background:#f8fafc"></label></div>' +
+          '<h4 style="margin:10px 0 6px">Tributável</h4><div class="fx-grid fx-g4">' +
+          fxCampo('tribItem.trib2.icmsTribUn', 'Un. Tributável', t.icmsTribUn) + fxCampo('tribItem.trib2.icmsTribQtd', 'Qtde. Tributável', t.icmsTribQtd, 'type="number" step="0.0001"') + fxCampo('tribItem.trib2.icmsTribVUnit', 'Valor Unit. Tributável', t.icmsTribVUnit, 'type="number" step="0.01"') +
+          '<label class="fx-lb">Total Parcial Tributável<input class="fx-in" value="' + P.brl(tribTotal) + '" readonly style="background:#f8fafc"></label></div>' +
+          '<p class="fx-mini">Totais parciais exibidos como quantidade × valor unitário; não alteram o total fiscal da nota. Revise os dados da operação antes de emitir.</p></div>';
+      }
     } else {
+      var refAba = G.__fxTribReformaAba || 'Padrão';
       var cofre = P.ibsCbs(it.vtotal, t.refIbsUfPerc, t.refIbsMunPerc, t.refCbsPerc);
+      var baseRef = Number(it.vtotal) || 0;
+      var legadoAuto = !t.refReformaRevisado && Number(t.refIbsUfPerc) === 0.1 && Number(t.refIbsMunPerc) === 0 && Number(t.refCbsPerc) === 0.9;
       h += '<div class="fx-grid fx-g3">' +
-        I.sel('tribItem.trib2.refCst', 'CST (Reforma)', P.REFORMA_CST) +
-        I.sel('tribItem.trib2.refClassif', 'Classificação', P.REFORMA_CLASSIF) +
-        I.inp('tribItem.trib2.refIbsUfPerc', 'IBS Estadual %', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.refIbsMunPerc', 'IBS Municipal %', 'type="number" step="0.01"') +
-        I.inp('tribItem.trib2.refCbsPerc', 'CBS %', 'type="number" step="0.01"') +
-        '</div>' +
-        '<div class="fx-cofre" style="margin-top:8px">' +
-        '<div><span class="fx-mini">IBS Estadual</span><b>R$ ' + P.brl(cofre.ibsUf) + '</b></div>' +
-        '<div><span class="fx-mini">IBS Municipal</span><b>R$ ' + P.brl(cofre.ibsMun) + '</b></div>' +
-        '<div><span class="fx-mini">CBS</span><b>R$ ' + P.brl(cofre.cbs) + '</b></div></div>' +
-        '<p class="fx-mini">Os cofrinhos verdes calculam sozinhos sobre o valor do item (' + P.brl(it.vtotal) + ') com as alíquotas acima — devolução de tributos usa os mesmos campos na nota de devolução.</p>';
+        P.codeInput('tribItem.trib2.refCst', 'Código CST-IBS/CBS (3 dígitos)', P.REFORMA_CST, 3, 'Selecione ou digite o código oficial', 'fx-cst-ibs-opcoes') +
+        P.codeInput('tribItem.trib2.refClassif', 'Classificação cClassTrib (6 dígitos)', P.REFORMA_CLASSIF, 6, 'Selecione ou digite o código oficial', 'fx-cclasstrib-opcoes') +
+        '<label class="fx-lb">Base de Cálculo<input class="fx-in" value="R$ ' + P.brl(baseRef) + '" readonly style="background:#f8fafc"></label></div>' +
+        '<div class="fx-tabs" style="margin-top:8px"><div class="fx-tab' + (refAba === 'Padrão' ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-reforma-sub\',\'Padrão\')">Padrão</div><div class="fx-tab' + (refAba === 'Devolução de Tributos' ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-reforma-sub\',\'Devolução de Tributos\')">Devolução de Tributos</div></div>';
+      if (refAba === 'Devolução de Tributos') {
+        h += '<div class="fx-grid fx-g3">' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Estadual</h4>' + I.inp('tribItem.trib2.refDevIbsUf', 'Valor do Tributo Devolvido R$', 'type="number" step="0.01"') + '</div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Municipal</h4>' + I.inp('tribItem.trib2.refDevIbsMun', 'Valor do Tributo Devolvido R$', 'type="number" step="0.01"') + '</div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">CBS</h4>' + I.inp('tribItem.trib2.refDevCbs', 'Valor do Tributo Devolvido R$', 'type="number" step="0.01"') + '</div>' +
+          '</div><p class="fx-mini">Informe os valores a devolver conforme o documento de origem e a orientação fiscal. Este campo não busca nem calcula o tributo da nota referenciada.</p>';
+      } else {
+        h += '<div class="fx-grid fx-g3" style="margin-top:8px">' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Estadual</h4><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.refIbsUfPerc', 'Alíquota (%)', 'type="number" min="0" step="0.0001"') + '<label class="fx-lb">Valor do IBS R$<input class="fx-in" value="' + (P.taxaInformada(t.refIbsUfPerc) ? P.brl(cofre.ibsUf) : '—') + '" readonly style="background:#f8fafc"></label></div></div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IBS Municipal</h4><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.refIbsMunPerc', 'Alíquota (%)', 'type="number" min="0" step="0.0001"') + '<label class="fx-lb">Valor do IBS R$<input class="fx-in" value="' + (P.taxaInformada(t.refIbsMunPerc) ? P.brl(cofre.ibsMun) : '—') + '" readonly style="background:#f8fafc"></label></div></div>' +
+          '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">CBS</h4><div class="fx-grid fx-g2">' + I.inp('tribItem.trib2.refCbsPerc', 'Alíquota (%)', 'type="number" min="0" step="0.0001"') + '<label class="fx-lb">Valor da CBS R$<input class="fx-in" value="' + (P.taxaInformada(t.refCbsPerc) ? P.brl(cofre.cbs) : '—') + '" readonly style="background:#f8fafc"></label></div></div>' +
+          '</div>' + I.chk('tribItem.trib2.refReformaRevisado', 'Campos conferidos na tabela oficial e com o responsável fiscal') +
+          (legadoAuto ? '<p class="fx-mini" style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:8px">Este item já contém as antigas alíquotas automáticas 0,1% / 0% / 0,9%. Revise e marque a conferência antes de reutilizá-las.</p>' : '') +
+          '<p class="fx-mini">Alíquota em branco não calcula valor. Os códigos sugeridos são exemplos; digite outro código se necessário. Os campos são guardados no rascunho, mas ainda não foram validados nem mapeados para o XML de emissão desta versão.</p>';
+      }
     }
     return h;
   }
@@ -653,17 +725,18 @@
       '<span class="fx-mini" style="align-self:center">CC-e nova se faz pela LISTAGEM da Central (botão da nota autorizada) — carta não altera valor/item.</span></div></div>';
   }
   function fxRenderReforma(n) {
-    var base = (n.totais && n.totais.produtos) || 0;
-    var cofre = P.ibsCbs(base, 0.1, 0, 0.9);
-    return '<div class="fx-card"><div class="fx-grid fx-g2">' +
-      I.sel('nota.reforma.cst', 'Tributação Padrão — CST', P.REFORMA_CST) +
-      I.sel('nota.reforma.classif', 'Classificação', P.REFORMA_CLASSIF) +
-      I.inp('nota.reforma.base', 'Base R$', 'type="number" step="0.01"') + '</div>' +
-      '<div class="fx-cofre" style="margin-top:8px">' +
-      '<div><span class="fx-mini">IBS Estadual 0,1%</span><b>R$ ' + P.brl(cofre.ibsUf) + '</b></div>' +
-      '<div><span class="fx-mini">IBS Municipal 0%</span><b>R$ ' + P.brl(cofre.ibsMun) + '</b></div>' +
-      '<div><span class="fx-mini">CBS 0,9%</span><b>R$ ' + P.brl(cofre.cbs) + '</b></div></div>' +
-      '<p class="fx-mini">Vigência por UF/data fica nas Configurações &gt; Reforma (o "Alterar NFe → Cidades / Datas" do sistema antigo virou os parâmetros da aba Reforma). <a href="javascript:void(0)" onclick="navigateTo(\'config-fiscal\')">Abrir Configurações</a></p></div>';
+    var base = 0, ibsUf = 0, ibsMun = 0, cbs = 0, rows = '';
+    (n.itens || []).forEach(function (it) {
+      var b = Number(it.vtotal) || 0, t = it.trib || {}, c = P.ibsCbs(b, t.refIbsUfPerc, t.refIbsMunPerc, t.refCbsPerc);
+      base += b; ibsUf += c.ibsUf; ibsMun += c.ibsMun; cbs += c.cbs;
+      rows += '<tr><td>' + P.esc(it.descricao || ('Item ' + it.n)) + '</td><td>' + P.esc(t.refCst || '—') + '</td><td>' + P.esc(t.refClassif || '—') + '</td><td style="text-align:right">R$ ' + P.brl(b) + '</td><td style="text-align:right">' + (P.taxaInformada(t.refIbsUfPerc) ? 'R$ ' + P.brl(c.ibsUf) : '—') + '</td><td style="text-align:right">' + (P.taxaInformada(t.refIbsMunPerc) ? 'R$ ' + P.brl(c.ibsMun) : '—') + '</td><td style="text-align:right">' + (P.taxaInformada(t.refCbsPerc) ? 'R$ ' + P.brl(c.cbs) : '—') + '</td></tr>';
+    });
+    return '<div class="fx-card"><h4 style="margin:0 0 6px">Resumo IBS/CBS por item</h4>' +
+      '<p class="fx-mini">As alíquotas não são preenchidas automaticamente. Informe CST, cClassTrib e percentuais em <b>Itens da Nota &gt; Tributação &gt; Reforma Tributária</b>; esta tela só resume os valores já lançados.</p>' +
+      '<div class="fx-cofre" style="margin:8px 0"><div><span class="fx-mini">Base informada dos itens</span><b>R$ ' + P.brl(base) + '</b></div><div><span class="fx-mini">IBS total</span><b>R$ ' + P.brl(ibsUf + ibsMun) + '</b></div><div><span class="fx-mini">CBS total</span><b>R$ ' + P.brl(cbs) + '</b></div></div>' +
+      '<div style="overflow:auto"><table class="fx-tb"><thead><tr><th>Item</th><th>CST</th><th>cClassTrib</th><th>Base</th><th>IBS Estadual</th><th>IBS Municipal</th><th>CBS</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:14px">Adicione itens à nota para ver o resumo.</td></tr>') + '</tbody></table></div>' +
+      '<p class="fx-mini" style="margin-top:8px">Campos desta versão são registrados no rascunho, mas ainda não têm integração de XML fiscal comprovada; não use este resumo como validação de emissão real. <a href="javascript:void(0)" onclick="navigateTo(\'config-fiscal\')">Abrir Configurações</a></p></div>';
   }
   function fxRenderReferenciar(n) {
     return '<div class="fx-card"><h4 style="margin:0 0 8px">🔗 Notas Fiscais Referenciadas</h4>' +
@@ -675,8 +748,7 @@
   }
   function fxRenderLog(n) {
     var regs = (n.log || []).slice().reverse();
-    return '<div class="fx-card"><div class="fx-tabs">' +
-      ['Respostas', 'XML Resposta', 'Log'].map(function (s) { return '<div class="fx-tab' + (s === 'Log' ? ' on' : '') + '">' + s + '</div>'; }).join('') + '</div>' +
+    return '<div class="fx-card"><h4 style="margin:0 0 6px">Histórico desta nota</h4>' +
       '<p class="fx-mini">Retorno completo WS / dados SEFAZ aparecem aqui depois da 1ª transmissão real. Antes disso: o log local da nota.</p>' +
       '<table class="fx-tb"><thead><tr><th>Quando</th><th>O que aconteceu</th><th>Quem</th></tr></thead><tbody>' +
       (regs.length ? regs.map(function (l) { return '<tr><td>' + P.esc((l.em || '').replace('T', ' ').slice(0, 19)) + '</td><td>' + P.esc(l.acao + (l.detalhe ? ' — ' + l.detalhe : '')) + '</td><td>' + P.esc(l.usuario || '') + '</td></tr>'; }).join('') :
@@ -856,8 +928,14 @@
     if (a === 'PIS') return '<div class="fx-grid fx-g2">' + I.sel('pf.pisCst', 'CST PIS', P.PISCOFINS_CST) + I.inp('pf.pisAli', 'Alíquota PIS %', 'type="number" step="0.01"') + '</div>';
     if (a === 'COFINS') return '<div class="fx-grid fx-g2">' + I.sel('pf.cofinsCst', 'CST COFINS', P.PISCOFINS_CST) + I.inp('pf.cofinsAli', 'Alíquota COFINS %', 'type="number" step="0.01"') + '</div>';
     if (a === 'IPI') return '<div class="fx-grid fx-g2">' + I.sel('pf.ipiCst', 'CST IPI', P.IPI_CST) + I.inp('pf.ipiAli', 'Alíquota IPI %', 'type="number" step="0.01"') + '</div>';
-    return '<div class="fx-grid fx-g2">' + I.sel('pf.refCst', 'CST (novo modelo)', P.REFORMA_CST) + I.sel('pf.refClassif', 'Classificação', P.REFORMA_CLASSIF) +
-      I.inp('pf.ibsUf', 'IBS UF %', 'type="number" step="0.01"') + I.inp('pf.ibsMun', 'IBS MUN %', 'type="number" step="0.01"') + I.inp('pf.cbs', 'CBS %', 'type="number" step="0.01"') + '</div>';
+    var avisoLegado = !pf.reformaRevisado && Number(pf.ibsUf) === 0.1 && Number(pf.ibsMun) === 0 && Number(pf.cbs) === 0.9
+      ? '<p class="fx-mini" style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:8px">Este perfil ainda pode conter as antigas alíquotas automáticas 0,1% / 0% / 0,9%. Revise-as antes de marcar como conferido.</p>' : '';
+    return '<div class="fx-grid fx-g2">' +
+      P.codeInput('pf.refCst', 'Código CST-IBS/CBS (3 dígitos)', P.REFORMA_CST, 3, 'Selecione ou digite o código oficial', 'fx-pf-cst-ibs-opcoes') +
+      P.codeInput('pf.refClassif', 'Classificação cClassTrib (6 dígitos)', P.REFORMA_CLASSIF, 6, 'Selecione ou digite o código oficial', 'fx-pf-cclasstrib-opcoes') +
+      I.inp('pf.ibsUf', 'IBS Estadual %', 'type="number" min="0" step="0.0001"') + I.inp('pf.ibsMun', 'IBS Municipal %', 'type="number" min="0" step="0.0001"') + I.inp('pf.cbs', 'CBS %', 'type="number" min="0" step="0.0001"') + '</div>' +
+      I.chk('pf.reformaRevisado', 'Aplicar estes dados de Reforma aos próximos itens após revisão fiscal') + avisoLegado +
+      '<p class="fx-mini">Sem a confirmação acima, o perfil não preenche CST, cClassTrib ou alíquotas nos itens novos. Os códigos sugeridos são exemplos; digite outro código se necessário.</p>';
   }
 
   /* ══════════════ PARTE 5 — MANIFESTAÇÃO DESTINATÁRIO (7 fotos) ══════════════ */
@@ -1097,10 +1175,20 @@
       h += '<div class="fx-card"><div class="fx-grid fx-g2">' +
         I.chk('cfg.reforma.ativa', 'Ativar Reforma Tributária (IBS/CBS 2026)') +
         I.sel('cfg.reforma.intermediador', 'Indicador de Intermediador/Marketplace', [['0', '0 - Site próprio / teleatendimento / venda direta'], ['1', '1 - Marketplace / plataforma / app parceiro']]) +
-        '</div><p class="fx-mini">O dele vende direto: indicador 0. Os cofrinhos da nota (IBS UF/MUN/CBS) usam as alíquotas do perfil/item.</p>' +
+        '</div><p class="fx-mini">Os percentuais de perfil/item nunca são preenchidos automaticamente. Informe-os depois de confirmar a classificação da operação e o regime tributário.</p>' +
         '<h4 style="margin:10px 0 8px">🗓️ Parâmetros de vigência (Cidades / Datas)</h4>' +
         I.inp('cfg.reforma.vigenciaUF', 'UF de referência', 'maxlength="2" style="width:70px" value="MG"') +
-        I.inp('cfg.reforma.vigenciaData', 'Vigente a partir de', 'type="date"') + '</div>';
+        I.inp('cfg.reforma.vigenciaData', 'Vigente a partir de', 'type="date"') + '</div>' +
+        '<div class="fx-card"><h4 style="margin:0 0 8px">Alíquotas padrão publicadas — Informe Técnico 2025.002 v1.70</h4>' +
+        '<div style="overflow:auto"><table class="fx-tb"><thead><tr><th>Ano</th><th>IBS Estadual</th><th>IBS Municipal</th><th>CBS</th></tr></thead><tbody>' +
+        '<tr><td>2026</td><td>0,1%</td><td>0%</td><td>0,9%</td></tr><tr><td>2027</td><td>0,05%</td><td>0,05%</td><td>Aguardar legislação</td></tr><tr><td>2028</td><td>0,05%</td><td>0,05%</td><td>Aguardar legislação</td></tr><tr><td>2029 em diante</td><td colspan="3">Definição por legislação/alíquota de referência</td></tr>' +
+        '</tbody></table></div><p class="fx-mini" style="margin-top:8px"><b>Referência, não preenchimento automático:</b> o IT publica alíquotas padrão por ano, mas isso não decide sozinho CST, cClassTrib, regime ou tratamento de cada item. Esta tela não certifica conformidade nem integra estes valores ao XML de emissão. Consulte <a href="https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=h9o7idH%20OcI=" target="_blank" rel="noopener">o Informe Técnico</a> e a <a href="https://dfe-portal.svrs.rs.gov.br/DFE/TabelaClassificacaoTributaria" target="_blank" rel="noopener">tabela oficial de classificação</a>.</p></div>';
+    } else if (aba === 'Log Fiscal') {
+      var logs = ((d.config && d.config.fxLogFiscal) || []).slice().reverse();
+      h += '<div class="fx-card"><h4 style="margin:0 0 6px">Auditoria Fiscal local</h4><p class="fx-mini">Últimos ' + logs.length + ' eventos guardados neste banco local (limite de 400). São ações do sistema, não respostas da SEFAZ. Senhas e CSC não são exibidos aqui.</p>' +
+        '<div style="overflow:auto;max-height:calc(100vh - 390px)"><table class="fx-tb"><thead><tr><th>Quando</th><th>Ação</th><th>Detalhe</th><th>Usuário</th></tr></thead><tbody>' +
+        (logs.length ? logs.map(function (l) { return '<tr><td>' + P.esc(String(l.em || '').replace('T', ' ').slice(0, 19)) + '</td><td>' + P.esc(l.acao || '') + '</td><td>' + P.esc(l.detalhe || '') + '</td><td>' + P.esc(l.usuario || '') + '</td></tr>'; }).join('') : '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:14px">Ainda não há eventos fiscais registrados.</td></tr>') +
+        '</tbody></table></div></div>';
     }
     return h;
   }
@@ -1285,20 +1373,31 @@
         it.qtd = Number((document.getElementById('fx-it-qtd') || {}).value) || 1;
         it.un = (document.getElementById('fx-it-un') || {}).value || 'UN';
         it.vunit = Number((document.getElementById('fx-it-vu') || {}).value) || (prod ? (prod.preco || prod.precoVenda || 0) : 0);
+        it.trib.icmsComUn = it.un; it.trib.icmsComQtd = it.qtd; it.trib.icmsComVUnit = it.vunit; it.trib.icmsComVTotal = it.qtd * it.vunit;
         it.perfilCod = (document.getElementById('fx-it-perfil') || {}).value || I.cfg().trib.perfilDentro;
         var pf = I.perfis().find(function (x) { return x.cod === it.perfilCod; });
-        if (pf) { it.cfop = pf.cfop; it.csosn = pf.csosn; it.trib.pisCst = pf.pisCst; it.trib.pisAli = pf.pisAli; it.trib.cofinsCst = pf.cofinsCst; it.trib.cofinsAli = pf.cofinsAli; it.trib.ipiCst = pf.ipiCst; it.trib.ipiPerc = pf.ipiAli; it.trib.refCst = pf.refCst; it.trib.refClassif = pf.refClassif; it.trib.refIbsUfPerc = pf.ibsUf; it.trib.refIbsMunPerc = pf.ibsMun; it.trib.refCbsPerc = pf.cbs; }
+        if (pf) {
+          it.cfop = pf.cfop; it.csosn = pf.csosn; it.trib.pisCst = pf.pisCst; it.trib.pisAli = pf.pisAli;
+          it.trib.cofinsCst = pf.cofinsCst; it.trib.cofinsAli = pf.cofinsAli; it.trib.ipiCst = pf.ipiCst; it.trib.ipiPerc = pf.ipiAli;
+          if (pf.reformaRevisado === true) {
+            it.trib.refCst = pf.refCst || ''; it.trib.refClassif = pf.refClassif || '';
+            it.trib.refIbsUfPerc = pf.ibsUf; it.trib.refIbsMunPerc = pf.ibsMun; it.trib.refCbsPerc = pf.cbs; it.trib.refReformaRevisado = true;
+          }
+        }
         if (!it.descricao) return I.toast2('Descreva o item ou escolha do estoque', 'info');
         n.itens.push(it); R1.totaisAuto(n);
         n.log.push({ acao: 'item-lancado', detalhe: it.descricao + ' x' + it.qtd, em: new Date().toISOString() });
         fxLimpaAliases(); I.save(); return fxReRender('central-nf');
       }
       if (acao === 'nf-item-del') { n.itens.splice(Number(a), 1); R1.totaisAuto(n); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
-      if (acao === 'nf-item-trib') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: Number(a), sub: 'Tributação' }; G.__fxTribAba = 'Tributação'; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
-      if (acao === 'nf-trib-sub') { G.__fxTrib.sub = a; return fxReRender('central-nf'); }
+      if (acao === 'nf-item-trib') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: Number(a), sub: 'Tributação' }; G.__fxTribAba = 'Tributação'; G.__fxTribReformaAba = 'Padrão'; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-sub') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib.sub = a; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
       if (acao === 'nf-trib-fechar') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: -1, sub: 'Tributação' }; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
       if (acao === 'nf-trib-aba') { I.aplica(fxRaizDe('central-nf')); G.__fxTribAba = a; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-reforma-sub') { I.aplica(fxRaizDe('central-nf')); G.__fxTribReformaAba = a === 'Devolução de Tributos' ? a : 'Padrão'; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-outros-sub') { I.aplica(fxRaizDe('central-nf')); G.__fxTribOutrosAba = a; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
       if (acao === 'nf-item-cfop-todos') {
+        I.aplica(fxRaizDe('central-nf'));
         var itAberto = (G.__fxTrib && G.__fxTrib.idx >= 0) ? n.itens[G.__fxTrib.idx] : null;
         if (itAberto) { var cf = (document.querySelector('[data-fx="tribItem.cfop"]') || {}).value || itAberto.cfop; n.itens.forEach(function (x) { x.cfop = cf; }); I.toast2('CFOP ' + cf + ' aplicado a todos os itens'); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
         return;
@@ -1309,6 +1408,8 @@
         if (a === 'icms') { itZ.trib.icmsBase = 0; itZ.trib.icmsValor = 0; }
         if (a === 'st') { itZ.trib.stBase = 0; itZ.trib.stPerc = 0; itZ.trib.stValor = 0; }
         if (a === 'ipi') { itZ.trib.ipiPerc = 0; itZ.trib.ipiValor = 0; }
+        if (a === 'pis') { itZ.trib.pisAli = 0; itZ.trib.pisValor = 0; }
+        if (a === 'cofins') { itZ.trib.cofinsAli = 0; itZ.trib.cofinsValor = 0; }
         fxLimpaAliases(); I.save(); return fxReRender('central-nf');
       }
       /* pagamentos/duplicatas/volumes (edição inline já vem pronta) */
@@ -1353,7 +1454,7 @@
       if (acao === 'pf-novo') {
         var usados = I.perfis().map(function (x) { return x.cod; });
         var livre = 1; while (usados.indexOf(String(livre).padStart(5, '0')) >= 0) livre++;
-        var pf2 = { cod: String(livre).padStart(5, '0'), descricao: '', tipo: 'ICMS', cfop: '5102', csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '000', refClassif: '000001', ibsUf: 0.1, ibsMun: 0, cbs: 0.9 };
+        var pf2 = { cod: String(livre).padStart(5, '0'), descricao: '', tipo: 'ICMS', cfop: '5102', csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '', refClassif: '', ibsUf: '', ibsMun: '', cbs: '', reformaRevisado: false };
         I.perfis().push(pf2); G.__fxPfEd = I.perfis().length - 1; G.__fxPfObj = pf2; G.__fxPfAba = 'ICMS';
         return fxReRender('fiscal-perfil');
       }

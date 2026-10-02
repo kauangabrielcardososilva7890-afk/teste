@@ -1485,7 +1485,7 @@ ok(g.indexOf('window.__orcResumoUltimaBaixa') >= 0, 'exposição do resumo da ú
 ok(g.indexOf('renderOrcamentos') >= 0 && g.indexOf('__v52293') >= 0, 'amarra o retrato na listagem VISÍVEL (a última que existir)');
 
 const m = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 40, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12 e, por último, a ribbon fiscal bonita v6.0.13 e a navegação+escuro v6.1.3, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0, e o login-retry v5.90.1 fecha a fila);');
+ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 43, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12, a ribbon fiscal v6.0.13, a navegação+escuro v6.1.3, mandar-erro v7.0.20, portão v7.0.22, função única v7.0.24, setup v5.90.0, login-retry v5.90.1, diagnóstico e notas da v7.3.14, e o banner fecha a fila);');
 
 const v237 = fs.readFileSync('ajustes_v52237_orcamentos_menu_patch.js', 'utf8');
 ok(v237.indexOf('__orcResumoUltimaBaixa') >= 0, 'aviso "não achei" mostra a última baixa');
@@ -1545,7 +1545,7 @@ ok(p.indexOf("window.__V52295_PURE") >= 0, 'marca de diagnóstico/teste presente
 
 // regressão: bundle contém o patch por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 39] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0, e o login-retry v5.90.1 fecha a fila)');
+ok(man[man.length - 42] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6, e o mandar-erro v7.0.20, e o portão de escrita v7.0.22, e a função única v7.0.24, e o setup v5.90.0, e o login-retry v5.90.1 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('__vosVendaPendente') >= 0, 'lógica presente no app.bundle.js');
 
@@ -1574,7 +1574,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
 
 console.log('== FILA / BUNDLE ==');
-ok('manifesto sobe pra 210+4; permissões/estorno na 210, menu fiscal 211; Início clicável 212; menus separados v6.0.8 (212); override v6.0.9 (214); 6 submenus (215); hover NF-e/NFC-e v6.0.11 fecha a fila', man.length >= 225 && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[208] === 'perfis_nuvem_cura_sessao_patch.js' && man[205] === 'fiscal_guard_patch.js');
+ok('manifesto sobe pra 210+4; permissões/estorno na 210, menu fiscal 211; Início clicável 212; menus separados v6.0.8 (212); override v6.0.9 (214); 6 submenus (215); hover NF-e/NFC-e v6.0.11 fecha a fila', man.length >= 225 && man[211] === 'fiscal_menu_completo_patch.js' && man[210] === 'permissoes_estorno_venda_patch.js' && man[212] === 'dashboard_inicio_clicavel_patch.js' && man[213] === 'menus_fiscais_separados_patch.js' && man[214] === 'permissoes_override_menus_fiscais_patch.js' && man[215] === 'seis_submenus_velho_patch.js' && man[216] === 'submenu_hover_nfe_patch.js' && man[209] === 'perfis_nuvem_cura_sessao_patch.js' && man[206] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)', bundle.indexOf('P605_PURE_START') >= 0 && bundle.indexOf('v6.0.5 — permissões no editor') >= 0);
 
 console.log('== PERMISSÕES (editor do usuário) ==');
@@ -1687,7 +1687,7 @@ ok(!/digi-escuro\s*[{,][^{}]*#f6f9ff|#f8fbff/.test(p), 'nenhum fundo claro nos b
 
 /* convívio e manifesto */
 const man = JSON.parse(ler('bundle-manifest.json'));
-ok(man.length >= 225 && man[221] === 'navegacao_fiscal_barra_escuro_patch.js' && man[220] === 'submenu_fiscal_oficial_patch.js',
+ok(man.length >= 225 && man[222] === 'navegacao_fiscal_barra_escuro_patch.js' && man[221] === 'submenu_fiscal_oficial_patch.js',
   'manifesto 225: v6.1.1 antes, v6.1.2 fecha a fila, v6.1.8 soma memória da tela + conferência da NF-e');
 const ix = ler('index.html');
 // v6.1.4 — a versão sai do package.json: subir a versão não reescreve o teste.

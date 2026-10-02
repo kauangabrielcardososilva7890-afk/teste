@@ -1199,7 +1199,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
 
 console.log('== FILA / BUNDLE ==');
-ok('manifesto sobe pra 216; override v6.0.9 (214), 6 submenus v6.0.10 (215), hover NF-e/NFC-e v6.0.11 fecha a fila', man.length >= 225 && man[208] === 'perfis_nuvem_cura_sessao_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[205] === 'fiscal_guard_patch.js' && man[206] === 'nf_transmissao_patch.js' && man[207] === 'autocura_empresa_central_nf_tela_patch.js');
+ok('manifesto sobe pra 216; override v6.0.9 (214), 6 submenus v6.0.10 (215), hover NF-e/NFC-e v6.0.11 fecha a fila', man.length >= 225 && man[209] === 'perfis_nuvem_cura_sessao_patch.js' && man[210] === 'permissoes_estorno_venda_patch.js' && man[211] === 'fiscal_menu_completo_patch.js' && man[212] === 'dashboard_inicio_clicavel_patch.js' && man[213] === 'menus_fiscais_separados_patch.js' && man[214] === 'permissoes_override_menus_fiscais_patch.js' && man[215] === 'seis_submenus_velho_patch.js' && man[216] === 'submenu_hover_nfe_patch.js' && man[206] === 'fiscal_guard_patch.js' && man[207] === 'nf_transmissao_patch.js' && man[208] === 'autocura_empresa_central_nf_tela_patch.js');
 ok('bundle contém o patch da cura (PURE + banner)', bundle.indexOf('pncProximoPasso') >= 0 && bundle.indexOf('v6.0.4 — cura da sessão DEFINITIVA') >= 0);
 ok('bundle NÃO contém mais o botão Reparar (r46)', bundle.indexOf('dc-reparar-sessao') < 0 && bundle.indexOf('Reparar sessão agora') < 0);
 
@@ -1489,7 +1489,7 @@ ok('o redesenho é chamado no fim do ciclo, sob a decisão e sem se perder',
 
 console.log('\n== 5) PUXAR AO ABRIR (v7.0.26, voto do dono) ==');
 ok('leitura exposta para a navegação', typeof S.puxarAoAbrirTela === 'function');
-ok('não fura ciclo em andamento', /async function puxarAoAbrirTela\(\)\{\s*if\(busy\) return false;/.test(code));
+ok('pull exige autorização e não fura ciclo em andamento', /async function puxarAoAbrirTela\(\)\{\s*if\(!authorized\(\)\)return false;\s*if\(busy\) return false;/.test(code));
 ok('carência anti-rajada ao pular de tela', /Date\.now\(\)-lastTick<2500/.test(code));
 ok('delega para a leitura silenciosa', /return tickSohLeitura\('abrir-tela'\);/.test(code));
 ok('devolve promessa (a troca de tela não espera)', typeof S.puxarAoAbrirTela().then === 'function');

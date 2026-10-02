@@ -3389,3 +3389,133 @@ só depois que a senha de cada usuário for trocada no app novo (a reescrita gra
 | `node test_runner.js` | **11 grupos passaram, 0 falharam**, 1 pulado (falta `jsdom`) |
 | `node mapa_camadas.js` | 1089 nomes globais, 2057 escritas, 291 repetidos — `MAPA_CAMADAS.md` atualizado junto |
 | `node auditar_mortos.js` | órfãos de teste: 0 |
+
+
+## §56 — Rodada 67 (01/10/2026): busca de Contratos reaparece em “Mostrar todos” (v7.3.10; diagnóstico sem patch)
+
+### 56.1 Escopo e isolamento
+
+Esta rodada foi limitada à reprodução/diagnóstico do comportamento reportado em **Locação > Contratos**. Não foi alterado qualquer arquivo de código do bug, não houve conexão com nuvem/banco real, não foram usados credenciais reais e não houve merge/close de PR. O teste foi feito em cópia local de QA do bundle v7.3.10, com dados sintéticos e interceptores de rede/gravação.
+
+Na reprodução positiva, a fixture tinha dois contratos ativos sintéticos: `QA-2026-001` (R$ 100,00) e `QA-2026-002` (R$ 200,00). `fetch`, XHR e `sendBeacon` eram interceptados antes de sair do browser; no checkpoint observado, 63 tentativas de rede foram bloqueadas. `saveDB` era stub em memória (contador final 8), uma tentativa de escrita em localStorage foi bloqueada e houve zero tentativas IndexedDB. Depois, foram apagadas as 10 chaves de localStorage e o DB temporário `digicopy_erp_storage_v1` do origin de QA, e o servidor temporário foi encerrado.
+
+### 56.2 Resultado dos dois cenários
+
+| Cenário | Ação | Resultado observado |
+|---|---|---|
+| Controle negativo — sem busca previamente aplicada | Em origin QA limpo: digitar `QA-2026-001`, apagar sem lupa/Enter e clicar **Mostrar todos** | Campo permaneceu vazio; `__CONTRATOS_FINAL_STATE__.busca=''`; `__CTR_FILTRO_V52237.q=''`; `campo='todos'`. Como a fixture não foi recarregada após a limpeza, a lista mostrou placeholder e cartões zero; este controle confirma que não há termo antigo a restaurar quando o estado primário começa vazio, mas não mede a lista de uma fixture. |
+| Reprodução positiva — busca previamente aplicada | Aplicar `QA-2026-001` pela lupa; apagar sem lupa/Enter; clicar **Mostrar todos** | Texto reapareceu como `QA-2026-001`; renderer primário reteve o termo; extensão informou `campo='todos', q=''`; uma linha de contrato continuou visível, embora os cartões dissessem **Contratos 1**, **Ativos 2**, **Mensalidade R$ 300,00**. |
+
+Captura do estado bugado: [evidence/contracts-search-restored.webp](evidence/contracts-search-restored.webp). O diagnóstico completo e a correção validada estão consolidados em [HANDOFF_FINALIZACAO_V7.3.14.md](HANDOFF_FINALIZACAO_V7.3.14.md).
+
+### 56.3 Causa confirmada no código
+
+1. `contratos_final_patch.js:407` guarda o estado primário em `window.__CONTRATOS_FINAL_STATE__` (`busca`, `status`, `sort`).
+2. `contratos_final_patch.js:433-434` só sincroniza input → `STATE.busca` quando `contratosFinalBuscar()` é chamado (lupa/Enter). `contratos_final_patch.js:404-405` remove a atualização por `oninput` e vincula Enter.
+3. `ajustes_v52237_contratos_filtros_patch.js:189` mantém outro estado, `window.__CTR_FILTRO_V52237`, com `campo` e `q`.
+4. `ajustes_v52237_contratos_filtros_patch.js:234-238` limpa `STATE.campo`, `STATE.q`, select e input, mas chama `window.renderContratos()` diretamente. Não limpa `window.__CONTRATOS_FINAL_STATE__.busca` nem passa por `contratosFinalBuscar()`.
+5. O wrapper de `renderContratos`, em `ajustes_v52237_contratos_filtros_patch.js:243-265`, deixa passar os dois contratos quando `campo='todos'` e `q=''`, então chama o renderer anterior.
+6. `contratos_final_patch.js:439-447` aplica `STATE.busca` antigo à tabela (442) e desenha novamente o input com `value="${esc(STATE.busca)}"` (446). Assim o termo volta e uma linha fica filtrada.
+7. Durante a chamada temporária do wrapper, os cartões **Ativos/Mensalidade** leem o `db.contratos` amplo, enquanto o cartão **Contratos** usa `lista.length` depois do filtro do renderer. Daí a discrepância observada `1` versus `2` / `R$ 300,00`.
+8. `reporTexto()` em `ajustes_v52237_contratos_filtros_patch.js:197-200` repõe input apenas quando `STATE.q` da extensão está preenchido; após **Mostrar todos**, esse `q` está vazio e não é a origem direta da restauração reproduzida.
+9. O manifesto atual contém `contratos_final_patch.js` antes de `ajustes_v52237_contratos_filtros_patch.js` (posições zero-based 22 e 146), compatível com o wrapper em volta do renderer final.
+
+**Diagnóstico:** dessincronização entre dois estados de UI. O controle negativo mostra a condição: o retorno só acontece quando há um termo primário anterior não limpo; a reprodução positiva confirma a falha e a divergência de contadores. Não se observou gravação de dados de contrato; o comportamento é estado de busca em memória.
+
+### 56.4 Cobertura e encaminhamento
+
+`test_msg_04_clientes.js:1182` coloca as verificações de F1 dentro de `if(false)` (“inerte: só parse, nunca executa”). As asserções `1206-1212` são estáticas e a linha 1212 confere somente a atribuição `STATE.campo='todos'; STATE.q='';`; não cobre `__CONTRATOS_FINAL_STATE__.busca` nem DOM/contadores. `test_runner.js:46-54` executa o arquivo, mas não executa o corpo do `if(false)`. Não foi rodado teste automatizado de UI para esta ocorrência.
+
+Recomendação para rodada autorizada: limpar o estado primário de busca ao acionar **Mostrar todos** (ou tornar o estado único/canônico) e acrescentar regressão comportamental para busca aplicada → apagar sem lupa → **Mostrar todos**, verificando input vazio, todas as linhas e cartões coerentes. **Nenhuma alteração de código foi feita nesta rodada**, conforme instrução.
+
+A lacuna `lan-cont` já estava fechada na r66 (§47.3/§55.1). A prova mobile/touch de Cadastros permaneceu sem execução, respeitando a ordem anterior registrada no handoff de excluir “celular/comercial”.
+
+
+## §57 — Rodada 67 (01/10/2026): autenticação, Nuvem e Usuários/permissões
+
+### §57.1 Escopo e segurança
+
+Pedido: investigar a repetição da tela obrigatória de troca de senha e a aceitação da senha antiga; testar Configurações → Usuários e permissões; remover a linha “Hierarquia: ...”; trocar o indicador “local” por “Nuvem”, abrir um diagnóstico pelo ponto pulsante e apresentar notas de atualização uma única vez por versão.
+
+Todos os cenários foram executados com usuário/senhas sintéticos em localhost/fixture. **Nenhuma credencial real foi usada**, nenhum login na nuvem real ocorreu e nenhum dado de produção foi consultado. O Playwright intercepta tráfego externo: somente endpoints GET de health/release/status têm resposta mockada; demais chamadas são abortadas. Não houve commit/push/deploy, publicação, criação/alteração de PR, merge ou fechamento de PR.
+
+### §57.2 Autenticação e senha anterior
+
+- `ajustes_v52253_login_tela_branca_patch.js:21-38`: se há `senhaHash` e `senhaSalt`, `loginFlexivel` não compara a senha digitada contra o campo texto legado. O hash é a fonte de verdade.
+- `ajustes_v52253_login_tela_branca_patch.js:181-203`: wrapper tenta a validação hashada e informa falhas de login por estado.
+- `ajustes_v52253_login_tela_branca_patch.js:247-254`: modal obrigatório decorre de `senhaPadrao`.
+- `ajustes_v5196_patch.js:238-244`: mudança de senha gera hash e a autoalteração limpa `senhaPadrao`.
+- Playwright com fixture: modal obrigatório apareceu no primeiro login; após salvar, hash/salt existiam, `senhaPadrao=false`, nova senha autenticou, modal não retornou e senha anterior foi recusada.
+- Limite: resultado confirma a lógica da versão local em fixture, não a senha/flag/credencial persistida na conta real, que não foi acessada.
+
+### §57.3 Usuários/permissões: navegação, CRUD e defeito de falso negativo corrigido
+
+- `ajustes_v5196_patch.js:104-152`: a listagem filtra `db.usuarios` por empresa ativa, não imprime senha, apresenta perfil/status e ações segundo as permissões. O título agora contém somente “Usuários e permissões”; a frase técnica de hierarquia foi removida.
+- `ajustes_v5196_patch.js:163-197`: campos de edição, perfil Admin/Dono, status Ativo/Inativo e senha vazia por padrão ao editar.
+- `ajustes_v5196_patch.js:201-246`: persistência e atualização/hash de usuários.
+- **Achado reproduzido:** ao salvar um usuário marcado Inativo, o registro era persistido, mas a “prova de gravação” requeria `x.ativo` verdadeiro. Isso emitia “O usuário NÃO ficou gravado” mesmo com o status salvo corretamente — falso alerta e contradição para o operador.
+- **Correção:** `ajustes_v5196_patch.js:247-257` compara empresa, login, senha, perfil e o status exato escolhido. Um usuário Inativo recebe confirmação explícita de que foi salvo e que o login está desativado.
+- `ajustes_v5196_patch.js:268-309`: cadastro/edição de técnico validado.
+- Browser E2E percorreu a navegação real, criou usuário, alterou perfil para Admin, marcou Inativo e manteve a senha digitada em branco; confirmou persistência e ausência do falso erro. Também criou e editou técnico.
+- Harness sintético cobre ainda hash em criação/edição, filtro por empresa, não exposição de senha, restrição de edição, bloqueio de autoexclusão e exclusões confirmadas de usuário e técnico.
+
+### §57.4 Nuvem e diagnóstico do indicador
+
+- `index.html:201-202` e `mobile/www/index.html:201-202`: rótulo “Nuvem” e ponto pulsante como botão acessível “Abrir diagnóstico da nuvem”.
+- `ajustes_v52267_diagnostico_nuvem_patch.js:35-58,60-85`: modal compacto mostra autorização, saúde/prontidão, fila, última sincronização e versões; executa apenas GET `/health`, não grava, autoriza nem sincroniza registros de negócio.
+- Primeiro E2E detectou que o listener preso ao botão original desaparecia quando a tela recriava a barra após login. `ajustes_v52267_diagnostico_nuvem_patch.js:88-103` agora delega clique em `document` via `closest('#dc-cloud-diag-trigger')`; E2E confirmou abertura após redesenho.
+- `cloudflare_data_sync_patch.js:1539-1556,1560-1564`: pulls de leitura e pull ao abrir tela retornam sem token autorizado. O E2E confirmou que `/v1/snapshot` não é solicitado no cenário local sem autorização.
+
+### §57.5 Notas de atualização por versão
+
+- `patch_notes_local.js:7-17` define texto simples por versão e chave local `digicopy_patch_visto_<versão>`.
+- `patch_notes_local.js:19-24,31-40` aguarda a sessão/app estarem abertas e consulta a chave sem depender da nuvem.
+- `patch_notes_local.js:46-59` mostra o popup acessível e grava o “visto” no momento em que ele aparece; assim, data e desconexão da nuvem não alteram a decisão.
+- E2E verificou `digicopy_patch_visto_7.3.11`, exibição no primeiro login e ausência após logout/login. Escopo prático é uma vez por versão neste browser/dispositivo; apagar dados locais ou trocar de aparelho apaga a lembrança.
+- Resumo 7.3.11 inclui: senha antiga deixa de valer quando há hash novo; desativação de usuário sem alerta falso; rótulo/diagnóstico da Nuvem; retirada da frase técnica em Usuários.
+
+### §57.6 Validação e build
+
+- `node build_bundle.js`, `node sync_build.js`, sincronização do bundle mobile e `node mapa_camadas.js`: bundle de 235 scripts, hash comum raiz/mobile `cce6f1d80bb4d9914be557e734512ef8c7d8984a2121b8eb6b5c092c1eb06bd8`.
+- `node test_r67_auth_ui.js`: passou (login hash, regras de usuário/técnico, falso alerta de Inativo, diagnósticos/GET, evento delegado, guarda de token e notas).
+- `npm test`: **13 passaram, 0 falharam, 0 omitidos**; jsdom foi instalado temporariamente com `--no-save --package-lock=false` só para esta execução, sem corrigir a árvore nem executar `npm audit fix`.
+- `cd e2e && npm test`: **1 passou** em Chromium, com fixture e servidor local. O mock rejeitou qualquer chamada externa fora da allowlist GET.
+- Handoff consolidado atualizado após a validação v7.3.14: [HANDOFF_FINALIZACAO_V7.3.14.md](HANDOFF_FINALIZACAO_V7.3.14.md).
+
+### §57.7 Limites e estado de entrega
+
+A troca da senha da conta real não foi feita e não foi verificado se o cadastro remoto tem hash/salt/flag atualizados. A interface foi validada em browser Chromium com dados sintéticos, não em aparelho físico/touch. Não houve deploy nem alteração remota do PR; alterações estão apenas no worktree/branch local `work/r67-auth-cloud-ui`. O diagnóstico de Contratos documentado na §56 não foi alterado nesta rodada.
+
+
+## §58 — Rodada 68 (02/10/2026): Fiscal, Contratos e finalização v7.3.14
+
+### §58.1 Isolamento e resultado geral
+
+Auditoria executada em Chromium/local com fixture sintética. Nenhuma credencial de conta foi usada, nenhum dado de produção foi lido e nenhuma emissão/transmissão fiscal foi tentada. O harness registrou 23/23 rotas abertas, zero erros de página, zero chamadas no trace de nuvem, quatro respostas mockadas sintéticas e duas chamadas abortadas antes de alcançar a rede. O fixture fiscal confirmou `transmissionAttempted:false`.
+
+### §58.2 Contratos e Locação
+
+`ajustes_v52237_contratos_filtros_patch.js:193+` sincroniza busca do renderer final e do filtro v52237. A regressão real de browser cobre aplicar busca, apagar sem lupa/Enter e clicar **Mostrar todos**; o estado final é `filterQuery=''`, `rendererQuery=''`, `filterField='todos'`, status vazio e uma linha sintética visível. O E2E confirma que o texto antigo não retorna. Capturas: `evidence/contracts-search-restored.webp` (antes) e `evidence/contracts-search-mostrar-todos.png` (depois).
+
+`ajustes_v52213_menus_atalhos_patch.js:29-30` restaura Máquinas nos clientes/Parque e Leituras. `locacao_chamados_fix_patch.js:81-96` encaminha ao destino consolidado existente com toast não bloqueante. As rotas correspondentes passaram no browser.
+
+### §58.3 Fiscal
+
+`fiscal_catalogo_completo_patch.js:555-658` organiza Tributação por item nas subabas principais, com Outros separado em CSOSN ICMS, ICMS ST, FCP, Efetivo e dados comerciais; Importação e Reforma Tributária têm campos editáveis. `:658-659,735-737,934-938,1176-1186` compõem os campos CST/cClassTrib, bases/valores, resumo e configuração IBS/CBS 2026, sem percentuais automáticos nem promessa de conformidade. `CONFIG_ABAS` contém 11 abas, incluindo Log Fiscal. A bateria `test_msg_08_fiscal.js` e o Playwright passaram; valores sintéticos de DI/país/FCP foram persistidos entre subabas. Memorando de referência: `FISCAL_FONTES_OFICIAIS_2026-10-02.md`.
+
+### §58.4 UX pessoal, release notes e proteção
+
+- Notas v7.3.14: chave local `digicopy_patch_visto_<versão>`; E2E confirmou exibição uma vez e ocultação após reload.
+- Diagnóstico Nuvem abre pelo ponto pulsante, via listener delegado em `ajustes_v52267_diagnostico_nuvem_patch.js:96+`; Usuários/permissões não mostra mais a linha técnica de hierarquia.
+- `orcamento_cloud_guard_patch.js:2-94` bloqueia/deduplica consultas remotas legadas sem autorização.
+- Exemplos de senha numérica em comentários/testes foram substituídos por marcadores sintéticos; bundle reconstruído e regressões reexecutadas.
+
+### §58.5 Build e testes
+
+`npm test`: **14 passaram, 0 falharam, 0 omitidos**. `e2e/personal-ui-audit.spec.js`: **1 passou**, 23 rotas; fiscal sintético, notas, busca, modais e rede. `node sync_build.js --check` e `mobile/npm run sync` passaram; sincronizador informou 0 referências quebradas. Bundle com 236 scripts; SHA-256 comum a desktop, `mobile/www` e Android assets: `7a38b6ce9e33cbb5322ac127491e72524edee58c3fae3c33ff93ba31a4d2ff2b`. Não foi compilado APK nem testado em dispositivo físico.
+
+Resultado JSON: `evidence/personal-ui-audit-v7314.json`. Relatório detalhado e passo seguinte: `HANDOFF_FINALIZACAO_V7.3.14.md`.
+
+### §58.6 Decisão de produto ainda necessária
+
+A implementação base continua cloud-only: `cloudflare_data_sync_patch.js:409` declara `modoSoNuvem(){ return true; }`. A faixa de `ajustes_v7015_nuvem_explica_patch.js:194-197` diz que as listas aparecem vazias quando não há autorização; no fixture sintético local havia um contrato visível. O estado não impediu o E2E, mas expôs uma divergência entre o copy offline e a fixture. Não foi convertido silenciosamente para local-only porque isso muda persistência e sincronização. Antes de declarar concluído o modo pessoal sem nuvem, o usuário precisa escolher entre manter cloud-only e corrigir a mensagem, ou oferecer modo local-only explícito. Nenhum PR foi mesclado/fechado nem houve publicação nesta rodada.

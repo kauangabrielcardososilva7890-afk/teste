@@ -23,6 +23,8 @@ const tests=[
   "test_msg_07_financeiro.js",
   "test_msg_08_fiscal.js",
   "test_msg_09_login.js",
+  "test_r67_auth_ui.js",
+  "test_r68_orcamento_cloud_guard.js",
   "test_msg_10_relatorios.js",
   "test_msg_11_jsdom.js",
   "test_regressao_dialogos.js",

@@ -26,6 +26,8 @@ function menusPadrao(){
     ]},
     {id:'locacao', icon:'ph-printer', label:'Locação', click:'navigateTo(\'contratos\')', menuId:'menu-outsourcing', items:[
       {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
+      {id:'parque', icon:'ph-map-pin', label:'Máquinas nos clientes', click:'navigateTo(\'parque\')'},
+      {id:'leituras', icon:'ph-speedometer', label:'Leituras', click:'navigateTo(\'leituras\')'},
       {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'}
     ]},
     // v5.24.34 — MENU DE NF DE VERDADE (relatório dele: 'os menus de NF não estão

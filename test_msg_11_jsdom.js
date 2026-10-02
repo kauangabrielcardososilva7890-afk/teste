@@ -116,8 +116,8 @@ function namesSelected(w) {
 
     let view = w.document.getElementById('view-config-fiscal');
     assert(view, 'Configurações fiscais abriu');
-    assert.strictEqual(view.querySelectorAll('[data-fx-tab]').length, 10, 'dez botões de aba renderizados');
-    const abas = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma'];
+    assert.strictEqual(view.querySelectorAll('[data-fx-tab]').length, 11, 'onze botões de aba renderizados');
+    const abas = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma', 'Log Fiscal'];
     for (const aba of abas) {
       const tab = view.querySelector('[data-fx-tab="' + aba + '"]');
       assert(tab, 'botão da aba ' + aba);
@@ -136,7 +136,7 @@ function namesSelected(w) {
     assert.strictEqual(senha.type, 'text', 'olho aberto mostra senha');
     assert(olho.querySelector('path').getAttribute('d').indexOf('M3 3l18 18') >= 0, 'senha visível troca para olho cortado');
 
-    console.log('E2E v6.1.3: menus exclusivos, legado removido, dez abas abriram e olho SVG passou.');
+    console.log('E2E v6.1.3: menus exclusivos, legado removido, onze abas abriram e olho SVG passou.');
   } finally {
     dom.window.close();
     await new Promise(function (resolve) { server.close(resolve); });

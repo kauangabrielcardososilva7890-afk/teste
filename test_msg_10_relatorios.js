@@ -125,7 +125,7 @@ ok('demo antiga ainda é removida', app.indexOf("const demoLogins = ['admin','ca
 ok('config nova nasce vazia (setup preenche)', app.indexOf("config:{empresa:{nome:'',cnpj:'',fone:'',email:''}}") >= 0);
 
 console.log('\n== 2) NENHUM PATCH RESSUSCITA FÁBRICA (r59) ==');
-const proibidos = ["login:'kauan'", 'login:"kauan"', "login:'denivaldo'", "senha:'6132'", "senha:'3232'", "id:'usr_kauan'", "id:'usr_denivaldo'", "id:'emp_digicopy'"];
+const proibidos = ["login:'kauan'", 'login:"kauan"', "login:'denivaldo'", "senha:'qa-only-not-secret'", "senha:'qa-only-not-secret'", "id:'usr_kauan'", "id:'usr_denivaldo'", "id:'emp_digicopy'"];
 const culpados = [];
 const arquivos = fs.readdirSync('.').filter(f => f.endsWith('.js') && /^patch_|^ajustes_|^app\.js$|^cloudflare_/.test(f));
 for(const f of arquivos){

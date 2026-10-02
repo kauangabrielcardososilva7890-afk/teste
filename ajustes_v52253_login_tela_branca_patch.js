@@ -29,7 +29,11 @@
         var uN = fold(u.nome);
         var uP = uN.split(/\s+/)[0];
         var matchLogin = (dL === uL || dL === uN || dL === uP);
-        var matchSenha = (txt(u.senha) === dS);
+        // Com hash+salt, o hash é a fonte de verdade. Não aceitar `senha`
+        // em texto nesse caso: cópias antigas/atrasadas podem manter a senha
+        // anterior nesse campo, mesmo depois da troca para um hash novo.
+        var temHashAtivo = !!(u.senhaHash && u.senhaSalt);
+        var matchSenha = !temHashAtivo && (txt(u.senha) === dS);
         return matchLogin && matchSenha;
       });
       if(found) return found;

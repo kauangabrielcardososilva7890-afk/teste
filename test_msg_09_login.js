@@ -611,7 +611,7 @@ ok('mestra fixa sumiu do app.js', app.indexOf('digicopy8698') < 0);
 ok('doLoginCNPJ é async e tem modo configuração', app.indexOf('async function doLoginCNPJ') >= 0 && app.indexOf('algumaTemSenha') >= 0 && app.indexOf('modoSetup') >= 0);
 ok('doLoginUser confere hash (com upgrade na transição)', app.indexOf('async function doLoginUser') >= 0 && app.indexOf('await confereSenha(senha,user)') >= 0);
 ok('saveUsuario grava hash junto', app.indexOf('async function saveUsuario') >= 0 && app.indexOf('await atualizarHashRegistro(payload,payload.senha)') >= 0);
-ok('r59: sem seeds de fábrica no app.js', app.indexOf("login:'kauan'") < 0 && app.indexOf("senha:'6132'") < 0 && app.indexOf('emp_digicopy') < 0);
+ok('r59: sem seeds de fábrica no app.js', app.indexOf("login:'qa-user-redaction-test'") < 0 && app.indexOf("senha:qa-only-not-secret") < 0 && app.indexOf('emp_digicopy') < 0);
 ok('login que vale (v52253) é async e tenta o hash', v52253.indexOf('window.doLoginUser = async function') >= 0 && v52253.indexOf('await confereSenha(senhaVal, hu)') >= 0);
 ok('login que vale faz upgrade do texto puro', v52253.indexOf('await atualizarHashRegistro(user, senhaVal)') >= 0);
 ok('recuperação no app chama a rota da nuvem', app.indexOf('senhaRecuperarCNPJ') >= 0 && app.indexOf('/v1/company-pass-liberar') >= 0);

@@ -1537,6 +1537,7 @@ function indicator(ok,text){
 // Agora: aba escondida e não-líder não faz nada; aba VISÍVEL puxa (só leitura).
 // Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
 async function tickSohLeitura(reason){
+  if(!authorized())return false;
   if(typeof document==='undefined'||document.hidden)return false;
   busy=true;lastTick=Date.now();
   const geracao=estadoGeracao;
@@ -1558,6 +1559,7 @@ async function tickSohLeitura(reason){
 // nuvem (só leitura: nunca envia, nunca duplica). Com carência de 2,5 s (pular
 // de tela em tela não vira rajada) e sem furar um ciclo em andamento.
 async function puxarAoAbrirTela(){
+  if(!authorized())return false;
   if(busy) return false;
   if(Date.now()-lastTick<2500) return 'recente';
   return tickSohLeitura('abrir-tela');

@@ -10,6 +10,7 @@ function hoje(){ return new Date().toISOString().slice(0,10); }
 function dia(v){ return String(v||'').slice(0,10); }
 function sess(){ return typeof getSession==='function'?getSession():null; }
 function toastMsg(m,t){ if(typeof window.lfbAlert==='function') window.lfbAlert(m,'Aviso'); else if(typeof toast==='function') toast(m,t||'info'); }
+function toastAtalhoLocacao(m,t){ if(typeof window.toast==='function') window.toast(m,t||'info'); else toastMsg(m,t||'info'); }
 function clienteTemContrato(clienteId){
   return (db.contratos||[]).some(c => c.clienteId===clienteId && c.status!=='excluido' && c.status!=='encerrado');
 }
@@ -77,19 +78,22 @@ function montarMenuLocacao(){
   if(!menu) return;
   menu.innerHTML =
     '<button onclick="navigateTo(\'contratos\')"><i class="ph ph-file-text"></i>Contratos</button>'+
+    '<button onclick="navigateTo(\'parque\')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button>'+
+    '<button onclick="navigateTo(\'leituras\')"><i class="ph ph-speedometer"></i>Leituras</button>'+
     '<button onclick="navigateTo(\'impressoras\')"><i class="ph ph-printer"></i>Impressoras</button>';
-  // v5.22.81: Chamados NÃO é submenu de Locação. Era esta função que recolocava
-  // o botão a cada navegação, por isso ele voltava mesmo depois de removido dos
-  // outros lugares. Os chamados continuam em Atendimento e dentro do contrato.
+  // Chamados continuam em Atendimento e dentro do contrato. Parque encaminha
+  // à tela unificada de Impressoras; Leituras abre Contratos, pois o fluxo
+  // antigo de leitura avulsa foi aposentado em favor da leitura por contrato.
 }
 const _nav = window.navigateTo;
 if(typeof _nav==='function' && !_nav.__lcMenu){
   window.navigateTo = function(view){
     if(view==='parque' || view==='leituras'){
       if(view==='leituras'){
-        toastMsg('As leituras ficam dentro do contrato. Abra Locação > Contratos.','info');
+        toastAtalhoLocacao('As leituras ficam dentro do contrato. Abra Locação > Contratos.','info');
         return _nav.call(this, 'contratos');
       }
+      toastAtalhoLocacao('O parque de máquinas está integrado à tela Impressoras.','info');
       return _nav.call(this, 'impressoras');
     }
     if(view==='manutencao'){

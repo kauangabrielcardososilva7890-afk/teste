@@ -136,7 +136,7 @@ window.renderUsuarios = function(){
 
   view.innerHTML = `<div class="neo-shell"><div class="neo-panel neo-float-in">
     <div class="neo-head">
-      <div><h3>Usuários e permissões</h3><p>Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div>
+      <div><h3>Usuários e permissões</h3></div>
       <div class="neo-actions">
         <button onclick="openModalCriarUsuario()" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo usuário</button>
         <button onclick="openModalNovoTecnico()" class="neo-btn"><i class="ph ph-plus-circle"></i>Novo técnico</button>
@@ -244,13 +244,12 @@ window.saveUsuarioFinal = async function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  // v5.24.34 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
-  // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
-  // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
-  // por onde "salvei e o login não entra" escapava em silêncio.
-  var provaLogin = (db.usuarios || []).some(function(x){ return x && fold(x.login) === login && txt(x.senha) === senha && x.ativo; });
+  // v5.24.34 — PROVA DE GRAVAÇÃO. Confere se os dados salvos correspondem ao
+  // estado escolhido no formulário. Um usuário inativo também foi salvo com
+  // sucesso; a inatividade só impede login e não deve gerar falso alerta.
+  var provaLogin = (db.usuarios || []).some(function(x){ return x && x.empresaId === s.empresaId && fold(x.login) === login && txt(x.senha) === senha && !!x.ativo === ativo && perfilEfetivo(x) === perfil; });
   if(provaLogin){
-    toastMsg('Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.', 'success');
+    toastMsg(ativo ? 'Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.' : 'Usuário salvo como inativo; o login está desativado.', 'success');
   } else if(typeof window.lfbAlert === 'function'){
     window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
   } else {

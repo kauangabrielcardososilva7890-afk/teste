@@ -220,7 +220,9 @@ function bindEnter(id, cb){
 function btnBusca(onclick){ return `<button type="button" onclick="${onclick}" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>`; }
 
 function ocultarLeiturasSeparadas(){
-  document.querySelectorAll("button[onclick=\"navigateTo('leituras')\"], button[data-nav='leituras']").forEach(el => { el.style.display = 'none'; });
+  // Preserva a entrada do menu dinâmico: ela encaminha o usuário ao contrato
+  // e explica o fluxo novo. Oculta apenas o atalho legado explicitamente marcado.
+  document.querySelectorAll("button[data-nav='leituras']").forEach(el => { el.style.display = 'none'; });
 }
 const oldNavigateToRefino = window.navigateTo;
 if(typeof oldNavigateToRefino === 'function'){

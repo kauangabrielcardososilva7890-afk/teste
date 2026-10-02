@@ -394,7 +394,7 @@ ok('toda troca de ambiente fica auditada', src.indexOf("ambiente->producao") >= 
 console.log('== PLACAS VISÍVEIS + INTEGRAÇÃO ==');
 ok('placa de ambiente nos dois modais fiscais (central + conferência)', src.indexOf("'central-nfe-modal'") >= 0 && src.indexOf("'nfe-conf-modal'") >= 0 && src.indexOf('nfg-placa') >= 0);
 ok('botão de trocar ambiente na Central', src.indexOf('nfg-amb-btn') >= 0 && src.indexOf('Habilitar PRODUÇÃO') >= 0);
-ok('porta v6.0.0 na 206; transmissao 207, autocura 208, perfis 209, permissões 210, menu fiscal v6.0.6; Início clicável v6.0.7; menus fiscais separados v6.0.8 na 212; override v6.0.9 na 214; 6 submenus v6.0.10 na 215; hover NF-e/NFC-e v6.0.11 fecha a fila (216)', manifest.length >= 225 && manifest[205] === 'fiscal_guard_patch.js' && manifest[206] === 'nf_transmissao_patch.js' && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[208] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[209] === 'permissoes_estorno_venda_patch.js' && manifest[210] === 'fiscal_menu_completo_patch.js' && manifest[211] === 'dashboard_inicio_clicavel_patch.js' && manifest[212] === 'menus_fiscais_separados_patch.js' && manifest[213] === 'permissoes_override_menus_fiscais_patch.js' && manifest[214] === 'seis_submenus_velho_patch.js' && manifest[215] === 'submenu_hover_nfe_patch.js' && bundle.indexOf('PORTÃO FISCAL v6.0.0') >= 0);
+ok('porta v6.0.0 na 206; transmissao 207, autocura 208, perfis 209, permissões 210, menu fiscal v6.0.6; Início clicável v6.0.7; menus fiscais separados v6.0.8 na 212; override v6.0.9 na 214; 6 submenus v6.0.10 na 215; hover NF-e/NFC-e v6.0.11 fecha a fila (216)', manifest.length >= 225 && manifest[206] === 'fiscal_guard_patch.js' && manifest[207] === 'nf_transmissao_patch.js' && manifest[208] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[209] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[210] === 'permissoes_estorno_venda_patch.js' && manifest[211] === 'fiscal_menu_completo_patch.js' && manifest[212] === 'dashboard_inicio_clicavel_patch.js' && manifest[213] === 'menus_fiscais_separados_patch.js' && manifest[214] === 'permissoes_override_menus_fiscais_patch.js' && manifest[215] === 'seis_submenus_velho_patch.js' && manifest[216] === 'submenu_hover_nfe_patch.js' && bundle.indexOf('PORTÃO FISCAL v6.0.0') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6000fg') >= 0);
 
 console.log('== CARIMBO 6.0.0 (linha fiscal abre versão nova) ==');
@@ -429,7 +429,7 @@ const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
 const P = require('./fiscal_menu_completo_patch.js');
 
 console.log('== FILA / BUNDLE ==');
-ok('manifesto sobe pra 216; Início clicável 212, separados 213, override 214, 6 submenus 215, hover NF-e/NFC-e v6.0.11 fecha a fila', man.length >= 225 && man[210] === 'fiscal_menu_completo_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
+ok('manifesto sobe pra 216; Início clicável 212, separados 213, override 214, 6 submenus 215, hover NF-e/NFC-e v6.0.11 fecha a fila', man.length >= 225 && man[211] === 'fiscal_menu_completo_patch.js' && man[212] === 'dashboard_inicio_clicavel_patch.js' && man[213] === 'menus_fiscais_separados_patch.js' && man[214] === 'permissoes_override_menus_fiscais_patch.js' && man[215] === 'seis_submenus_velho_patch.js' && man[216] === 'submenu_hover_nfe_patch.js' && man[210] === 'permissoes_estorno_venda_patch.js' && man[206] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)', bundle.indexOf('FMC606_PURE_START') >= 0 && bundle.indexOf('v6.0.6 — MENU FISCAL COMPLETO') >= 0);
 
 console.log('== CC-e (110110) ==');
@@ -511,7 +511,7 @@ const P = require('./submenu_hover_nfe_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 216; hover NF-e/NFC-e fecha a fila',
-  man.length >= 225 && man[215] === 'submenu_hover_nfe_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js');
+  man.length >= 225 && man[216] === 'submenu_hover_nfe_patch.js' && man[215] === 'seis_submenus_velho_patch.js' && man[214] === 'permissoes_override_menus_fiscais_patch.js');
 ok('bundle contém o patch (guard + PURE + banner)',
   bundle.indexOf('__v60011sxvm') >= 0 && bundle.indexOf('SXVM_PURE_START') >= 0 && bundle.indexOf('SUBMENU_HOVER_NFE_PATCH v6.0.11 ativo') >= 0);
 
@@ -586,7 +586,7 @@ const P = require('./ribbon_fiscal_estilo_antigo_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto já é 219 — a ribbon v6.0.13 ficou na posição histórica 217 (em cima dela, só o catálogo fiscal completo)',
-  man.length >= 225 && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js' && man[216] === 'navegacao_sem_tela_branca_patch.js');
+  man.length >= 225 && man[218] === 'ribbon_fiscal_estilo_antigo_patch.js' && man[217] === 'navegacao_sem_tela_branca_patch.js');
 ok('bundle contém o patch (guard + PURE + css)',
   bundle.indexOf('__v60013wxr') >= 0 && bundle.indexOf('WXR613_PURE') >= 0 && bundle.indexOf('wxr-ribbon-css') >= 0);
 
@@ -617,7 +617,7 @@ ok('submenu_hover_nfe_patch.js NÃO foi editado nesta versão (mural 6.0.11 segu
 
 console.log('== NADA QUEBRA O QUE JÁ ESTAVA CERTO ==');
 ok('anti-tela-branca da 6.0.12 intocado e anterior na fila',
-  man[216] === 'navegacao_sem_tela_branca_patch.js' && bundle.indexOf('NAV612_PURE') >= 0);
+  man[217] === 'navegacao_sem_tela_branca_patch.js' && bundle.indexOf('NAV612_PURE') >= 0);
 ok('menu-nfe da barra segue real (regressão)',
   html.indexOf('id="menu-nfe" class="module-menu"') >= 0 && html.indexOf("navigateTo('fiscal-enviar-xml')") >= 0);
 
@@ -656,7 +656,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('== FILA / BUNDLE / CARIMBO ==');
 ok('manifesto já é 220 (Menu Fiscal oficial v6.1.0 por último); o catálogo da 6.0.14 ficou na posição histórica 218 (por cima do ribbon)',
-  man.length >= 225 && man[218] === 'fiscal_catalogo_completo_patch.js' && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js');
+  man.length >= 225 && man[219] === 'fiscal_catalogo_completo_patch.js' && man[218] === 'ribbon_fiscal_estilo_antigo_patch.js');
 ok('bundle contém o patch (guards + PURE + fxAcao + fx614-css)',
   bundle.indexOf('__v6014fxc') >= 0 && bundle.indexOf('FX614_PURE') >= 0 && bundle.indexOf('fxAcao') >= 0 && bundle.indexOf('fx614-css') >= 0);
 ok('carimbo v6.0.14 (package + index + query do bundle)',
@@ -677,13 +677,16 @@ ok('5 perfis reais da loja semeados (idempotente): 00001/00002/00003/00005/00004
   P.PERFIS_SEED.length === 5 && P.PERFIS_SEED.map(function (s) { return s.cod + ':' + s.cfop; }).join('/') === '00001:5102/00002:6102/00003:5915/00005:5916/00004:6949');
 ok('VENDA_NF_ABAS = as 9 do editor dele',
   P.VENDA_NF_ABAS.length === 9 && P.VENDA_NF_ABAS.indexOf('Itens da Nota') >= 0 && P.VENDA_NF_ABAS.indexOf('Reforma Tributária') >= 0);
-ok('CONFIG_ABAS = as 10 da config dele (Geral…Reforma, NFCe e Nuvem dentro)',
-  P.CONFIG_ABAS.length === 10 && P.CONFIG_ABAS.join('|') === 'Geral|Impressão|NFCe|Tributação|Nuvem|Outras|Mensagens|FCP|Autorizações|Reforma');
+ok('CONFIG_ABAS mantém as telas existentes e acrescenta Log Fiscal',
+  P.CONFIG_ABAS.length === 11 && P.CONFIG_ABAS.join('|') === 'Geral|Impressão|NFCe|Tributação|Nuvem|Outras|Mensagens|FCP|Autorizações|Reforma|Log Fiscal');
 ok('MANIF_COLS = 15 colunas da grade de destinadas', P.MANIF_COLS && P.MANIF_COLS.length === 15);
 ok('PAGAMENTOS cobre 01-99 (Dinheiro/Crédito/Débito/Pix/Boleto…)',
   P.PAGAMENTOS.length >= 10 && JSON.stringify(P.PAGAMENTOS[0][0]) === '"01"' && P.PAGAMENTOS.some(function (p) { return p[0] === '99'; }));
 ok('ibsCbs: cofrinhos por fora (base 100, alíq 0,1/0/0,9 → 0,10/0/0,90)',
   JSON.stringify(P.ibsCbs(100, 0.1, 0, 0.9)) === '{"ibsUf":0.1,"ibsMun":0,"cbs":0.9}');
+const itemVazio = P.itemVazio(1);
+ok('item novo não presume CST, cClassTrib nem alíquotas IBS/CBS',
+  itemVazio.trib.refCst === '' && itemVazio.trib.refClassif === '' && itemVazio.trib.refIbsUfPerc === '' && itemVazio.trib.refIbsMunPerc === '' && itemVazio.trib.refCbsPerc === '' && itemVazio.trib.refReformaRevisado === false);
 const nv = P.notaVazia('777', 'dono');
 ok('notaVazia nasce rascunho: status "Não Gerada", modelo 55, série 1, frete 9, homologação',
   nv.status === 'Não Gerada' && nv.modelo === '55' && nv.serie === '1' && nv.frete.modalidade === '9' && nv.ambiente !== 'producao');
@@ -725,8 +728,43 @@ ok('Tributação do item: mini-abas Itens/Tributação + "Alterar para Todos" + 
   ['Alterar para Todos', 'Tributação', 'GTIN'].every(function (s) { return it1.indexOf(s) >= 0; }));
 G.__fxTrib.sub = 'Tributação'; G.__fxTribAba = 'Reforma Tributária';
 const it2 = R1.renderCentral();
-ok('18 fotos do item: sub-abas Tributação/Importação/Outros/Reforma + cofrinhos IBS/CBS',
-  ['Importação', 'Outros', 'Reforma Tributária'].every(function (s) { return it2.indexOf(s) >= 0; }) && /ibs/i.test(it2) && /cbs/i.test(it2));
+ok('Reforma por item mostra cabeçalho do produto, CST, cClassTrib, base, Padrão/Devolução e não presume alíquotas',
+  ['Dados do Produto', 'GTIN/EAN', 'Alterar para Todos', 'Importação', 'Outros', 'Reforma Tributária', 'Código CST-IBS/CBS', 'cClassTrib', 'Base de Cálculo', 'Devolução de Tributos', 'Alíquota em branco não calcula valor'].every(function (s) { return it2.indexOf(s) >= 0; }) && /ibs/i.test(it2) && /cbs/i.test(it2));
+G.__fxTribAba = 'Importação';
+const importRef = R1.renderCentral();
+ok('Importação agrupa declaração, desembaraço, adições, valores e país e mantém calendário nas datas',
+  ['Dados para Declaração', 'Desembaraço Aduaneiro', 'Adições', 'Valores', 'Dados do País', 'type="date"', 'codPais', 'nomePais'].every(function (s) { return importRef.indexOf(s) >= 0; }));
+G.__fxTribAba = 'Outros'; G.__fxTribOutrosAba = 'CSOSN ICMS';
+const csosnRef = R1.renderCentral();
+ok('Outros possui as cinco subabas mostradas nas referências e campos CSOSN ICMS',
+  ['CSOSN ICMS', 'Icms ST', 'Fcp', 'Efetivo', 'Outros', 'Valor DIF.', 'Valor UF Remet.', 'Valor UF Dest.', 'Cód. Benefício Fiscal'].every(function (s) { return csosnRef.indexOf(s) >= 0; }));
+G.__fxTribOutrosAba = 'Icms ST';
+const stRef = R1.renderCentral();
+ok('ICMS ST expõe valores retido, destino, combinação FCP/ST e substituído',
+  ['Valor ST Ret.', 'Valor ST Dest.', '% FCP + % ST', 'Vlr. Substituído'].every(function (s) { return stRef.indexOf(s) >= 0; }));
+G.__fxTribOutrosAba = 'Fcp';
+const fcpRef = R1.renderCentral();
+ok('FCP separa base, percentual e valor próprio, UF destino e ST',
+  ['V. B.C. FCP R$', 'FCP UF Dest.', 'V. B.C. FCP UF Dest. R$', 'FCP ST', 'V. FCP ST R$'].every(function (s) { return fcpRef.indexOf(s) >= 0; }));
+G.__fxTribOutrosAba = 'Efetivo';
+const efetivoRef = R1.renderCentral();
+ok('Efetivo inclui base, alíquota, valor e redução efetiva',
+  ['Base Cálculo Efetivo', 'Alíquota Efetiva', 'Valor Efetivo', 'Redução Efetivo'].every(function (s) { return efetivoRef.indexOf(s) >= 0; }));
+G.__fxTribOutrosAba = 'Outros';
+const outrosRef = R1.renderCentral();
+ok('Outros separa pedido, unidade/quantidade/valor comercial e unidade/quantidade/valor tributável',
+  ['Núm. do Pedido', 'Núm. Item Pedido', 'Un. Comercial', 'Qtde. Comercial', 'Valor Unit. Comercial', 'Total Parcial Comercial', 'Un. Tributável', 'Qtde. Tributável', 'Valor Unit. Tributável', 'Total Parcial Tributável'].every(function (s) { return outrosRef.indexOf(s) >= 0; }));
+G.__fxTribAba = 'Reforma Tributária';
+G.__fxTribReformaAba = 'Devolução de Tributos';
+const devolucaoRef = R1.renderCentral();
+ok('Devolução de tributos expõe um valor separado para IBS UF, IBS municipal e CBS',
+  ['refDevIbsUf', 'refDevIbsMun', 'refDevCbs', 'Valor do Tributo Devolvido'].every(function (s) { return devolucaoRef.indexOf(s) >= 0; }));
+G.__fxTribReformaAba = 'Padrão';
+G.__fxEd.aba = 'Reforma Tributária';
+const resumoRef = R1.renderCentral();
+ok('aba Reforma da nota resume valores por item sem alíquotas universais',
+  resumoRef.indexOf('Resumo IBS/CBS por item') >= 0 && resumoRef.indexOf('0,1%') < 0 && resumoRef.indexOf('0,9%') < 0);
+G.__fxEd.aba = 'Itens da Nota';
 R1.totaisAuto(n);
 ok('Total da nota = produtos + serviços − descontos (+frete/despesas), SEM somar cofrinhos (2×50 = 100)',
   n.totais.total === 100 && n.totais.produtos === 100);
@@ -742,18 +780,21 @@ ok('NCM: favoritos + mesmos atalhos/padrões do velho (Padrao/Tinta/Locacao, cha
 const xml = R2.enviarXml();
 ok('Enviar XML = "Preparar Arquivos Fiscais": matriz do mês + "Não Suportado" NFC-e + aviso nuvem junta XMLs + Enviar para Escritório (mês longo) + e-mail escritório',
   ['Preparar Arquivos Fiscais', 'Não Suportado', 'Enviar para Escritório', 'nuvem junta', 'fx-xml-email'].every(function (s) { return xml.indexOf(s) >= 0 || src.indexOf(s) >= 0; }));
-const abasCfg = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma'];
+const abasCfg = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma', 'Log Fiscal'];
 const cfgOk = abasCfg.every(function (a) { G.__fxCfgAba = a; const h = R2.config(); return h.indexOf('>' + a + '<') >= 0 && h.length > 600; });
-ok('Configurações: as 10 abas renderizam de verdade', cfgOk);
+ok('Configurações: as 11 abas renderizam de verdade', cfgOk);
 G.__fxCfgAba = 'NFCe';
 ok('Aba NFCe: versão veqr200 + CSC mascarado nas chaves herdadas (nfCsc/nfCscId) + "gerar ao finalizar" desmarcado',
   R2.config().indexOf('veqr200') >= 0 && R2.config().indexOf('CSC') >= 0 && src.indexOf('nfCscId') >= 0);
 G.__fxCfgAba = 'FCP';
 ok('FCP: tabela das 27 UFs + padrão 2%', R2.config().split('<tr>').length >= 28 && src.indexOf("padrao: 2") >= 0);
+G.__fxCfgAba = 'Log Fiscal';
+ok('Log Fiscal global aparece em Configurações e informa limite e ausência de segredos',
+  R2.config().indexOf('Auditoria Fiscal local') >= 0 && R2.config().indexOf('Senha') >= 0 && R2.config().indexOf('CSC') >= 0);
 
 console.log('== AÇÕES (fxAcao) ==');
 ok('switch único cobre listagem/editor/perfil/manifestação/ncm/xml/config (prefixos)',
-  ['lst-sel', 'nf-novo', 'nf-alterar', 'nf-excluir', 'nf-clonar', 'nf-gerar', 'nf-previa', 'nf-item-add', 'nf-item-cfop-todos', 'nf-dest-puxar', 'nf-ref-add', 'pf-novo', 'pf-salvar', 'mf-consultar', 'mf-manifestar', 'mf-baixar', 'ncm-add', 'ncm-uso', 'xml-enviar', 'cfg-salvar'].every(function (a) { return src.indexOf("'" + a + "'") >= 0; }));
+  ['lst-sel', 'nf-novo', 'nf-alterar', 'nf-excluir', 'nf-clonar', 'nf-gerar', 'nf-previa', 'nf-item-add', 'nf-item-cfop-todos', 'nf-dest-puxar', 'nf-ref-add', 'nf-trib-sub', 'nf-trib-outros-sub', 'nf-trib-reforma-sub', 'pf-novo', 'pf-salvar', 'mf-consultar', 'mf-manifestar', 'mf-baixar', 'ncm-add', 'ncm-uso', 'xml-enviar', 'cfg-salvar'].every(function (a) { return src.indexOf("'" + a + "'") >= 0; }));
 ok('regra fiscal travada: nota Autorizada não pode ser alterada nem excluída (aviso no sistema)',
   src.indexOf('Nota já autorizada') >= 0 && src.indexOf('não pode ser alterada') >= 0 && src.indexOf('não pode ser excluída') >= 0);
 ok('permissão "Emitir NF" exigida p/ excluir rascunho, gerar, manifestar e inutilizar',
@@ -806,7 +847,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('== FILA / BUNDLE / CARIMBO ==');
 ok('manifesto 220; Menu Fiscal Oficial fecha a fila (por cima do catálogo fiscal da 6.0.14)',
-  man.length >= 225 && man[219] === 'menu_fiscal_oficial_patch.js' && man[218] === 'fiscal_catalogo_completo_patch.js');
+  man.length >= 225 && man[220] === 'menu_fiscal_oficial_patch.js' && man[219] === 'fiscal_catalogo_completo_patch.js');
 ok('bundle contém o patch (guard + PURE + observer + css)',
   bundle.indexOf('__v6100mfo') >= 0 && bundle.indexOf('MFO610_PURE') >= 0 && bundle.indexOf('mfo610-css') >= 0);
 ok('carimbo 6.1.0 (package + index 4 pontos)',
@@ -900,7 +941,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('== FILA / BUNDLE / CARIMBO ==');
 ok('manifesto 221; Submenu Fiscal Oficial fecha a fila',
-  man.length >= 225 && man[220] === 'submenu_fiscal_oficial_patch.js' && man[219] === 'menu_fiscal_oficial_patch.js');
+  man.length >= 225 && man[221] === 'submenu_fiscal_oficial_patch.js' && man[220] === 'menu_fiscal_oficial_patch.js');
 ok('bundle contém o patch (guard + PURE + css + captura de clique)',
   bundle.indexOf('__v6101sfo') >= 0 && bundle.indexOf('SFO611_PURE') >= 0 && bundle.indexOf('sfo611-css') >= 0 && bundle.indexOf('onCliqueCaptura') >= 0);
 ok('carimbo 6.1.1 (package + index 4 pontos)',

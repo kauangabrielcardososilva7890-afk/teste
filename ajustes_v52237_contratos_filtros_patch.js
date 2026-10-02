@@ -188,6 +188,16 @@ if(typeof document==='undefined') return;
 
 var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'hoje', q:'' });
 
+// v7.3.14 — o filtro e o renderer principal tinham estados de busca separados.
+// Sincronize até quando a busca foi apagada (string vazia é um valor explícito).
+function sincronizarBusca(q){
+  q = q == null ? '' : String(q);
+  STATE.q = q;
+  var estadoFinal = window.__CONTRATOS_FINAL_STATE__;
+  if(estadoFinal) estadoFinal.busca = q;
+  return q;
+}
+
 function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
 }
@@ -231,10 +241,13 @@ function injetar(){
     btnTodos.innerHTML='<i class="ph ph-list"></i> Mostrar todos';
     btnTodos.title='Mostra todos os contratos (o padrão novo da tela é só os de hoje)';
     btnTodos.onclick=function(){
-      STATE.campo='todos'; STATE.q='';
+      STATE.campo='todos'; sincronizarBusca('');
       var selEl=document.getElementById('ctr-filtro-campo'); if(selEl) selEl.value='todos';
       var bx=document.getElementById('search-contratos'); if(bx) bx.value='';
-      if(typeof window.renderContratos==='function') window.renderContratos();
+      var statusEl=document.getElementById('filter-contrato-status'); if(statusEl) statusEl.value='';
+      var estadoFinal=window.__CONTRATOS_FINAL_STATE__; if(estadoFinal) estadoFinal.status='';
+      if(typeof window.contratosFinalBuscar==='function') window.contratosFinalBuscar();
+      else if(typeof window.renderContratos==='function') window.renderContratos();
     };
     pai.insertBefore(btnTodos, busca);
   }
@@ -244,9 +257,14 @@ if(typeof window.renderContratos==='function' && !window.renderContratos.__v5223
   var old=window.renderContratos;
   window.renderContratos=function(){
     var s=typeof getSession==='function'?getSession():null;
-    var campo=(document.getElementById('ctr-filtro-campo')||{}).value || STATE.campo || 'todos';
-    var q=(document.getElementById('search-contratos')||{}).value || STATE.q || '';
-    STATE.campo=campo; STATE.q=q;
+    var campoEl=document.getElementById('ctr-filtro-campo');
+    var buscaEl=document.getElementById('search-contratos');
+    var campo=campoEl ? campoEl.value : (STATE.campo || 'todos');
+    var q=buscaEl ? buscaEl.value : (STATE.q || '');
+    STATE.campo=campo; sincronizarBusca(q);
+    var statusEl=document.getElementById('filter-contrato-status');
+    var estadoFinal=window.__CONTRATOS_FINAL_STATE__;
+    if(statusEl && estadoFinal) estadoFinal.status=statusEl.value || '';
     if(s && typeof db!=='undefined'){
       var orig=db.contratos;
       try{
@@ -268,8 +286,10 @@ if(typeof window.renderContratos==='function' && !window.renderContratos.__v5223
 if(typeof window.contratosFinalBuscar==='function' && !window.contratosFinalBuscar.__v52237fil){
   var oldB=window.contratosFinalBuscar;
   window.contratosFinalBuscar=function(){
-    STATE.q=document.getElementById('search-contratos')&&document.getElementById('search-contratos').value||'';
-    STATE.campo=document.getElementById('ctr-filtro-campo')&&document.getElementById('ctr-filtro-campo').value||'todos';
+    var buscaEl=document.getElementById('search-contratos');
+    if(buscaEl) sincronizarBusca(buscaEl.value);
+    var campoEl=document.getElementById('ctr-filtro-campo');
+    if(campoEl) STATE.campo=campoEl.value;
     return oldB.apply(this, arguments);
   };
   window.contratosFinalBuscar.__v52237fil=true;
