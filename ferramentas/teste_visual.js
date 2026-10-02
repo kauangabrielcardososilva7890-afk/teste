@@ -54,7 +54,9 @@ function montarBase() {
   const eq = (n) => ({ id: 'eq-' + n, modelo: 'Impressora Sintética ' + n, serial: 'SN' + n + '000000', patrimonio: 'PAT-' + n, contadorPreto: 100 * n, contadorColor: 50 * n, clienteId: 'cli-1', contratoId: 'ctr-1', departamento: 'Departamento ' + textoFixo(n), local: 'Local ' + textoFixo(n), empresaId: 'emp-teste', status: 'instalado' });
   return {
     _montada: true, empresas: [empresa], empresaAtivaId: 'emp-teste',
-    config: { loja: { nome: empresa.nome, fantasia: empresa.fantasia, cnpj: empresa.cnpj }, seguranca: {} },
+    // sem 'config' aqui de propósito: o testador mescla em cima do config que o
+    // app criou, senão apaga chaves que o resto do código lê com .slice()
+    config: { loja: { nome: empresa.nome, fantasia: empresa.fantasia, cnpj: empresa.cnpj } },
     usuarios: [{ id: 'u-qa', nome: 'QA Sintético', login: 'qa', perfil: 'ADMIN', ativo: true, empresaId: 'emp-teste' }],
     clientes: [1, 2, 3].map(cli), equipamentos: [1, 2, 3, 4].map(eq),
     contratos: [1, 2].map(n => ({ id: 'ctr-' + n, numero: 'CTR-000' + n, clienteId: 'cli-' + n, status: 'ativo', valor: 100 * n, inicio: dia, fim: hoje, empresaId: 'emp-teste', equipamentos: ['eq-1'] })),
@@ -197,7 +199,13 @@ function medirModal() {
     // do próprio app, que conhece o formato de pedaços/manifesto.
     const alvo = (window.db && typeof window.db === 'object') ? window.db : null;
     if (!alvo) return { ok: false, motivo: 'window.db não apareceu (o app não subiu?)' };
+    // `config` é MESCLADO, não trocado: o app cria chaves dentro de db.config
+    // (nfe, caixa, sync...) e um replace apagaria o que o resto do código lê com
+    // .slice() em cima — é exatamente o tipo de 'reading slice' que o run #2
+    // colheu no carregamento e que derruba o patch inteiro que vier depois.
+    const configAntes = alvo.config;
     Object.assign(alvo, base);
+    if (configAntes && typeof configAntes === 'object') alvo.config = Object.assign({}, configAntes, base.config);
     if (!Array.isArray(alvo.empresas) || !alvo.empresas.length) alvo.empresas = base.empresas;
     if (!alvo.empresaAtivaId) alvo.empresaAtivaId = 'emp-teste';
     try { if (typeof window.saveDB === 'function') window.saveDB(); } catch (e) { return { ok: false, motivo: 'saveDB lançou: ' + e.message }; }
@@ -296,7 +304,9 @@ function medirModal() {
   resultados.semeaduraDesktop = await paginaD.evaluate((base) => {
     const alvo = (window.db && typeof window.db === 'object') ? window.db : null;
     if (!alvo) return { ok: false, motivo: 'sem window.db' };
+    const cfg = alvo.config;
     Object.assign(alvo, base);
+    if (cfg && typeof cfg === 'object') alvo.config = Object.assign({}, cfg, base.config);
     try { window.saveDB && window.saveDB(); } catch (e) { return { ok: false, motivo: e.message }; }
     try {
       localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({
