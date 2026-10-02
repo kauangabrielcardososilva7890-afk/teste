@@ -1118,14 +1118,14 @@ async function handleResetCloud(request, env) {
   // repetidos travavam o Zerar (409). O Zerar agora DESCONECTA os outros
   // aparelhos sozinho (revoga + some da lista, auditado). O aparelho que pediu
   // continua valendo. Segredos (senhas de conexão/gerente) NUNCA são tocados:
-  // moram no env do worker, não nas tabelas. Logins de USUÁRIO vão junto com
-  // os dados (são registros) e voltam quando este PC enviar de novo.
+  // moram no env do worker, não nas tabelas. Cadastros de USUÁRIO são a
+  // exceção: permanecem para que os logins continuem funcionando após a limpeza.
   const outros = await env.DB.prepare(
     'SELECT COUNT(*) AS total FROM devices WHERE id != ? AND revoked_at IS NULL AND excluido_em IS NULL'
   ).bind(admin.id).first();
   const nOutros = Number(outros && outros.total) || 0;
   const [recordCount, changeCount] = await env.DB.batch([
-    env.DB.prepare('SELECT COUNT(*) AS total FROM records'),
+    env.DB.prepare("SELECT COUNT(*) AS total FROM records WHERE entity <> 'usuarios'"),
     env.DB.prepare('SELECT COUNT(*) AS total FROM changes')
   ]);
   // v5.24.0 — zerar a nuvem SÓ depois de guardar uma foto completa dela na
@@ -1138,7 +1138,9 @@ async function handleResetCloud(request, env) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM enrollment_codes'),
     env.DB.prepare('DELETE FROM changes'),
-    env.DB.prepare('DELETE FROM records'),
+    // 'DELETE FROM records' continua sendo o reset lógico; usuarios é a única
+    // entidade de negócio preservada, junto com devices e connect_secrets.
+    env.DB.prepare("DELETE FROM records WHERE entity <> 'usuarios'"),
     // v5.26.5 — a contagem guardada some junto: senão o painel continua dizendo
     // que a nuvem tem o que já foi apagado (ou que não tem nada do que subiu).
     env.DB.prepare("DELETE FROM system_meta WHERE key = 'resumo_json'"),

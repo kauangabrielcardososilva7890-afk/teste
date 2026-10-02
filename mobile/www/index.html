@@ -88,7 +88,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 .modern-topnav{position:relative;top:auto;z-index:28;background:rgba(255,255,255,.96);border-bottom:1px solid #dbe3ef;box-shadow:0 1px 8px rgba(15,23,42,.06)}
 .module-row{height:48px;display:flex;align-items:center;gap:4px;padding:0 10px;background:linear-gradient(180deg,#ffffff,#f8fbff);overflow:visible}
 .module{position:relative}.module>button{height:34px;padding:0 13px;border-radius:9px;font-size:12px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:7px;transition:.18s;background:transparent}.module>button i{font-size:17px;color:#0a1e8a}.module>button:hover{background:#eaf2ff;color:#0a1e8a;transform:translateY(-1px)}
-.module-menu{position:absolute;top:39px;left:0;min-width:230px;background:white;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.14);padding:8px;opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:.16s;z-index:80}.module:hover .module-menu{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+ .module-menu{position:absolute;top:39px;left:0;min-width:230px;background:white;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.14);padding:8px;opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:.16s;z-index:80}.module:hover .module-menu,.module:focus-within .module-menu{opacity:1;visibility:visible;transform:translateY(0) scale(1);pointer-events:auto}
 .module-menu button{width:100%;height:38px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;text-align:left;font-size:12.5px;color:#334155;transition:.14s}.module-menu button:hover{background:#f1f6ff;color:#0a1e8a;padding-left:14px}.module-menu i{font-size:18px;color:#0a1e8a}.module-menu small{margin-left:auto;color:#94a3b8;font-size:10px}
 .command-row{height:42px;display:flex;align-items:center;gap:8px;padding:4px 12px;background:white;border-top:1px solid #eef2f7}.command-row .quick{height:28px;padding:0 10px;border:1px solid #dbe3ef;border-radius:8px;background:#fff;font-size:11.5px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;transition:.15s}.command-row .quick:hover{border-color:#0a1e8a;color:#0a1e8a;box-shadow:0 4px 14px rgba(10,30,138,.10);transform:translateY(-1px)}.command-row .quick.primary{background:#0a1e8a;color:white;border-color:#0a1e8a}.command-search{height:28px;width:250px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:12px}.pulse-dot{width:7px;height:7px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulseRing 1.7s infinite}@keyframes pulseRing{70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
 .clean-home{height:calc(100vh - 124px);background:radial-gradient(circle at 52% 48%,#eef5ff 0,#fff 32%,#fff 100%);position:relative;overflow:hidden;display:grid;place-items:center}.clean-home:before,.clean-home:after{content:"";position:absolute;border-radius:999px;border:1px solid rgba(10,30,138,.08);animation:floatSoft 7s ease-in-out infinite}.clean-home:before{width:360px;height:360px}.clean-home:after{width:520px;height:520px;animation-delay:-2s}@keyframes floatSoft{0%,100%{transform:translateY(0) scale(1);opacity:.55}50%{transform:translateY(-12px) scale(1.025);opacity:.9}}
@@ -99,6 +99,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 /* anti-flash login */
 #app-shell.hidden{display:none!important}
+#login-screen.hidden{display:none!important;pointer-events:none!important}
 #login-screen:not(.hidden){display:flex!important}
 
 /* fix menu cobrindo botão contrato - dá espaço sem quebrar scroll */
@@ -122,6 +123,8 @@ html,body{max-width:100%;overflow-x:hidden}
   .statusbar span{min-width:0}
   #v7015-faixa{left:8px!important;right:8px!important;bottom:28px!important;transform:none!important;max-width:none!important;max-height:26vh!important;overflow:auto!important;font-size:11px!important;line-height:1.3!important;padding:8px 10px!important}
 }
+/* v8.0.0 — o clique dá foco ao botão; o foco mantém o submenu acessível. */
+.module:focus-within > .module-menu{opacity:1!important;visibility:visible!important;transform:translateY(0) scale(1)!important;pointer-events:auto!important}
 
 </style>
 </head>

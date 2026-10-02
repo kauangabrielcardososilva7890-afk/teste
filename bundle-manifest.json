@@ -234,5 +234,6 @@
   "ajustes_v5901_login_retry_nuvem_patch.js",
   "ajustes_v52267_diagnostico_nuvem_patch.js",
   "patch_notes_local.js",
-  "ajustes_v52266_versao_nova_banner_patch.js"
+  "ajustes_v52266_versao_nova_banner_patch.js",
+  "ajustes_v8000_limpeza_controles_legados_patch.js"
 ]

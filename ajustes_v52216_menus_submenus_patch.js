@@ -203,6 +203,10 @@ function htmlModulo(m){
   var wrapId = m.wrapId ? ' id="'+m.wrapId+'"' : '';
   var title = m.title ? ' title="'+esc(m.title)+'"' : '';
   var type = (m.btnId==='btn-backup-top'||m.btnId==='btn-nuvem') ? ' type="button"' : '';
+  // A abertura do menu pai não pode navegar: a repintura da barra apagaria o submenu.
+  var click = (m.items && m.items.length)
+    ? ' onclick="event.preventDefault();event.stopPropagation();this.parentElement.classList.toggle(\'sfo-pin\');return false;"'
+    : ' onclick="'+m.click+'"';
   var menuId = m.menuId ? ' id="'+m.menuId+'"' : '';
   var fade = m.oculto ? ' style="opacity:.55"' : '';
   var sub = '';
@@ -212,7 +216,7 @@ function htmlModulo(m){
       return '<button onclick="'+it.click+'"'+f2+'><i class="ph '+it.icon+'"></i>'+esc(it.label)+'</button>';
     }).join('')+'</div>';
   }
-  return '<div class="module"'+wrapId+fade+'><button'+btnId+type+title+' onclick="'+m.click+'"><i class="ph '+m.icon+'"></i>'+esc(limitarNome(m.label, LIMITE_MENU))+'</button>'+sub+'</div>';
+  return '<div class="module"'+wrapId+fade+'><button'+btnId+type+title+click+'><i class="ph '+m.icon+'"></i>'+esc(limitarNome(m.label, LIMITE_MENU))+'</button>'+sub+'</div>';
 }
 
 window.pintarMenus = function(){

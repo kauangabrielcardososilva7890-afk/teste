@@ -20,9 +20,9 @@
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
  * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.4   (igual ao src/index.js)
- * GERADO EM: 2026-10-01 03:56 UTC
+ * GERADO EM: 2026-10-02 16:19 UTC
  * sha256 do código (sem este cabeçalho):
- *   3a3f3cf3a8cfaa3389f112defa785e6de05fcd10b13d466f6e14806f70c95863
+ *   f1807d009f919c2181b13e60f88db2410a4544affd16c45b1a4c8e375a3cc1d7
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -1052,7 +1052,7 @@ async function handleResetCloud(request, env) {
   ).bind(admin.id).first();
   const nOutros = Number(outros && outros.total) || 0;
   const [recordCount, changeCount] = await env.DB.batch([
-    env.DB.prepare("SELECT COUNT(*) AS total FROM records"),
+    env.DB.prepare("SELECT COUNT(*) AS total FROM records WHERE entity <> 'usuarios'"),
     env.DB.prepare("SELECT COUNT(*) AS total FROM changes")
   ]);
   const agoraSp = /* @__PURE__ */ new Date();
@@ -1062,7 +1062,9 @@ async function handleResetCloud(request, env) {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM enrollment_codes"),
     env.DB.prepare("DELETE FROM changes"),
-    env.DB.prepare("DELETE FROM records"),
+    // 'DELETE FROM records' continua sendo o reset lógico; usuarios é a única
+    // entidade de negócio preservada, junto com devices e connect_secrets.
+    env.DB.prepare("DELETE FROM records WHERE entity <> 'usuarios'"),
     // v5.26.5 — a contagem guardada some junto: senão o painel continua dizendo
     // que a nuvem tem o que já foi apagado (ou que não tem nada do que subiu).
     env.DB.prepare("DELETE FROM system_meta WHERE key = 'resumo_json'"),

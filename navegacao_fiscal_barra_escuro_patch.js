@@ -228,10 +228,8 @@
     var pai = mod && mod.querySelector(':scope > button');
     var menu = mod && mod.querySelector(':scope > .module-menu');
     if (mod && pai && menu && pai.contains(e.target)) {
-      e.preventDefault(); e.stopImmediatePropagation();
-      var estava = mod.classList.contains('sfo-pin');
-      fecharMenus();
-      if (!estava) mod.classList.add('sfo-pin');
+      // O onclick inline do botão faz o cancelamento e o toggle. Se este listener também
+      // alternar a classe, o resultado será sempre fechado.
       return;
     }
     if (e.target && e.target.closest && e.target.closest('.module-menu')) {
