@@ -63,7 +63,9 @@ jobs:
       - name: espera o Pages publicar este exato bundle
         run: |
           alvo="${{ vars.URL_TESTE }}"
-          [ -z "$alvo" ] && alvo="https://teste-60f.pages.dev/importar.html"
+          # index.html e nao importar.html: so o index carrega <script src="app.bundle.js
+          # ?v=<versao>-<hash>">, que e o que estamos comparando.
+          [ -z "$alvo" ] && alvo="https://teste-60f.pages.dev/index.html"
           aqui=$(node -p "const fs=require('fs');const h=fs.readFileSync('index.html','utf8');(h.match(/app\.bundle\.js\?v=[0-9.]+-[a-f0-9]+/)||['?'])[0]")
           echo "bundle deste commit: $aqui"
           for i in $(seq 1 24); do
