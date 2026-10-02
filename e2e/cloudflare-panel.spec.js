@@ -68,7 +68,7 @@ test('troca de senha, nota única e diagnóstico da nuvem em fixture sem produç
   expect(changed).toEqual({ senhaPadrao: false, senha: 'senha-final-sintetica', hasHash: true, oldAccepted: false });
 
   // As notas foram exibidas e marcadas antes do formulário; a chave é local e por versão.
-  const seenKey = await page.evaluate(() => localStorage.getItem('digicopy_patch_visto_7.3.11'));
+  const seenKey = await page.evaluate(() => localStorage.getItem(`digicopy_patch_visto_${window.DIGICOPY_APP_VERSION}`));
   expect(seenKey).toBe('1');
   await expect(page.locator('#digicopy-patch-notes')).toHaveCount(0);
 

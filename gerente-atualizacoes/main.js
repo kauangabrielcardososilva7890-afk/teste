@@ -17,6 +17,14 @@ const API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
 let win = null;
 
+function registrarErroGerente(tipo, erro){
+  try{
+    const dir = app.getPath('userData');
+    const linha = '[' + new Date().toISOString() + '] ' + tipo + ': ' + String((erro && (erro.stack || erro.message)) || erro || 'erro sem detalhes').slice(0,1200) + '\n';
+    fs.appendFileSync(path.join(dir, 'log-erros-gerente.txt'), linha, 'utf8');
+  }catch(_e){}
+}
+
 function criarJanela() {
   win = new BrowserWindow({
     width: 1180,
@@ -35,6 +43,15 @@ function criarJanela() {
   });
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, 'index.html'));
+  try{
+    win.webContents.on('console-message', (_event, level, message) => {
+      if(level >= 2) registrarErroGerente('CONSOLE', message);
+    });
+    win.webContents.on('render-process-gone', (_event, detalhes) => {
+      registrarErroGerente('RENDERER_PAROU', JSON.stringify(detalhes));
+      try{ dialog.showMessageBox(win, { type:'warning', title:'Gerente de Atualizações', message:'O programa encontrou um problema inesperado.', detail:'A janela será encerrada para evitar continuar em estado incompleto. Abra novamente e, se o problema persistir, envie o arquivo log-erros-gerente.txt.' }); }catch(_e){}
+    });
+  }catch(_e){}
 }
 
 app.whenReady().then(criarJanela);

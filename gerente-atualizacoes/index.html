@@ -76,6 +76,10 @@
   .aviso-bloq{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:11px 14px;font-size:12.5px;color:#92400e;margin-top:14px;line-height:1.6}
   .status-topo{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .status-topo .pill{font-size:11px;font-weight:800;background:#eef2ff;color:#3730a3;border-radius:999px;padding:5px 12px}
+  #erro-inesperado{position:fixed;left:18px;right:18px;bottom:18px;z-index:1000;display:none;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:14px;padding:13px 16px;box-shadow:0 14px 35px rgba(124,45,18,.18);font-size:13px;line-height:1.45}
+  #erro-inesperado.on{display:block}
+  #erro-inesperado b{display:block;margin-bottom:3px}
+  #erro-inesperado button{float:right;margin-left:12px;border:1px solid #fed7aa;background:#fff;color:#9a3412;border-radius:8px;padding:4px 9px;font-weight:800;cursor:pointer}
 </style>
 </head>
 <body>
@@ -210,6 +214,7 @@
 </div>
 
 <footer id="ft">DIGICOPY Gerente de Atualizações · v5.26.3 · as senhas viajam só como embaralhado (hash) · quem baixa é sempre o cliente, este programa só publica</footer>
+<div id="erro-inesperado" role="alert" aria-live="assertive"><button type="button" onclick="window.fecharAvisoErroInesperado&&window.fecharAvisoErroInesperado()">Fechar</button><b>Ocorreu algo inesperado</b><span id="erro-inesperado-text">A operação não terminou como esperado. Nenhum dado foi apagado automaticamente. Tente novamente; se persistir, envie esta mensagem ao suporte.</span></div>
 
 <script>
 'use strict';
@@ -221,6 +226,22 @@ var imgsEscolhidas = [];              // [{caminho, nome, tamanho}]
 var empresasCache = [];               // picker
 var releasesCache = [];
 var editando = null;                  // versao em edição
+
+// Aviso global: falhas inesperadas nunca ficam silenciosas e não fingem sucesso.
+(function(){
+  var ultimo = '';
+  function texto(v){ return String((v&&v.message)||v||'falha não identificada').replace(/[<>]/g,'').slice(0,220); }
+  window.fecharAvisoErroInesperado=function(){ var el=document.getElementById('erro-inesperado'); if(el) el.classList.remove('on'); };
+  window.mostrarAvisoErroInesperado=function(erro){
+    var t=texto(erro); if(t===ultimo) return; ultimo=t;
+    var el=document.getElementById('erro-inesperado'), tx=document.getElementById('erro-inesperado-text');
+    if(tx) tx.textContent='A operação não terminou como esperado ('+t+'). Nenhum dado foi apagado automaticamente. Tente novamente; se persistir, informe esta mensagem ao suporte.';
+    if(el) el.classList.add('on');
+    try{ console.error('[GERENTE][ERRO_INESPERADO]',t,erro); }catch(_e){}
+  };
+  window.addEventListener('error',function(ev){ window.mostrarAvisoErroInesperado((ev&&ev.message)||'erro de tela'); });
+  window.addEventListener('unhandledrejection',function(ev){ window.mostrarAvisoErroInesperado(ev&&ev.reason||'promessa rejeitada'); });
+})();
 
 function $(id){ return document.getElementById(id); }
 function soDig(v){ return String(v||'').replace(/\D/g,''); }
