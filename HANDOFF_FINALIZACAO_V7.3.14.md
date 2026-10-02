@@ -107,8 +107,9 @@ Transformar o ERP de cloud-only em local-only mudaria onde os dados são gravado
 
 - O PR #33 está **fechado sem merge**. O PR #34 foi mesclado anteriormente para `arena/01a0d9c3-teste`; a branch-base verificada é o commit `1d76e536`.
 - A branch local atual é `work/r67-auth-cloud-ui`; a propriedade `package.json > digicopy.branch` aponta para `arena/01a0d9c3-teste`, que é o destino apropriado de revisão.
-- Nesta rodada nenhum PR foi mesclado/fechado, nenhuma publicação foi feita e nenhum ambiente de produção foi acessado.
-- Aguardar revisão do novo PR em modo rascunho e a decisão do item 6 antes de considerar concluída a implementação de modo pessoal local-only.
+- O novo PR [#47](https://github.com/kauangabrielcardososilva7890-afk/teste/pull/47) está **aberto em Draft**, com `work/r67-auth-cloud-ui` como head e `arena/01a0d9c3-teste` como base.
+- Nenhum PR foi mesclado/fechado; não houve deploy do app nem acesso a ambiente de produção.
+- A decisão do item 6 ainda é necessária antes de considerar concluída a implementação de modo pessoal local-only.
 
 ## 8. Próxima ação para outro agente
 
