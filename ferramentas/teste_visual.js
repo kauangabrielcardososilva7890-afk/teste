@@ -165,21 +165,40 @@ function medirModal() {
 
   // login sem credencial: monta a base sintética e salva pelos canos do próprio app
   await pagina.goto(URL_ALVO, { waitUntil: 'domcontentloaded' });
-  await pagina.evaluate((base) => {
-    try { window.db = base; } catch (e) {}
-    try { if (typeof window.saveDB === 'function') window.saveDB(); } catch (e) {}
+  await pagina.waitForTimeout(900);
+  const semeadura = await pagina.evaluate((base) => {
+    // O app guarda a base num `let db` de escopo de script e espelha em
+    // window.db. Trocar window.db NÃO troca o db interno — por isso a base é
+    // MESCLADA no objeto que já está vivo (Object.assign) e salva pelo saveDB
+    // do próprio app, que conhece o formato de pedaços/manifesto.
+    const alvo = (window.db && typeof window.db === 'object') ? window.db : null;
+    if (!alvo) return { ok: false, motivo: 'window.db não apareceu (o app não subiu?)' };
+    Object.assign(alvo, base);
+    if (!Array.isArray(alvo.empresas) || !alvo.empresas.length) alvo.empresas = base.empresas;
+    if (!alvo.empresaAtivaId) alvo.empresaAtivaId = 'emp-teste';
+    try { if (typeof window.saveDB === 'function') window.saveDB(); } catch (e) { return { ok: false, motivo: 'saveDB lançou: ' + e.message }; }
     try {
-      const chave = 'digicopy_session_v42_demo_apresentacao';
-      localStorage.setItem(chave, JSON.stringify({
+      localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({
         usuarioId: 'u-qa', usuarioNome: 'QA Sintético', perfil: 'ADMIN',
-        empresaId: 'emp-teste', empresaNome: 'Empresa Sintética QA', cnpj: '00000000000000',
+        empresaId: alvo.empresaAtivaId, empresaNome: 'Empresa Sintética QA', cnpj: '00000000000000',
         loginAt: new Date().toISOString(),
       }));
-      sessionStorage.setItem('digicopy_ultima_empresa', 'emp-teste');
-    } catch (e) {}
+      sessionStorage.setItem('digicopy_ultima_empresa', alvo.empresaAtivaId);
+    } catch (e) { return { ok: false, motivo: 'localStorage indisponível: ' + e.message }; }
+    return { ok: true, clientes: (alvo.clientes || []).length, equipamentos: (alvo.equipamentos || []).length };
   }, montarBase());
+  resultados.semeadura = semeadura;
   await pagina.reload({ waitUntil: 'domcontentloaded' });
   await pagina.waitForTimeout(1400);
+  await pagina.evaluate(() => {
+    // se a tela de login continuar na frente (o boot só abre o app quando a
+    // sessão é aceita pelo fluxo dele), dá o empurrão que o botão daria
+    const login = document.getElementById('login-screen');
+    if (login && !login.classList.contains('hidden') && typeof window.showApp === 'function') {
+      try { window.showApp(); } catch (e) {}
+    }
+  });
+  await pagina.waitForTimeout(700);
 
   resultados.verso = await pagina.evaluate(() => {
     const rodape = document.querySelector('footer, .app-footer');
@@ -252,11 +271,14 @@ function medirModal() {
     if (d.bilheteNaTabela || d.bilheteNaFaixa) falhas.push('desktop ' + d.tela + ': apareceu aviso de arraste onde não devia');
   }
   if (errosPagina.length) falhas.push('erros de página (' + errosPagina.length + '): ' + errosPagina.slice(0, 3).join(' | '));
+  if (!resultados.semeadura || !resultados.semeadura.ok) falhas.push('a base sintética não entrou: ' + ((resultados.semeadura && resultados.semeadura.motivo) || '?') + ' — as medidas abaixo não valem (nenhuma tela tem linhas para cortar)');
+  if (resultados.semeadura && resultados.semeadura.ok && resultados.semeadura.clientes !== 3) falhas.push('clientes semeados = ' + resultados.semeadura.clientes + ' (esperado 3)');
   if (VERSAO_ESPERADA && resultados.verso.indexOf(VERSAO_ESPERADA) < 0) falhas.push('o site publicado não é a versão esperada: ' + resultados.verso + ' ≠ ' + VERSAO_ESPERADA);
 
   const md = [
     '## Teste visual no navegador real — ' + resultados.verso,
     '',
+    'Semeadura: `' + JSON.stringify(resultados.semeadura) + '`', '',
     'Rodado no GitHub Actions contra `' + URL_ALVO + '` (celular 390×844, desktop 1365×850, base sintética montada na hora, nada de dado real).',
     '',
     '| tela | colunas | tabela | tela cabe? | não cabe | rolável | bilhete | última coluna alcançável |',
