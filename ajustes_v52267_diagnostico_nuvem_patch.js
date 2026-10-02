@@ -43,7 +43,7 @@ function abrirDiagnosticoNuvem(){
   var title=node('h2','Diagnóstico da Nuvem','margin:0;font-size:18px;font-weight:900;color:#0a1e8a;');title.id='dc-cloud-diagnostic-title';
   var close=node('button','Fechar','border:0;border-radius:9px;background:#f1f5f9;color:#334155;padding:7px 10px;font-weight:800;cursor:pointer;');close.type='button';close.setAttribute('aria-label','Fechar diagnóstico');
   top.appendChild(title);top.appendChild(close);card.appendChild(top);
-  card.appendChild(node('p','Resumo desta máquina e da resposta do serviço. Este diagnóstico não altera nem envia registros.','margin:7px 0 12px;color:#64748b;font-size:12px;line-height:1.5;'));
+  card.appendChild(node('p','Os registros ficam na nuvem. Alterações aguardando confirmação existem apenas na memória desta sessão; uma fila antiga de versão anterior permanece até a nuvem confirmar o envio.','margin:7px 0 12px;color:#64748b;font-size:12px;line-height:1.5;'));
   var status=node('div','Consultando status…','padding:11px 12px;border-radius:11px;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:800;');status.id='dc-cloud-diagnostic-status';card.appendChild(status);
   var rows=node('div');rows.id='dc-cloud-diagnostic-rows';card.appendChild(rows);
   var error=node('p','','margin:10px 0 0;color:#b91c1c;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;');error.id='dc-cloud-diagnostic-error';card.appendChild(error);
@@ -76,7 +76,9 @@ function abrirDiagnosticoNuvem(){
     var versaoServico=String((cloud&&(cloud.versao||cloud.workerVersao||cloud.version))||'Não informada');
     rows.appendChild(criarLinha('Autorização deste computador',autorizado?'Sim':'Não'));
     rows.appendChild(criarLinha('Serviço da nuvem',cloud?(pronto?'Respondendo e pronto':'Respondendo, configuração pendente'):'Sem resposta confirmada'));
-    rows.appendChild(criarLinha('Fila aguardando envio',fila+' alteração(ões)'));
+    rows.appendChild(criarLinha('Fila nova (somente memória)',fila+' alteração(ões)'));
+    if(Number(local.legacyOutboxPending)>0)rows.appendChild(criarLinha('Fila antiga aguardando confirmação',Number(local.legacyOutboxPending)+' alteração(ões) preservadas até confirmação'));
+    rows.appendChild(criarLinha('Base de negócio no navegador','não é gravada por esta versão'));
     rows.appendChild(criarLinha('Última sincronização confirmada',formatarHora(local.emDiaAte||local.lastOk)));
     rows.appendChild(criarLinha('Versão do sistema',String(window.DIGICOPY_APP_VERSION||'—')));
     rows.appendChild(criarLinha('Versão da nuvem',versaoServico));

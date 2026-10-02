@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// DIGICOPY CLOUD DATA v5.20.30 — sincronização incremental local-first
-// • Nuvem ausente/vazia NUNCA apaga o PC.
-// • Primeiro baixa novidades; depois envia somente registros alterados.
-// • Fila local durável, idempotência, versão por registro e backoff.
+// DIGICOPY CLOUD DATA v5.20.30 — sincronização incremental cloud-only
+// • A nuvem é a fonte dos registros; dados novos ficam apenas em memória até confirmação.
+// • Cópias locais legadas são lidas para migração e removidas somente após confirmação remota.
+// • Fila nova é volátil; uma fila antiga já existente é mantida até ser confirmada ou resolvida.
 // • Exclusões em massa inesperadas são bloqueadas para aprovação manual.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
@@ -388,6 +388,11 @@ function normalizarEstado(novo){
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
 let state=loadState(),outbox=loadOutbox();
+// Compatibilidade de migração: só esta fila que já existia antes desta versão
+// continua no armazenamento, item a item, até a nuvem confirmar a mutação.
+// Mutação nova nunca é acrescentada a este array.
+let legacyOutboxItems=outbox.slice();
+let legacyRetryAt=0;
 normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -395,12 +400,11 @@ normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
 //   "EU N QUERO DADOS SALVOS NO MEU PC N, EU QUERO É SOMENTE OS DADOS DA NUVEM,
 //    TUDO O QUE EU CRIAR VAI PRA NUVEM, QUERO QUE NADA FIQUE SALVO NO PC OU NO
 //    NAVEGADOR N, É DIFICIL ISSO?"
-// Como funciona: o sistema PARA de gravar a base neste computador. O que ele
-// cria sobe para a nuvem na hora e a tela continua funcionando com os dados na
-// memória do programa; ao abrir o sistema, a base é remontada LENDO O DIÁRIO DA
-// NUVEM desde o começo. No PC fica guardado só o necessário para não pedir a
-// senha de novo e para não perder nada que ainda não subiu (token + fila de
-// envio).
+// Como funciona: o sistema PARA de gravar registros de negócio neste computador.
+// O que cria fica em memória e sobe para a nuvem; só aparece como salvo depois da
+// confirmação remota. Ao abrir, a base é remontada do diário da nuvem. Mantemos
+// somente token/metadata de sincronização; filas antigas já existentes ficam até
+// confirmação, enquanto filas novas e cópias de recuperação são voláteis.
 // v7.1.0 — virou o ÚNICO modo (ordem do dono): sem interruptor, sempre ligado.
 // ═══════════════════════════════════════════════════════════════════════════
 const SO_NUVEM_KEY='digicopy_cf_so_nuvem_v1';
@@ -467,7 +471,7 @@ let ultimaConferenciaNuvem=0;
 // próximo ciclo varre e envia o que faltava. Só pode negar; nunca apaga a mais.
 let ultimaProva=0, provaOk=false, provaGeracao=-1, provaVarredura=-1;
 function tudoConfirmadoNaNuvem(){
-  if(outbox.length)return false;
+  if(outbox.length||legacyOutboxItems.length)return false;
   if((state.heldLocalOnly||[]).length)return false;   // tem coisa segurada de propósito: não libera
   const agora=Date.now();
   // A prova é cara (percorre a base): vale por 1 minuto — mas só enquanto NADA mudou.
@@ -588,11 +592,15 @@ const TETO_FECHANDO=2000;       // ao fechar, aceita bem mais que a fila normal 
 let gravacaoAgendada=null,estadoMudou=true,estadoGravadoEm=0;
 function marcarEstado(){estadoMudou=true;}
 function gravarFila(){
-  try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));filaGravada=true;return true;}
+  try{
+    if(legacyOutboxItems.length)localStorage.setItem(OUTBOX_KEY,JSON.stringify(legacyOutboxItems));
+    else localStorage.removeItem(OUTBOX_KEY);
+    filaGravada=true;return true;
+  }
   catch(e){
-    // A FILA NÃO COUBE: isto é risco de perda de verdade (é a fila que guarda o que ele
-    // gravou). Antes ficava só no `lastError`; agora também aparece na tela, uma vez por minuto.
-    lastError='Sem espaço para a fila de sincronização.';
+    // Uma fila legada pode conter a única cópia de uma alteração ainda não confirmada.
+    // A fila nova, por decisão do dono, nunca é escrita no navegador.
+    lastError='Não foi possível atualizar a fila antiga pendente de sincronização.';
     filaGravada=false;
     try{avisarFilaNaoGravada();}catch(e2){}
     return false;
@@ -1361,24 +1369,36 @@ function varrerDemonstracao(){
   return lixo.length;
 }
 
+function sanitizeConflictRecord(entry){
+  const x=entry&&typeof entry==='object'?entry:{};
+  const token=(v,max)=>String(v||'').replace(/[^A-Za-z0-9_.-]/g,'').slice(0,max);
+  const at=typeof x.at==='string'&&/^\d{4}-\d\d-\d\dT/.test(x.at)?x.at:new Date().toISOString();
+  const operation=['upsert','delete'].includes(String(x.operation||''))?String(x.operation):'';
+  const status=['conflict','rejected'].includes(String(x.status||''))?String(x.status):'rejected';
+  return {at,entity:token(x.entity,48),operation,status,code:token(x.code,48)};
+}
+function readConflictLog(){
+  try{
+    const raw=localStorage.getItem(CONFLICT_KEY);if(!raw)return [];
+    const parsed=JSON.parse(raw);if(!Array.isArray(parsed))return [];
+    const cleaned=parsed.slice(0,20).map(sanitizeConflictRecord);
+    if(JSON.stringify(cleaned)!==JSON.stringify(parsed.slice(0,20)))localStorage.setItem(CONFLICT_KEY,JSON.stringify(cleaned));
+    return cleaned;
+  }catch(e){return [];}
+}
 function rememberConflict(item,result){
   try{
-    let list=JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');if(!Array.isArray(list))list=[];
-    list.unshift({at:new Date().toISOString(),local:item.mutation,current:result.current||null});
+    let list=readConflictLog();
+    const mut=item&&item.mutation||{},err=result&&result.error||null;
+    // Guarda apenas diagnóstico não identificável; nunca persiste IDs, chaves,
+    // hashes ou payloads de cliente/nota/contrato no ledger local.
+    list.unshift(sanitizeConflictRecord({at:new Date().toISOString(),entity:mut.entity,operation:mut.operation,status:result&&result.conflict?'conflict':'rejected',code:err&&(err.codigo||err.code)}));
     localStorage.setItem(CONFLICT_KEY,JSON.stringify(list.slice(0,20)));
   }catch(e){}
 }
-// v7.0.18 — O QUE A NUVEM CONFIRMOU TEM DE ESTAR NA BASE (defeito provado)
-// O caso: ele gravou e o programa fechou antes de subir (faltou luz, travou,
-// fechou sem internet, ou a fila estava grande e a gravação não coube no envio
-// de despedida). Ao reabrir no modo SÓ NUVEM a base começa vazia, a fila pendente
-// SOBE e a nuvem confirma — mas a confirmação só atualizava o livro-caixa e
-// consumia a fila, sem colocar o registro na base. O eco da nuvem é pulado pelo
-// guarda de versão ("já conheço esta versão") e o registro ficava na nuvem, mas
-// INVISÍVEL neste PC até a próxima reabertura: o "sumiu ao fechar e abrir".
-// O conserto: ao confirmar um upsert, se o registro NÃO está na base, ele entra
-// com os dados que acabaram de subir. NUNCA sobrescreve o que está na tela: uma
-// edição mais nova pode estar esperando a vez — ela sobe no próximo ciclo.
+// v7.0.18 — materializa na base em memória somente mutações confirmadas pela
+// nuvem. O gravador local está bloqueado; dados não confirmados não sobrevivem
+// a fechar/recarregar, e o keepalive de saída é apenas uma última tentativa.
 function materializarConfirmado(item){
   try{
     const mut=item&&item.mutation;
@@ -1441,7 +1461,9 @@ async function pushOutbox(){
         state.versions[item.key]=Number(result.version)||state.versions[item.key]||0;
         if(item.mutation.operation==='delete'){delete state.known[item.key];delete state.hashes[item.key];limparMarcaDeExclusao(item.key);}
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
-        remove.add(item.mutation.mutationId);sent++;
+        const confirmedId=item.mutation.mutationId;
+        legacyOutboxItems=legacyOutboxItems.filter(x=>!x||!x.mutation||x.mutation.mutationId!==confirmedId);
+        remove.add(confirmedId);sent++;
       }else if(result.conflict){
         // v5.24.0 — conflito NÃO descarta mais a edição local de cara. Antes:
         // aceitava o estado da nuvem e jogava a mutação fora em silêncio —
@@ -1455,16 +1477,18 @@ async function pushOutbox(){
           if(result.current){item.mutation=Object.assign({},item.mutation,{baseVersion:Number(result.current.version)||0});}
           continue; // não entra no "remove": fica na outbox e reenvia no próximo lote
         }
+        if(legacyOutboxItems.some(x=>x&&x.mutation&&x.mutation.mutationId===item.mutation.mutationId))legacyRetryAt=Date.now()+60000;
         rememberConflict(item,result);
         state.known[item.key]=true;state.hashes[item.key]=item.hash;   // r61: cedeu de vez — mesmos bytes nao voltam a fila
         limparMarcaDeExclusao(item.key);   // a nuvem não aceitou: não fica insistindo
         try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('info','Havia uma alteração mais nova na nuvem ('+(item.mutation&&item.mutation.entity)+'). Se faltar algo, refaça a última edição.',{tipo:'sync'}); }catch(e){}
         remove.add(item.mutation.mutationId);
       }else if(result.error){
+        if(legacyOutboxItems.some(x=>x&&x.mutation&&x.mutation.mutationId===item.mutation.mutationId))legacyRetryAt=Date.now()+60000;
         rememberConflict(item,result);limparMarcaDeExclusao(item.key);remove.add(item.mutation.mutationId);
         // v7.0.18 — RECUSA DA NUVEM NUNCA MAIS EM SILÊNCIO (defeito provado: o item
         // era descartado sem nenhum aviso e, no SÓ NUVEM, sumia ao fechar e reabrir).
-        // O registro continua na tela (está na base local); ele precisa saber que NÃO subiu.
+        // O registro continua apenas na base em memória; ele precisa saber que NÃO subiu.
         // r61 v7.3.1 (P0 30/09) — mas NUNCA de modal: window.toast com 'error'
         // vira lfbAlert (v5171) e cada item recusado abria um modal bloqueante —
         // com a fila recusada todo ciclo, era tempestade infinita em cima do login.
@@ -1477,7 +1501,7 @@ async function pushOutbox(){
           relatarSaude('recusado',onde+' '+codigoErro);
           state.known[item.key]=true;state.hashes[item.key]=item.hash;
           if(typeof window!=='undefined'&&typeof window.notificarEvento==='function'){
-            const textoRecusa='A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela continua na tela — confira e salve de novo.';
+            const textoRecusa='A nuvem recusou uma gravação ('+onde+': '+codigoErro+'). Ela NÃO foi salva na nuvem e permanece apenas nesta sessão. Corrija/refaça a edição e aguarde confirmação antes de fechar ou recarregar.';
             let guardado=false;
             try{ guardado=window.notificarEvento('info',textoRecusa,{tipo:'sync'})!==false; }catch(eN){}
             if(!guardado){ try{ enfileirarRecado('nuvem-recusou-'+onde+'-'+String(item.hash||'x'),textoRecusa,'aviso'); }catch(eR){} }
@@ -1580,6 +1604,7 @@ async function tick(reason){
   const trocou=()=>geracao!==estadoGeracao;   // a decisão mudou no meio? então para
   try{
     if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    if(!outbox.length&&legacyOutboxItems.length&&Date.now()>=legacyRetryAt){outbox=legacyOutboxItems.slice();legacyRetryAt=Date.now()+60000;}
     const info=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.deviceInfo?window.DIGICOPY_CLOUD.deviceInfo():null;
     const firstAuthorizedPull=!state.initialPull;
     const activation=info&&info.activation;
@@ -1633,6 +1658,10 @@ async function tick(reason){
       // de esperar o próximo ciclo normal de vários minutos.
       indicator(true,'Enviando para a nuvem • faltam '+outbox.length+' registros');
       busy=false;schedule(3000);return true;
+    }
+    if(legacyOutboxItems.length){
+      indicator(false,'A nuvem ainda não confirmou '+legacyOutboxItems.length+' alteração(ões) antigas; a cópia anterior foi mantida até confirmação.');
+      return false;
     }
     const devolvidos=await devolverSumidos();
     if(devolvidos){lastError='';schedule(1200);}
@@ -1943,17 +1972,15 @@ function pendingEstimate(){
 }
 function info(){
   const base={authorized:authorized(),busy,paused:!!state.paused,
-  // v7.0.12 — os campos novos são o que faltava para a fila deixar de ser invisível:
-  // quantos estão por subir (outbox, de sempre), se a fila encheu, se ela coube no
-  // navegador e até quando a nuvem está em dia.
-  filaCheia, filaGravada, emDiaAte:Number(state.lastOk)||0, varreduraMs:durVarredura,
+  // Estado da fila em memória e das pendências migradas que ainda aguardam confirmação.
+  filaCheia, filaGravada, filaVolatil:true, legacyOutboxPending:legacyOutboxItems.length, emDiaAte:Number(state.lastOk)||0, varreduraMs:durVarredura,
   // os limites, para ninguém precisar de "número mágico" na tela nem nos testes
   tetoFila:MAX_OUTBOX, tetoAoFechar:TETO_FECHANDO,
   // v7.0.15 — o teto do dia (quando a nuvem está no limite) também aparece: é o que
   // permite a faixa dizer "a nuvem está no limite de hoje, volta às HH:MM" em vez de
   // deixar a tela vazia sem explicação.
   limiteAte:Number(state.limiteAte)||0,
-  recuperando:!!state.recuperacaoCursor,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};
+  recuperando:!!state.recuperacaoCursor,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,lastOk:state.lastOk||0,lastError,conflicts:readConflictLog()};
   // v7.0.15 — O `pending` VIROU SOB DEMANDA (ganho de desempenho medido):
   // ele é o ÚNICO campo que percorre a base inteira e calcula o hash de cada registro.
   // Numa base de 76 mil registros isso custa ~223 ms (medido na bancada) por chamada —
@@ -2407,24 +2434,25 @@ try{
   const original=window.saveDB;
   if(typeof original==='function'&&!original.__cfWrapped){
     window.saveDB=function(){
-      // SÓ NUVEM: a base NÃO é gravada neste computador (segue na memória e
-      // sobe para a nuvem). Fora do modo, grava como sempre gravou.
-      const soNuvem=!!window.DIGICOPY_SO_NUVEM&&authorized();
-      const r=soNuvem?true:original.apply(this,arguments);
-      // v7.0.12 — ENFILEIRAR NA HORA: a mudança entra na fila (e a fila é gravada no
-      // navegador) no MESMO INSTANTE da gravação. Antes só ficava `sujo` e esperava a
-      // varredura de 900 ms — e fechar a janela nesse intervalo perdia a mudança.
-      if(!applying&&authorized()){sujo=true;enfileirarNaHora();schedule(900);}
-      return r;
+      // SÓ NUVEM: jamais chamar o gravador local/IndexedDB. Quando houver autorização,
+      // a varredura cria uma fila em memória e envia ao serviço; sem autorização, a
+      // faixa offline explica que a alteração ainda não foi salva.
+      if(!applying){
+        if(authorized()){sujo=true;enfileirarNaHora();schedule(900);}
+        else{window.__digicopyAlteracaoSemNuvem=true;}
+      }
+      return authorized();
     };
     window.saveDB.__cfWrapped=true;
   }
   const urgente=window.saveDBAgora;
   if(typeof urgente==='function'&&!urgente.__cfSujo){
     window.saveDBAgora=function(){
-      // v7.0.12 — mesma regra do saveDB: vale para a gravação urgente também
-      if(!applying&&authorized()){sujo=true;enfileirarNaHora();}
-      return urgente.apply(this,arguments);
+      if(!applying){
+        if(authorized()){sujo=true;enfileirarNaHora();}
+        else{window.__digicopyAlteracaoSemNuvem=true;}
+      }
+      return authorized();
     };
     window.saveDBAgora.__cfSujo=true;
   }
@@ -2438,15 +2466,13 @@ try{document.addEventListener('click',()=>{setTimeout(()=>{try{tentarRedesenhoPe
 try{document.addEventListener('focusout',()=>{setTimeout(()=>{try{tentarRedesenhoPendente();}catch(e){}},250);},true);}catch(e){}
 try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>1000)schedule(200);});}catch(e){}
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
-// v7.0.6 — fechar/recarregar a janela grava o estado grande na hora (o resto do
-// tempo ele é gravado agrupado; aqui não pode ficar nada pendente).
-// v7.0.12 — FECHAR NÃO PERDE (3 passos, nesta ordem):
-//   1. varredura AGORA, com teto de 500: o que ele gravou entra na fila mesmo se a
-//      fila normal (100) estiver cheia — é a última chance;
-//   2. persistAgora: estado + fila vão para o navegador na hora;
-//   3. entrega com keepalive: manda o que couber ANTES de a janela morrer (a promessa
-//      sobrevive ao fechamento). Se não chegar, a fila persistida garante a próxima
-//      abertura — nada depende desta tentativa.
+// v7.3.15 — FECHAMENTO CLOUD-ONLY:
+//   1. varredura AGORA, com teto de 500, para tentar enviar as alterações da sessão;
+//   2. persistAgora grava somente estado técnico e pendências legadas já existentes;
+//      a fila nova de negócio permanece apenas na memória;
+//   3. keepalive tenta entregar um lote, mas é best-effort e não garante confirmação.
+//      Se ainda houver fila, beforeunload pede confirmação e a interface alerta que
+//      fechar/recarregar sem confirmação pode perder as alterações desta sessão.
 function prepararParaFechar(){
   try{
     if(!authorized())return;
@@ -2456,7 +2482,7 @@ function prepararParaFechar(){
     if(outbox.length>=TETO_FECHANDO){
       try{indicator(false,'Fila da nuvem cheia ('+outbox.length+' pendente(s))');}catch(e){}
       try{
-        if(typeof window.toast==='function')window.toast('A fila da nuvem está cheia ('+outbox.length+' mudanças pendentes). Deixe a internet ligada um pouco para subir; não feche sem isso.','error');
+        if(typeof window.toast==='function')window.toast('Há '+outbox.length+' alteração(ões) só na memória, aguardando a nuvem. Mantenha esta janela aberta até aparecer “Nuvem sincronizada”; fechar pode perder as pendentes.','error');
       }catch(e){}
     }
   }catch(e){}
@@ -2478,11 +2504,12 @@ function entregarAoSair(){
   }catch(e){}
 }
 try{
-  const fechar=()=>{
+  const fechar=(ev)=>{
     try{prepararParaFechar();}catch(e){}
     try{persistAgora();}catch(e){}
     try{entregarAoSair();}catch(e){}
     try{devolverLideranca();}catch(e){}
+    if(ev&&ev.type==='beforeunload'&&authorized()&&outbox.length){try{ev.preventDefault();ev.returnValue='';}catch(e){}}
   };
   window.addEventListener('pagehide',fechar);
   window.addEventListener('beforeunload',fechar);

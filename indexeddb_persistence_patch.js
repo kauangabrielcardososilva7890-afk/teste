@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PERSISTÊNCIA INDEXEDDB v2 — incremental por entidade
-// Migra automaticamente o snapshot v1 e grava apenas entidades alteradas.
-// O localStorage permanece como compatibilidade; IndexedDB é a cópia ampla.
+// INDEXEDDB — compatibilidade de leitura de cópias legadas no modo SÓ NUVEM.
+// Dados novos de negócio ficam apenas na memória até confirmação da nuvem;
+// nenhuma base ou cópia de recuperação nova é persistida neste navegador.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -10,8 +10,11 @@ const SNAPSHOTS='snapshots';
 const ENTITIES='entities';
 const META='meta';
 const KEY='main';
+const CLOUD_ONLY=true;
+const volatileRecoverySnapshots=new Map();
 let database=null,openPromise=null,writeTimer=null,lastSavedAt=0,lastError='',clearing=false,entityHashes={};
-window.__indexedDbPersistAtivo=true;
+window.__indexedDbPersistAtivo=false;
+window.__dbPersistenciaSomenteNuvem=true;
 
 function open(){
   if(database)return Promise.resolve(database);
@@ -57,6 +60,7 @@ function signature(campo,value,manifest){
   try{return 'j:'+hashText(JSON.stringify(value));}catch(e){return 't:'+Date.now();}
 }
 async function writeNow(reason){
+  if(CLOUD_ONLY){window.__dbPersistidoOk=false;window.__dbIDBOk=true;return {ok:true,changed:0,removed:0,stored:false,cloudOnly:true};}
   if(clearing||typeof db==='undefined'||!valid(db)){window.__dbIDBOk=false;return false;}
   try{
     const x=await open(),keys=Object.keys(db),manifest=localManifest(),hashes={},changed=[];
@@ -90,10 +94,10 @@ async function boot(){
       if(typeof normalizeDbShape==='function')db=normalizeDbShape(db);
       lastSavedAt=legacyTs;entityHashes={};
       await writeNow('migracao-snapshot-v1');
-      console.log('[DIGICOPY][IndexedDB] snapshot v1 migrado para entidades');
+      console.log('[DIGICOPY][IndexedDB] cópia legada lida para memória; sem gravação local');
     }else{
       entityHashes={};await writeNow('migracao-localStorage');
-      console.log('[DIGICOPY][IndexedDB] base atual migrada com sucesso');
+      console.log('[DIGICOPY][IndexedDB] cópia legada carregada; gravações locais desativadas');
     }
     if(typeof seedData==='function')seedData(false);
     if(typeof getSession==='function'&&getSession()&&typeof showApp==='function')showApp();
@@ -104,16 +108,24 @@ async function boot(){
 async function writeRecoverySnapshot(name,data){
   try{
     const copy=typeof structuredClone==='function'?structuredClone(data):JSON.parse(JSON.stringify(data));
-    await putSnapshot({key:'recovery_'+String(name||Date.now()),savedAt:Date.now(),reason:'recovery',data:copy});return true;
+    const key='recovery_'+String(name||Date.now());
+    if(CLOUD_ONLY){volatileRecoverySnapshots.set(key,{key,savedAt:Date.now(),reason:'recovery-volatile',data:copy});return true;}
+    await putSnapshot({key,savedAt:Date.now(),reason:'recovery',data:copy});return true;
   }catch(e){lastError=e&&e.message?e.message:String(e);return false;}
 }
 // Ler de volta uma cópia de recuperação (usado pelo conserto da nuvem).
 async function readRecoverySnapshot(name){
-  try{const snap=await getSnapshot('recovery_'+String(name||''));return snap&&snap.data?snap.data:null;}
+  try{
+    const key='recovery_'+String(name||'');
+    const volatile=volatileRecoverySnapshots.get(key);
+    if(volatile&&volatile.data)return typeof structuredClone==='function'?structuredClone(volatile.data):JSON.parse(JSON.stringify(volatile.data));
+    const snap=await getSnapshot(key);return snap&&snap.data?snap.data:null;
+  }
   catch(e){lastError=e&&e.message?e.message:String(e);return null;}
 }
 async function clearLocalData(){
   clearing=true;if(writeTimer)clearTimeout(writeTimer);
+  volatileRecoverySnapshots.clear();
   try{
   try{if(database){database.close();database=null;}}catch(e){}
   await new Promise((resolve,reject)=>{const req=indexedDB.deleteDatabase(IDB_NAME);req.onsuccess=()=>resolve(true);req.onerror=()=>reject(req.error||new Error('Falha ao apagar IndexedDB'));req.onblocked=()=>reject(new Error('Feche as outras abas do DIGICOPY e tente novamente.'));});
@@ -152,7 +164,7 @@ function getAllSnapshots(){
     r.onerror=()=>reject(r.error);
   }));
 }
-window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,listSnapshots:getAllSnapshots,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
+window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,listSnapshots:getAllSnapshots,clearLocalData,info:()=>({active:false,cloudOnly:true,legacyReadable:true,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
 window.DIGICOPY_DB_READY=boot();
 try{
   const original=window.saveDB;

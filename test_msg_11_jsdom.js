@@ -1310,23 +1310,20 @@ if (false) { // ═══ test_nuvem_nao_perde.js (inerte: só parse, nunca exec
 // ═════════════════════════════════════════════════════
 // TESTE — A NUVEM NÃO PODE PERDER O QUE ELE ACABOU DE GRAVAR
 //
-// A DOR (relatada pelo dono): "dado que some". O caminho vivo da gravação é o
-// SÓ NUVEM (upload_cloud/cloudflare_data_sync_patch.js): a base NÃO é gravada
-// neste computador, então o que garante que a mudança não morra é a FILA
-// (outbox) persistida no navegador.
+// O caminho vivo é SÓ NUVEM: nem a base nem a fila nova são persistidas no
+// navegador. Uma alteração só está salva depois da resposta da nuvem. Até lá
+// fica em memória nesta sessão; fechar/recarregar pode perdê-la.
 //
-// O defeito provado aqui (rodada 23, §37.3): a mudança só entrava na fila
-// quando a varredura rodava — e a varredura era agendada para 900 ms DEPOIS de
-// gravar. Nessa janela, a única cópia da mudança estava na memória: fechar a
-// janela (ou faltar luz, ou o programa morrer) levava a mudança embora, e como
-// o SÓ NUVEM remonta a base pela nuvem, ela NÃO voltava.
+// Esta regressão prova os dois caminhos honestamente: quando a nuvem confirma,
+// a mudança reaparece após reabrir; quando não confirma, nenhum payload fica no
+// navegador e a interface não pode apresentá-la como salva.
 //
 // O QUE ESTE TESTE FAZ (com a nuvem fingida e o relógio na mão):
 //   1. abre o sistema com a base assentada (nada pendente);
 //   2. grava um cliente (window.saveDB) e NÃO deixa o relógio andar;
-//   3. confere o que sobrou no navegador (a fila persistida) — hoje: nada;
-//   4. fecha a janela (pagehide) e REABRE com a nuvem que não tem o cliente;
-//   5. exige que a mudança sobreviva (na fila ou já enviada com keepalive).
+//   3. confere fila volátil em memória e nenhuma cópia persistida;
+//   4. fecha a janela, tenta keepalive e REABRE;
+//   5. confirma que o dado existe após reabrir somente se a nuvem o recebeu.
 // ═════════════════════════════════════════════════════
 const fs = require('fs');
 let JSDOM = null;
@@ -1463,29 +1460,25 @@ function abrirNavegador(nuvem, estadoSalvo) {
   n1.janela.db.clientes.push(cliente);
   n1.janela.saveDB();                       // é assim que o sistema grava
 
-  // 3) o que já está GRAVADO no navegador no fim do clique? (no máximo uns milésimos
-  //    depois: numa base grande o motor adia a varredura para o fim do clique, e ela
-  //    roda antes de qualquer outra coisa — nada de esperar os 900 ms)
+  // 3) a fila fica visível em memória imediatamente, mas não é gravada no navegador.
   await n1.andar(5);
-  const salvoNoClique = n1.filaSalva().filter((x) => x && x.key === 'clientes|c-novo');
-  ok('a gravação ENTRA NA FILA no fim do clique (não fica só na memória)',
-    salvoNoClique.length === 1, 'fila no clique: ' + JSON.stringify(n1.filaSalva().map((x) => x.key)));
+  const pendenteNoClique=n1.janela.DIGICOPY_CLOUD_SYNC.info().outbox;
+  ok('a gravação entra na fila volátil e não no localStorage',
+    pendenteNoClique===1&&n1.filaSalva().length===0,JSON.stringify({pendenteNaMemoria:pendenteNoClique,persistida:n1.filaSalva().length}));
 
   // 4) ele fecha a janela logo depois de gravar
   n1.fechar();
   await n1.respirar();
-  const depoisDeFechar = n1.filaSalva().filter((x) => x && x.key === 'clientes|c-novo');
-  ok('e ao FECHAR a janela a mudança continua gravada na fila',
-    depoisDeFechar.length === 1, 'fila ao fechar: ' + JSON.stringify(n1.filaSalva().map((x) => x.key)));
+  ok('o fechamento não persiste a fila de negócio nova no navegador',
+    n1.filaSalva().length===0,'itens persistidos: '+n1.filaSalva().length);
 
   // 5) ao fechar, o motor tenta entregar o que couber com keepalive (a promessa sobrevive ao fechamento)
   const comKeepalive = nuvem.envios.filter((e) => e.keepalive);
   const entregouNoFechamento = comKeepalive.some((e) => e.mutations.some((m) => m.recordId === 'c-novo'));
-  ok('ao fechar o motor tenta entregar com keepalive (chega antes, sem esperar a próxima abertura)',
+  ok('ao fechar o motor tenta entregar com keepalive (tentativa best-effort)',
     entregouNoFechamento, 'envios com keepalive: ' + comKeepalive.length);
 
-  // 6) ele REABRE o sistema: a nuvem (o que o motor entregou) + o que ficou gravado no navegador.
-  //    SÓ NUVEM: a base é remontada pela nuvem, então o cliente só existe se veio da nuvem ou da fila.
+  // 6) ao reabrir, somente o que a nuvem confirmou pode reaparecer.
   const guardado = n1.estadoSalvo();
   const nuvem2 = nuvemFingida();
   nuvem2.diario.push.apply(nuvem2.diario, nuvem.diario);
@@ -1493,13 +1486,13 @@ function abrirNavegador(nuvem, estadoSalvo) {
   await n2.andar(20000);
   const clienteNaNuvem = nuvem2.diario.some((c) => c.entity === 'clientes' && String(c.recordId) === 'c-novo');
   const clienteNoBanco = (n2.janela.db.clientes || []).some((c) => c && c.id === 'c-novo');
-  ok('DEPOIS DE FECHAR E REABRIR o cliente está lá (veio para a nuvem ou continuou na fila)',
-    clienteNaNuvem || clienteNoBanco,
+  ok('DEPOIS DE FECHAR E REABRIR o cliente está lá somente se veio confirmado da nuvem',
+    clienteNaNuvem && clienteNoBanco,
     'nuvem=' + clienteNaNuvem + ' banco=' + clienteNoBanco + ' fila=' + JSON.stringify(n2.filaSalva().map((x) => x.key)));
 
   const i2 = n2.janela.DIGICOPY_CLOUD_SYNC.info();
-  ok('e o motor mostra na tela que está tudo entregue (nada preso na memória)',
-    i2.outbox === 0 || clienteNaNuvem, JSON.stringify({ outbox: i2.outbox, naNuvem: clienteNaNuvem }));
+  ok('o motor não mantém uma fila nova persistida para fingir que salvou',
+    i2.outbox===0&&n2.filaSalva().length===0,JSON.stringify({outbox:i2.outbox,persistida:n2.filaSalva().length,naNuvem:clienteNaNuvem}));
 
   console.log('-- o que o dono vê sobre a fila (nada de fila invisível) --');
   ok('o motor diz quantos estão por subir e até quando está em dia',
@@ -1517,23 +1510,23 @@ function abrirNavegador(nuvem, estadoSalvo) {
     ok('o motor diz os limites da fila (a tela não usa número mágico)',
       teto > 0 && tetoAoFechar > teto, JSON.stringify({ tetoFila: caps.tetoFila, tetoAoFechar: caps.tetoAoFechar }));
 
-    // MUITO mais gravações do que a fila normal aceita — e mais do que cabe até ao fechar.
+    // MUITO mais gravações do que o limite da fila volátil aceita.
     const total = tetoAoFechar + 50;
     for (let i = 0; i < total; i++) n3.janela.db.clientes.push({ id: 'c' + i, nome: 'Cliente ' + i });
     n3.janela.saveDB();
     await n3.andar(5);   // fim do clique: a varredura já rodou
     const iTeto = n3.janela.DIGICOPY_CLOUD_SYNC.info();
-    ok('com a fila no limite, o motor diz que encheu (ele PRECISA saber: sobe aos poucos)',
+    ok('com a fila no limite, o motor indica saturação em memória',
       iTeto.filaCheia === true && iTeto.outbox === teto, JSON.stringify({ outbox: iTeto.outbox, filaCheia: iTeto.filaCheia }));
 
     n3.fechar();
     await n3.respirar();
-    const naFila = n3.filaSalva().filter((x) => x && String(x.key).indexOf('clientes|c') === 0).length;
-    ok('mesmo com a fila cheia, AO FECHAR tudo o que coube fica guardado (nada só na memória)',
-      naFila >= tetoAoFechar, 'guardados: ' + naFila + ' (teto ao fechar: ' + tetoAoFechar + ' de ' + total + ')');
+    const naFila = n3.filaSalva().length;
+    ok('mesmo com fila cheia, fechar não persiste registros novos no navegador',
+      naFila===0, 'persistidos: ' + naFila + ' (teto ao fechar: ' + tetoAoFechar + ' de ' + total + ')');
     const avisou = n3.avisos.some((a) => /fila|pendente|subir|espa/i.test(a.txt));
     ok('e o que NÃO coube, ele avisa na tela (nada de silêncio)',
-      avisou && naFila < total, 'avisos: ' + JSON.stringify(n3.avisos.slice(0, 2)) + ' guardados: ' + naFila + ' de ' + total);
+      avisou && naFila===0, 'avisos: ' + JSON.stringify(n3.avisos.slice(0, 2)) + ' persistidos: ' + naFila + ' de ' + total);
   }
 
   console.log('-- "não está aparecendo nenhum dado, é normal?" --');
@@ -1602,7 +1595,7 @@ function abrirNavegador(nuvem, estadoSalvo) {
       'subiu=' + subiu + ' liberou=' + liberou);
   }
 
-  console.log('\nRESULTADO: ' + passou + ' verificações passaram — o que ele grava entra na fila na hora, sobrevive a fechar e reabrir, e a tela vazia nunca fica em silêncio.');
+  console.log('\nRESULTADO: ' + passou + ' verificações passaram — só confirma quando a nuvem aceita; fila nova volátil, legado protegido até sincronizar e sem alegação falsa de salvamento.');
   try { n1.dom.window.close(); n2.dom.window.close(); } catch (e) { }
 })();
 //<<<<SECAO:test_nuvem_nao_perde.js:FIM>>>>
@@ -1900,15 +1893,9 @@ if (false) { // ═══ test_impressora_nao_some_reabrir.js (inerte: só parse
 // A DOR (relatada pelo dono): "cadastra a impressora no contrato e ela some
 // quando fecha e abre o programa".
 //
-// O DEFEITO PROVADO (nesta rodada): ele gravou e o programa fechou antes de
-// subir (faltou luz, travou, fechou sem internet, ou a fila estava grande e a
-// gravação não coube no envio de despedida). Ao reabrir no modo SÓ NUVEM, a
-// base começa vazia, a fila pendente SOBE e a nuvem confirma — mas a confirmação
-// só atualizava o livro-caixa e consumia a fila, SEM colocar o registro na base.
-// O eco da nuvem é pulado pelo guarda de versão ("já conheço esta versão") e o
-// registro ficava na nuvem, mas INVISÍVEL neste PC até a próxima reabertura.
-// O conserto: ao confirmar um upsert, se o registro NÃO está na base, ele entra
-// com os dados que acabaram de subir (nunca sobrescreve o que está na tela).
+// Política cloud-only atual: a fila nova é volátil. Um envio confirmado deve
+// reaparecer após reabrir; se o keepalive falhar, o teste prova que nenhum payload
+// fica no navegador nem é falsamente apresentado como salvo.
 //
 // O SEGUNDO DEFEITO (mesma família): quando a nuvem RECUSAVA um item
 // (result.error), ele era descartado SEM NENHUM AVISO — e no SÓ NUVEM sumia ao
@@ -1916,10 +1903,10 @@ if (false) { // ═══ test_impressora_nao_some_reabrir.js (inerte: só parse
 // de saúde da nuvem.
 //
 // O QUE ESTE TESTE FAZ (nuvem fingida + navegador na mão, relógio falso):
-//   A. controle: envia antes de fechar → reabre → está lá;
-//   F. A PROVA: o envio de despedida FALHA (offline/crash) → reabre, sobe a fila
-//      pendente → a impressora TEM de estar na tela (banco=true), não só na nuvem;
-//   C. a nuvem recusa o item → ele TEM de avisar na tela (nada de silêncio).
+//   A. controle: a nuvem confirma antes de fechar → reabre → está lá;
+//   F. o keepalive falha → a pendência existia apenas em memória e não sobrevive
+//      à reabertura como um falso registro salvo localmente;
+//   C. a nuvem recusa o item → avisa na tela e guarda apenas metadados de conflito.
 // ═════════════════════════════════════════════════════
 const fs = require('fs');
 let JSDOM = null;
@@ -2063,9 +2050,14 @@ async function cicloFecharReabrir(opNuvem, tag, esperarEnvio) {
   const idNovo = salvarImpressora(n1.janela, tag);
   if (esperarEnvio) await n1.andar(20000);
   else await n1.andar(5);
+  const pendingBeforeClose=n1.janela.DIGICOPY_CLOUD_SYNC.info().outbox;
   n1.fechar();
   await n1.respirar();
   const guardado = n1.estadoSalvo();
+  const baseKeysPersisted=Object.keys(guardado).filter(k=>/^digicopy_erp_v42_demo_apresentacao(?:_manifest|_part__.*)?$/.test(k)||/^digicopy_(?:erp|backup)$/.test(k));
+  const storedOutbox=n1.filaSalva();
+  let conflictsHavePayload=false,conflictsHaveIdentifiers=false;
+  try{const cs=JSON.parse(guardado['digicopy_cf_sync_conflicts_v1']||'[]');conflictsHavePayload=cs.some(x=>x&&(x.local||x.current||x.data));conflictsHaveIdentifiers=cs.some(x=>x&&(x.key||x.recordId||x.localHash||x.currentHash));}catch(e){}
   const nuvem2 = nuvemFingida(opNuvem);
   nuvem2.diario.push.apply(nuvem2.diario, nuvem.diario);
   const n2 = abrirNavegador(nuvem2, guardado);
@@ -2075,7 +2067,9 @@ async function cicloFecharReabrir(opNuvem, tag, esperarEnvio) {
     noBanco: (n2.janela.db.parque || []).some((c) => c && c.id === idNovo),
     naNuvem: nuvem2.diario.some((c) => c.entity === 'parque' && String(c.recordId) === idNovo),
     naFila: n2.filaSalva().some((x) => x && String(x.key).indexOf(idNovo) >= 0),
-    avisos: n2.avisos, sino: n2.sino, relatos: nuvem2.relatos
+    avisos: n2.avisos, sino: n2.sino, relatos: nuvem.relatos.concat(nuvem2.relatos),
+    avisosAntesFechar:n1.avisos, sinoAntesFechar:n1.sino, pendingBeforeClose,
+    storedOutbox:storedOutbox.length, baseKeysPersisted, conflictsHavePayload, conflictsHaveIdentifiers
   };
 }
 
@@ -2088,25 +2082,26 @@ async function cicloFecharReabrir(opNuvem, tag, esperarEnvio) {
     ok('enviou antes de fechar: está na tela e na nuvem', r.noBanco && r.naNuvem, JSON.stringify({ banco: r.noBanco, nuvem: r.naNuvem }));
   }
 
-  console.log('-- A PROVA: despedida falha (offline/crash), sobe depois de reabrir --');
+  console.log('-- keepalive falha: a pendência não é persistida nem declarada salva --');
   {
     const r = await cicloFecharReabrir({ falharKeepalive: true }, 'F', false);
-    ok('subiu na nuvem depois de reabrir', r.naNuvem, 'nuvem=' + r.naNuvem);
-    ok('E ESTÁ NA TELA (não some)', r.noBanco, 'banco=' + r.noBanco + ' fila=' + r.naFila);
-    ok('nada preso na fila', !r.naFila, 'fila=' + r.naFila);
+    ok('a pendência existiu em memória antes do fechamento', r.pendingBeforeClose>0, 'outbox=' + r.pendingBeforeClose);
+    ok('o navegador não guardou base nem outbox de negócio', r.storedOutbox===0&&r.baseKeysPersisted.length===0, JSON.stringify({outbox:r.storedOutbox,base:r.baseKeysPersisted.length}));
+    ok('ao reabrir, não há registro falso sem confirmação cloud', !r.naNuvem&&!r.noBanco&&!r.naFila, JSON.stringify({nuvem:r.naNuvem,banco:r.noBanco,fila:r.naFila}));
   }
 
   console.log('-- recusa da nuvem nunca mais em silêncio --');
   {
-    const r = await cicloFecharReabrir({ rejeitar: (m) => m.entity === 'parque' && String(m.recordId) === 'prq-C' }, 'C', false);
+    const r = await cicloFecharReabrir({ rejeitar: (m) => m.entity === 'parque' && String(m.recordId) === 'prq-C' }, 'C', true);
     // A r61 trocou o toast/modal por item pelo sino: abrir uma janela para
     // cada recusa criava uma tempestade bloqueante. Toast continua aceito para
     // caminhos antigos, mas o sino é o canal oficial e fica visível ao usuário.
-    const avisouTela = r.avisos.some((a) => /recusou/i.test(a.txt));
-    const avisouSino = r.sino.some((s) => /recusou/i.test(s.msg));
-    ok('a recusa aparece em aviso visível (toast ou sino)', avisouTela || avisouSino, JSON.stringify({ avisos: r.avisos.map((a) => a.txt).slice(0, 2), sino: r.sino.map((s) => s.msg).slice(0, 1) }));
-    ok('a recusa aparece no sino', avisouSino, JSON.stringify(r.sino.map((s) => s.msg).slice(0, 1)));
+    const avisouTela = r.avisosAntesFechar.some((a) => /recusou/i.test(a.txt));
+    const avisouSino = r.sinoAntesFechar.some((s) => /recusou/i.test(s.msg));
+    ok('a recusa aparece em aviso visível (toast ou sino)', avisouTela || avisouSino, JSON.stringify({ avisos: r.avisosAntesFechar.map((a) => a.txt).slice(0, 2), sino: r.sinoAntesFechar.map((s) => s.msg).slice(0, 1) }));
+    ok('a recusa aparece no sino', avisouSino, JSON.stringify(r.sinoAntesFechar.map((s) => s.msg).slice(0, 1)));
     ok('a recusa vai para o relatório de saúde da nuvem', r.relatos.some((x) => x && x.tipo === 'recusado'), JSON.stringify(r.relatos.slice(0, 2)));
+    ok('o conflito não persiste payload nem identificadores de negócio', !r.conflictsHavePayload&&!r.conflictsHaveIdentifiers, JSON.stringify({payload:r.conflictsHavePayload,identificadores:r.conflictsHaveIdentifiers}));
   }
 
   console.log('\nRESULTADO: ' + passou + ' verificações passaram.');

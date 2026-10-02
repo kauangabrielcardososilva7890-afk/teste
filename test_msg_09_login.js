@@ -430,7 +430,9 @@ console.log('-- reclamação 10: o erro.txt do rodapé não volta --');
 console.log('-- reclamação 12: SÓ NUVEM (nada salvo no PC) --');
 {
   const sync = ler('cloudflare_data_sync_patch.js');
-  ok('o saveDB em SÓ NUVEM não grava a base no PC', /soNuvem\?true:original\.apply/.test(sync));
+  const app = ler('app.js'), idb = ler('indexeddb_persistence_patch.js');
+  const wrapper=sync.slice(sync.indexOf('window.saveDB=function(){'),sync.indexOf('window.saveDB.__cfWrapped=true;'));
+  ok('o saveDB em SÓ NUVEM não grava a base no PC', /if\(authorized\(\)\)\{sujo=true;enfileirarNaHora\(\);schedule\(900\);\}/.test(wrapper)&&!/original\.apply/.test(wrapper)&&/window\.DIGICOPY_SO_NUVEM===true\)return false/.test(app)&&/const CLOUD_ONLY=true/.test(idb));
   ok('a cópia local só é solta quando a nuvem confirma que tem tudo',
     /modoSoNuvem\(\)&&!outbox\.length&&await nuvemTemTudo\(\)/.test(sync) && /async function nuvemTemTudo\(\)/.test(sync));
 }
@@ -446,7 +448,7 @@ console.log('-- reclamação 13: o "dado que some" (rodada 24) --');
   ok('a fila não encolheu de volta (400 no dia a dia, 2.000 ao fechar)',
     tetoFila >= 400 && tetoFechar > tetoFila, 'fila: ' + tetoFila + ' | ao fechar: ' + tetoFechar);
   ok('o motor conta na tela o que está por subir e até quando está em dia',
-    /filaCheia, filaGravada, emDiaAte:/.test(sync) && /btn\.title=\(text\|\|'Nuvem DIGICOPY'\)\+extra/.test(sync));
+    /filaCheia, filaGravada, filaVolatil:true, legacyOutboxPending:legacyOutboxItems\.length, emDiaAte:/.test(sync) && /btn\.title=\(text\|\|'Nuvem DIGICOPY'\)\+extra/.test(sync));
 }
 
 console.log('-- reclamação 15: nada de prompt/confirm nativo no caminho crítico (regra 16) --');
@@ -497,7 +499,7 @@ console.log('-- reclamação 19: "não está aparecendo nenhum dado, é normal?"
   ok('ela NUNCA fica presa na tela (tem saída garantida)',
     /nunca deixar o dono preso no aviso de carga/.test(sync));
   ok('o motor diz na tela quantos estão por subir e até quando está em dia (o "sumiço" deixa de ser mistério)',
-    /filaCheia, filaGravada, emDiaAte:/.test(sync));
+    /filaCheia, filaGravada, filaVolatil:true, legacyOutboxPending:legacyOutboxItems\.length, emDiaAte:/.test(sync));
 
   // v7.0.14 — o degrau novo: base vazia com a nuvem RESPONDENDO avisa na tela, com o
   // nome/CNPJ da conexão. Era o único caso em que "não apareceu nada" ainda ficava mudo.

@@ -70,15 +70,12 @@ function normalizeDbShape(parsed){
   return parsed;
 }
 // ═══════════════════════════════════════════════════════════════════════════
-// PERSISTÊNCIA LOCAL INCREMENTAL (v4.4.0) — o fim do "travando"
-// Antes: cada saveDB() comprimia e regravava a base INTEIRA (dezenas de MB)
-// em uma chave única — congelava a tela por segundos a cada ação.
-// Agora: cada entidade (clientes, vendas, modulosDinamicos...) é quebrada em
-// PEDAÇOS pequenos com hash próprio, e só os pedaços alterados são
-// recomprimidos/regravados. Ex.: ao editar 1 venda, só o pedaço dela (~ms)
-// é regravado — não mais a base toda (~segundos).
-// A chave única antiga (DB_KEY) vira apenas um backup de compatibilidade,
-// atualizado fora do uso ativo (aba oculta / a cada 10 min).
+// ARMAZENAMENTO LOCAL LEGADO (v4.4.0) — mantido para ler/migrar cópias antigas.
+// O ERP atual opera em SÓ NUVEM: os gravadores abaixo são interrompidos pelos
+// guards DIGICOPY_SO_NUVEM, e a sincronização só considera uma mudança salva
+// após confirmação remota. Não remova esses guards sem rever a política de dados.
+// O particionamento abaixo permanece por compatibilidade com instalações locais
+// antigas; não é uma promessa de armazenamento local no modo atual.
 // ═══════════════════════════════════════════════════════════════════════════
 const DB_CHUNK_ITENS=600;           // itens por pedaço de listas grandes
 const DB_CHUNK_OBJ_MIN=8;           // objetos com +8 chaves viram 1 pedaço por chave
@@ -173,6 +170,9 @@ function loadDB(){
 // saveDBAgora() drena tudo de forma síncrona (fechar aba, imprimir, recarregar).
 let __saveQ=null;
 function saveDB(){
+  // v7.3.15 — SÓ NUVEM: o banco permanece em memória e é enviado pelo motor
+  // Cloudflare; nunca grave cópia de negócio em localStorage neste modo.
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true)return false;
   const novas = Object.keys(db);
   if(!__saveQ){
     let manifestAnt={v:2, partes:{}};
@@ -187,6 +187,7 @@ function saveDB(){
   }
 }
 function __gravarParteCampo(campo, q){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true)return;
   const infoAnt=(q.manifestAnt.partes||{})[campo]||{subs:{}};
   let fatia;
   try{ fatia=dbFatiarEntidade(db[campo]); }catch(eF){ q.partes[campo]={tipo:'valor', subs:infoAnt.subs||{}}; return; }
@@ -213,6 +214,7 @@ function __gravarParteCampo(campo, q){
   q.partes[campo]={tipo:fatia.tipo, subs};
 }
 function __finalizarSaveQ(q){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true){window.__dbPersistidoOk=false;return;}
   // entidades que saíram do banco
   Object.keys(q.manifestAnt.partes||{}).forEach(campo=>{
     if(campo in db) return;
@@ -233,6 +235,7 @@ function __finalizarSaveQ(q){
   agendarSnapshotLegado();
 }
 function __saveTick(){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true){__saveQ=null;return;}
   const q=__saveQ; if(!q) return;
   const t0=Date.now();
   while(q.keys.length && (Date.now()-t0)<25){
@@ -247,6 +250,7 @@ function __saveTick(){
 }
 // Drena a fila de forma SÍNCRONA (usado ao fechar a aba, antes de imprimir/recarregar)
 function __saveDBDrainSync(){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true){__saveQ=null;return;}
   if(!__saveQ) return;
   while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); try{__gravarParteCampo(campo, __saveQ);}catch(eP){__saveQ.falhouQuota=true;} } // r59d
   __finalizarSaveQ(__saveQ);
@@ -258,6 +262,7 @@ window.__saveDBDrainSync = __saveDBDrainSync;
 // (a tela congela com a base grande, então ele nunca roda durante o uso).
 let __snapHash='';
 function gravarSnapshotLegado(force){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true)return false;
   let h='';
   try{ h=JSON.stringify((JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'{}')||{}).partes||{}); }catch(eH){ h=''; }
   if(h && h===__snapHash) return; // nada mudou desde o último snapshot

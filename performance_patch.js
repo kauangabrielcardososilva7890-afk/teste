@@ -72,6 +72,7 @@ window.__perfPure = { perfHashStr, perfDiffPartes, perfEmLotes };
     agendado = false;
     if(!pendente) return;
     pendente = false;
+    if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true) return false;
     try{ realSave(); }catch(e){ /* mantém na fila mental: próxima ação tenta de novo */ pendente = true; }
   }
   window.saveDB = function(){
@@ -82,11 +83,13 @@ window.__perfPure = { perfHashStr, perfDiffPartes, perfEmLotes };
   };
   // Para fluxos que PRECISAM da gravação imediata (antes de reload/impressão)
   window.saveDBAgora = function(){
+    if(window.DIGICOPY_SO_NUVEM===true){pendente=false;return false;}
     pendente = true; flush();
     // v4.5.0: a persistência real é fatiada no tempo; aqui drena tudo na hora
     if(typeof window.__saveDBDrainSync==='function'){ try{ window.__saveDBDrainSync(); }catch(e){} }
   };
   const urgente = ()=>{
+    if(window.DIGICOPY_SO_NUVEM===true){pendente=false;return;}
     if(pendente){ pendente=false; try{ realSave(); }catch(e){ pendente=true; } }
     if(typeof window.__saveDBDrainSync==='function'){ try{ window.__saveDBDrainSync(); }catch(eD){} }
   };

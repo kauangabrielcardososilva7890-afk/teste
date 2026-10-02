@@ -83,14 +83,22 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
     };
     sessionStorage.setItem('digicopy_v5262_fechou_esta_sessao', '1');
     localStorage.setItem('digicopy_erp_v42_demo_apresentacao', JSON.stringify(dbFixture));
+    localStorage.setItem('digicopy_cf_sync_conflicts_v1', JSON.stringify([{ at: '2026-10-02T00:00:00.000Z', key: 'cliente|QA-SYNTHETIC-001', entity: 'cliente', recordId: 'QA-SYNTHETIC-001', operation: 'upsert', localHash: 'synthetic-local-hash', currentHash: 'synthetic-current-hash', status: 'conflict' }]));
     localStorage.setItem('digicopy_patch_visto_7.3.11', '1');
     localStorage.setItem('digicopy_patch_visto_7.3.12', '1');
     localStorage.setItem('digicopy_patch_visto_7.3.13', '1');
+    localStorage.setItem('digicopy_patch_visto_7.3.14', '1');
   }, { dbFixture });
 
   await page.goto('/index.html');
   await expect(page.locator('#login-screen')).toBeVisible();
   await page.waitForFunction(() => window.db && Array.isArray(window.db.clientes));
+  await page.evaluate(async () => {
+    if (window.DIGICOPY_DB_READY) await window.DIGICOPY_DB_READY;
+    for (const key of Object.keys(localStorage)) {
+      if (/^digicopy_erp_v42_demo_apresentacao(?:_manifest|_part__.*)?$/.test(key) || /^digicopy_erp_(?:backup_pre_sync|v20|v10)$/.test(key)) localStorage.removeItem(key);
+    }
+  });
   await page.locator('#login-user').fill('qa-admin');
   await page.locator('#login-senha-user').fill('senha-qa-sintetica');
   await page.getByRole('button', { name: 'Entrar no Sistema' }).click();
@@ -100,12 +108,19 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
   const releaseNotesFirstLogin = await page.evaluate(() => ({
     version: window.DIGICOPY_APP_VERSION,
     seenForCurrentVersion: localStorage.getItem(`digicopy_patch_visto_${window.DIGICOPY_APP_VERSION}`),
-    previousVersionSeen: localStorage.getItem('digicopy_patch_visto_7.3.13')
+    previousVersionSeen: localStorage.getItem('digicopy_patch_visto_7.3.14')
   }));
   await page.getByRole('button', { name: 'Entendi', exact: true }).click();
   await expect(page.locator('#digicopy-patch-notes')).toHaveCount(0);
   await page.reload();
   await page.waitForTimeout(1400);
+  await page.waitForFunction(() => window.db && Array.isArray(window.db.clientes));
+  await page.evaluate(async () => {
+    if (window.DIGICOPY_DB_READY) await window.DIGICOPY_DB_READY;
+    for (const key of Object.keys(localStorage)) {
+      if (/^digicopy_erp_v42_demo_apresentacao(?:_manifest|_part__.*)?$/.test(key) || /^digicopy_erp_(?:backup_pre_sync|v20|v10)$/.test(key)) localStorage.removeItem(key);
+    }
+  });
   if (await page.locator('#login-screen').isVisible().catch(() => false)) {
     await page.locator('#login-user').fill('qa-admin');
     await page.locator('#login-senha-user').fill('senha-qa-sintetica');
@@ -114,7 +129,7 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
     await page.waitForTimeout(1200);
   }
   const releaseNotesAfterReload = await page.locator('#digicopy-patch-notes').count();
-  expect(releaseNotesFirstLogin.version, 'a aplicação deve usar a versão atual').toBe('7.3.14');
+  expect(releaseNotesFirstLogin.version, 'a aplicação deve usar a versão atual').toBe('7.3.15');
   expect(releaseNotesFirstLogin.seenForCurrentVersion, 'marcar como visto ao exibir, com chave da versão atual').toBe('1');
   expect(releaseNotesFirstLogin.previousVersionSeen, 'o marcador da versão anterior não suprime as notas atuais').toBe('1');
   expect(releaseNotesAfterReload, 'a nota não deve reaparecer depois de recarregar em modo sem nuvem real').toBe(0);
@@ -323,6 +338,56 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
   result.fiscalEditorAudit = { syntheticOnly: true, transmissionAttempted: false, importBottomVisibleAfterScroll: importBottomVisible, persisted: fiscalPersisted };
   expect(fiscalPersisted, 'o rascunho Fiscal deve guardar as alterações entre subabas').toMatchObject({ descricao: 'Item Fiscal Sintético QA', quantidade: 2, valorUnitario: '50', di: 'DI-QA-001', adicaoNumero: '1', codPais: '9999', nomePais: 'PAÍS SINTÉTICO QA', fcpBase: '100', fcpPerc: '2', fcpValor: '2' });
   await page.screenshot({ path: path.join(OUT_DIR, 'fiscal-reforma-ibs-cbs.png') });
+
+  const cloudOnlyStorageAudit = await page.evaluate(async () => {
+    if (window.DIGICOPY_DB_READY) await window.DIGICOPY_DB_READY;
+    if (typeof window.saveDB === 'function') window.saveDB();
+    if (typeof window.saveDBAgora === 'function') window.saveDBAgora();
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const baseKeys = Object.keys(localStorage).filter(k => /^digicopy_erp_v42_demo_apresentacao(?:_manifest|_part__.*)?$/.test(k) || /^digicopy_erp_(?:backup_pre_sync|v20|v10)$/.test(k) || /^digicopy_(?:erp|backup)$/.test(k));
+    const outbox = localStorage.getItem('digicopy_cf_sync_outbox_v1');
+    const conflictsRaw = localStorage.getItem('digicopy_cf_sync_conflicts_v1');
+    let conflictsHavePayload = false, conflictsHaveIdentifiers = false;
+    try {
+      const conflicts = JSON.parse(conflictsRaw || '[]');
+      conflictsHavePayload = conflicts.some(x => x && (x.local || x.current || x.data));
+      conflictsHaveIdentifiers = conflicts.some(x => x && (x.key || x.recordId || x.localHash || x.currentHash));
+    } catch (_) {}
+    const idbCounts = await new Promise(resolve => {
+      let request;
+      try { request = indexedDB.open('digicopy_erp_storage_v1', 2); } catch (_) { return resolve({ entities: null, snapshots: null, error: 'open-failed' }); }
+      request.onerror = () => resolve({ entities: null, snapshots: null, error: 'open-failed' });
+      request.onsuccess = () => {
+        const database = request.result;
+        if (!database.objectStoreNames.contains('entities') || !database.objectStoreNames.contains('snapshots')) { database.close(); return resolve({ entities: null, snapshots: null, error: 'stores-missing' }); }
+        const tx = database.transaction(['entities', 'snapshots'], 'readonly');
+        const entities = tx.objectStore('entities').count();
+        const snapshots = tx.objectStore('snapshots').count();
+        let entityCount = null, snapshotCount = null;
+        entities.onsuccess = () => { entityCount = entities.result; };
+        snapshots.onsuccess = () => { snapshotCount = snapshots.result; };
+        tx.oncomplete = () => { database.close(); resolve({ entities: entityCount, snapshots: snapshotCount }); };
+        tx.onerror = () => { database.close(); resolve({ entities: null, snapshots: null, error: 'count-failed' }); };
+      };
+    });
+    return {
+      modeCloudOnly: window.DIGICOPY_SO_NUVEM === true,
+      syntheticDbStillInMemory: window.db?.notasNf?.some(n => (n.itens || []).some(i => i.descricao === 'Item Fiscal Sintético QA')) || false,
+      baseKeys,
+      newOutboxStored: !!(outbox && outbox !== '[]'),
+      conflictsHaveBusinessPayload: conflictsHavePayload,
+      conflictsHaveBusinessIdentifiers: conflictsHaveIdentifiers,
+      indexedDbCounts: idbCounts
+    };
+  });
+  result.cloudOnlyStorageAudit = cloudOnlyStorageAudit;
+  expect(cloudOnlyStorageAudit.modeCloudOnly, 'o produto deve operar em cloud-only').toBe(true);
+  expect(cloudOnlyStorageAudit.syntheticDbStillInMemory, 'a base pode continuar em memória para a tela').toBe(true);
+  expect(cloudOnlyStorageAudit.baseKeys, 'o banco de negócio sintético deve sair de localStorage após o carregamento').toEqual([]);
+  expect(cloudOnlyStorageAudit.newOutboxStored, 'a fila nova não deve persistir payloads no navegador').toBe(false);
+  expect(cloudOnlyStorageAudit.conflictsHaveBusinessPayload, 'a auditoria de conflitos não deve persistir registros completos').toBe(false);
+  expect(cloudOnlyStorageAudit.conflictsHaveBusinessIdentifiers, 'o ledger local não deve manter IDs ou hashes de registros comerciais').toBe(false);
+  expect(cloudOnlyStorageAudit.indexedDbCounts, 'IndexedDB não deve conter registros nem snapshots criados nesta versão').toMatchObject({ entities: 0, snapshots: 0 });
 
   const failedRoutes = result.routes.filter(x => !x.ok);
   expect(failedRoutes, 'rotas sem tela/modal visualmente aberto: ' + JSON.stringify(failedRoutes)).toEqual([]);

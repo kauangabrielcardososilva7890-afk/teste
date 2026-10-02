@@ -4388,9 +4388,14 @@ ok('o motor para colar foi regerado junto (não fica para trás)',
 console.log('\n== 4) SÓ NUVEM: NADA GUARDADO NO PC (ordem dele em maiúsculas) ==');
 ok('o modo existe e vem LIGADO sempre (r46: modo único, sem escolha guardada)',
   /function modoSoNuvem\(\)\{ return true; \}/.test(sync));
-ok('em SÓ NUVEM a base não é gravada no computador (saveDB não persiste)',
-  /const soNuvem=!!window\.DIGICOPY_SO_NUVEM&&authorized\(\)/.test(sync) &&
-  /const r=soNuvem\?true:original\.apply\(this,arguments\)/.test(sync));
+const appStorage=ler('app.js'),perfStorage=ler('performance_patch.js'),idbStorage=ler('indexeddb_persistence_patch.js');
+const saveDBCloudWrapper=sync.slice(sync.indexOf('window.saveDB=function(){'),sync.indexOf('window.saveDB.__cfWrapped=true;'));
+ok('em SÓ NUVEM nenhum gravador local é chamado; a fila nova é apenas em memória',
+  /if\(authorized\(\)\)\{sujo=true;enfileirarNaHora\(\);schedule\(900\);\}/.test(saveDBCloudWrapper) &&
+  !/original\.apply\(this,arguments\)/.test(saveDBCloudWrapper) &&
+  /window\.DIGICOPY_SO_NUVEM===true\)return false/.test(appStorage) &&
+  /window\.DIGICOPY_SO_NUVEM===true/.test(perfStorage) &&
+  /const CLOUD_ONLY=true/.test(idbStorage) && /stored:false,cloudOnly:true/.test(idbStorage));
 ok('a cópia só é solta quando a nuvem confirma que tem TUDO o que este PC tem',
   /async function nuvemTemTudo\(\)\{/.test(sync) &&
   /if\(modoSoNuvem\(\)&&!outbox\.length&&await nuvemTemTudo\(\)&&tudoConfirmadoNaNuvem\(\)\)\{/.test(sync) &&
@@ -5291,7 +5296,8 @@ ok('mandar-erro vivo no patch próprio', ler('ajustes_v7020_mandar_erro_patch.js
 
 console.log('== r46: avisos abrem a nuvem (trazer saiu na r47) ==');
 ok('restaurar item-a-item continua (dentro de Ver excluídos)', ler('cloudflare_sync_patch.js').includes('dc-restore'));
-ok('avisos renomeados (5× Abrir a Nuvem)', (fx.match(/rotulo: 'Abrir a Nuvem'/g) || []).length === 5);
+const avisosAbrirNuvem=fx.match(/\{ rotulo: 'Abrir a Nuvem',[^}]*acao: irCheckup \}/g)||[];
+ok('os avisos mantêm botões para abrir a Nuvem (inclui fila pendente)', avisosAbrirNuvem.length >= 5);
 ok('aviso abre a janela da nuvem', /function irCheckup\(\)\{[^}]*abrirCloudflareNuvem/s.test(fx));
 
 console.log('== r46: bundles limpos (rodar npm run bundle antes de entregar) ==');

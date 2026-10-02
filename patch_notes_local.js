@@ -25,6 +25,11 @@ var NOTAS_POR_VERSAO={
   '7.3.14':[
     'Em Contratos, quando você apaga o texto da busca e escolhe Mostrar todos, o texto antigo não volta.',
     'Mostrar todos também limpa o filtro de situação e exibe novamente os contratos da empresa atual.'
+  ],
+  '7.3.15':[
+    'Os registros de negócio não são mais gravados em armazenamento permanente do navegador: a nuvem é a cópia oficial.',
+    'Uma alteração só aparece como salva depois da confirmação da nuvem. Se a conexão cair, ela fica apenas na memória desta sessão; mantenha a janela aberta até a confirmação.',
+    'Uma fila antiga já existente nesta máquina é preservada apenas até a nuvem confirmar o envio, para evitar perder alterações pendentes.'
   ]
 };
 function chave(v){return 'digicopy_patch_visto_'+String(v||'').replace(/[^0-9A-Za-z._-]/g,'_');}

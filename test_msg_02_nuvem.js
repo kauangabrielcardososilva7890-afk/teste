@@ -414,24 +414,25 @@ const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const html=fs.readFileSync('index.html','utf8');
 const app=fs.readFileSync('app.js','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
-console.log('== INDEXEDDB PERSISTENCE V2 ==');
+console.log('== INDEXEDDB LEGADO / CLOUD-ONLY ==');
 ok('abre banco na versão 2',/indexedDB\.open\(IDB_NAME,2\)/.test(code));
 ok('possui stores snapshots, entities e meta',/createObjectStore\(SNAPSHOTS/.test(code)&&/createObjectStore\(ENTITIES/.test(code)&&/createObjectStore\(META/.test(code));
 ok('migra snapshot v1 automaticamente',/migracao-snapshot-v1/.test(code));
 ok('restaura entidades incrementais mais novas',/incTs>localTs/.test(code));
 ok('usa hashes do manifesto local',/function signature/.test(code)&&/info\.subs/.test(code));
-ok('grava apenas entidades alteradas',/changed\.forEach\(campo=>store\.put/.test(code));
-ok('remove somente entidades que sumiram',/removed\.forEach\(campo=>store\.delete/.test(code));
+ok('cloud-only bloqueia gravações novas de entidades no IndexedDB',/const CLOUD_ONLY=true/.test(code)&&/if\(CLOUD_ONLY\)\{window\.__dbPersistidoOk=false;window\.__dbIDBOk=true;return \{ok:true,changed:0,removed:0,stored:false,cloudOnly:true\};\}/.test(code));
+ok('cópias antigas ainda podem ser lidas para migração',/getIncremental\(\)/.test(code)&&/getSnapshot\(KEY\)/.test(code));
 ok('envolve saveDB e saveDBAgora',/window\.saveDB=function/.test(code)&&/window\.saveDBAgora=function/.test(code));
 ok('limpeza remove só chaves DIGICOPY',/deleteDatabase\(IDB_NAME\)/.test(code)&&/\^digicopy\/i.test\(k\)/.test(code));
 ok('limpeza não regrava durante reload',/if\(clearing\|\|/.test(code));
-ok('guarda snapshot antes de operações críticas',/writeRecoverySnapshot/.test(code)&&/recovery_/.test(code));
+ok('snapshots novos ficam apenas em memória',/volatileRecoverySnapshots\.set\(key,\{key,savedAt:Date\.now\(\),reason:'recovery-volatile',data:copy\}\)/.test(code));
+ok('o gravador principal bloqueia localStorage e snapshot legado em cloud-only',/window\.DIGICOPY_SO_NUVEM===true\)return false/.test(app)&&/window\.DIGICOPY_SO_NUVEM===true\)return false/.test(app.slice(app.indexOf('function gravarSnapshotLegado'))));
 ok('sync aguarda restauração',/DIGICOPY_DB_READY/.test(fs.readFileSync('cloudflare_data_sync_patch.js','utf8')));
 ok('aviso antigo só aparece se IndexedDB falhar',/!window\.__indexedDbPersistAtivo/.test(app));
 ok('carrega antes do sync Cloudflare',manifest.indexOf('indexeddb_persistence_patch.js')<manifest.indexOf('cloudflare_data_sync_patch.js'));
 ok('Backup está visível no topo',/id="btn-backup-top"[^>]*exportBackup/.test(html));
 ok('arquivo entra no bundle Electron',pkg.build.files.includes('app.bundle.js')&&manifest.includes('indexeddb_persistence_patch.js'));
-console.log('\nRESULTADO: persistência IndexedDB incremental passou!');
+console.log('\nRESULTADO: cloud-only sem persistência de negócio passou!');
 //<<<<SECAO:test_indexeddb_persistence.js:FIM>>>>
 }
 
@@ -1767,6 +1768,7 @@ function ok(nome,cond){if(!cond){console.error('  \u2718 '+nome);process.exit(1)
 const code=fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
 
 console.log('== NUVEM RÁPIDA (v7.0.6) ==');
+const faixaCloudOnly=fs.readFileSync('ajustes_v7015_nuvem_explica_patch.js','utf8');
 console.log('-- 1) procurar registro na lista não varre a lista inteira --');
 ok('existe índice id → posição', /const INDICE_LISTA=\{\}/.test(code) && /function posicaoNaLista\(entity,id\)/.test(code));
 ok('o índice cresce junto (acréscimo no fim), não é refeito a cada registro',
@@ -1787,30 +1789,32 @@ ok('só roda quando este PC vai remontar a base (cursor 0) e uma vez por sessão
 ok('não mexe no cursor da leitura completa (o diário segue lido do começo)',
   /let cursor=Math\.max\(0,maxSeq-PASSE_RAPIDO\)/.test(code) && !/state\.cursor=Math\.max\(0,maxSeq/.test(code));
 
-console.log('-- 3) gravar sem travar a remessa --');
-ok('a fila (pequena) é gravada na hora, sempre', /function gravarFila\(\)/.test(code) && /const okFila=gravarFila\(\);/.test(code));
+console.log('-- 3) cloud-only: envio em memória sem persistir registros --');
+ok('a fila nova não é escrita no navegador; só a fila legada é retida para migração', /let legacyOutboxItems=outbox\.slice\(\)/.test(code) && /JSON\.stringify\(legacyOutboxItems\)/.test(code) && !/localStorage\.setItem\(OUTBOX_KEY,JSON\.stringify\(outbox\)\)/.test(code));
+ok('a fila legada só é removida de armazenamento quando a nuvem confirma a mutação', /legacyOutboxItems=legacyOutboxItems\.filter\(x=>!x\|\|!x\.mutation\|\|x\.mutation\.mutationId!==confirmedId\)/.test(code));
+ok('a interface avisa que mudanças novas só existem na memória até confirmação', /ficam apenas na memória desta sessão/.test(faixaCloudOnly)&&/fechar ou recarregar pode perder as pendentes/.test(faixaCloudOnly));
 ok('o bloco grande (estado) é agrupado numa gravação só', /gravacaoAgendada=setTimeout\(function\(\)\{gravacaoAgendada=null;gravarEstado\(\);\},300\)/.test(code));
 ok('o bloco grande só é reescrito quando mudou (com rede de 30 s)',
   /if\(!estadoMudou&&\(Date\.now\(\)-estadoGravadoEm\)<30000\)return okFila;/.test(code));
 ok('gravação imediata existe para as decisões que não podem esperar', /function persistAgora\(\)/.test(code));
 ok('zerar a nuvem / escolher publicar gravam na hora',
   (code.match(/persistAgora\(\)/g)||[]).length>=8);
-ok('fechar ou esconder a janela grava na hora',
-  /addEventListener\('pagehide',fechar\)/.test(code) && /addEventListener\('beforeunload',fechar\)/.test(code));
+ok('fechar envia keepalive e avisa antes de sair com fila nova volátil',
+  /addEventListener\('pagehide',fechar\)/.test(code) && /addEventListener\('beforeunload',fechar\)/.test(code) && /ev\.preventDefault\(\);ev\.returnValue='';/.test(code));
 
 console.log('-- 4) a tela não para a cada 3 segundos --');
 ok('a varredura é pulada quando nada mudou (com rede de 10 s)',
   /if\(!forcarVarredura&&!sujo&&!outbox\.length&&!filaCheia&&Date\.now\(\)-varreduraFeita<10000\)return 0;/.test(code));
 // v7.0.12 — além de avisar, a gravação agora ENFILEIRA na hora: era a janela de
 // 900 ms em que a mudança vivia só na memória (o "dado que some" quando fechava).
-ok('o sistema avisa a varredura quando grava (saveDB) e quando apaga',
-  /if\(!applying&&authorized\(\)\)\{sujo=true;enfileirarNaHora\(\);schedule\(900\);\}/.test(code) && /sujo=true;\n/.test(code));
-ok('e a gravação entra na fila NA HORA (a varredura roda no próprio clique; base grande: no fim dele)',
-  /function enfileirarNaHora\(\)\{/.test(code) && /window\.saveDB=function\(\)\{[\s\S]{0,700}?enfileirarNaHora\(\)/ .test(code)
-  && /window\.saveDBAgora=function\(\)\{[\s\S]{0,400}?enfileirarNaHora\(\)/.test(code));
-ok('ao fechar: varredura forçada com teto maior, fila gravada e entrega com keepalive',
+const trechoSaveDBCloudOnly=code.slice(code.indexOf('window.saveDB=function(){'),code.indexOf('window.saveDB.__cfWrapped=true;'));
+ok('saveDB nunca chama o gravador local e só enfileira com autorização',
+  /if\(authorized\(\)\)\{sujo=true;enfileirarNaHora\(\);schedule\(900\);\}/.test(trechoSaveDBCloudOnly) && !/original\.apply\(this,arguments\)/.test(trechoSaveDBCloudOnly));
+ok('saveDBAgora também não chama persistência local',
+  /window\.saveDBAgora=function\(\)\{[\s\S]{0,350}?enfileirarNaHora\(\)/.test(code) && !/urgente\.apply\(this,arguments\)/.test(code));
+ok('ao fechar: varredura forçada e entrega best-effort com keepalive',
   /function prepararParaFechar\(\)\{/.test(code) && /scanLocal\(\{teto:TETO_FECHANDO\}\)/.test(code)
-  && /const fechar=\(\)=>\{[\s\S]{0,400}?prepararParaFechar\(\)/.test(code)
+  && /const fechar=\(ev\)=>\{[\s\S]{0,400}?prepararParaFechar\(\)/.test(code)
   && /keepalive:true/.test(code));
 ok('remessa grande continua correndo até o fim (fila cheia não para em 100)',
   /filaCheia=outbox\.length>=MAX_OUTBOX;/.test(code));

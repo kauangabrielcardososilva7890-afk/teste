@@ -189,12 +189,28 @@
       const inf = info();
       if (!inf) { esconder(); return; }
 
-      // 1) SEM CONEXÃO — a base é só nuvem, então sem conexão a tela fica vazia.
-      //    (No SÓ NUVEM nem precisa contar a base: sem token não entra nada.)
+      // 1) SEM CONEXÃO — alterações só são confirmadas pela nuvem; cópias antigas
+      //    podem permanecer visíveis até a primeira sincronização segura.
       if (!inf.authorized && soNuvem()) {
-        mostrar('Este computador <b>não está conectado à nuvem</b> — por isso as listas aparecem vazias. É só conectar uma vez.',
+        const antigas=Number(inf.legacyOutboxPending)||0;
+        const avisoAntigas=antigas?' Há '+antigas+' alteração(ões) antigas aguardando confirmação; serão removidas do navegador somente depois que a nuvem confirmar.':'';
+        mostrar('Este computador <b>não está conectado à nuvem</b>. As listas podem mostrar uma cópia antiga até a sincronização.'+avisoAntigas+' Alterações novas não são gravadas no navegador e só ficam salvas após confirmação da nuvem; conecte agora.',
           [{ rotulo: 'Conectar agora', id: 'v7015-bt-conectar', acao: irConectar },
            { rotulo: 'Abrir a Nuvem', id: 'v7015-bt-ck1', transparente: true, acao: irCheckup }], '#9a3412');
+        return;
+      }
+
+      // 1b) ALTERAÇÕES SEM CONFIRMAÇÃO — fila nova existe somente na memória.
+      if (inf.authorized && Number(inf.outbox)>0) {
+        const pendentes=Number(inf.outbox)||0;
+        mostrar('Há <b>'+pendentes+' alteração(ões) aguardando confirmação da nuvem</b>. Elas ficam apenas na memória desta sessão, não no navegador. Mantenha esta janela aberta até a sincronização confirmar; fechar ou recarregar pode perder as pendentes.',
+          [{ rotulo: 'Abrir a Nuvem', id: 'v7015-bt-pendentes', acao: irCheckup }], '#92400e');
+        return;
+      }
+
+      if (inf.authorized && Number(inf.legacyOutboxPending)>0) {
+        mostrar('A nuvem ainda não confirmou <b>'+Number(inf.legacyOutboxPending)+' alteração(ões) que já estavam pendentes numa versão anterior</b>. Essa cópia antiga é mantida apenas para evitar perda e será removida após confirmação. Abra o diagnóstico da Nuvem para ver o estado.',
+          [{ rotulo: 'Abrir a Nuvem', id: 'v7015-bt-pendentes-legados', acao: irCheckup }], '#92400e');
         return;
       }
 

@@ -3524,3 +3524,39 @@ A implementação base continua cloud-only: `cloudflare_data_sync_patch.js:409` 
 ### §58.7 Pull request de revisão
 
 O PR [#47](https://github.com/kauangabrielcardososilva7890-afk/teste/pull/47) foi criado em **Draft/Open** de `work/r67-auth-cloud-ui` para `arena/01a0d9c3-teste`. O corpo foi verificado após corrigir a interpolação inicial do Markdown; o hash de bundle e os resultados de teste aparecem corretamente. Nenhum PR foi mesclado ou fechado.
+
+
+## §59 — Rodada seguinte (02/10/2026): cloud-only estrito de novos dados — v7.3.15
+
+### §59.1 Decisão confirmada e política adotada
+
+O usuário decidiu manter **cloud-only**: registros de negócio devem ficar na nuvem, sem novo armazenamento permanente em browser. Isso substitui a escolha ainda pendente registrada historicamente na §58. A aplicação continua configurada com `modoSoNuvem(){ return true; }`; não foi criado modo local-only.
+
+### §59.2 Barreiras de persistência local
+
+- `app.js:172-270`: guards impedem escrita integral, incremental/em partes, snapshot legado e fila de save local quando `window.DIGICOPY_SO_NUVEM===true`.
+- `performance_patch.js:71-92`: flush/autosave e flush de saída não invocam gravação local no modo cloud-only.
+- `indexeddb_persistence_patch.js:13`: `CLOUD_ONLY=true`; as cópias legadas ainda podem ser lidas para compatibilidade/migração, mas a versão não grava novas entidades/snapshots.
+- `cloudflare_data_sync_patch.js:2419+`: o wrapper de `saveDB` não delega ao gravador local; quando autorizado, usa fila volátil em memória.
+- `cloudflare_data_sync_patch.js:1372-1400`: o ledger de conflitos é minimizado e `readConflictLog()` sanitiza entradas antigas, removendo chave, ID do registro, hashes e payload. Recusas informam que a alteração não chegou à nuvem e existe apenas na sessão.
+- `ajustes_v7015_nuvem_explica_patch.js:195-212` e `ajustes_v52267_diagnostico_nuvem_patch.js:80`: avisos e diagnóstico distinguem alterações novas voláteis de fila legada que ainda aguarda confirmação.
+
+**Exceção de transição, não apagada automaticamente:** payload de fila criado por versões anteriores pode continuar no browser até a nuvem confirmar. A interface o identifica; apagá-lo sem sincronização confirmada poderia destruir alterações ainda não enviadas. Por orientação do usuário, nenhum serviço real foi conectado nesta rodada, então a migração/upload e a remoção do legado não foram exercitados. Tokens/sessão e metadados técnicos de sincronização continuam separados dos registros de negócio.
+
+### §59.3 Provas automatizadas
+
+A bateria `npm test` passou **14/14**, com 0 falhas e 0 omitidos. O Playwright passou **1/1**, cobrindo 23/23 rotas. A auditoria cloud-only confirmou: `modeCloudOnly:true`; banco sintético permanece em memória para renderizar a tela; `baseKeys:[]`; fila nova não persistida; ledger sem payload nem identificadores comerciais; IndexedDB com zero entidades e zero snapshots da versão. Um registro legado de conflito com ID/hash estritamente sintéticos foi injetado no harness e sanitizado.
+
+Resultado visual: 0 erros de página; 7 chamadas observadas, sendo 5 mocks sintéticos e 2 abortadas antes da rede; nenhuma chamada `/orcamento`; transmissão fiscal `false`. Nenhum login real, credencial, dado de produção ou conexão de nuvem foi usado.
+
+### §59.4 Bundle e evidência
+
+Bundle com 236 scripts. SHA-256 idêntico em `app.bundle.js`, `mobile/www/app.bundle.js` e `mobile/android/app/src/main/assets/public/app.bundle.js`:
+
+`bbcb127deffc6890852bc80cdff0f57850d69fd7bb83d1382b2b5ef7e8b715f1`
+
+Relatório E2E em `evidence/personal-ui-audit-v7315.json`; 33 capturas em `evidence/personal-ui-r68/`. Handoff desta versão: `HANDOFF_FINALIZACAO_V7.3.15.md`.
+
+### §59.5 GitHub
+
+O PR [#47](https://github.com/kauangabrielcardososilva7890-afk/teste/pull/47) segue **Draft/Open**, head `work/r67-auth-cloud-ui`, base `arena/01a0d9c3-teste`. Esta rodada será enviada ao mesmo PR. Não houve merge, close ou deploy. A validação final de sincronização real permanece fora do escopo por restrição explícita do usuário.
