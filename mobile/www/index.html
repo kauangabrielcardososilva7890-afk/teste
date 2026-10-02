@@ -114,6 +114,8 @@ html,body{max-width:100%;overflow-x:hidden}
 .overflow-x-auto,.overflow-auto{max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .overflow-x-auto>table,.overflow-auto>table{min-width:max-content}
 #modal-container>div,#modal-root>div{max-width:calc(100vw - 16px)!important;max-height:calc(100vh - 76px);overflow:auto}
+/* v8.0.0 — overflow-x:auto fazia o navegador calcular overflow-y:auto e cortava os submenus. */
+@media (min-width:641px){.module-row{overflow:visible}}
 @media (max-width:640px){
   .module-row{padding:0 6px;gap:2px}
   .module>button{padding:0 10px;min-height:36px}
