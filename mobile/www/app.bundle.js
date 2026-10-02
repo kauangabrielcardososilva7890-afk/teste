@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 233 | sha256: 0c888e50f4d00ea6
+ * scripts: 233 | sha256: b19169bccd18bde3
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -50652,13 +50652,41 @@ if (typeof document === 'undefined') return;
     window.navigateTo = embrulhado;
     return true;
   }
-  if (!prenderNavegacao() && typeof document !== 'undefined' && document.addEventListener) {
-    document.addEventListener('DOMContentLoaded', function () { prenderNavegacao(); });
+  // Atualização v7.3.18, medida no navegador (issue #44 do Actions): o embrulho acima
+  // não sobrevivia. `window.navigateTo` é reatribuído por NOVE patches diferentes
+  // (ajustes_consolidados, notinha, locacao_chamados_fix, ajustes_v5197,
+  // ajustes_v52237_orcamentos_menu, ...) e este arquivo é o patch #122 do bundle —
+  // qualquer reatribuição posterior apaga o meu embrulho e a sonda `ganchoNavigateTo`
+  // devolve false no site publicado. Também não adianta só DOMContentLoaded: quando o
+  // bundle é avaliado o documento já está 'interactive'/'complete' e o evento não
+  // dispara nunca mais. Então: tenta agora, de novo em DOMContentLoaded e, o que
+  // decide, em `load` — quando todo patch já rodou e o meu embrulho vira o de fora.
+  function instalarGancho() {
+    var instalado = prenderNavegacao();
+    window.__digiRoloGancho = instalado ? (window.__digiRoloGancho || 'tardio') : 'ausente';
+    if (instalado) varrer();
+    return instalado;
+  }
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', instalarGancho);
+    window.addEventListener('load', function () { if (instalarGancho()) window.__digiRoloGancho = 'load'; });
   }
   if (typeof MutationObserver === 'function') {
+    // Cinto: trocar a tela é mudar `class` dos .view, e isso um observer de childList
+    // não vê. O rAF junta várias mutações numa varredura só (muda de tela dispara
+    // dezenas de mutações).
+    var revirando = false;
+    var varrerJointa = function () {
+      if (revirando) return;
+      revirando = true;
+      var faz = function () { revirando = false; varrer(); };
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(faz); else setTimeout(faz, 16);
+    };
     try {
-      new MutationObserver(varrer).observe(document.querySelector('.modern-topnav') || document.body,
-        { childList: true, subtree: true });
+      var alvo = document.querySelector('.modern-topnav') || document.body;
+      new MutationObserver(varrerJointa).observe(alvo, { childList: true, subtree: true });
+      new MutationObserver(varrerJointa).observe(document.getElementById('content') || document.body,
+        { attributes: true, attributeFilter: ['class'], subtree: true });
     } catch (e) {}
   }
 

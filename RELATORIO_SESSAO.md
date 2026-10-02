@@ -8466,3 +8466,48 @@ Também: a espera do workflow passou a comparar o **carimbo do bundle** (`app.bu
 só a versão, e falha o job se o Pages ainda servir outro bundle — sem isso, duas rodadas na mesma versão
 mudando só o bundle dariam veredito sobre o deploy anterior (é o tipo de ✓ de favor que o laço automatizado
 fabrica sozinho). Bundle `0c888e50f4d00ea6` → carimbo `7.3.17-89cea908f044`; suíte 11✅/0❌/1 pulada.
+
+## r72 — 02/10/2026 (v7.3.18) — primeiro run em que o app de fato subiu, e o que ele mostrou
+
+Issues #39 a #44 (rodadas #5 a #10). Cinco falhas antes do veredito, todas minhas, todas úteis:
+
+| rodada | o que apareceu | o que era |
+|---|---|---|
+| #5/#6 | job morria em ~1m com "não chegou a medir" | eu tinha posto o guard de deploy num `curl` do runner; o Pages não serve HTML confiável para cliente sem browser |
+| #7 | 1m12s, sem motivo na issue | o `page.goto` do laço de espera não tinha `catch` e o `main` era um IIFE sem `.catch` → unhandled rejection virava exit 1 mudo |
+| #8 | — |Instrumentei: stdout+stderr vão para `teste-visual/stderr.log` e a issue cola as últimas 40 linhas quando falta `resultado.md`; o IIFE ganhou `.catch` que escreve a pilha |
+| #9 | `ReferenceError: rec is not defined` em `medirModal` | `medirModal` é serializada e avaliada sozinha: não herda o `rec` do evaluate das telas. O ramo só existiu agora porque antes o boot morria e o modal nem abria |
+| #10 | **medida de verdade** | ver abaixo |
+
+A rodada #10 (issue #44, `Deploy: conferido na tentativa 1`) é a primeira em que o patch esteve vivo no site
+publicado. Ela trouxe três coisas:
+
+1. **O bilhete funciona no celular publicado.** Impressoras 611px em 352, Contratos 655 em 388, Financeiro 535
+   em 352, Produtos 601 em 388 — todas com `rolável ✓`, `bilhete ✓`, `última coluna alcançável ✓`. Ou seja: as
+   "7 tabelas sem aviso" das issues #35–#38 eram efeito colateral do boot morto, não do patch. A causa do boot
+   morto era a *minha* base sintética (item r71 bis), já corrigida com `descricao`/`contadorPB`.
+2. **Meu `prenderNavegacao()` de r71 não sobrevivia.** Sonda: `ganchoNavigateTo:false` com `patch:"5.22.70"` e
+   `cssInjetado:true` — o patch rodou, só que `window.navigateTo` é reatribuído por **nove** patches depois do
+   meu (o mapa das camadas conta **38 escritas** em `navigateTo`, o nome mais disputado do sistema inteiro), e o
+   fallback em `DOMContentLoaded` nunca dispara porque o bundle roda com o documento já `interactive`. Corrigido:
+   instalo também em `load` (quando todo patch já rodou, meu embrulho vira o de fora) e acresci um
+   `MutationObserver` em `class` dos `.view` com varredura junta por `requestAnimationFrame` — assim o aviso não
+   depende mais de quem estiver no comando de `navigateTo`.
+3. **Dois bugs meus de medição.** O `bilheteNaFaixa:true` no desktop era o elemento *existindo* escondido pelo
+   `@media (min-width:821px){.digi-rola-dica{display:none}}` do próprio patch — agora meço `bilheteVisivel`. E as
+   linhas do celular mentiam: `clientes`, `leituras`, `parque`, `manutencao`, `vendas` e `relatorios` **não
+   abriram** (a tela visível continuou a anterior), mas eu media e registrava igual — só o desktop tinha a
+   asserção de "pediu X, abriu Y". Levei a asserção para o celular e, quando divergir, o teste agora chama
+   `navigateTo(id)` direto e grava `antes/depois/qual embrulho manda`, para separar "botão da barra não chama" de
+   "`navigateTo` recusa a tela". Essa recusa é a pergunta em aberto mais valiosa do laço: se confirmada, é um
+   usuário real clicando em Clientes e vendo o dashboard.
+
+Enquanto isso, `test_runner` me pegou uma vez mais: `✘ o MAPA_CAMADAS.md está no repositório e diz os mesmos
+números` — quem mexe em escrita de global (foi o caso do gancho novo) tem de rodar `npm run mapa`, ou a seção
+`test_camadas_protegidas.js` do tema de vendas reprova a suíte inteira. Não existe `aplicar_tema_testes.js`; o
+que regenera o mapa é `node mapa_camadas.js`.
+
+Estado: `app.js` endurecido + `menus_tela_pequena_patch.js` com gancho em `load`/observer; bundle
+`b19169bccd18bde3` → carimbo `7.3.18-ddcd03ae7c0a`; suíte 11✅/0❌/1 pulada (sem jsdom); `mobile/www` sincronizado.
+O `console: Failed to load resource: 403` que ainda aparece no veredito é um recurso do próprio site (não é
+falha de corte) — vou separar na próxima rodada para ele não poluir o sinal.

@@ -92,6 +92,8 @@ function medirTela() {
   saida.mecanica = {
     patch: (window.MENUS_TELA_PEQUENA_PURE && window.MENUS_TELA_PEQUENA_PURE.VERSAO) || 'patch não expôs PURE',
     ganchoNavigateTo: !!(window.navigateTo && window.navigateTo.__digiRoloNav),
+    ganchoInstaladoEm: window.__digiRoloGancho || 'não reportado',
+    quemMandaNoNavigateTo: String(window.navigateTo || '').replace(/\s+/g, ' ').slice(0, 90),
     cssInjetado: !!document.getElementById('digi-menus-tela-pequena'),
     forcador: typeof window.digiRevarrerTelas,
   };
@@ -126,6 +128,9 @@ function medirTela() {
       overflowX: cont ? getComputedStyle(cont).overflowX : 'sem contêiner',
       marcado: !!(cont && cont.classList.contains('digi-rola')),
       bilhete: !!(cont && cont.nextElementSibling && cont.nextElementSibling.classList.contains('digi-rola-dica')),
+      // existe ≠ aparece: o CSS do próprio patch esconde o bilhete acima de 821px
+      // (@media min-width), e foi assim que o desktop levou '✗' por um aviso invisível.
+      bilheteVisivel: !!(cont && cont.nextElementSibling && cont.nextElementSibling.classList.contains('digi-rola-dica') && visivel(cont.nextElementSibling)),
       textoBilhete: (cont && cont.nextElementSibling && cont.nextElementSibling.classList.contains('digi-rola-dica')) ? cont.nextElementSibling.textContent.trim() : '',
     };
     if (cont && saida.tabela.naoCabe) {
@@ -146,6 +151,7 @@ function medirTela() {
       largura: Math.round(faixa.scrollWidth), disponivel: faixa.clientWidth, naoCabe: faixa.scrollWidth > faixa.clientWidth + 2,
       rola: /auto|scroll/.test(getComputedStyle(faixa).overflowX),
       bilhete: !!(faixa.nextElementSibling && faixa.nextElementSibling.classList.contains('digi-rola-dica')),
+      bilheteVisivel: !!(faixa.nextElementSibling && faixa.nextElementSibling.classList.contains('digi-rola-dica') && visivel(faixa.nextElementSibling)),
     };
   }
 
@@ -305,6 +311,23 @@ function medirModal() {
     const modo = await navegar(pagina, tela);
     const medido = await pagina.evaluate(medirTela);
     medido.entrada = modo;
+    medido.pedida = tela;
+    medido.mudanca = medido.tela !== 'view-' + tela;
+    if (medido.mudanca) {
+      // diagnóstico do portão: qual embrulho está no comando e se chamar navigateTo
+      // direto abre (se abrir, o problema é do botão/barra; se não, do navigateTo)
+      medido.diagnostico = await pagina.evaluate((v) => {
+        const vista = document.querySelector('.view:not(.hidden)');
+        const antes = vista ? vista.id : null;
+        let lancou = '';
+        try { window.navigateTo(v); } catch (e) { lancou = String(e.message).slice(0, 90); }
+        const depoisEl = document.querySelector('.view:not(.hidden)');
+        return { antes: antes, depois: depoisEl ? depoisEl.id : null, lancou: lancou,
+                 funcao: String(window.navigateTo || '').replace(/\s+/g, ' ').slice(0, 120) };
+      }, tela);
+      await pagina.waitForTimeout(600);
+      medido.diagnosticoAbriu = medido.diagnostico.depois === 'view-' + tela;
+    }
     // força a varredura (é o gancho público do patch) e mede outra vez: se o
     // bilhete aparecer aqui, o defeito é de MOMENTO, não de decisão
     await pagina.evaluate(() => { try { window.digiRevarrerTelas && window.digiRevarrerTelas(); } catch (e) { } });
@@ -366,7 +389,9 @@ function medirModal() {
     const modo = await navegar(paginaD, tela);
     const m = await paginaD.evaluate(medirTela);
     resultados.desktop.push({ pedida: tela, aberta: m.tela, entrada: modo,
-      bilheteNaTabela: !!(m.tabela && m.tabela.bilhete), bilheteNaFaixa: !!(m.faixa && m.faixa.bilhete), faixaPrecisaRolar: !!(m.faixa && m.faixa.naoCabe) });
+      bilheteNaTabela: !!(m.tabela && m.tabela.bilhete), bilheteNaFaixa: !!(m.faixa && m.faixa.bilhete),
+      bilheteNaTabelaVisivel: !!(m.tabela && m.tabela.bilheteVisivel), bilheteNaFaixaVisivel: !!(m.faixa && m.faixa.bilheteVisivel),
+      faixaPrecisaRolar: !!(m.faixa && m.faixa.naoCabe) });
   }
 
   await contextoD.close();
@@ -381,7 +406,8 @@ function medirModal() {
     if (t && t.naoCabe) {
       const ok = t.marcado && t.rola !== 'hidden' && t.atingeOFim && t.ultimaColunaVisivel;
       if (!ok) falhas.push(s.tela + ': tabela de ' + t.largura + 'px em ' + t.disponivel + 'px sem rolagem útil (marcado=' + t.marcado + ', overflow=' + t.overflowX + ', chega ao fim=' + t.atingeOFim + ', última coluna visível=' + t.ultimaColunaVisivel + ')');
-      if (!t.bilhete) falhas.push(s.tela + ': tabela não cabe e o bilhete de arraste não apareceu' +
+      if (mudanca) falhas.push('celular: pediu ' + s.pedida + ' e a tela visível foi ' + s.tela + ' — o que está medido na linha é da tela errada');
+    if (!t.bilheteVisivel && t.naoCabe) falhas.push(s.tela + ': tabela não cabe e o bilhete de arraste não apareceu' +
         (s.depoisDeForcar && s.depoisDeForcar.bilhete ? ' — MAS aparece ao forçar a varredura, logo é a hora de medir que está errada, não a medição' : '') +
         ' · mecânica: ' + JSON.stringify(s.mecanica));
     }
@@ -405,7 +431,7 @@ function medirModal() {
     if (!(config.nuvem.respiroCorpo > 0)) falhas.push('faixa da Nuvem: corpo sem respiro (padding-bottom=' + config.nuvem.respiroCorpo + ')');
   }
   for (const d of resultados.desktop) {
-    if (d.bilheteNaTabela || d.bilheteNaFaixa) falhas.push('desktop ' + d.tela + ': apareceu aviso de arraste onde não devia');
+    if (d.bilheteNaTabelaVisivel || d.bilheteNaFaixaVisivel) falhas.push('desktop ' + d.aberta + ': apareceu aviso de arraste VISÍVEL onde não devia');
   }
   if (errosPagina.length) falhas.push('erros de página (' + errosPagina.length + '): ' + errosPagina.slice(0, 3).join(' | '));
   if (!resultados.semeadura || !resultados.semeadura.ok) falhas.push('a base sintética não entrou: ' + ((resultados.semeadura && resultados.semeadura.motivo) || '?') + ' — as medidas abaixo não valem (nenhuma tela tem linhas para cortar)');

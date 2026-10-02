@@ -8,9 +8,9 @@
 > dentro de uma função e só troca a global quando aquela função for chamada.
 
 - Arquivos no bundle: **233**
-- Nomes globais escritos: **1091**
-- Escritas totais (contando as repetições): **2060**
-- Nomes escritos em **2 ou mais** arquivos: **291**
+- Nomes globais escritos: **1092**
+- Escritas totais (contando as repetições): **2062**
+- Nomes escritos em **2 ou mais** arquivos: **292**
 - Análise sem parser (acorn)? **não**
 
 ## Os nomes mais disputados (quem ganha está na última linha)
@@ -1607,6 +1607,11 @@
 
 - sobrepõe: indexeddb_persistence_patch.js:135 — valor, em uso
 - **GANHA →** indexeddb_persistence_patch.js:141 — valor, no carregamento
+
+### `__digiRoloGancho` — 2 escritas
+
+- sobrepõe: menus_tela_pequena_patch.js:407 — valor, em uso
+- sobrepõe: menus_tela_pequena_patch.js:413 — valor, em uso
 
 ### `__esFim` — 2 escritas
 
