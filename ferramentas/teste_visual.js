@@ -78,6 +78,16 @@ function medirTela() {
   const vista = document.querySelector('.view:not(.hidden)') || document.querySelector('#view-dashboard');
   const saida = { tela: vista ? vista.id : null, titulo: (document.getElementById('page-title') || {}).innerText || '', erro: null };
 
+  // Sondas: sem isto o relatório diria apenas "não marcou" e eu teria de adivinhar
+  // se a culpe é do patch (não carregou), do gancho (não foi instalado), do
+  // momento (a varredura ainda não rodou ali) ou da decisão (recusa marcar).
+  saida.mecanica = {
+    patch: (window.MENUS_TELA_PEQUENA_PURE && window.MENUS_TELA_PEQUENA_PURE.VERSAO) || 'patch não expôs PURE',
+    ganchoNavigateTo: !!(window.navigateTo && window.navigateTo.__digiRoloNav),
+    cssInjetado: !!document.getElementById('digi-menus-tela-pequena'),
+    forcador: typeof window.digiRevarrerTelas,
+  };
+
   // 1) a tabela não cabe? o bloco dela rola? o bilhete existe? e depois de
   //    arrastar até o fim, a última célula entra no recorte?
   //    A escolhida é a tabela VISÍVEL mais larga da tela — a primeira do DOM é
@@ -171,7 +181,10 @@ function medirModal() {
   const resultados = { url: URL_ALVO, verso: '', feitoEm: new Date().toISOString(), celular: [], desktop: [], modal: null, erros: errosPagina };
   const contexto = await navegador.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   const pagina = await contexto.newPage();
-  pagina.on('pageerror', e => errosPagina.push('pageerror: ' + String(e && e.message).slice(0, 160)));
+  pagina.on('pageerror', (e) => {
+    const st = String((e && e.stack) || '').split('\n').slice(0, 3).join(' | ').replace(/https:\/\/[^ )]*\//g, '~/');
+    errosPagina.push('pageerror: ' + String(e && e.message).slice(0, 140) + (st ? ' ⟵ ' + st.slice(0, 260) : ''));
+  });
   pagina.on('console', m => { if (m.type() === 'error') errosPagina.push('console: ' + m.text().slice(0, 160)); });
 
   // login sem credencial: monta a base sintética e salva pelos canos do próprio app
@@ -222,9 +235,15 @@ function medirModal() {
   // da navegação por programa). O resultado de cada tela diz por onde entramos.
   const navegar = async (p, tela) => {
     const modo = await p.evaluate((v) => {
-      const b = document.querySelector('[data-nav="' + v + '"]');
-      if (b && b.offsetParent !== null) { b.click(); return 'clique no menu'; }
-      try { window.navigateTo(v); return 'navigateTo'; } catch (e) { return 'falhou: ' + e.message; }
+      // a barra do app é <div class="module"><button onclick="navigateTo('x')">;
+      // data-nav existe em outro canto (e nem sempre). Clicar o botão certo é o
+      // caminho do usuário, e é ele que dispara os ganchos de clique do resto.
+      const alvos = [].slice.call(document.querySelectorAll('.module-row button, [data-nav]'));
+      const b = alvos.find((el) => el.offsetParent !== null &&
+        String(el.getAttribute('onclick') || '').indexOf("'" + v + "'") >= 0) ||
+        document.querySelector('[data-nav="' + v + '"]');
+      if (b && b.offsetParent !== null) { b.click(); return 'clique no botão da barra'; }
+      try { window.navigateTo(v); return 'navigateTo (botão não achado)'; } catch (e) { return 'falhou: ' + e.message; }
     }, tela);
     await p.waitForTimeout(760);
     return modo;
@@ -234,6 +253,14 @@ function medirModal() {
     const modo = await navegar(pagina, tela);
     const medido = await pagina.evaluate(medirTela);
     medido.entrada = modo;
+    // força a varredura (é o gancho público do patch) e mede outra vez: se o
+    // bilhete aparecer aqui, o defeito é de MOMENTO, não de decisão
+    await pagina.evaluate(() => { try { window.digiRevarrerTelas && window.digiRevarrerTelas(); } catch (e) { } });
+    await pagina.waitForTimeout(320);
+    const depois = await pagina.evaluate(medirTela);
+    medido.depoisDeForcar = depois.tabela;
+    if (!medido.mecanica.forcarExiste) medido.depoisDeForcar = null;
+    medido.mecanica.forcarExiste = medido.mecanica.forcador === 'function';
     if (tela === 'config') {
       // a faixa da Nuvem só aparece quando o próprio módulo confere o estado; sem
       // dar esse empurrão o teste medir uma tela sem faixa e daria ✓ de favor
@@ -263,7 +290,24 @@ function medirModal() {
   const contextoD = await navegador.newContext({ viewport: { width: 1365, height: 850 } });
   const paginaD = await contextoD.newPage();
   await paginaD.goto(URL_ALVO, { waitUntil: 'domcontentloaded' });
-  await paginaD.waitForTimeout(1200);
+  await paginaD.waitForTimeout(900);
+  // sem semear também aqui, o desktop media a tela de LOGIN e o "nada mudou no
+  // desktop" saía ✓ de favor — contexto novo não herda o IndexedDB do anterior
+  resultados.semeaduraDesktop = await paginaD.evaluate((base) => {
+    const alvo = (window.db && typeof window.db === 'object') ? window.db : null;
+    if (!alvo) return { ok: false, motivo: 'sem window.db' };
+    Object.assign(alvo, base);
+    try { window.saveDB && window.saveDB(); } catch (e) { return { ok: false, motivo: e.message }; }
+    try {
+      localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({
+        usuarioId: 'u-qa', usuarioNome: 'QA Sintético', perfil: 'ADMIN', empresaId: alvo.empresaAtivaId || 'emp-teste',
+        empresaNome: 'Empresa Sintética QA', cnpj: '00000000000000', loginAt: new Date().toISOString(),
+      }));
+    } catch (e) { }
+    return { ok: true, clientes: (alvo.clientes || []).length };
+  }, montarBase());
+  await paginaD.reload({ waitUntil: 'domcontentloaded' });
+  await paginaD.waitForTimeout(1300);
   for (const tela of ['clientes', 'impressoras', 'contratos', 'financeiro', 'auditoria']) {
     const modo = await navegar(paginaD, tela);
     const m = await paginaD.evaluate(medirTela);
@@ -283,7 +327,9 @@ function medirModal() {
     if (t && t.naoCabe) {
       const ok = t.marcado && t.rola !== 'hidden' && t.atingeOFim && t.ultimaColunaVisivel;
       if (!ok) falhas.push(s.tela + ': tabela de ' + t.largura + 'px em ' + t.disponivel + 'px sem rolagem útil (marcado=' + t.marcado + ', overflow=' + t.overflowX + ', chega ao fim=' + t.atingeOFim + ', última coluna visível=' + t.ultimaColunaVisivel + ')');
-      if (!t.bilhete) falhas.push(s.tela + ': tabela não cabe e o bilhete de arraste não apareceu');
+      if (!t.bilhete) falhas.push(s.tela + ': tabela não cabe e o bilhete de arraste não apareceu' +
+        (s.depoisDeForcar && s.depoisDeForcar.bilhete ? ' — MAS aparece ao forçar a varredura, logo é a hora de medir que está errada, não a medição' : '') +
+        ' · mecânica: ' + JSON.stringify(s.mecanica));
     }
     if (t) linhas.push('| ' + s.tela + ' | ' + t.colunas + ' | ' + t.largura + ' | ' + t.disponivel + ' | ' + (t.naoCabe ? 'sim' : 'não') + ' | ' + (t.marcado ? '✓' : '—') + ' | ' + (t.bilhete ? '✓' : '—') + ' | ' + (t.ultimaColunaVisivel === undefined ? '—' : (t.ultimaColunaVisivel ? '✓' : '✗')) + ' |');
     else linhas.push('| ' + s.tela + ' | — | — | — | sem tabela | — | — | — |');
@@ -315,7 +361,9 @@ function medirModal() {
   const md = [
     '## Teste visual no navegador real — ' + resultados.verso,
     '',
-    'Semeadura: `' + JSON.stringify(resultados.semeadura) + '` · modal: `' + String(resultados.modalAbertura) + '`', '',
+    'Semeadura: `' + JSON.stringify(resultados.semeadura) + '` · desktop: `' + JSON.stringify(resultados.semeaduraDesktop) + '` · modal: `' + String(resultados.modalAbertura) + '`', '',
+    'Mecânica do patch na página: `' + JSON.stringify((resultados.celular[0] || {}).mecanica) + '`', '',
+    'Onde o bilhete apareceu ao FORÇAR a varredura (e não antes): `' + (resultados.celular.filter(s => s.tabela && s.depoisDeForcar && s.depoisDeForcar.bilhete && !s.tabela.bilhete).map(s => s.tela).join(', ') || 'nenhuma') + '`', '',
     'Rodado no GitHub Actions contra `' + URL_ALVO + '` (celular 390×844, desktop 1365×850, base sintética montada na hora, nada de dado real).',
     '',
     '| tela | colunas | tabela | tela cabe? | não cabe | rolável | bilhete | última coluna alcançável |',
