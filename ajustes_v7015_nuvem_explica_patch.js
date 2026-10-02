@@ -82,41 +82,18 @@
     return Promise.resolve(false);   // sem a janela do sistema, não faz nada (regra 16: nunca diálogo nativo)
   }
 
-  // ── a faixa ──────────────────────────────────────────────────────────────
+  // ── aviso visual do sistema ──────────────────────────────────────────────
   function esconder(){
     const el = document.getElementById('v7015-faixa');
     if (el) el.remove();
   }
   function mostrar(msg, botoes, cor){
-    let el = document.getElementById('v7015-faixa');
-    if (!el){
-      el = document.createElement('div');
-      el.id = 'v7015-faixa';
-      document.body.appendChild(el);
-    }
-    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:' + Z +
-      ';max-width:min(760px,94vw);background:' + (cor || '#0a1e8a') + ';color:#fff;border-radius:14px;' +
-      'box-shadow:0 14px 40px rgba(2,10,40,.35);padding:11px 12px 11px 14px;display:flex;gap:10px;' +
-      'align-items:center;font-size:12.5px;line-height:1.45;font-weight:600;font-family:inherit';
-    el.innerHTML = '<span style="flex:1">' + msg + '</span>';
-    (botoes || []).forEach(function(b){
-      const bt = document.createElement('button');
-      bt.type = 'button';
-      bt.textContent = b.rotulo;
-      bt.id = b.id || '';
-      bt.style.cssText = 'height:34px;padding:0 12px;border-radius:9px;border:0;cursor:pointer;font-weight:900;' +
-        'font-size:12px;white-space:nowrap;' + (b.transparente
-          ? 'background:rgba(255,255,255,.16);color:#fff'
-          : 'background:#fff;color:' + (cor || '#0a1e8a'));
-      bt.onclick = function(ev){ ev.preventDefault(); try { b.acao(); } catch (e) {} };
-      el.appendChild(bt);
-    });
-    const x = document.createElement('button');
-    x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Esconder aviso');
-    x.style.cssText = 'height:34px;width:34px;border-radius:9px;border:0;cursor:pointer;background:transparent;color:#fff;opacity:.75;font-weight:900';
-    x.onclick = function(ev){ ev.preventDefault(); fechadoAte = Date.now() + 10 * 60000; esconder(); };
-    el.appendChild(x);
-    return el;
+    // O aviso antigo era uma faixa fixa no rodapé e parecia um alerta do site;
+    // além disso, cobria conteúdo e ficava por cima de outras telas. O toast
+    // do ERP é interno, não bloqueia cliques e funciona no navegador/Electron.
+    const texto = String(msg || '').replace(/<[^>]*>/g, '');
+    recado(texto, 'info');
+    return null;
   }
   function irConectar(){
     if (typeof window.v5262AbrirPortao === 'function') { window.v5262AbrirPortao(true); return; }
