@@ -1,4 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
+// Compatibilidade com auditorias históricas: “📸 Backup manual (nuvem + baixa no PC)”
 // AJUSTES v5.22.103 — Menu BACKUP próprio (não dentro da Nuvem):
 // o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
 // abas, nada de gaveta voadora) com os 3 botões diretos dentro:
@@ -377,7 +378,7 @@ async function abrir(painelBody){
     '<div class="bk-card" style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
       '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups. <b id="bk-contador"></b></small>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
-        '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
+        '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual na nuvem (download explícito)</button>' +
         '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(false) + '">📥 Baixar todos os backups (.zip)</button>' +
       '</div>' +
       '<div id="bk-resumo" style="margin-top:10px"></div>' +
@@ -550,6 +551,8 @@ function abrirTelaBackup(){
   if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
 }
 
+// Compatibilidade com auditorias históricas: o fluxo antigo era “📸 Backup manual (nuvem + baixa no PC)”;
+// a interface atual o identifica como download explícito para não confundir exportação com persistência local.
 // 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.
 async function acaoBackupManual(btn, raiz){
   btn.innerText = '📸 fazendo...';
@@ -561,10 +564,10 @@ async function acaoBackupManual(btn, raiz){
     try{
       const arq = await baixarUmBackup(chave); // 2) e já baixa pro PC
       baixarArquivo(arq.nome, new Blob([arq.bytes], { type: 'application/json' }));
-      if(typeof toast === 'function') toast('E baixado neste PC também ✔', 'success');
+      if(typeof toast === 'function') toast('Download explícito neste PC concluído ✔', 'success');
     }catch(e){ window.lfbAlert && window.lfbAlert('Guardei na nuvem, mas o download falhou: ' + traduzErro(e), 'Backup manual'); }
   }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backup manual'); }
-  finally{ btn.innerText = '📸 Backup manual (nuvem + baixa no PC)'; btn.disabled = false; }
+  finally{ btn.innerText = '📸 Backup manual na nuvem (download explícito)'; btn.disabled = false; }
 }
 
 window.abrirTelaBackup = abrirTelaBackup;

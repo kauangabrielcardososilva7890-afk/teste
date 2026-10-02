@@ -549,6 +549,7 @@ window.renderProdutos = function(){
   // Por padrão não lista nada (só aparece ao pesquisar, "Estoque baixo" ou "Mostrar todos")
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
+  const avisoLista = temFiltro ? 'Nenhum produto corresponde aos filtros atuais.' : 'A lista fica recolhida inicialmente. Use “Mostrar todos”, “Estoque baixo” ou a busca para exibir produtos.';
   const totalProdutos = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido').length;
   const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
   const estoqueTotal = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido')
@@ -607,7 +608,7 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
-              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
+              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">${avisoLista}</td></tr>'}
               ${list.length > vis.length && vis.length > 0 ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>

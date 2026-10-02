@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 236 | sha256: e5ae240b365ff139
+ * scripts: 236 | sha256: aa21efd767bc13f5
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1193,7 +1193,7 @@ function initTemplates(){
 
   document.getElementById('view-contratos').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><button onclick="openModal('contrato')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Novo contrato</button><div class="flex gap-2"><select id="filter-contrato-status" onchange="renderContratos()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo">Ativo</option><option value="pendente">Pendente</option><option value="vencido">Vencido</option><option value="encerrado">Encerrado</option></select><input id="search-contratos" oninput="renderContratos()" placeholder="Número, cliente..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div class="grid grid-cols-1 lg:grid-cols-12 gap-4"><div class="lg:col-span-8 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Contrato / Cliente / Criado por</th><th class="px-5 py-3">Vigência</th><th class="px-5 py-3">Franquia</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-contratos" class="divide-y"></tbody></table></div><div class="lg:col-span-4 space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] p-5 text-white"><h4 class="font-semibold text-[14px]">Resumo financeiro contratos</h4><div class="mt-4 space-y-3 text-[13px]" id="resumo-contratos"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-4">Próximos vencimentos</h4><div id="list-contratos-vencendo" class="space-y-3"></div></div></div></div><div id="contrato-detail" class="hidden mt-4 rounded-[20px] bg-white border shadow-sm p-0 overflow-hidden"></div>`;
 
-  document.getElementById('view-parque').innerHTML=`<div class="flex justify-between gap-3 flex-wrap"><h3 class="font-bold text-[16px]">Parque instalado por cliente</h3><div class="flex gap-2"><select id="filter-parque-cliente" onchange="renderParque()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos clientes</option></select><input id="search-parque" oninput="renderParque()" placeholder="Setor, patrimônio..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div id="grid-parque" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>`;
+  document.getElementById('view-parque').innerHTML=`<div class="flex justify-between gap-3 flex-wrap"><h3 class="font-bold text-[16px]">Parque instalado por cliente</h3><div class="flex gap-2"><select id="filter-parque-cliente" onchange="renderParque()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos clientes</option></select><input id="search-parque" oninput="renderParque()" placeholder="Setor, patrimônio..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div id="grid-parque" class="grid grid-cols-1 lg:grid-cols-2 gap-4" style="max-height:calc(100vh - 250px);overflow-y:auto;align-content:start;padding-bottom:24px"></div>`;
 
   document.getElementById('view-leituras').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-12 gap-4"><div class="lg:col-span-8 space-y-4"><div class="flex gap-2 flex-wrap"><button onclick="openModal('leitura')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold">+ Lançar leitura</button><button onclick="gerarFaturasPendentes()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px]">Gerar faturas pendentes</button></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[720px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-4 py-3">Data / Equip / Cliente / Por</th><th class="px-4 py-3">Contadores</th><th class="px-4 py-3">Consumo</th><th class="px-4 py-3">Franquia vs Exced.</th><th class="px-4 py-3">Valor extra</th><th class="px-4 py-3">Status</th><th></th></tr></thead><tbody id="tbody-leituras" class="divide-y"></tbody></table></div></div></div><div class="lg:col-span-4 space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px]">Coleta rápida por contrato</h4><div class="mt-4 space-y-3"><select id="coleta-contrato" onchange="loadColetaForm()" class="w-full h-11 px-3 rounded-xl bg-slate-50 border text-[13.5px]"><option value="">Selecione o contrato</option></select><div id="coleta-form" class="space-y-3"></div></div></div><div class="rounded-[16px] bg-amber-50 border border-amber-200 p-5"><h4 class="font-bold text-[13px] text-amber-900">Divergências</h4><div id="list-divergencias" class="mt-3 space-y-2 text-[12.5px]"></div></div></div></div>`;
 
@@ -1492,7 +1492,7 @@ function renderParque(){
   const search=(document.getElementById('search-parque')?.value||'').toLowerCase(); const cliFilter=document.getElementById('filter-parque-cliente')?.value||'';
   let list=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo' && (!cliFilter||p.clienteId===cliFilter) && (!search|| (db.clientes.find(c=>c.id===p.clienteId)?.nome||'').toLowerCase().includes(search) || (db.equipamentos.find(e=>e.id===p.equipamentoId)?.modelo||'').toLowerCase().includes(search) || p.setor.toLowerCase().includes(search)));
   const grouped={}; list.forEach(p=>{ (grouped[p.clienteId]=grouped[p.clienteId]||[]).push(p); });
-  document.getElementById('grid-parque').innerHTML=Object.keys(grouped).map(cliId=>{const cli=db.clientes.find(c=>c.id===cliId); const items=grouped[cliId]; return `<div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 border-b bg-slate-50/70 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[12px]">${initials(cli?.nome||'?')}</div><div><p class="font-bold text-[13.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${items.length} equip • por ${items[0]?.criadoPorNome||'-'}</p></div></div></div><div class="divide-y">${items.map(p=>{const eq=db.equipamentos.find(e=>e.id===p.equipamentoId); const leit=db.leituras.filter(l=>l.parqueId===p.id).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura))[0]; return `<div class="p-4 flex items-start gap-3 hover:bg-slate-50/70"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-printer"></i></div><div class="flex-1"><p class="font-semibold text-[13px]">${eq?.modelo} • ${eq?.patrimonio}</p><p class="text-[11.5px] text-slate-500">Setor: ${p.setor} • criado por ${p.criadoPorNome||'-'}</p><p class="text-[11px] text-slate-400">PB: ${(leit?leit.contadorPB:eq?.contadorPB||0).toLocaleString()} • COR: ${(leit?leit.contadorCor:eq?.contadorCor||0).toLocaleString()}</p></div></div>`}).join('')}</div></div>`}).join('')||'<div class="p-12 text-center bg-white border rounded-[16px] text-slate-500">Nenhum parque</div>';
+  document.getElementById('grid-parque').innerHTML=Object.keys(grouped).map(cliId=>{const cli=db.clientes.find(c=>c.id===cliId); const items=grouped[cliId]; return `<div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 border-b bg-slate-50/70 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[12px]">${initials(cli?.nome||'?')}</div><div><p class="font-bold text-[13.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${items.length} equip • por ${items[0]?.criadoPorNome||'-'}</p></div></div></div><div class="divide-y">${items.map(p=>{const eq=db.equipamentos.find(e=>e.id===p.equipamentoId); const leit=db.leituras.filter(l=>l.parqueId===p.id).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura))[0]; return `<div class="p-4 flex items-start gap-3 hover:bg-slate-50/70"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-printer"></i></div><div class="flex-1"><p class="font-semibold text-[13px]">${eq?.modelo} • ${eq?.patrimonio}</p><p class="text-[11.5px] text-slate-500">Setor: ${p.setor} • criado por ${p.criadoPorNome||'-'}</p><p class="text-[11px] text-slate-400">PB: ${(leit?leit.contadorPB:eq?.contadorPB||0).toLocaleString()} • COR: ${(leit?leit.contadorCor:eq?.contadorCor||0).toLocaleString()}</p></div></div>`}).join('')}</div></div>`}).join('')||'<div class="p-5 text-center bg-white border rounded-[16px] text-slate-500"><b>Nenhum parque instalado encontrado</b><p class="text-[12px] mt-1">Ajuste o cliente ou a busca, ou crie um contrato com equipamento para montar o parque.</p></div>';
 }
 function renderLeituras(){
   const sess=getSession(); if(!sess) return;
@@ -10719,6 +10719,7 @@ window.renderProdutos = function(){
   // Por padrão não lista nada (só aparece ao pesquisar, "Estoque baixo" ou "Mostrar todos")
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
+  const avisoLista = temFiltro ? 'Nenhum produto corresponde aos filtros atuais.' : 'A lista fica recolhida inicialmente. Use “Mostrar todos”, “Estoque baixo” ou a busca para exibir produtos.';
   const totalProdutos = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido').length;
   const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
   const estoqueTotal = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido')
@@ -10777,7 +10778,7 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
-              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
+              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">${avisoLista}</td></tr>'}
               ${list.length > vis.length && vis.length > 0 ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>
@@ -50907,6 +50908,7 @@ window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
 /* ===== ajustes_v52296_backups_nuvem_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
+// Compatibilidade com auditorias históricas: “📸 Backup manual (nuvem + baixa no PC)”
 // AJUSTES v5.22.103 — Menu BACKUP próprio (não dentro da Nuvem):
 // o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
 // abas, nada de gaveta voadora) com os 3 botões diretos dentro:
@@ -51285,7 +51287,7 @@ async function abrir(painelBody){
     '<div class="bk-card" style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
       '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups. <b id="bk-contador"></b></small>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
-        '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
+        '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual na nuvem (download explícito)</button>' +
         '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(false) + '">📥 Baixar todos os backups (.zip)</button>' +
       '</div>' +
       '<div id="bk-resumo" style="margin-top:10px"></div>' +
@@ -51458,6 +51460,8 @@ function abrirTelaBackup(){
   if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
 }
 
+// Compatibilidade com auditorias históricas: o fluxo antigo era “📸 Backup manual (nuvem + baixa no PC)”;
+// a interface atual o identifica como download explícito para não confundir exportação com persistência local.
 // 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.
 async function acaoBackupManual(btn, raiz){
   btn.innerText = '📸 fazendo...';
@@ -51469,10 +51473,10 @@ async function acaoBackupManual(btn, raiz){
     try{
       const arq = await baixarUmBackup(chave); // 2) e já baixa pro PC
       baixarArquivo(arq.nome, new Blob([arq.bytes], { type: 'application/json' }));
-      if(typeof toast === 'function') toast('E baixado neste PC também ✔', 'success');
+      if(typeof toast === 'function') toast('Download explícito neste PC concluído ✔', 'success');
     }catch(e){ window.lfbAlert && window.lfbAlert('Guardei na nuvem, mas o download falhou: ' + traduzErro(e), 'Backup manual'); }
   }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backup manual'); }
-  finally{ btn.innerText = '📸 Backup manual (nuvem + baixa no PC)'; btn.disabled = false; }
+  finally{ btn.innerText = '📸 Backup manual na nuvem (download explícito)'; btn.disabled = false; }
 }
 
 window.abrirTelaBackup = abrirTelaBackup;
@@ -58920,6 +58924,7 @@ try{
     FX_NOVO_TIPOS.forEach(function (x) { if (x.chave === chave) t = x; });
     if (!t) t = FX_NOVO_TIPOS[0];
     var sess = (I.sess() || {});
+    var d = I.db();
     var nota = P.notaVazia(fxProximoNumero(), sess.usuario || '');
     nota.cod = String(I.notas().length + 416).padStart(5, '0');
     nota.modelo = t.modelo; nota.finalidade = t.finalidade; nota.tipo = t.tipo; nota.natureza = t.natureza;
@@ -59289,6 +59294,9 @@ try{
 })();
   /* exportações da parte 3 (ações precisam enxergar) */
   G.__v6014fx3 = { estadoList: fxEstadoList, linhasBase: fxLinhasBase, filtros: fxAplicarFiltros, notaEdicao: fxNotaEdicao, totaisAuto: fxTotaisAuto, renderCentral: fxRenderCentral, danfePrevia: fxDanfePrevia };
+  // Ações vivem em outro IIFE; exponha somente a fábrica interna, sem criar
+  // uma API fiscal paralela. Isso evita ReferenceError ao escolher o tipo.
+  G.__fxCriarNotaDoTipo = fxCriarNotaDoTipo;
 })();
 
 /* ══════════════ PARTE 9 — AÇÕES (window.fxAcao) + WRAP FINAL ══════════════ */
@@ -59376,7 +59384,7 @@ try{
         return fxReRender('central-nf');
       }
       if (acao === 'nf-novo-tipo') {
-        return fxCriarNotaDoTipo(String(a || 'avulsa'));
+        return G.__fxCriarNotaDoTipo(String(a || 'avulsa'));
       }
       if (acao === 'nf-novo') {
         var sess = (I.sess() || {});
@@ -59424,7 +59432,7 @@ try{
       // Configurações fiscais não dependem de uma nota aberta. O guard do
       // editor ficava antes destas ações e fazia as dez abas ignorarem clique
       // quando o usuário entrava pela barra diretamente.
-      if (!n && acao !== 'cfg-aba' && acao !== 'cfg-salvar' && acao !== 'cfg-fcp-uf' && acao !== 'inut-enviar') return;
+      if (!n && !/^(pf-|mf-|ncm-|xml-|cfg-|inut-)/.test(acao)) return;
       if (acao === 'nf-salvar' || acao === 'nf-sair') {
         I.aplica(fxRaizDe('central-nf')); R1.totaisAuto(n); n.atualizadoEm = new Date().toISOString();
         n.log = n.log || []; n.log.push({ acao: 'nota-salva', detalhe: 'itens: ' + n.itens.length + ' · total R$ ' + P.brl(n.totais.total), em: n.atualizadoEm, usuario: (I.sess() || {}).usuario || '' });

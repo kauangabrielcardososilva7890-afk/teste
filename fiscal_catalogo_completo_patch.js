@@ -827,6 +827,7 @@
     FX_NOVO_TIPOS.forEach(function (x) { if (x.chave === chave) t = x; });
     if (!t) t = FX_NOVO_TIPOS[0];
     var sess = (I.sess() || {});
+    var d = I.db();
     var nota = P.notaVazia(fxProximoNumero(), sess.usuario || '');
     nota.cod = String(I.notas().length + 416).padStart(5, '0');
     nota.modelo = t.modelo; nota.finalidade = t.finalidade; nota.tipo = t.tipo; nota.natureza = t.natureza;
@@ -1196,6 +1197,9 @@
 })();
   /* exportações da parte 3 (ações precisam enxergar) */
   G.__v6014fx3 = { estadoList: fxEstadoList, linhasBase: fxLinhasBase, filtros: fxAplicarFiltros, notaEdicao: fxNotaEdicao, totaisAuto: fxTotaisAuto, renderCentral: fxRenderCentral, danfePrevia: fxDanfePrevia };
+  // Ações vivem em outro IIFE; exponha somente a fábrica interna, sem criar
+  // uma API fiscal paralela. Isso evita ReferenceError ao escolher o tipo.
+  G.__fxCriarNotaDoTipo = fxCriarNotaDoTipo;
 })();
 
 /* ══════════════ PARTE 9 — AÇÕES (window.fxAcao) + WRAP FINAL ══════════════ */
@@ -1283,7 +1287,7 @@
         return fxReRender('central-nf');
       }
       if (acao === 'nf-novo-tipo') {
-        return fxCriarNotaDoTipo(String(a || 'avulsa'));
+        return G.__fxCriarNotaDoTipo(String(a || 'avulsa'));
       }
       if (acao === 'nf-novo') {
         var sess = (I.sess() || {});
@@ -1331,7 +1335,7 @@
       // Configurações fiscais não dependem de uma nota aberta. O guard do
       // editor ficava antes destas ações e fazia as dez abas ignorarem clique
       // quando o usuário entrava pela barra diretamente.
-      if (!n && acao !== 'cfg-aba' && acao !== 'cfg-salvar' && acao !== 'cfg-fcp-uf' && acao !== 'inut-enviar') return;
+      if (!n && !/^(pf-|mf-|ncm-|xml-|cfg-|inut-)/.test(acao)) return;
       if (acao === 'nf-salvar' || acao === 'nf-sair') {
         I.aplica(fxRaizDe('central-nf')); R1.totaisAuto(n); n.atualizadoEm = new Date().toISOString();
         n.log = n.log || []; n.log.push({ acao: 'nota-salva', detalhe: 'itens: ' + n.itens.length + ' · total R$ ' + P.brl(n.totais.total), em: n.atualizadoEm, usuario: (I.sess() || {}).usuario || '' });
