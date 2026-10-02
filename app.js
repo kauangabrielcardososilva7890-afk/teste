@@ -831,106 +831,25 @@ function sugerirIcone(nomeTabela){
 
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
-  <div class="space-y-6">
-    <div class="rounded-[20px] bg-gradient-to-r from-[#0a1e8a] to-[#142ecc] text-white p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center p-2"><img src="./logo.png" alt="DIGICOPY" class="w-full h-full object-contain"></div>
-        <div>
-          <h1 class="text-[22px] font-extrabold tracking-tight">DIGICOPY ERP</h1>
-          <p class="text-[13px] text-white/80">Painel Geral • Gestão de Locação, Assistência Técnica e Vendas</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button onclick="navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-list-magnifying-glass text-[16px]"></i> Notinhas</button>
-        <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-wrench text-[16px]"></i> Chamado</button>
-        <button onclick="navigateTo('clientes')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-users text-[16px]"></i> Clientes</button>
-      </div>
+  <div class="dash-shell">
+    <div class="dash-breadcrumb"><span>Início</span><i class="ph ph-caret-right"></i><b>Visão geral</b></div>
+    <div class="dash-heading">
+      <div><h1>Visão geral</h1><p>Acompanhe os principais indicadores da sua empresa em tempo real.</p></div>
+      <div class="dash-heading-actions"><button onclick="navigateTo('vendas')" class="dash-outline"><i class="ph ph-calendar-blank"></i><span id="dash-periodo">Este mês</span></button><button onclick="navigateTo('config')" class="dash-outline"><i class="ph ph-sliders-horizontal"></i>Preferências</button></div>
     </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('contratos')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 grid place-items-center text-[22px]"><i class="ph ph-file-text"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Contratos ativos</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-contratos">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('parque')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center text-[22px]"><i class="ph ph-map-pin"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Parque instalado</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-parque">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('manutencao')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-[22px]"><i class="ph ph-wrench"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">OS em aberto</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-os">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('impressoras')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 grid place-items-center text-[22px]"><i class="ph ph-printer"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Máq. disponíveis</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-disponiveis">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('financeiro')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center text-[22px]"><i class="ph ph-currency-dollar"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Faturamento Mês</p>
-          <p class="text-[18px] font-extrabold text-emerald-700" id="kpi-faturamento">R$ 0,00</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('vendas')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-700 grid place-items-center text-[22px]"><i class="ph ph-receipt"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Vendas do mês</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-vendas">0</p>
-          <p class="text-[11px] font-bold text-sky-700" id="kpi-vendas-valor">R$ 0,00</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('vendas');setTimeout(function(){try{setNeoVendasTab('orcamentos')}catch(e){}},120)" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-700 grid place-items-center text-[22px]"><i class="ph ph-clipboard-text"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Orçamentos abertos</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-orcamentos">0</p>
-          <p class="text-[11px] text-slate-500">aguardando resposta</p>
-        </div>
-      </div>
+    <div class="dash-kpis">
+      <button class="dash-kpi" onclick="navigateTo('clientes')"><span class="dash-kpi-icon blue"><i class="ph ph-users-three"></i></span><span><small>Clientes ativos</small><strong id="kpi-clientes">0</strong><em class="positive">Cadastros</em></span></button>
+      <button class="dash-kpi" onclick="navigateTo('produtos')"><span class="dash-kpi-icon purple"><i class="ph ph-cube"></i></span><span><small>Produtos</small><strong id="kpi-produtos">0</strong><em class="positive">Estoque</em></span></button>
+      <button class="dash-kpi" onclick="navigateTo('contratos')"><span class="dash-kpi-icon orange"><i class="ph ph-file-text"></i></span><span><small>Contratos ativos</small><strong id="kpi-contratos">0</strong><em class="positive">Locação</em></span></button>
+      <button class="dash-kpi" onclick="navigateTo('financeiro')"><span class="dash-kpi-icon green"><i class="ph ph-chart-line-up"></i></span><span><small>Financeiro do mês</small><strong id="kpi-faturamento">R$ 0,00</strong><em class="positive">Recebimentos</em></span></button>
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="rounded-[18px] bg-white border shadow-sm p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-wrench text-[#0a1e8a]"></i> Chamados & OS Recentes</h3>
-          <button onclick="navigateTo('manutencao')" class="text-[12px] font-bold text-[#0a1e8a] hover:underline">Ver todos →</button>
-        </div>
-        <div id="list-chamados-recentes" class="divide-y border rounded-xl overflow-hidden"></div>
-      </div>
-
-      <div class="rounded-[18px] bg-white border shadow-sm p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-speedometer text-[#0a1e8a]"></i> Leituras Pendentes</h3>
-          <button onclick="navigateTo('leituras')" class="text-[12px] font-bold text-[#0a1e8a] hover:underline">Ver todas →</button>
-        </div>
-        <div id="list-leituras-pendentes" class="divide-y border rounded-xl overflow-hidden"></div>
-      </div>
+    <div class="dash-columns">
+      <div class="dash-card dash-activity"><div class="dash-card-title"><div><h2><i class="ph ph-clock-counter-clockwise"></i> Atividade recente</h2><p>Últimos registros e ações do sistema</p></div><button onclick="navigateTo('auditoria')">Ver todas <i class="ph ph-arrow-right"></i></button></div><div id="list-alertas" class="dash-activity-list"></div></div>
+      <div class="dash-card dash-actions"><div class="dash-card-title"><div><h2><i class="ph ph-lightning"></i> Ações rápidas</h2><p>Acesse as tarefas mais usadas</p></div></div><div class="dash-action-list"><button onclick="openQuickOS()"><span><i class="ph ph-headset"></i><b>Novo atendimento</b><small>Registrar um novo chamado</small></span><i class="ph ph-caret-right"></i></button><button onclick="openModal('cliente')"><span><i class="ph ph-user-plus"></i><b>Cadastrar cliente</b><small>Adicionar um novo cliente</small></span><i class="ph ph-caret-right"></i></button><button onclick="navigateTo('vendas')"><span><i class="ph ph-shopping-cart"></i><b>Registrar venda</b><small>Lançar uma nova venda</small></span><i class="ph ph-caret-right"></i></button><button onclick="openModal('contrato')"><span><i class="ph ph-file-text"></i><b>Novo contrato de locação</b><small>Criar um contrato</small></span><i class="ph ph-caret-right"></i></button><button onclick="navigateTo('financeiro')"><span><i class="ph ph-currency-circle-dollar"></i><b>Lançar recebimento</b><small>Registrar um recebimento</small></span><i class="ph ph-caret-right"></i></button></div></div>
     </div>
-
-    <div class="rounded-[18px] bg-white border shadow-sm p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-clipboard-text text-[#0a1e8a]"></i> Últimas Atividades (Auditoria)</h3>
-        <span class="text-[12px] text-slate-500" id="kpi-auditoria">0 hoje</span>
-      </div>
-      <div id="list-alertas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-    </div>
-
-    <div class="hidden">
-      <span id="alert-vencendo">0</span>
-      <canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div>
-    </div>
+    <div class="dash-columns dash-secondary"><div class="dash-card"><div class="dash-card-title"><div><h2><i class="ph ph-wrench"></i> Chamados em aberto</h2><p>Atendimentos que precisam de acompanhamento</p></div><button onclick="navigateTo('manutencao')">Ver todos <i class="ph ph-arrow-right"></i></button></div><div id="list-chamados-recentes" class="dash-activity-list"></div></div><div class="dash-card"><div class="dash-card-title"><div><h2><i class="ph ph-speedometer"></i> Leituras pendentes</h2><p>Coletas aguardando conferência</p></div><button onclick="navigateTo('leituras')">Ver todas <i class="ph ph-arrow-right"></i></button></div><div id="list-leituras-pendentes" class="dash-activity-list"></div></div></div>
+    <div class="dash-footer-note"><span class="dash-note-icon"><i class="ph ph-check"></i></span><div><b>Tudo sob controle</b><p>Seu sistema está atualizado e funcionando normalmente.</p></div><span class="dash-note-status"><span></span>Nuvem sincronizada</span></div>
+    <div class="dash-hidden-metrics"><span id="kpi-clientes-hidden">0</span><span id="kpi-produtos-hidden">0</span><span id="kpi-parque">0</span><span id="kpi-os">0</span><span id="kpi-disponiveis">0</span><span id="kpi-vendas">0</span><span id="kpi-vendas-valor">R$ 0,00</span><span id="kpi-orcamentos">0</span><span id="kpi-auditoria">0 hoje</span><span id="alert-vencendo">0</span><canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div></div>
   </div>`;
 
   document.getElementById('view-clientes').innerHTML=`<div class="flex flex-wrap items-center gap-3 justify-between"><div class="flex gap-2"><button onclick="openModal('cliente')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1.5"></i>Novo cliente</button><button onclick="exportClientes()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Exportar</button></div><div class="flex gap-2"><select id="filter-clientes-status" onchange="renderClientes()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="inadimplente">Inadimplente</option></select><div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="search-clientes" oninput="renderClientes()" placeholder="Buscar..." class="h-10 pl-9 pr-4 rounded-xl bg-white border text-[13.5px] w-[260px]"></div></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] tracking-widest uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Cliente / Quem criou</th><th class="px-5 py-3">Documento</th><th class="px-5 py-3">Contato</th><th class="px-5 py-3">Contratos</th><th class="px-5 py-3">Status</th><th class="px-5 py-3"></th></tr></thead><tbody id="tbody-clientes" class="divide-y divide-slate-50"></tbody></table></div><div id="pagination-clientes" class="p-3 border-t flex items-center justify-between text-[12px] text-slate-500"></div></div>`;
@@ -1068,6 +987,10 @@ function renderDashboard(){
   const sess=getSession(); if(!sess) return;
   const empFilter=id=>!id||id===sess.empresaId;
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
+  const clientesAtivos=(db.clientes||[]).filter(c=>c.empresaId===sess.empresaId && c.status!=='inativo').length;
+  const produtosAtivos=(db.produtos||[]).filter(p=>p.empresaId===sess.empresaId && p.status!=='inativo').length;
+  const kpiClientes=document.getElementById('kpi-clientes'); if(kpiClientes) kpiClientes.innerText=clientesAtivos;
+  const kpiProdutos=document.getElementById('kpi-produtos'); if(kpiProdutos) kpiProdutos.innerText=produtosAtivos;
   document.getElementById('kpi-contratos').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length;
   document.getElementById('kpi-parque').innerText=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length;
   document.getElementById('kpi-os').innerText=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length;
