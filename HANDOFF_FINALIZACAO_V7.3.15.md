@@ -88,3 +88,12 @@ Evidências portáveis:
 - **Não mesclar nem fechar** sem permissão expressa do usuário.
 - Antes de uso operacional real, o dono deve validar uma sincronização em uma janela autorizada e confirmar que a nuvem aceitou os dados; esta rodada não usou credenciais nem rede de produção.
 - Se for necessário remover a fila legada antes da confirmação, pedir instrução explícita: a remoção pode descartar alterações que ainda não estejam na nuvem.
+
+
+## 7. Verificação remota final (02/10/2026)
+
+- Commit publicado: `68e1876617192c1a0b16b257be4929719c80e328` (`feat: enforce cloud-only business storage v7.3.15`).
+- PR #47 verificado após push: **OPEN + Draft**, título `v7.3.15: cloud-only, Fiscal IBS/CBS e correções pessoais`, head `work/r67-auth-cloud-ui`, base `arena/01a0d9c3-teste`. Não foi mesclado nem fechado.
+- `node sync_build.js --check` terminou com `Sync OK` (v7.3.15, 236 scripts no bundle, 0 soltos, 13 entradas de build) e imprimiu um aviso não bloqueante: o checkout é a branch de feature, enquanto `package.json > digicopy.branch` aponta para a base do PR. Essa configuração também define links de distribuição; foi mantida para não apontar o link de download do cliente para uma branch ainda não mesclada.
+- Portanto, o site oficial indicado pelo sincronizador **não é evidência de que v7.3.15 esteja publicado**. Toda validação visual desta rodada foi feita localmente em Chromium com rede de nuvem interceptada/sintética; não houve deploy.
+- O commit contém as alterações rastreadas, handoff e evidências. Dois handoffs locais não relacionados (`HANDOFF_BUSCA_CONTRATOS_2026-10-01.md` e `HANDOFF_R67_AUTENTICACAO_NUVEM_USUARIOS.md`) permaneceram fora do commit, sem modificação.

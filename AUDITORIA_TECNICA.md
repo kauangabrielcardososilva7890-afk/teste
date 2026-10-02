@@ -3560,3 +3560,11 @@ Relatório E2E em `evidence/personal-ui-audit-v7315.json`; 33 capturas em `evide
 ### §59.5 GitHub
 
 O PR [#47](https://github.com/kauangabrielcardososilva7890-afk/teste/pull/47) segue **Draft/Open**, head `work/r67-auth-cloud-ui`, base `arena/01a0d9c3-teste`. Esta rodada será enviada ao mesmo PR. Não houve merge, close ou deploy. A validação final de sincronização real permanece fora do escopo por restrição explícita do usuário.
+
+
+## §60 — Verificação remota após o push
+
+- Commit `68e1876617192c1a0b16b257be4929719c80e328` enviado à branch `work/r67-auth-cloud-ui`; PR #47 confirmado como **OPEN/Draft**, com base `arena/01a0d9c3-teste`. Sem merge, close ou deploy.
+- `node sync_build.js --check` retornou `Sync OK` (v7.3.15, 236 scripts, 0 scripts soltos, 13 entradas do manifesto), com aviso não bloqueante de que o checkout é a feature branch enquanto `package.json > digicopy.branch` é a base. Esse campo participa dos links de distribuição; foi mantido para não publicar link de download apontando para a branch revisável antes de merge. O aviso não é erro de build.
+- A URL oficial impressa pelo sincronizador corresponde ao site distribuído atual e **não comprova publicação das mudanças deste PR**. A evidência v7.3.15 vem exclusivamente do servidor/teste local com rede interceptada, descrito na §59.
+- Handoffs preexistentes não relacionados foram deixados intocados e não incluídos no commit.
