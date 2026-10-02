@@ -113,6 +113,23 @@ test('auditoria visual desktop do uso pessoal com fixture isolada', async ({ pag
   }));
   await page.getByRole('button', { name: 'Entendi', exact: true }).click();
   await expect(page.locator('#digicopy-patch-notes')).toHaveCount(0);
+  // Smoke test físico: o submenu precisa abrir com o clique real do usuário,
+  // não apenas existir no DOM ou funcionar por execução direta de onclick.
+  for (const label of ['Atendimento', 'Locação', 'Fiscal', 'Cadastros', 'Configurações']) {
+    const parent = page.locator('.modern-topnav .module > button').filter({ hasText: label }).first();
+    await expect(parent, `menu pai ${label} deve estar visível`).toBeVisible();
+    const submenu = parent.locator('xpath=..').locator('.module-menu');
+    await parent.click();
+    await expect(submenu, `submenu ${label} deve abrir após clique`).toBeVisible();
+    await expect(submenu.locator('button').first(), `submenu ${label} deve ter itens clicáveis`).toBeVisible();
+    await parent.click();
+    await expect(parent.locator('xpath=..'), `menu ${label} deve remover o pin no segundo clique`).not.toHaveClass(/sfo-pin/);
+    // Enquanto o ponteiro está sobre o pai, a regra :hover mantém o menu
+    // visualmente aberto; clicar fora também testa o fechamento real.
+    await page.mouse.move(1200, 780);
+    await page.locator('body').click({ position: { x: 20, y: 820 } });
+    await expect(submenu, `submenu ${label} deve fechar no segundo clique`).not.toBeVisible();
+  }
   await page.reload();
   await page.waitForTimeout(1400);
   await page.waitForFunction(() => window.db && Array.isArray(window.db.clientes));

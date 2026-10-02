@@ -24,15 +24,4 @@
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',remover);
   setTimeout(remover,100); setTimeout(remover,500); setTimeout(remover,1500);
   try{ new MutationObserver(remover).observe(document.body,{childList:true,subtree:true}); }catch(e){}
-  // Último guard de navegação: alguns patches antigos fecham a classe no
-  // próximo tick. Reaplica somente para o pai clicado, sem impedir itens do submenu.
-  document.addEventListener('click',function(e){
-    var b=e.target&&e.target.closest?e.target.closest('.module-row .module > button'):null;
-    if(!b) return;
-    var m=b.parentElement;
-    if(!m||!m.querySelector(':scope > .module-menu')) return;
-    [0,40,140,320].forEach(function(ms){ setTimeout(function(){
-      if(document.activeElement===b || m.matches(':hover') || ms===0) m.classList.add('sfo-pin');
-    },ms); });
-  },true);
 })();

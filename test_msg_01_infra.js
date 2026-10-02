@@ -2154,7 +2154,7 @@ ok('versão continua na família 5.22',/^\d+\.\d+\.\d+/.test(pkg.version));
 ok('a nuvem e o pacote andam na mesma versão',new RegExp("API_VERSION = '"+wpkg.version.replace(/\./g,'\\.')+"'").test(worker));
 ok('o carimbo aparece na resposta de saúde',/version: API_VERSION/.test(worker));
 ok('o conserto das contas está no código que vai subir',/async function resumoDaNuvem/.test(worker));
-ok('o erro passa a dizer o motivo',/detail: motivo/.test(worker));
+ok('o erro interno não vaza o motivo para o cliente',/INTERNAL_ERROR/.test(worker)&&!/detail: motivo/.test(worker));
 ok('as migrações dos índices existem',fs.existsSync('cloudflare-worker/migrations/0003_indices_contagem.sql'));
 console.log('\nRESULTADO: ajustes v5.22.79 passaram!');
 //<<<<SECAO:test_ajustes_v52279.js:FIM>>>>

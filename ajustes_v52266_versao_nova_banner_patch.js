@@ -108,18 +108,18 @@ try{
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',remover);
   setTimeout(remover,100); setTimeout(remover,500); setTimeout(remover,1500);
   try{ new MutationObserver(remover).observe(document.body,{childList:true,subtree:true}); }catch(e){}
-  // Último guard de navegação: alguns patches antigos fecham a classe no
-  // próximo tick. Reaplica somente para o pai clicado, sem impedir itens do submenu.
-  document.addEventListener('click',function(e){
-    var b=e.target&&e.target.closest?e.target.closest('.module-row .module > button'):null;
-    if(!b) return;
-    var m=b.parentElement;
-    if(!m||!m.querySelector(':scope > .module-menu')) return;
-    [0,40,140,320].forEach(function(ms){ setTimeout(function(){
-      if(document.activeElement===b || m.matches(':hover') || ms===0) m.classList.add('sfo-pin');
-    },ms); });
-  },true);
-
+  // Fonte única para módulos não fiscais: captura o clique antes dos
+  // onclick legados e torna abrir/fechar determinístico.
+  document.addEventListener('click', function(e){
+    if(e.defaultPrevented || !e.target || !e.target.closest) return;
+    var b=e.target.closest('.module-row .module > button');
+    var m=b && b.parentElement;
+    var menu=m && m.querySelector(':scope > .module-menu');
+    if(!b || !menu || m.querySelector('#menu-nfe')) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    document.querySelectorAll('.module.sfo-pin').forEach(function(x){ if(x!==m) x.classList.remove('sfo-pin'); });
+    m.classList.toggle('sfo-pin');
+  }, true);
   })();
 
 })();

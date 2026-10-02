@@ -1,6 +1,6 @@
 // DIGICOPY ERP v3.8 - Main process (Electron)
 // Responsável por: janela principal, IPC com Firebird e sistema de arquivos
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -737,6 +737,14 @@ function registerEscolaIPC(){
 function escolaLoginPath(){
   return path.join(app.getPath('userData'), 'escola-login.json');
 }
+function lerSenhaEscola(raw){
+  if(raw && raw.senhaCriptografada && safeStorage.isEncryptionAvailable()){
+    try{ return safeStorage.decryptString(Buffer.from(String(raw.senhaCriptografada), 'base64')); }catch(e){}
+  }
+  // Compatibilidade: uma senha antiga em texto é lida, mas não é mais gravada
+  // assim quando o usuário salvar novamente o login.
+  return String((raw && raw.senha) || '');
+}
 function registerEscolaLoginIPC(){
   ipcMain.handle('escola:login-status', async () => {
     try{
@@ -744,7 +752,7 @@ function registerEscolaLoginIPC(){
       if(!fs.existsSync(p)) return { ok:true, saved:false };
       const raw = JSON.parse(fs.readFileSync(p, 'utf8')||'{}');
       const usuario = String(raw.usuario||'').trim();
-      const senha = String(raw.senha||'');
+      const senha = lerSenhaEscola(raw);
       return { ok:true, saved:!!(usuario&&senha), usuario, senha };
     }catch(e){ return { ok:false, saved:false, error:e.message||String(e) }; }
   });
@@ -753,7 +761,9 @@ function registerEscolaLoginIPC(){
       const usuario = String((dados&&dados.usuario)||'').trim();
       const senha = String((dados&&dados.senha)||'');
       if(!usuario || !senha) return { ok:false, error:'Informe usuário e senha.' };
-      fs.writeFileSync(escolaLoginPath(), JSON.stringify({ usuario, senha, atualizadoEm:new Date().toISOString() }), 'utf8');
+      if(!safeStorage.isEncryptionAvailable()) return { ok:false, error:'O armazenamento seguro do sistema operacional não está disponível.' };
+      const registro = { usuario, senhaCriptografada: safeStorage.encryptString(senha).toString('base64'), atualizadoEm:new Date().toISOString() };
+      fs.writeFileSync(escolaLoginPath(), JSON.stringify(registro), { encoding:'utf8', mode:0o600 });
       return { ok:true, saved:true, usuario };
     }catch(e){ return { ok:false, error:e.message||String(e) }; }
   });

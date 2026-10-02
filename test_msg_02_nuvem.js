@@ -1038,7 +1038,7 @@ S.devolverSumidos().then(n=>{
   // v5.22.82: as contas viraram um resumo guardado, que gasta muito menos do banco.
   ok('a contagem não derruba mais a tela',/async function resumoDaNuvem/.test(worker)&&/DIGICOPY_RESUMO_AGRUPADO/.test(worker));
   ok('conta que falha não derruba a tela',/DIGICOPY_RESUMO_PARCIAL/.test(worker));
-  ok('o erro da API agora diz o motivo',/detail: motivo/.test(worker)&&/' Motivo: ' \+ motivo/.test(worker));
+  ok('o erro da API não vaza o motivo interno',/INTERNAL_ERROR/.test(worker)&&!/detail: motivo/.test(worker));
   ok('as migrações do banco existem',fs.existsSync('cloudflare-worker/migrations/0003_indices_contagem.sql')&&fs.existsSync('cloudflare-worker/migrations/0004_menos_gravacoes.sql'));
 
   console.log('\nRESULTADO: ajustes v5.22.76 passaram!');
@@ -1101,7 +1101,7 @@ ok('senha errada continua desconectando',/if\(e\.status===401\)\{forgetAuth\(\);
 ok('a pessoa é avisada do motivo, sem susto',/Os números da nuvem não puderam ser contados agora/.test(painel)&&/NÃO atrapalha a sincronização/.test(painel));
 ok('sincronizar-agora saiu da tela (r46: automático), ver-excluídos ficou',!/dc-sync-now/.test(painel)&&/dc-list-deleted/.test(painel));
 ok('no servidor, a contagem virou resumo guardado',/async function resumoDaNuvem/.test(worker));
-ok('o erro do servidor diz o motivo',/detail: motivo/.test(worker));
+ok('o erro do servidor não vaza o motivo interno',/INTERNAL_ERROR/.test(worker)&&!/detail: motivo/.test(worker));
 console.log('\nRESULTADO: ajustes v5.22.78 passaram!');
 //<<<<SECAO:test_ajustes_v52278.js:FIM>>>>
 }

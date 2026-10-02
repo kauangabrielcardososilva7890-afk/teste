@@ -21,6 +21,9 @@ const JSON_HEADERS = {
   'cache-control': 'no-store',
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
+  'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
   'access-control-allow-origin': '*',
   'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova, x-digicopy-usuario-prova2',
   'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
@@ -2697,8 +2700,8 @@ export default {
         return json({ ok: false, error: error.code, message: error.message }, error.status);
       }
       console.error('DIGICOPY_API_ERROR', error);
-      const motivo = String((error && error.message) || error || '').slice(0, 200);
-      return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' + (motivo ? ' Motivo: ' + motivo : ''), detail: motivo }, 500);
+      // SQL, stack e nomes internos ficam apenas no log do Worker.
+      return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' }, 500);
     }
   },
   // Relógio da própria nuvem: todo dia 18:30 de São Paulo faz o backup
