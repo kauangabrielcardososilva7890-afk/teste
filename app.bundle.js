@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 217 | sha256: bd9bb9b0d94ca407
+ * scripts: 217 | sha256: 6221c9cb2c252fb3
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -55344,7 +55344,7 @@ try{
 
   /* ---------- clique no pai fiscal: abre e FICA preso (pin); compõe com o sfo611 ---------- */
   document.addEventListener('click', function (e) {
-    if (e.defaultPrevented) return; /* o submenu_fiscal_oficial (6.1.1) já tratou */
+    if (e.defaultPrevented) return; /* o shell fiscal consolidado já tratou */
     var mod = e.target && e.target.closest ? e.target.closest('.module') : null;
     if (!mod) return;
     var btn = mod.querySelector(':scope > button');
