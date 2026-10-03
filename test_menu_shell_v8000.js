@@ -12,4 +12,6 @@ assert(/G\.abrirEtiquetas=renderEtiquetas/.test(mod),'Etiquetas possui rota pró
 assert(/ui-sidebar-position-card/.test(mod)&&/ui-sidebar-side/.test(mod),'Preferência de posição do menu existe em Configurações > Preferências');
 assert(/digi-sidebar-right/.test(mod)&&/margin-right:300px/.test(mod),'Sidebar pode ser movido para o lado direito');
 assert(/SIDEBAR_POSICAO_PURE/.test(mod)&&/sidebarKey/.test(mod),'Posição do sidebar possui persistência independente por perfil/dispositivo');
+assert(/ui-escuro-dispositivo-card/.test(mod)&&/view-config/.test(mod),'Cartão de aparência de Preferências possui cobertura visual');
+assert(/v8-menu-order-row/.test(mod)&&/modal-root/.test(mod),'Editor de menus possui cobertura de tema no modal');
 console.log('menu_shell_v8000: OK');

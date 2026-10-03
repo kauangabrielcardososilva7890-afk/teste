@@ -1,9 +1,5 @@
 // PATCH todos os popups no estilo do sistema (igual login incorreto) - REMOVE popups antigos
 (function(){
-  // Preserva o confirm real como compatibilidade para fluxos legados ainda
-  // síncronos. Antes este patch sempre retornava false e vários botões
-  // cancelavam silenciosamente mesmo após o usuário confirmar no modal.
-  const nativeConfirm = (typeof window.confirm === 'function') ? window.confirm.bind(window) : null;
   window.__confirmSistemaBypass = 0;
   function allowLegacyConfirmOnce(){
     window.__confirmSistemaBypass = 1;
@@ -51,9 +47,10 @@
     // Wrappers assíncronos já perguntaram no popup do sistema: a chamada
     // síncrona interna recebe um "sim" único, sem mostrar um segundo aviso.
     if(window.__confirmSistemaBypass > 0){ window.__confirmSistemaBypass--; return true; }
-    // Funções antigas ainda não migradas continuam operacionais com o diálogo
-    // nativo, em vez de falhar silenciosamente. Serão migradas gradualmente.
-    return nativeConfirm ? nativeConfirm(String(msg)) : false;
+    // Fluxos síncronos legados não podem abrir o confirm nativo. Falham fechado
+    // e mostram o motivo no popup visual, sem executar ação destrutiva.
+    showModal(String(msg), 'Confirmação necessária', true);
+    return false;
   };
 
   // Wrappers para ações que usavam confirm() - agora usam confirmSistema corretamente

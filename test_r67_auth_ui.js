@@ -129,7 +129,7 @@ elements['u-ativo'].value = 'true';
   ok('rótulo Nuvem é acionável e acessível', /id="dc-cloud-diag-trigger"[^>]*aria-label="Abrir diagnóstico da nuvem"/.test(html) && html.includes('>Nuvem</span>'));
   ok('diagnóstico está no bundle e usa somente GET explícito', manifest.includes('ajustes_v52267_diagnostico_nuvem_patch.js') && diag.includes("api('/health',{method:'GET'})") && !/method\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/.test(diag));
   ok('clique do diagnóstico usa delegação e sobrevive à recriação da barra', diag.includes("document.addEventListener('click'") && diag.includes("closest('#dc-cloud-diag-trigger')"));
-  ok('pull de leitura só roda com token autorizado', syncSource.includes('async function tickSohLeitura(reason){\n  if(!authorized())return false;') && syncSource.includes('async function puxarAoAbrirTela(){\n  if(!authorized())return false;'));
+  ok('pull de leitura só roda com token autorizado', /async function tickSohLeitura\(reason\)\{[\s\S]{0,140}?if\(!authorized\(\)\)return false;/.test(syncSource) && /async function puxarAoAbrirTela\(\)\{[\s\S]{0,140}?if\(!authorized\(\)\)return false;/.test(syncSource));
   ok('notas de v'+version+' estão embutidas no bundle e a chave depende só da versão', manifest.includes('patch_notes_local.js') && notes.includes("'7.3.11'") && notes.includes('digicopy_patch_visto_') && notes.includes('localStorage.setItem(chave(versao),\'1\')') && notes.includes('Desativar um usuário agora'));
   console.log('\nRESULTADO: testes sintéticos r67 de autenticação, Usuários, Técnicos, diagnóstico e patch passaram.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

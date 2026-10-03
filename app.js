@@ -942,7 +942,7 @@ async function saveUsuario(){
   // v7.1.0-r54 (P1): grava hash+salt junto (texto puro segue junto na transição p/ os PCs velhos).
   const precisaHash=!id||!u||!u.senhaHash||(u.senha!==payload.senha);
   if(precisaHash&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(payload,payload.senha); }catch(e){} }
-  if(u&&u.senhaPadrao&&payload.senha!==u.senha) payload.senhaPadrao=false; // trocou a de fábrica: libera o login
+  if(u&&payload.senha) payload.senhaPadrao=false; // senha informada = troca confirmada; invalida a senha inicial
   if(id){
     Object.assign(u,payload,{atualizadoEm:new Date().toISOString(), atualizadoPor:sess.usuarioId});
     logAction('usuario','editar',id,`Editado usuário ${payload.login} perfil ${payload.perfil}`);

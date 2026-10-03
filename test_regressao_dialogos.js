@@ -5,6 +5,7 @@ function ok(nome, cond) {
 }
 const rel = fs.readFileSync('ajustes_relatorio_pai_patch.js', 'utf8');
 const fiscal = fs.readFileSync('ajustes_v5240_relatorio_grande_patch.js', 'utf8');
+const popup = fs.readFileSync('popup_sistema_patch.js', 'utf8');
 console.log('== REGRESSÃO: diálogos nativos no Electron ==');
 ok('estorno geral usa confirmSistema', /window\.confirmSistema\(/.test(rel));
 ok('estorno geral não usa confirm nativo', !/\bconfirm\s*\(/.test(rel));
@@ -13,4 +14,6 @@ ok('estorno fiscal usa confirmSistema', /window\.confirmSistema\(/.test(fiscal))
 ok('fallback fiscal não usa alert nativo', !/\balert\s*\(/.test(fiscal));
 ok('fallback fiscal não usa confirm nativo', !/\bconfirm\s*\(/.test(fiscal));
 ok('fallback fiscal recusa com segurança', /cb\(false\)/.test(fiscal));
-console.log('  ✔ 7 regressões de diálogos nativos');
+ok('popup não mantém referência ao confirm nativo', !/nativeConfirm/.test(popup));
+ok('popup síncrono falha fechado com aviso visual', /Confirmação necessária/.test(popup) && /return false/.test(popup));
+console.log('  ✔ 9 regressões de diálogos nativos');

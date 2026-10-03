@@ -239,8 +239,11 @@ window.saveUsuarioFinal = async function(id){
   // Bandeira: senha que OUTRA pessoa escolheu (criação ou troca por admin) → o dono troca no próximo login.
   const precisaHash = eraNovo || !u.senhaHash || (senhaAntiga !== senha);
   if(precisaHash && typeof atualizarHashRegistro === 'function'){ try{ await atualizarHashRegistro(u, senha); }catch(e){} }
+  // Qualquer senha explicitamente informada no cadastro é uma troca confirmada.
+  // A senha anterior (inclusive a senha inicial) nunca deve continuar exigindo
+  // troca nem ser aceita como senha válida depois desta operação.
   if(eraNovo) u.senhaPadrao = true;
-  else if(senhaDigitada && senhaDigitada !== senhaAntiga) u.senhaPadrao = (u.id === s.usuarioId) ? false : true;
+  else if(senhaDigitada) u.senhaPadrao = false;
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();

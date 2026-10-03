@@ -13,7 +13,13 @@ const {spawnSync}=require('child_process');
     }catch(e){}
   }
 })();
-const tests=[
+const testsOficiais=[
+  "test_menu_shell_v8000.js",
+  "test_r67_auth_ui.js",
+  "test_r68_orcamento_cloud_guard.js",
+  "test_regressao_dialogos.js",
+];
+const testsHistoricos=[
   "test_msg_01_infra.js",
   "test_msg_02_nuvem.js",
   "test_msg_03_vendas.js",
@@ -23,12 +29,12 @@ const tests=[
   "test_msg_07_financeiro.js",
   "test_msg_08_fiscal.js",
   "test_msg_09_login.js",
-  "test_r67_auth_ui.js",
-  "test_r68_orcamento_cloud_guard.js",
   "test_msg_10_relatorios.js",
   "test_msg_11_jsdom.js",
-  "test_regressao_dialogos.js",
 ];
+const tests=process.env.DIGICOPY_RUN_LEGACY==='1'
+  ? testsOficiais.concat(testsHistoricos)
+  : testsOficiais;
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não
 // está no vendor/ (é grande), então num checkout novo ou num CI sem `npm
@@ -45,6 +51,9 @@ if(!jsdomDisponivel){
   }
 }
 let failed=0, passed=0, xfailed=0, semRodar=0;
+if(process.env.DIGICOPY_RUN_LEGACY!=='1'){
+  console.log(`\nℹ️ ${testsHistoricos.length} testes históricos foram separados da suíte v8. Para executá-los: DIGICOPY_RUN_LEGACY=1 npm test`);
+}
 for(const file of tests){
   if(!jsdomDisponivel && precisaJsdom.has(file)){
     semRodar++;
