@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 218 | sha256: 8cf810cb45f4b3c0
+ * scripts: 218 | sha256: 727d87fb148cfd7b
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -27741,7 +27741,7 @@ window.saveUsuarioFinal = async function(id){
     if(typeof logAction === 'function') logAction('usuario', 'criar', u.id, 'Criado usuário ' + login + ' perfil ' + perfil);
   }
   // r58 (auditoria, bug #0 — espelha r54 P1): senha mudou (ou não tinha hash) → re-hash ANTES de gravar.
-  // Bandeira: senha que OUTRA pessoa escolheu (criação ou troca por admin) → o dono troca no próximo login.
+  // Bandeira: criação exige troca; uma senha explicitamente trocada é confirmada.
   const precisaHash = eraNovo || !u.senhaHash || (senhaAntiga !== senha);
   if(precisaHash && typeof atualizarHashRegistro === 'function'){ try{ await atualizarHashRegistro(u, senha); }catch(e){} }
   // Qualquer senha explicitamente informada no cadastro é uma troca confirmada.
@@ -57406,7 +57406,10 @@ function abrirSetupControlado(){
   }
   Promise.resolve(sec.remotoPermiteSetup()).then(function(ok){
     if(ok){ renderSetup(); return; }
-    try{ if(typeof toast === 'function') toast('A nuvem já está configurada ou não pôde ser verificada. Use o login normal.', 'error'); }catch(e){}
+    // Quando o portão de conexão já está ativo, o login normal ficará atrás
+    // dele. Não abrir outro aviso/modal sobre a mesma tela: isso causava a
+    // sobreposição observada no navegador autenticado.
+    try{ if(!document.getElementById('v5262-portao') && typeof toast === 'function') toast('A nuvem já está configurada ou não pôde ser verificada. Use o login normal.', 'error'); }catch(e){}
     if(typeof showLoginAnterior === 'function') showLoginAnterior.call(window);
   }).catch(function(){
     try{ if(typeof toast === 'function') toast('Não foi possível verificar a nuvem. O setup foi bloqueado.', 'error'); }catch(e){}

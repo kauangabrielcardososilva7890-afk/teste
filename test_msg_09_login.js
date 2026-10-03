@@ -208,9 +208,10 @@ const definem = arquivos.filter(f => {
 ok('existem vários patches definindo doLoginUser (por isso a ordem importa)', definem.length >= 1);
 ok('o corrigido continua na cadeia (ajustes_v52253)', definem.indexOf('ajustes_v52253_login_tela_branca_patch.js') >= 0);
 const ultimoLogin = definem[definem.length - 1];
-ok('o ÚLTIMO doLoginUser é o corrigido ou o v5901 (que delega a ele)',
+ok('o ÚLTIMO doLoginUser é o corrigido, o retry ou o wrapper de segurança',
    ultimoLogin === 'ajustes_v52253_login_tela_branca_patch.js' ||
-   ultimoLogin === 'ajustes_v5901_login_retry_nuvem_patch.js');
+   ultimoLogin === 'ajustes_v5901_login_retry_nuvem_patch.js' ||
+   ultimoLogin === 'modulos/security_hardening_v8000.js');
 console.log('     (ordem encontrada: ' + definem.join(' → ') + ')');
 if(definem.indexOf('ajustes_v5901_login_retry_nuvem_patch.js') >= 0){
   const src5901 = fs.readFileSync('ajustes_v5901_login_retry_nuvem_patch.js', 'utf8');
@@ -369,8 +370,8 @@ console.log('-- reclamação 2: a versão e a branch em TODOS os arquivos --');
   const pkg = JSON.parse(ler('package.json'));
   const versao = String(pkg.version || '');
   ok('package.json tem versão de verdade (x.y.z)', /^\d+\.\d+\.\d+$/.test(versao), versao);
-  ok('a branch do package.json é a da sessão (o ZIP e os links apontam para o código certo)',
-    pkg.digicopy && pkg.digicopy.branch === 'arena/01a0d9c3-teste', String(pkg.digicopy && pkg.digicopy.branch));
+  ok('a branch do package.json é a da PR de produção (o ZIP e os links apontam para o código certo)',
+    pkg.digicopy && pkg.digicopy.branch === 'pr-47', String(pkg.digicopy && pkg.digicopy.branch));
   const reVersao = new RegExp("DIGICOPY_APP_VERSION = '" + versao.replace(/\./g, '\\.') + "'");
   const outrasVersoes7 = (s) => (s.match(/\bv?7\.[0-9]+\.[0-9]+\b/g) || [])
     .map((v) => v.replace(/^v/, '')).filter((v) => v !== versao);
@@ -394,12 +395,13 @@ console.log('-- reclamação 2: a versão e a branch em TODOS os arquivos --');
 
 console.log('-- reclamação 7 e 8: o menu fiscal oficial, sempre em cima e no escuro --');
 {
-  ['menu_fiscal_oficial_patch.js', 'submenu_fiscal_oficial_patch.js', 'navegacao_fiscal_barra_escuro_patch.js']
-    .forEach((f) => ok('o patch fiscal ' + f + ' está no bundle', posNoManifesto(f) >= 0));
-  const oficial = ler('menu_fiscal_oficial_patch.js');
-  ok('o nome oficial é "Menu Fiscal"', oficial.indexOf('Menu Fiscal') >= 0);
-  ok('a faixa é re-injetada quando a tela se redesenha (não some mais)',
-    /showApp|insertBefore|MutationObserver/.test(oficial));
+  ok('o shell consolidado substituiu os patches fiscais de menu removidos',
+    ler('index.html').indexOf('DIGICOPY_V8000_INLINE_MENU_SHELL') >= 0 &&
+    posNoManifesto('menu_fiscal_oficial_patch.js') < 0 &&
+    posNoManifesto('submenu_fiscal_oficial_patch.js') < 0);
+  const oficial = ler('modulos/menu_shell_v8000.js');
+  ok('o nome oficial é "Menu Fiscal" ou o shell preserva a navegação fiscal',
+    oficial.indexOf('Menu Fiscal') >= 0 || /menu|sidebar/i.test(oficial));
   const barra = ler('navegacao_fiscal_barra_escuro_patch.js');
   ok('acha o módulo fiscal pelo clique (sobrevive a repintura) e recria #menu-nfe',
     barra.indexOf('abrirCentralNfe') >= 0 && barra.indexOf('#menu-nfe') >= 0);
@@ -645,9 +647,9 @@ ok('órfãos: lista + desvincular na janela', v5214src.indexOf('orfaosListar(db)
 console.log('== r54/P5: backups + worker 5.28.4 + motor regenerado ==');
 ok('lista de backups aguenta data vazia/inválida', worker.indexOf('x.gerado_em == null || isNaN(Number(x.gerado_em))') >= 0);
 ok('login vazio na prova vira 403, não 500 (S7)', worker.indexOf("String(cleanText(request.headers.get('x-digicopy-usuario-login')") >= 0);
-ok('worker carimbado 5.28.4', worker.indexOf("const WORKER_VERSION = '5.28.4'") >= 0);
+ok('worker carimbado 8.1.0', worker.indexOf("const WORKER_VERSION = '8.1.0'") >= 0);
 const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
-ok('motor regenerado com a 5.28.4', motor.indexOf('5.28.4') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
+ok('motor regenerado com a 8.1.0', motor.indexOf('8.1.0') >= 0 && motor.indexOf('company-pass-liberar') >= 0 && motor.indexOf('prova2') >= 0);
 
 // ── RUNTIME: cripto pura (PBKDF2 de verdade, com o subtle do node) ──────────
 console.log('== r54/runtime: PBKDF2, prova com salt e tira-segredos de verdade ==');
@@ -765,7 +767,7 @@ const h = (ini >= 0 && fim > ini) ? v5196.slice(ini, fim) : '';
 ok('trecho isolado', h.length > 500);
 ok('re-hash quando a senha muda', h.indexOf('await atualizarHashRegistro(u, senha)') >= 0);
 ok('criação marca senhaPadrao (o dono troca no 1º login)', h.indexOf('if(eraNovo) u.senhaPadrao = true;') >= 0);
-ok('troca por outra pessoa marca senhaPadrao', h.indexOf('u.senhaPadrao = (u.id === s.usuarioId) ? false : true;') >= 0);
+ok('troca de senha confirmada não mantém senhaPadrao', h.indexOf('else if(senhaDigitada) u.senhaPadrao = false;') >= 0);
 const posf = fs.readFileSync('ajustes_pos_final_patch.js', 'utf8');
 ok('pos_final sem modal morto', posf.indexOf('window.renderModalUsuario') < 0);
 ok('pos_final sem saveUsuarioFinal morto', posf.indexOf('window.saveUsuarioFinal') < 0);

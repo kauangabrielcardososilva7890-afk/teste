@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.28.4   (igual ao src/index.js)
- * GERADO EM: 2026-10-02 16:19 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 8.1.0   (igual ao src/index.js)
+ * GERADO EM: 2026-10-03 04:11 UTC
  * sha256 do código (sem este cabeçalho):
- *   f1807d009f919c2181b13e60f88db2410a4544affd16c45b1a4c8e375a3cc1d7
+ *   2956efba8edec762a2981047e15e1c1ecd36c5840db55a8f95b518f20191a69d
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -35,8 +35,18 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.28.4";
+var WORKER_VERSION = "8.1.0";
 var MAX_MUTATIONS = 100;
+var AUTH_RATE_POLICIES = Object.freeze({
+  "/v1/check-pass": { windowMs: 6e4, maxAttempts: 8, maxFailures: 5, baseBlockMs: 6e4, maxBlockMs: 15 * 6e4 },
+  "/v1/enroll-cnpj": { windowMs: 6e4, maxAttempts: 6, maxFailures: 4, baseBlockMs: 6e4, maxBlockMs: 15 * 6e4 },
+  "/v1/site-login": { windowMs: 6e4, maxAttempts: 8, maxFailures: 5, baseBlockMs: 6e4, maxBlockMs: 15 * 6e4 },
+  "/v1/gerente-login": { windowMs: 6e4, maxAttempts: 5, maxFailures: 3, baseBlockMs: 5 * 6e4, maxBlockMs: 60 * 6e4 },
+  "/v1/company-pass-liberar": { windowMs: 6e4, maxAttempts: 5, maxFailures: 3, baseBlockMs: 5 * 6e4, maxBlockMs: 60 * 6e4 },
+  "/v1/setup": { windowMs: 6e4, maxAttempts: 5, maxFailures: 3, baseBlockMs: 5 * 6e4, maxBlockMs: 60 * 6e4 },
+  "/v1/recover": { windowMs: 6e4, maxAttempts: 5, maxFailures: 3, baseBlockMs: 5 * 6e4, maxBlockMs: 60 * 6e4 }
+});
+var __AUTH_RATE_TABLE_OK = false;
 var MAX_CHANGE_LIMIT = 1e3;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
 var JSON_HEADERS = {
@@ -44,6 +54,9 @@ var JSON_HEADERS = {
   "cache-control": "no-store",
   "x-content-type-options": "nosniff",
   "referrer-policy": "no-referrer",
+  "content-security-policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "strict-transport-security": "max-age=31536000; includeSubDomains",
   "access-control-allow-origin": "*",
   "access-control-allow-headers": "authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova, x-digicopy-usuario-prova2",
   "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
@@ -60,10 +73,11 @@ var ApiError = class extends Error {
   static {
     __name(this, "ApiError");
   }
-  constructor(status, code, message) {
+  constructor(status, code, message, retryAfter = 0) {
     super(message);
     this.status = status;
     this.code = code;
+    this.retryAfter = Number(retryAfter) || 0;
   }
 };
 function cleanText(value, max = 120) {
@@ -95,6 +109,77 @@ async function sameSecret(left, right) {
   return diff === 0;
 }
 __name(sameSecret, "sameSecret");
+async function garantirTabelaAuthRate(env) {
+  if (__AUTH_RATE_TABLE_OK) return;
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS auth_rate_limits (key_hash TEXT NOT NULL, endpoint TEXT NOT NULL, window_started_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, failures INTEGER NOT NULL DEFAULT 0, blocked_until INTEGER NOT NULL DEFAULT 0, last_seen_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (key_hash, endpoint))`);
+  await env.DB.exec(`CREATE INDEX IF NOT EXISTS idx_auth_rate_blocked ON auth_rate_limits(blocked_until)`);
+  await env.DB.prepare("DELETE FROM auth_rate_limits WHERE last_seen_at < ?").bind(Date.now() - 24 * 60 * 60 * 1e3).run();
+  __AUTH_RATE_TABLE_OK = true;
+}
+__name(garantirTabelaAuthRate, "garantirTabelaAuthRate");
+function authClientIp(request) {
+  const value = String(request.headers.get("CF-Connecting-IP") || "").trim();
+  return value && value.length <= 128 ? value : "unknown";
+}
+__name(authClientIp, "authClientIp");
+async function authRateKey(endpoint, kind, value) {
+  return sha256("digicopy-auth-rate-v1|" + endpoint + "|" + kind + "|" + String(value || "unknown"));
+}
+__name(authRateKey, "authRateKey");
+async function iniciarTentativaAuth(request, env, endpoint, identity = "") {
+  const policy = AUTH_RATE_POLICIES[endpoint];
+  if (!policy) return { falhar: /* @__PURE__ */ __name(async () => {
+  }, "falhar"), sucesso: /* @__PURE__ */ __name(async () => {
+  }, "sucesso") };
+  await garantirTabelaAuthRate(env);
+  const rawKeys = [["ip", authClientIp(request)]];
+  const normalizedIdentity = String(identity || "").replace(/\D/g, "");
+  if (normalizedIdentity) rawKeys.push(["identity", normalizedIdentity]);
+  const keys = [];
+  const now = Date.now();
+  for (const [kind, value] of rawKeys) {
+    const keyHash = await authRateKey(endpoint, kind, value);
+    keys.push(keyHash);
+    const row = await env.DB.prepare("SELECT window_started_at AS windowStartedAt, attempts, failures, blocked_until AS blockedUntil FROM auth_rate_limits WHERE key_hash = ? AND endpoint = ? LIMIT 1").bind(keyHash, endpoint).first();
+    const activeWindow = row && Number(row.windowStartedAt) + policy.windowMs > now;
+    const blockedUntil = activeWindow ? Number(row.blockedUntil) || 0 : 0;
+    if (blockedUntil > now) {
+      const retryAfter = Math.max(1, Math.ceil((blockedUntil - now) / 1e3));
+      throw new ApiError(429, "AUTH_RATE_LIMITED", "Muitas tentativas. Aguarde antes de tentar novamente.", retryAfter);
+    }
+    const attempts = activeWindow ? Number(row.attempts) || 0 : 0;
+    if (attempts >= policy.maxAttempts) {
+      const retryAfter = Math.max(1, Math.ceil((Number(row.windowStartedAt) + policy.windowMs - now) / 1e3));
+      throw new ApiError(429, "AUTH_RATE_LIMITED", "Limite tempor\xE1rio de tentativas atingido. Aguarde antes de tentar novamente.", retryAfter);
+    }
+    await env.DB.prepare(`INSERT INTO auth_rate_limits (key_hash, endpoint, window_started_at, attempts, failures, blocked_until, last_seen_at)
+      VALUES (?, ?, ?, 1, 0, 0, ?)
+      ON CONFLICT(key_hash, endpoint) DO UPDATE SET
+        window_started_at = CASE WHEN auth_rate_limits.window_started_at + ? <= ? THEN excluded.window_started_at ELSE auth_rate_limits.window_started_at END,
+        attempts = CASE WHEN auth_rate_limits.window_started_at + ? <= ? THEN 1 ELSE auth_rate_limits.attempts + 1 END,
+        failures = CASE WHEN auth_rate_limits.window_started_at + ? <= ? THEN 0 ELSE auth_rate_limits.failures END,
+        blocked_until = CASE WHEN auth_rate_limits.window_started_at + ? <= ? THEN 0 ELSE auth_rate_limits.blocked_until END,
+        last_seen_at = excluded.last_seen_at`).bind(keyHash, endpoint, now, now, policy.windowMs, now, policy.windowMs, now, policy.windowMs, now, policy.windowMs, now).run();
+  }
+  return {
+    falhar: /* @__PURE__ */ __name(async () => {
+      for (const keyHash of keys) {
+        const row = await env.DB.prepare("SELECT window_started_at AS windowStartedAt, failures FROM auth_rate_limits WHERE key_hash = ? AND endpoint = ? LIMIT 1").bind(keyHash, endpoint).first();
+        const failures = (Number(row && row.failures) || 0) + 1;
+        const block = failures >= policy.maxFailures;
+        const exponent = Math.min(6, Math.max(0, failures - policy.maxFailures));
+        const blockedUntil = block ? Date.now() + Math.min(policy.maxBlockMs, policy.baseBlockMs * 2 ** exponent) : 0;
+        await env.DB.prepare("UPDATE auth_rate_limits SET failures = ?, blocked_until = ?, last_seen_at = ? WHERE key_hash = ? AND endpoint = ?").bind(failures, blockedUntil, Date.now(), keyHash, endpoint).run();
+      }
+    }, "falhar"),
+    sucesso: /* @__PURE__ */ __name(async () => {
+      for (const keyHash of keys) {
+        await env.DB.prepare("DELETE FROM auth_rate_limits WHERE key_hash = ? AND endpoint = ?").bind(keyHash, endpoint).run();
+      }
+    }, "sucesso")
+  };
+}
+__name(iniciarTentativaAuth, "iniciarTentativaAuth");
 async function readBody(request) {
   const raw = await request.text();
   if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
@@ -293,6 +378,11 @@ async function handleHealth(env) {
   });
 }
 __name(handleHealth, "handleHealth");
+async function handleSetupStatus(env) {
+  const row = await env.DB.prepare("SELECT 1 AS configured FROM devices WHERE excluido_em IS NULL LIMIT 1").first();
+  return json({ ok: true, configured: !!row });
+}
+__name(handleSetupStatus, "handleSetupStatus");
 async function handleSetup(request, env) {
   if (!env.SETUP_SECRET) {
     throw new ApiError(503, "SETUP_NOT_CONFIGURED", "Segredo de ativa\xE7\xE3o ainda n\xE3o configurado.");
@@ -1660,8 +1750,29 @@ async function route(request, env, ctx) {
   if (request.method === "GET" && url.pathname === "/orcamento") return handleOrcamentoGet(url, env);
   if (request.method === "POST" && url.pathname === "/orcamento") return handleOrcamentoPost(request, env, ctx);
   if (!env.DB) throw new ApiError(503, "DATABASE_NOT_BOUND", "Banco D1 n\xE3o vinculado.");
-  if (request.method === "POST" && url.pathname === "/v1/setup") return handleSetup(request, env);
-  if (request.method === "POST" && url.pathname === "/v1/recover") return handleRecovery(request, env);
+  if (request.method === "GET" && url.pathname === "/v1/setup-status") return handleSetupStatus(env);
+  if (request.method === "POST" && url.pathname === "/v1/setup") {
+    const tentativa = await iniciarTentativaAuth(request, env, "/v1/setup");
+    try {
+      const r = await handleSetup(request, env);
+      await tentativa.sucesso();
+      return r;
+    } catch (error) {
+      await tentativa.falhar();
+      throw error;
+    }
+  }
+  if (request.method === "POST" && url.pathname === "/v1/recover") {
+    const tentativa = await iniciarTentativaAuth(request, env, "/v1/recover");
+    try {
+      const r = await handleRecovery(request, env);
+      await tentativa.sucesso();
+      return r;
+    } catch (error) {
+      await tentativa.falhar();
+      throw error;
+    }
+  }
   if (request.method === "POST" && url.pathname === "/v1/invites") return handleCreateInvite(request, env);
   if (request.method === "POST" && url.pathname === "/v1/enroll") return handleEnroll(request, env);
   if (request.method === "POST" && url.pathname === "/v1/changes") return handlePush(request, env, ctx);
@@ -1715,13 +1826,19 @@ async function route(request, env, ctx) {
     const cnpj0 = soDigitos(body0 && body0.cnpj || "");
     const senha0 = String(body0 && body0.senha || "");
     if (!cnpjValido(cnpj0) || !senha0) throw new ApiError(400, "DADOS_NECESSARIOS", "Informe o CNPJ da loja e a senha de conex\xE3o ou do gerente.");
+    const tentativa = await iniciarTentativaAuth(request, env, "/v1/check-pass", cnpj0);
     const seg0 = await lerSegredos(env);
     if (!seg0 || !seg0.conn_hash && !seg0.gerente_hash) {
+      await tentativa.sucesso();
       return json({ ok: false, senhaDefinida: false, aviso: 'As senhas ainda n\xE3o foram definidas. O administrador define no painel Nuvem, cart\xE3o "Senhas de conex\xE3o (CNPJ) e do Gerente".' });
     }
     const conexaoOk = !!(seg0.conn_hash && await conferirSenha(env, cnpj0, senha0, "conn_hash"));
     const gerenteOk = !!(seg0.gerente_hash && seg0.gerente_hash !== seg0.conn_hash && cnpj0 === seg0.owner_cnpj && await conferirSenha(env, cnpj0, senha0, "gerente_hash"));
-    if (!conexaoOk && !gerenteOk) return json({ ok: false, senhaDefinida: true, aviso: "CNPJ ou senha de conex\xE3o/gerente incorretos. Confira e tente de novo." }, 403);
+    if (!conexaoOk && !gerenteOk) {
+      await tentativa.falhar();
+      return json({ ok: false, senhaDefinida: true, aviso: "CNPJ ou senha de conex\xE3o/gerente incorretos. Confira e tente de novo." }, 403);
+    }
+    await tentativa.sucesso();
     return json({
       ok: true,
       senhaDefinida: true,
@@ -1735,9 +1852,14 @@ async function route(request, env, ctx) {
     const cnpj = soDigitos(body && body.cnpj || "");
     const senhaGerente = String(body && body.senhaGerente || "");
     if (!cnpjValido(cnpj) || !senhaGerente) throw new ApiError(400, "DADOS_NECESSARIOS", "Informe CNPJ e senha do gerente.");
+    const tentativa = await iniciarTentativaAuth(request, env, "/v1/company-pass-liberar", cnpj);
     const seg = await lerSegredos(env);
     const ok = !!(seg && seg.gerente_hash && cnpj === seg.owner_cnpj && await conferirSenha(env, cnpj, senhaGerente, "gerente_hash"));
-    if (!ok) throw new ApiError(403, "NAO_LIBERADO", "Senha do gerente n\xE3o confere.");
+    if (!ok) {
+      await tentativa.falhar();
+      throw new ApiError(403, "NAO_LIBERADO", "Senha do gerente n\xE3o confere.");
+    }
+    await tentativa.sucesso();
     return json({ ok: true });
   }
   if (request.method === "POST" && url.pathname === "/v1/enroll-cnpj") {
@@ -1747,12 +1869,16 @@ async function route(request, env, ctx) {
     const senha = String(body && body.senha || "");
     const name = cleanText(body && body.deviceName || "", 80);
     if (!cnpjValido(cnpj) || !senha || !name) throw new ApiError(400, "DADOS_NECESSARIOS", "Informe CNPJ (14 d\xEDgitos), senha de conex\xE3o e o nome do computador.");
+    const tentativa = await iniciarTentativaAuth(request, env, "/v1/enroll-cnpj", cnpj);
     const seg = await lerSegredos(env);
     let role = "device";
     let via = "cnpj";
     if (!await conferirSenha(env, cnpj, senha, "conn_hash")) {
       const gerOk = !!(seg && seg.gerente_hash && seg.conn_hash && seg.gerente_hash !== seg.conn_hash && cnpj === seg.owner_cnpj && await conferirSenha(env, cnpj, senha, "gerente_hash"));
-      if (!gerOk) throw new ApiError(403, "CNPJ_OU_SENHA_INVALIDOS", "CNPJ ou senha de conex\xE3o incorretos.");
+      if (!gerOk) {
+        await tentativa.falhar();
+        throw new ApiError(403, "CNPJ_OU_SENHA_INVALIDOS", "CNPJ ou senha de conex\xE3o incorretos.");
+      }
       role = "admin";
       via = "cnpj-gerente";
     }
@@ -1768,6 +1894,7 @@ async function route(request, env, ctx) {
       env.DB.prepare(`INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(id, name, tokenHash, role, now, now),
       env.DB.prepare(`INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at) VALUES ('device_enrolled', ?, ?, ?, ?)`).bind(id, id, JSON.stringify({ name, role, via, cnpj }), now)
     ]);
+    await tentativa.sucesso();
     return json({ ok: true, activation: via, device: { id, name, role }, token }, 201);
   }
   if (request.method === "POST" && url.pathname === "/v1/site-login") {
@@ -1782,8 +1909,13 @@ async function route(request, env, ctx) {
       cnpj = soDigitos(body && body.cnpj || "");
       senha = String(body && body.senha || "");
     }
+    const tentativa = await iniciarTentativaAuth(request, env, "/v1/site-login", cnpj);
     const okc = cnpjValido(cnpj) && await conferirSenha(env, cnpj, senha, "conn_hash");
-    if (!okc) return paginaLoginSite("CNPJ ou senha de conex\xE3o incorretos.");
+    if (!okc) {
+      await tentativa.falhar();
+      return paginaLoginSite("CNPJ ou senha de conex\xE3o incorretos.");
+    }
+    await tentativa.sucesso();
     await upsertEmpresa(env, cnpj, "");
     const token = randomToken("ss_");
     const now = Date.now();
@@ -1801,12 +1933,20 @@ async function route(request, env, ctx) {
     const cnpj = soDigitos(body && body.cnpj || "");
     const senha = String(body && body.senha || "");
     if (!cnpjValido(cnpj) || !senha) throw new ApiError(400, "DADOS_NECESSARIOS", "Informe CNPJ e a senha do gerente.");
+    const tentativa = await iniciarTentativaAuth(request, env, "/v1/gerente-login", cnpj);
     const seg = await lerSegredos(env);
     if (!seg || !seg.owner_cnpj || !seg.gerente_hash) {
       throw new ApiError(409, "GERENTE_NAO_DEFINIDO", 'A senha do gerente ainda n\xE3o foi definida. Abra o sistema como administrador \u2192 Nuvem \u2192 cart\xE3o "Senhas de conex\xE3o (CNPJ) e do Gerente" \u2192 Salvar senhas na nuvem.');
     }
-    if (cnpj !== seg.owner_cnpj) throw new ApiError(403, "GERENTE_SO_DONO", "O gerente de atualiza\xE7\xF5es s\xF3 entra com o CNPJ da empresa dona (" + seg.owner_nome + "). Este CNPJ digitado n\xE3o \xE9 o dela.");
-    if (!await conferirSenha(env, cnpj, senha, "gerente_hash")) throw new ApiError(403, "SENHA_GERENTE_INVALIDA", "Senha do gerente incorreta. Confira e tente de novo \u2014 \xE9 a senha definida no cart\xE3o de senhas do painel Nuvem.");
+    if (cnpj !== seg.owner_cnpj) {
+      await tentativa.falhar();
+      throw new ApiError(403, "GERENTE_SO_DONO", "O gerente de atualiza\xE7\xF5es s\xF3 entra com o CNPJ da empresa dona (" + seg.owner_nome + "). Este CNPJ digitado n\xE3o \xE9 o dela.");
+    }
+    if (!await conferirSenha(env, cnpj, senha, "gerente_hash")) {
+      await tentativa.falhar();
+      throw new ApiError(403, "SENHA_GERENTE_INVALIDA", "Senha do gerente incorreta. Confira e tente de novo \u2014 \xE9 a senha definida no cart\xE3o de senhas do painel Nuvem.");
+    }
+    await tentativa.sucesso();
     const token = randomToken("gr_");
     const now = Date.now();
     const expira = now + 7 * 24 * 3600 * 1e3;
@@ -2516,11 +2656,10 @@ var index_default = {
       return await route(request, env, ctx);
     } catch (error) {
       if (error instanceof ApiError) {
-        return json({ ok: false, error: error.code, message: error.message }, error.status);
+        return json({ ok: false, error: error.code, message: error.message }, error.status, error.retryAfter ? { "retry-after": String(error.retryAfter) } : {});
       }
       console.error("DIGICOPY_API_ERROR", error);
-      const motivo = String(error && error.message || error || "").slice(0, 200);
-      return json({ ok: false, error: "INTERNAL_ERROR", message: "Erro interno da API." + (motivo ? " Motivo: " + motivo : ""), detail: motivo }, 500);
+      return json({ ok: false, error: "INTERNAL_ERROR", message: "Erro interno da API." }, 500);
     }
   },
   // Relógio da própria nuvem: todo dia 18:30 de São Paulo faz o backup
@@ -2535,7 +2674,7 @@ var index_default = {
     }
   }
 };
-var __test = { freioDecide, PLANO_PAGO, PLANO_GRATIS, hojeUTC, cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
+var __test = { AUTH_RATE_POLICIES, freioDecide, PLANO_PAGO, PLANO_GRATIS, hojeUTC, cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
 export {
   __test,
   index_default as default

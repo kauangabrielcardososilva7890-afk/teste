@@ -236,7 +236,7 @@ window.saveUsuarioFinal = async function(id){
     if(typeof logAction === 'function') logAction('usuario', 'criar', u.id, 'Criado usuário ' + login + ' perfil ' + perfil);
   }
   // r58 (auditoria, bug #0 — espelha r54 P1): senha mudou (ou não tinha hash) → re-hash ANTES de gravar.
-  // Bandeira: senha que OUTRA pessoa escolheu (criação ou troca por admin) → o dono troca no próximo login.
+  // Bandeira: criação exige troca; uma senha explicitamente trocada é confirmada.
   const precisaHash = eraNovo || !u.senhaHash || (senhaAntiga !== senha);
   if(precisaHash && typeof atualizarHashRegistro === 'function'){ try{ await atualizarHashRegistro(u, senha); }catch(e){} }
   // Qualquer senha explicitamente informada no cadastro é uma troca confirmada.

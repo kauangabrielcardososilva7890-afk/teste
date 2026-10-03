@@ -86,7 +86,10 @@ function abrirSetupControlado(){
   }
   Promise.resolve(sec.remotoPermiteSetup()).then(function(ok){
     if(ok){ renderSetup(); return; }
-    try{ if(typeof toast === 'function') toast('A nuvem já está configurada ou não pôde ser verificada. Use o login normal.', 'error'); }catch(e){}
+    // Quando o portão de conexão já está ativo, o login normal ficará atrás
+    // dele. Não abrir outro aviso/modal sobre a mesma tela: isso causava a
+    // sobreposição observada no navegador autenticado.
+    try{ if(!document.getElementById('v5262-portao') && typeof toast === 'function') toast('A nuvem já está configurada ou não pôde ser verificada. Use o login normal.', 'error'); }catch(e){}
     if(typeof showLoginAnterior === 'function') showLoginAnterior.call(window);
   }).catch(function(){
     try{ if(typeof toast === 'function') toast('Não foi possível verificar a nuvem. O setup foi bloqueado.', 'error'); }catch(e){}

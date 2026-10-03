@@ -102,7 +102,7 @@ html = html.replace(
 // Cache-busting: todo recurso LOCAL versionado pelo app recebe ?v=<versao>.
 // Bibliotecas de terceiros em assets/vendor mantêm a versão própria delas.
 html = html.replace(
-  /(<script\s[^>]*src=")\.\/([A-Za-z0-9_.\-/]+\.js)(\?v=[^"]*)?(")/g,
+  /(<script\s[^>]*src="\.\/([A-Za-z0-9_.\-/]+\.js)(\?[^\"]*)?("))/g,
   (m, pre, arquivo, _q, pos) => {
     if (arquivo.startsWith('assets/vendor/')) return m;
     if (arquivo === 'app.bundle.js') return m; // tratado logo abaixo, pelo HASH
@@ -123,7 +123,7 @@ function hashDoBundle(){
 }
 const vBundle = hashDoBundle();
 html = html.replace(
-  /(\.\/app\.bundle\.js)(\?v=[^"]*)?(")/g,
+  /(\.\/app\.bundle\.js)(\?[^\"]*)?(")/g,
   // formato: ?v=<versão>-<hash do conteúdo>. A versão continua na URL (todo o
   // resto do sistema e os testes já dependem dela) e o hash é o que faz o
   // navegador baixar de novo a cada correção — sem depender de bump de versão.
