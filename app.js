@@ -543,7 +543,11 @@ function setPageHeader(title, subtitle){
 }
 
 function navigateTo(view){
-  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  document.querySelectorAll('.view').forEach(v=>{
+    v.classList.add('hidden');
+    v.style.removeProperty('display');
+    v.style.removeProperty('visibility');
+  });
 
   const target=document.getElementById('view-'+view);
   if(target) target.classList.remove('hidden');

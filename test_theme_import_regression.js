@@ -5,6 +5,7 @@ const index = fs.readFileSync('index.html', 'utf8');
 const manifest = fs.readFileSync('bundle-manifest.json', 'utf8');
 const fluxos = fs.readFileSync('fluxos_operacionais_patch.js', 'utf8');
 const app = fs.readFileSync('app.js', 'utf8');
+assert(app.includes("v.style.removeProperty('display')") && app.includes("v.style.removeProperty('visibility')"), 'navegação limpa estilos inline das telas ocultadas');
 
 assert(index.includes('var shellRefreshPending=false'), 'shell usa atualização coalescida');
 assert(index.includes('new MutationObserver(scheduleShellRefresh)'), 'observer usa scheduler');

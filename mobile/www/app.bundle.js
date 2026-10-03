@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 219 | sha256: e061cec93820660c
+ * scripts: 219 | sha256: 617f7998780c6da0
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -795,7 +795,11 @@ function setPageHeader(title, subtitle){
 }
 
 function navigateTo(view){
-  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  document.querySelectorAll('.view').forEach(v=>{
+    v.classList.add('hidden');
+    v.style.removeProperty('display');
+    v.style.removeProperty('visibility');
+  });
 
   const target=document.getElementById('view-'+view);
   if(target) target.classList.remove('hidden');
