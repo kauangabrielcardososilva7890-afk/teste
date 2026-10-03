@@ -1617,6 +1617,10 @@ window.importarJsonDBeaver = function(dados){
     return;
   }
   const executar = function(){
+    if(window.__importacaoLegadoEmAndamento || window.__fbImportEmAndamento){
+      toast('Já existe uma importação em andamento. Aguarde o término antes de iniciar outra.','info');
+      return;
+    }
     const rawData = {};
     for(const [tabela, registros] of Object.entries(dadosImportar)){
       if(!legacyTabelaPermitida(tabela)) continue;
@@ -1626,12 +1630,15 @@ window.importarJsonDBeaver = function(dados){
       toast('Nenhuma tabela possui destino validado no ERP. Nada foi gravado.','info');
       return;
     }
+    window.__importacaoLegadoEmAndamento=true;
     try{
       fbImportToErp(rawData);
       toast('Importação concluída!','success');
     }catch(e){
       console.error('[IMPORT] falha ao importar JSON',e);
       toast('Falha ao importar: '+(e.message||e),'error');
+    } finally {
+      window.__importacaoLegadoEmAndamento=false;
     }
   };
   const msg=`Importar ${Object.keys(dadosImportar).length} tabelas para o ERP?\n\nIsso vai adicionar os dados aos módulos existentes ou criar novos módulos.`;
@@ -1716,6 +1723,14 @@ window.handleMultipleUpload = async function(files, inputEl){
   const log = qs('#upload-log');
 
   if(!files || files.length === 0) return;
+  if(window.__uploadLeituraEmAndamento){
+    if(status) status.innerHTML='<p class="text-amber-600 font-bold">Já existe uma leitura em andamento. Aguarde a conclusão antes de escolher os arquivos novamente.</p>';
+    return;
+  }
+  const unicos = Array.from(files).filter((file, i, all) => i === all.findIndex(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified));
+  files = unicos;
+  window.__uploadLeituraEmAndamento = true;
+  window._rawDataParaImportar = null;
   console.log('[UPLOAD] inicio: '+files.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
 
   try {
@@ -1724,7 +1739,7 @@ window.handleMultipleUpload = async function(files, inputEl){
     if(status) status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Iniciando leitura de '+files.length+' arquivo(s)...</p>';
 
     const sess = getSession();
-    if(!sess) { if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
+    if(!sess) { window.__uploadLeituraEmAndamento=false; if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
 
     const total = files.length;
     let processados = 0;
@@ -1768,8 +1783,9 @@ window.handleMultipleUpload = async function(files, inputEl){
               if(log) log.innerHTML += '<div class="text-slate-500">↷ '+file.name+' → <b>'+tabelaKey+'</b> ignorada ('+motivo+')</div>';
               continue;
             }
-            rawData[tabelaKey] = { data: value, error: null };
-            tabelasImportadas[tabelaKey] = value.length;
+            if(rawData[tabelaKey] && Array.isArray(rawData[tabelaKey].data)) rawData[tabelaKey].data = rawData[tabelaKey].data.concat(value);
+            else rawData[tabelaKey] = { data: value, error: null };
+            tabelasImportadas[tabelaKey] = rawData[tabelaKey].data.length;
             totalRegistros += value.length;
             if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+tabelaKey+'</b> ('+value.length+' registros)</div>';
             }
@@ -1802,7 +1818,9 @@ window.handleMultipleUpload = async function(files, inputEl){
       </div>`;
     }
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
+    window.__uploadLeituraEmAndamento = false;
   } catch(e){
+    window.__uploadLeituraEmAndamento = false;
     console.error('[UPLOAD] falha geral', e);
     if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+e.message+'</p>';
   }
@@ -1813,7 +1831,7 @@ window.importarTudoDeUmaVez = function(){
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   const tabelas = Object.keys(rawData);
   const totalReg = tabelas.reduce(function(s,t){return s+(rawData[t].data?.length||0)},0);
-  if(window.__importacaoLegadoEmAndamento){
+  if(window.__importacaoLegadoEmAndamento || window.__fbImportEmAndamento){
     toast('Já existe uma importação em andamento. Aguarde o resultado antes de enviar outro lote.','info');
     return;
   }

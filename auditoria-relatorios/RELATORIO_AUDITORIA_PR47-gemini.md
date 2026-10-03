@@ -1,6 +1,6 @@
 # RELATÓRIO DE AUDITORIA COMPLETA E SOMENTE DE LEITURA
-**Projeto:** DigiCopy ERP (Branch: `pr-47` / `auditoria-correcao-pr47` | Versão: `v8.1.0`)  
-**Data:** 03 de Outubro de 2026  
+**Projeto:** DigiCopy ERP (Branch: `pr-47` / `auditoria-correcao-pr47` | Versão: `v8.1.0`)
+**Data:** 03 de Outubro de 2026
 **Status do Workspace:** Limpo, íntegro e inalterado (Nenhum arquivo modificado, criado, deletado ou commitado no repositório).
 
 ---

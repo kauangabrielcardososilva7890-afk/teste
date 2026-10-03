@@ -21,8 +21,8 @@ Já localizei os arquivos centrais. Alguns achados têm descrições que diverge
     })();
 • Ran rg --files | rg 'app\.bundle|\.js$' | Select-Object -First 80; rg -n -e 'a1Nuvem' -e 'escolaAuth' -e 'localStorage\.setItem\(ESCOLA_LOGIN_KEY' -e 'ENTITY_RE' -e …
   └ SHA256          D793181E64F1BE70D9D45C22AC902ED1C7F60D04BCE6232AE698454010503A03       C:\Users\User\Downloads\teste...
-    
-    
+
+
 • Ran rg -n 'salvarLancamentoContador|estornar|fatur|p\.contadores|anterior|status.*aberta|status.*faturado|novaLeituraDefinitiva|function.*doLoginUser|doLoginUser\s*=…
   └ window.CONTRATOS_LEITURAS_DEFINITIVO_PURE={ medidorPadrao, calcMed };
     console.log('[DIGICOPY] contratos_leituras_definitivo_patch.js v4.9.44 carregado');
@@ -36,7 +36,7 @@ Já localizei os arquivos centrais. Alguns achados têm descrições que diverge
     ajustes_v5250_leitura_overhaul_patch.js:187:      l.valorExcedente=l.valorTotal;
     ajustes_v5250_leitura_overhaul_patch.js:218:      btn.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); window.__v5250fatDaLista=true; window.estorn…
 • Ran Get-Content cloudflare_data_sync_patch.js | Select-Object -Skip 300 -First 80; Get-Content ajustes_v5250_leitura_overhaul_patch.js | Select-Object -Skip 25 -Firs…
-  └ 
+  └
     function randomToken(prefix = '') {
       const bytes = new Uint8Array(32);
 • Failed (exit 1) rg -n 'escolaAuth|a1Nuvem|&gt|localStorage\.setItem\(ESCOLA_LOGIN_KEY' --glob '*.js' --glob '!app.bundle.js' --glob '!mobile/**'; rg -n 'a1Nuvem|nfe-…

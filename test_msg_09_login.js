@@ -370,8 +370,8 @@ console.log('-- reclamação 2: a versão e a branch em TODOS os arquivos --');
   const pkg = JSON.parse(ler('package.json'));
   const versao = String(pkg.version || '');
   ok('package.json tem versão de verdade (x.y.z)', /^\d+\.\d+\.\d+$/.test(versao), versao);
-  ok('a branch do package.json é a da PR de produção (o ZIP e os links apontam para o código certo)',
-    pkg.digicopy && pkg.digicopy.branch === 'pr-47', String(pkg.digicopy && pkg.digicopy.branch));
+  ok('a branch do package.json é a branch publicada da PR (o ZIP e os links apontam para o código certo)',
+    pkg.digicopy && pkg.digicopy.branch === 'auditoria-correcao-pr47', String(pkg.digicopy && pkg.digicopy.branch));
   const reVersao = new RegExp("DIGICOPY_APP_VERSION = '" + versao.replace(/\./g, '\\.') + "'");
   const outrasVersoes7 = (s) => (s.match(/\bv?7\.[0-9]+\.[0-9]+\b/g) || [])
     .map((v) => v.replace(/^v/, '')).filter((v) => v !== versao);

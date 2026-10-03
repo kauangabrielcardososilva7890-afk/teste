@@ -14,7 +14,7 @@ A arquitetura tem frontend JavaScript carregado em camadas conforme `bundle-mani
 
 ### AUD-001 — A criação de leitura pelo menu geral contorna a regra de uma leitura aberta por contrato
 
-**Classificação:** CONFIRMADO  
+**Classificação:** CONFIRMADO
 **Gravidade:** ALTA
 
 **Local:** `ajustes_v52436_leitura_uma_aberta_patch.js:58`; `contratos_leituras_definitivo_patch.js:120`.
