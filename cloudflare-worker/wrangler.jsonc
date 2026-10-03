@@ -6,11 +6,25 @@
   "observability": {
     "enabled": true
   },
+  // v5.24.28 — depósito dos .exe das atualizações (pedido dele: anexa o .exe
+  // DIRETO no portal). Se o deploy falhar com erro de R2: crie o bucket
+  // "digicopy-downloads" no painel (R2 → Create bucket, Standard) e rode de novo.
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "digicopy-downloads"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "digicopy-erp",
       "database_id": "b6c32346-d6d5-475a-b9c3-40782b525bae"
     }
-  ]
+  ],
+  // Backup diário sozinho na nuvem: 21:30 UTC = 18:30 em São Paulo (sem
+  // horário de verão no Brasil). PC da loja pode estar desligado.
+  "triggers": {
+    "crons": ["30 21 * * *"]
+  }
 }

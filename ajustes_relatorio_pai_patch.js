@@ -164,8 +164,21 @@ function ajustarBuscaVenda(){
   const pi=document.getElementById('vos-prod-search'); if(pi&&!document.getElementById('vos-prod-lupa')){ pi.removeAttribute('oninput'); pi.oninput=null; pi.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault(); window.vosVendaSearchProd(pi.value);} }; pi.insertAdjacentHTML('afterend','<button id="vos-prod-lupa" type="button" onclick="vosVendaSearchProd(document.getElementById(\'vos-prod-search\').value)" class="absolute right-2 top-[30px] h-8 px-3 rounded-lg bg-[#0a1e8a] text-white"><i class="ph ph-magnifying-glass"></i></button>'); }
 }
 const oldNova=window.novaVenda; if(typeof oldNova==='function') window.novaVenda=function(){ const r=oldNova.apply(this,arguments); setTimeout(ajustarBuscaVenda,80); return r; };
-const oldImp=window.imprimirNotinha; window.imprimirNotinha=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(v && !['faturado','finalizada'].includes(low(v.status))){ toast('Fature a notinha antes de imprimir ou salvar em PDF','error'); return; } return oldImp?oldImp.apply(this,arguments):null; };
-window.estornarVendaParaEditar=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return; if(!confirm('Estornar esta notinha para permitir edição?')) return; v.status='estornada'; v.estornada=true; (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }}); salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success'); if(typeof renderVendas==='function') renderVendas(); };
+// v5.22.84 — impressão livre: a venda imprime em qualquer situação (salva,
+// aberta, faturada, orçamento), no formato Vendas ou Ordem de Serviço.
+// A trava antiga ("Fature a notinha antes de imprimir") foi removida a pedido.
+  window.estornarVendaParaEditar=function(id){
+    const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return;
+    const concluir=function(ok){
+      if(!ok) return;
+      v.status='estornada'; v.estornada=true;
+      (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }});
+      salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success');
+      if(typeof renderVendas==='function') renderVendas();
+    };
+    if(typeof window.confirmSistema==='function') window.confirmSistema('Estornar esta notinha para permitir edição?','Estornar venda').then(concluir);
+    else if(typeof toast==='function') toast('A confirmação do sistema não está disponível; a venda não foi estornada.','error');
+  };
 
 // ── bloqueio visual para faturados ────────────────────────────────────────
 document.addEventListener('focusin',ev=>{ const root=document.getElementById('modal-root'); if(!root||root.classList.contains('hidden')) return; const vendaId=window.__vosForm&&window.__vosForm.vendaId; const v=vendaId&&(db.vendas||[]).find(x=>x.id===vendaId); if(v&&['faturado','finalizada'].includes(low(v.status))&&ev.target.matches('input,textarea,select')){ ev.target.blur(); toast('Venda faturada: estorne para alterar.','info'); } });

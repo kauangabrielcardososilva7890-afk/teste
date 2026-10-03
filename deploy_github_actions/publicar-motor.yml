@@ -1,0 +1,112 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# PUBLICAR O MOTOR DA NUVEM — um clique, pelo GitHub (plano B do Workers Builds)
+#
+# COMO INSTALAR ESTE BOTÃO (2 minutos, uma vez só):
+#   1) Abra o repositório no GitHub e clique na aba "Actions".
+#   2) Clique em "New workflow" (ou "set up a workflow yourself").
+#   3) Apague todo o conteúdo do editor e cole ESTE arquivo inteiro.
+#   4) Dê o nome de arquivo `publicar-motor.yml` e clique em "Commit changes".
+#   O MESMO código está no relatório de teste (RELATORIO_DE_TESTE_NF.html),
+#   na seção «Plano B do deploy», com um botão «📋 Copiar código» — é só colar.
+#   (O nome `.github/workflows/publicar-motor.yml` é criado automaticamente
+#    pelo próprio GitHub ao salvar por essa tela — por isso este arquivo mora
+#    aqui nesta pasta: a ferramenta automática que edita o sistema não tem
+#    permissão de escrever na pasta de workflows, o dono do repositório tem.)
+#
+# POR QUE ISTO EXISTE (21/09/2026)
+# O build automático da Cloudflare (Workers Builds) ficou preso no erro
+#   "The build token selected for this build has been deleted or rolled and
+#    cannot be used for this build."
+# Isso é token de build velho guardado no painel deles — não é o código do
+# sistema. Enquanto a Cloudflare não voltar a publicar sozinha, este arquivo
+# dá o MESMO resultado, sem depender daquele token: você aperta um botão aqui
+# no GitHub e ele roda exatamente os dois passos do atualizar_motor_nuvem.cmd
+#   1) wrangler d1 migrations apply DB --remote   (aplica migrações pendentes)
+#   2) wrangler deploy                           (publica o worker)
+#
+# COMO USAR (uma vez só de configuração):
+#  1) No GitHub: Settings → Secrets and variables → Actions → New repository
+#     secret, e crie DOIS segredos:
+#       CLOUDFLARE_API_TOKEN  → token criado em Cloudflare → My Profile →
+#                               API Tokens → Create Token → "Edit Cloudflare
+#                               Workers" e acrescente a permissão D1: Edit
+#                               (o nosso deploy roda migrações do banco D1).
+#       CLOUDFLARE_ACCOUNT_ID → aparece na Cloudflare em Workers & Pages →
+#                               lado direito (Account ID) ou na URL do painel.
+#  2) Aba "Actions" → "Publicar motor da nuvem" → botão "Run workflow".
+#
+# SEGURANÇA: os segredos ficam guardados no GitHub (criptografados) e NUNCA
+# aparecem em log. Este arquivo não roda sozinho em push — só quando você
+# aperta o botão. Assim não tem susto na nuvem da loja.
+# ═══════════════════════════════════════════════════════════════════════════
+name: Publicar motor da nuvem
+
+on:
+  # Só roda quando VOCÊ aperta o botão (Actions → Run workflow).
+  workflow_dispatch:
+    inputs:
+      aplicar_migracoes:
+        description: 'Aplicar as migrações do banco antes de publicar'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    name: Migrações + publicar o worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: cloudflare-worker
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar o Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Conferir os segredos
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          faltando=""
+          [ -z "$CF_TOKEN" ] && faltando="$faltando CLOUDFLARE_API_TOKEN"
+          [ -z "$CF_ACCOUNT" ] && faltando="$faltando CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$faltando" ]; then
+            echo "::error::Faltam segredos no GitHub:$faltando"
+            echo "Crie em: Settings → Secrets and variables → Actions → New repository secret"
+            exit 1
+          fi
+          echo "Segredos presentes. Seguindo."
+
+      - name: O que ainda falta aplicar no banco (só olhando)
+        if: ${{ inputs.aplicar_migracoes }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 d1 migrations list DB --remote
+
+      - name: Aplicar as migrações do banco
+        if: ${{ inputs.aplicar_migracoes }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 d1 migrations apply DB --remote
+
+      - name: Publicar o worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 deploy
+
+      - name: Conferir a versão publicada (fim)
+        run: |
+          echo "Pronto. O worker foi publicado com os segredos do GitHub."
+          echo "Para conferir: abra https://digicopy-sync-api.digicopyonline.workers.dev/health"
+          echo "e veja os campos version/versao."

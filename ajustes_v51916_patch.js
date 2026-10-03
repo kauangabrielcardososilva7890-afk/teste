@@ -13,6 +13,16 @@ function low(v){ return String(v == null ? '' : v).toLowerCase().trim(); }
 function sess(){ return typeof getSession === 'function' ? getSession() : null; }
 function avisar(m){ if(typeof window.lfbAlert === 'function') return window.lfbAlert(m, 'Aviso'); else if(typeof toast === 'function') return toast(m, 'info'); }
 function confirmar(m, t){ return typeof window.confirmSistema === 'function' ? window.confirmSistema(m, t || 'Confirmar') : Promise.resolve(false); }
+function produtoDaEmpresa(dbRef,id,empresaId){
+  if(!id||!empresaId) return null;
+  return (dbRef&&dbRef.produtos||[]).find(function(p){ return p&&String(p.id)===String(id)&&p.empresaId===empresaId; })||null;
+}
+function produtosDaEmpresa(dbRef,ids,empresaId){
+  if(!empresaId) return [];
+  var wanted=new Set((ids||[]).map(String));
+  return (dbRef&&dbRef.produtos||[]).filter(function(p){ return p&&p.empresaId===empresaId&&wanted.has(String(p.id)); });
+}
+window.AJUSTES_V51916_PURE = { produtoDaEmpresa:produtoDaEmpresa, produtosDaEmpresa:produtosDaEmpresa, deleteProdutoConfirmaInternamente:true };
 
 // ═════════════════════════════════════════════════════════════════════════
 // Item 1 — venda faturada abre na tela principal (cadastro), travada
@@ -32,37 +42,71 @@ if(typeof _hist51916 === 'function'){
 // Item 2 — excluir produto (corrige confirm quebrado + seleção múltipla)
 // ═════════════════════════════════════════════════════════════════════════
 window.excluirProdutoUnificado = function(){
+  const s = sess();
+  if(!s||!s.empresaId){ avisar('Não foi possível identificar a empresa da sessão. Nenhum produto foi excluído.'); return Promise.resolve(false); }
   const checks = Array.from(document.querySelectorAll('input[name="produto-check-lote"]:checked'));
-  let alvos = [];
-  if(checks.length){
-    alvos = checks.map(ch => (db.produtos || []).find(x => x.id === ch.value)).filter(Boolean);
+  const ids = Array.from(new Set(checks.map(ch => String(ch.value || '')).filter(Boolean)));
+  const alvos = produtosDaEmpresa(db, ids, s.empresaId);
+  if(!alvos.length){ avisar('Marque os produtos desta empresa para excluir.'); return Promise.resolve(false); }
+  if(typeof window.confirmSistema !== 'function'){
+    avisar('A confirmação do sistema não está disponível. Os produtos foram mantidos.');
+    return Promise.resolve(false);
   }
-  if(!alvos.length){ avisar('Marque os produtos na tabela para excluir.'); return; }
-  confirmar('Deseja excluir ' + alvos.length + ' produto(s)?', 'Excluir Produtos').then(function(ok){
-    if(!ok) return;
-    alvos.forEach(function(p){
-      db.produtos = (db.produtos || []).filter(x => x.id !== p.id);
+  const idsAlvo = alvos.map(p => String(p.id));
+  let confirmacao;
+  try{ confirmacao = confirmar('Deseja excluir ' + alvos.length + ' produto(s)?', 'Excluir Produtos'); }
+  catch(e){ avisar('Não foi possível confirmar a exclusão. Os produtos foram mantidos.'); return Promise.resolve(false); }
+  return Promise.resolve(confirmacao).then(function(ok){
+    if(ok !== true){ if(ok !== false) avisar('Não foi possível confirmar a exclusão. Os produtos foram mantidos.'); return false; }
+    const sessaoAtual = sess();
+    if(!sessaoAtual || sessaoAtual.empresaId !== s.empresaId){ avisar('A empresa da sessão mudou. Nenhum produto foi excluído.'); return false; }
+    const atuais = produtosDaEmpresa(db, idsAlvo, s.empresaId);
+    if(!atuais.length){ avisar('Os produtos selecionados não estão mais disponíveis nesta empresa.'); return false; }
+    const idsAtuais = new Set(atuais.map(p => String(p.id)));
+    db.produtos = (db.produtos || []).filter(x => !(x && x.empresaId === s.empresaId && idsAtuais.has(String(x.id))));
+    atuais.forEach(function(p){
       if(typeof logAction === 'function') logAction('produto', 'excluir', p.id, 'Excluído produto ' + (p.nome || ''));
     });
     if(typeof saveDB === 'function') saveDB();
     if(typeof renderProdutos === 'function') renderProdutos();
     if(typeof renderAuditoria === 'function') renderAuditoria();
-    if(typeof toast === 'function') toast(alvos.length + ' produto(s) excluído(s)', 'success');
+    if(typeof toast === 'function') toast(atuais.length + ' produto(s) excluído(s)', 'success');
+    return true;
+  },function(){
+    avisar('Não foi possível confirmar a exclusão. Os produtos foram mantidos.');
+    return false;
   });
 };
 
 // Corrige a função original (sem confirm() quebrado)
 window.deleteProduto = function(id){
-  const p = (db.produtos || []).find(x => x.id === id);
-  if(!p) return;
-  confirmar('Excluir produto "' + (p.nome || '') + '"?', 'Excluir Produto').then(function(ok){
-    if(!ok) return;
-    db.produtos = (db.produtos || []).filter(x => x.id !== id);
-    if(typeof logAction === 'function') logAction('produto', 'excluir', id, 'Excluído produto ' + (p.nome || ''));
+  const s = sess();
+  if(!s||!s.empresaId){ avisar('Não foi possível identificar a empresa da sessão. Nenhum produto foi excluído.'); return Promise.resolve(false); }
+  const p = produtoDaEmpresa(db, id, s.empresaId);
+  if(!p){ avisar('Produto não encontrado nesta empresa.'); return Promise.resolve(false); }
+  if(typeof window.confirmSistema !== 'function'){
+    avisar('A confirmação do sistema não está disponível. O produto foi mantido.');
+    return Promise.resolve(false);
+  }
+  let confirmacao;
+  try{ confirmacao = confirmar('Excluir produto "' + (p.nome || '') + '"?', 'Excluir Produto'); }
+  catch(e){ avisar('Não foi possível confirmar a exclusão. O produto foi mantido.'); return Promise.resolve(false); }
+  return Promise.resolve(confirmacao).then(function(ok){
+    if(ok !== true){ if(ok !== false) avisar('Não foi possível confirmar a exclusão. O produto foi mantido.'); return false; }
+    const sessaoAtual = sess();
+    if(!sessaoAtual || sessaoAtual.empresaId !== s.empresaId){ avisar('A empresa da sessão mudou. Nenhum produto foi excluído.'); return false; }
+    const atual = produtoDaEmpresa(db, id, s.empresaId);
+    if(!atual){ avisar('Produto não encontrado nesta empresa.'); return false; }
+    db.produtos = (db.produtos || []).filter(x => !(x && String(x.id) === String(id) && x.empresaId === s.empresaId));
+    if(typeof logAction === 'function') logAction('produto', 'excluir', id, 'Excluído produto ' + (atual.nome || ''));
     if(typeof saveDB === 'function') saveDB();
     if(typeof renderProdutos === 'function') renderProdutos();
     if(typeof renderAuditoria === 'function') renderAuditoria();
     if(typeof toast === 'function') toast('Produto excluído', 'success');
+    return true;
+  },function(){
+    avisar('Não foi possível confirmar a exclusão. O produto foi mantido.');
+    return false;
   });
 };
 

@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // MODELO — nuvem de UM cliente (r59 comercial). NÃO edite este arquivo:
+  // o provisionar_cliente.cmd copia e preenche __NOME__ e __DBID__ sozinho.
+  "name": "__NOME__",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-16",
+  "observability": {
+    "enabled": true
+  },
+  // Mesmo depósito da oficial: os .exe das atualizações moram na nuvem do
+  // VENDEDOR (o app do cliente baixa de lá). O motor do cliente só precisa
+  // da ligação para não falhar se algum dia precisar do depósito.
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "digicopy-downloads"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "__NOME__",
+      "database_id": "__DBID__"
+    }
+  ],
+  // Backup diário sozinho na nuvem do cliente (21:30 UTC = 18:30 São Paulo).
+  "triggers": {
+    "crons": ["30 21 * * *"]
+  }
+}

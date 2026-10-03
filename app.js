@@ -11,10 +11,10 @@ const PENDING_CNPJ_KEY='digicopy_pending_cnpj_v42_demo_apresentacao';
 const defaultData={
   empresas:[],
   usuarios:[],
-  clientes:[], produtos:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
+  clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], orcamentos:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
-  tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
-  config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
+  tecnicos:[], // v5.22.68: sem técnico de demonstração. Ver TECNICOS_DEMO.
+  config:{empresa:{nome:'',cnpj:'',fone:'',email:''}}
 };
 
 // Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
@@ -42,27 +42,40 @@ function storageDecode(raw){
   }
   return raw;
 }
+// Técnicos que o sistema criava sozinho nas versões antigas.
+const TECNICOS_DEMO = [
+  {id:'t1', nome:'Carlos Mendes', especialidade:'Laser Mono'},
+  {id:'t2', nome:'Ana Souza',     especialidade:'Color'},
+  {id:'t3', nome:'Rafael Lima',   especialidade:'Grande formato'}
+];
+function ehTecnicoDemo(t){
+  if(!t) return false;
+  return TECNICOS_DEMO.some(d =>
+    d.id === t.id &&
+    d.nome === String(t.nome||'').trim() &&
+    d.especialidade === String(t.especialidade||'').trim());
+}
+window.ehTecnicoDemo = ehTecnicoDemo;
+window.TECNICOS_DEMO = TECNICOS_DEMO;
+
 function normalizeDbShape(parsed){
-  ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
+  ['empresas','usuarios','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
   if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
-  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
+  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=[];
   if(!parsed.config) parsed.config=structuredClone(defaultData.config);
   if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
   parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
   return parsed;
 }
 // ═══════════════════════════════════════════════════════════════════════════
-// PERSISTÊNCIA LOCAL INCREMENTAL (v4.4.0) — o fim do "travando"
-// Antes: cada saveDB() comprimia e regravava a base INTEIRA (dezenas de MB)
-// em uma chave única — congelava a tela por segundos a cada ação.
-// Agora: cada entidade (clientes, vendas, modulosDinamicos...) é quebrada em
-// PEDAÇOS pequenos com hash próprio, e só os pedaços alterados são
-// recomprimidos/regravados. Ex.: ao editar 1 venda, só o pedaço dela (~ms)
-// é regravado — não mais a base toda (~segundos).
-// A chave única antiga (DB_KEY) vira apenas um backup de compatibilidade,
-// atualizado fora do uso ativo (aba oculta / a cada 10 min).
+// ARMAZENAMENTO LOCAL LEGADO (v4.4.0) — mantido para ler/migrar cópias antigas.
+// O ERP atual opera em SÓ NUVEM: os gravadores abaixo são interrompidos pelos
+// guards DIGICOPY_SO_NUVEM, e a sincronização só considera uma mudança salva
+// após confirmação remota. Não remova esses guards sem rever a política de dados.
+// O particionamento abaixo permanece por compatibilidade com instalações locais
+// antigas; não é uma promessa de armazenamento local no modo atual.
 // ═══════════════════════════════════════════════════════════════════════════
 const DB_CHUNK_ITENS=600;           // itens por pedaço de listas grandes
 const DB_CHUNK_OBJ_MIN=8;           // objetos com +8 chaves viram 1 pedaço por chave
@@ -157,6 +170,9 @@ function loadDB(){
 // saveDBAgora() drena tudo de forma síncrona (fechar aba, imprimir, recarregar).
 let __saveQ=null;
 function saveDB(){
+  // v7.3.15 — SÓ NUVEM: o banco permanece em memória e é enviado pelo motor
+  // Cloudflare; nunca grave cópia de negócio em localStorage neste modo.
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true)return false;
   const novas = Object.keys(db);
   if(!__saveQ){
     let manifestAnt={v:2, partes:{}};
@@ -171,6 +187,7 @@ function saveDB(){
   }
 }
 function __gravarParteCampo(campo, q){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true)return;
   const infoAnt=(q.manifestAnt.partes||{})[campo]||{subs:{}};
   let fatia;
   try{ fatia=dbFatiarEntidade(db[campo]); }catch(eF){ q.partes[campo]={tipo:'valor', subs:infoAnt.subs||{}}; return; }
@@ -197,6 +214,7 @@ function __gravarParteCampo(campo, q){
   q.partes[campo]={tipo:fatia.tipo, subs};
 }
 function __finalizarSaveQ(q){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true){window.__dbPersistidoOk=false;return;}
   // entidades que saíram do banco
   Object.keys(q.manifestAnt.partes||{}).forEach(campo=>{
     if(campo in db) return;
@@ -204,6 +222,12 @@ function __finalizarSaveQ(q){
   });
   try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes:q.partes})); }catch(eMan){}
   window.__dbPersistidoOk=!q.falhouQuota;
+  // r59d: FALHA DUPLA (navegador cheio + ampliado falhou) = vai ALTO: alerta + relato. Suprimir aqui foi o sumico silencioso.
+  if(q.falhouQuota && window.__dbIDBOk===false && !window.__avisouDisco){
+    window.__avisouDisco=true;
+    try{ if(typeof window.lfbAlert==='function') window.lfbAlert('O navegador recusou a gravação (espaço cheio?) e o armazenamento ampliado também falhou. Feche as outras abas do DIGICOPY e tente salvar de novo — não recarregue antes.', 'Não gravou'); }catch(eA){}
+    try{ var RS59d=(typeof window!=='undefined'&&window.DIGICOPY_CLOUD_SYNC&&typeof window.DIGICOPY_CLOUD_SYNC.relatarSaude==='function')?window.DIGICOPY_CLOUD_SYNC.relatarSaude:null; if(RS59d)RS59d('falha','gravacao local falhou: quota+idb'); }catch(eR){}
+  }
   if(q.falhouQuota && !window.__indexedDbPersistAtivo && !window.__avisouQuota){
     window.__avisouQuota=true;
     if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio e o armazenamento ampliado não iniciou. Não feche antes de exportar um backup.','error');
@@ -211,11 +235,12 @@ function __finalizarSaveQ(q){
   agendarSnapshotLegado();
 }
 function __saveTick(){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true){__saveQ=null;return;}
   const q=__saveQ; if(!q) return;
   const t0=Date.now();
   while(q.keys.length && (Date.now()-t0)<25){
     const campo=q.keys.shift();
-    __gravarParteCampo(campo, q);
+    try{__gravarParteCampo(campo, q);}catch(eP){q.falhouQuota=true;} // r59d: entidade ruim nao mata a fila
   }
   if(q.keys.length){ setTimeout(__saveTick, 0); return; }
   __finalizarSaveQ(q);
@@ -225,8 +250,9 @@ function __saveTick(){
 }
 // Drena a fila de forma SÍNCRONA (usado ao fechar a aba, antes de imprimir/recarregar)
 function __saveDBDrainSync(){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true){__saveQ=null;return;}
   if(!__saveQ) return;
-  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); __gravarParteCampo(campo, __saveQ); }
+  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); try{__gravarParteCampo(campo, __saveQ);}catch(eP){__saveQ.falhouQuota=true;} } // r59d
   __finalizarSaveQ(__saveQ);
   __saveQ=null;
 }
@@ -236,6 +262,7 @@ window.__saveDBDrainSync = __saveDBDrainSync;
 // (a tela congela com a base grande, então ele nunca roda durante o uso).
 let __snapHash='';
 function gravarSnapshotLegado(force){
+  if(typeof window!=='undefined'&&window.DIGICOPY_SO_NUVEM===true)return false;
   let h='';
   try{ h=JSON.stringify((JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'{}')||{}).partes||{}); }catch(eH){ h=''; }
   if(h && h===__snapHash) return; // nada mudou desde o último snapshot
@@ -247,11 +274,24 @@ if(typeof document!=='undefined' && document.addEventListener){
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ try{ setTimeout(()=>gravarSnapshotLegado(true), 1200); }catch(eV){} } });
 }
 let db=loadDB();
+if(typeof window !== 'undefined'){ window.db = db; }
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
 function fmtMoney(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
-function fmtDate(s){if(!s) return '-'; const d=new Date(s); if(isNaN(d)) return s; return d.toLocaleDateString('pt-BR')}
-function fmtDateTime(s){if(!s) return '-'; return new Date(s).toLocaleString('pt-BR')}
+// Datas: 'AAAA-MM-DD' sem hora precisa virar meia-noite LOCAL. Se cair no
+// new Date() direto, o navegador entende como UTC e no Brasil (UTC-3) a tela
+// mostra o dia ANTERIOR. Era o bug das datas erradas das vendas.
+function parseDataLocal(valor){
+  if(valor instanceof Date) return valor;
+  if(typeof valor !== 'string') return new Date(valor);
+  const so = valor.trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(so);
+  if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  return new Date(so);
+}
+window.parseDataLocal = parseDataLocal;
+function fmtDate(s){if(!s) return '-'; const d=parseDataLocal(s); if(isNaN(d)) return s; return d.toLocaleDateString('pt-BR')}
+function fmtDateTime(s){if(!s) return '-'; const d=parseDataLocal(s); if(isNaN(d)) return s; return d.toLocaleString('pt-BR')}
 function onlyDigits(s){return (s||'').replace(/\D/g,'')}
 function initials(name){return (name||'').split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('')||'??'}
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
@@ -284,34 +324,32 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  // AUTORITATIVO (roda em toda carga): garante a empresa única + os 2 usuários
-  // reais com as credenciais corretas, e remove usuários de demonstração.
-  //   • Kauan     → login "kauan"     senha "6132"  perfil Admin
-  //   • Denivaldo → login "denivaldo" senha "3232"  perfil Dono
+  // r59 COMERCIAL — sem NADA de fábrica: empresa e usuários nascem no SETUP
+  // (v5900, assistência cadastra). Base vazia = setup abre em vez do login.
+  // Aqui só: limpeza de demo antiga + garantias estruturais (id/empresaId).
   db.empresas = Array.isArray(db.empresas) ? db.empresas : [];
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
   let mudou = false;
 
-  let emp = db.empresas.find(e=>e.id==='emp_digicopy')
-         || db.empresas.find(e=>/digicopy/i.test(String(e.fantasia||e.nome||'')))
-         || db.empresas[0];
-  if(!emp){
-    emp = {id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
-    db.empresas.push(emp);
-    mudou = true;
-  }
-  // Só mantém UMA empresa (a real). Empresas demo/órfãs são removidas.
+  // Só mantém UMA empresa (a primeira). Sem empresa = setup pendente.
   if(db.empresas.length > 1){
-    db.empresas = [emp];
+    db.empresas = [db.empresas[0]];
     mudou = true;
   }
+  const emp = db.empresas[0] || null;
 
-  const garantidos = [
-    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132'},
-    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232'}
-  ];
   const demoLogins = ['admin','carlos','ana','financeiro'];
   const demoIds = ['usr_admin'];
+
+  // Técnicos que vinham de fábrica e voltavam sozinhos toda vez que a lista
+  // ficava vazia. Some SÓ o registro de demonstração (id t1/t2/t3 com o nome e
+  // a especialidade originais). Cadastrar um técnico com o mesmo nome pela
+  // tela continua permitido — não virou regra, só parou de voltar.
+  db.tecnicos = (db.tecnicos||[]).filter(t=>{
+    if(!t) return false;
+    if(ehTecnicoDemo(t)){ mudou = true; return false; }
+    return true;
+  });
 
   // Remove usuários de demonstração (de versões antigas).
   // v5.20.24 — NUNCA apaga usuário cadastrado pela tela: só remove demo de verdade
@@ -326,31 +364,16 @@ function seedData(force=false){
     return true;
   });
 
-  // Garante (cria OU corrige) os 2 usuários reais.
-  garantidos.forEach(g=>{
-    const u = db.usuarios.find(x=>String(x.login||'').toLowerCase()===g.login);
-    if(!u){
-      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
-      mudou = true;
-    } else {
-      if(u.id !== g.id){ u.id = g.id; mudou = true; }
-      if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
-      if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }
-      if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
-      if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
-      if(u.ativo !== true){ u.ativo = true; mudou = true; }
-    }
-  });
 
   // Qualquer usuário órfão aponta pra empresa real.
-  db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
+  if(emp) db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
 
   // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
   // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
-  ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+  if(emp) ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
-      db[k].forEach(function(r){ if(r && r.empresaId && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
+      db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
   });
 
@@ -371,22 +394,36 @@ function formatarLoginCNPJ(input){
 function togglePass(id){
   const el=document.getElementById(id); if(!el) return; el.type=el.type==='password'?'text':'password';
 }
-function doLoginCNPJ(){
+async function doLoginCNPJ(){
   const cnpjInput=document.getElementById('login-cnpj').value.trim();
   const senha=document.getElementById('login-senha-cnpj').value.trim();
   if(!cnpjInput || !senha){toast('Informe CNPJ e senha CNPJ','error'); return;}
   const digits=onlyDigits(cnpjInput);
-  let emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
-  // Credencial corporativa única da empresa; dados importados permanecem vinculados à primeira empresa.
-  if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
-    emp=db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
+  // v7.1.0-r54 (P1): senha-mestra fixa APAGADA (estava no código público).
+  // Troca segura, sem risco de trancar ninguém:
+  //  • se NENHUMA empresa tem senha ainda → modo configuração: cria na hora;
+  //  • se já tem → confere hash (texto puro só na transição, com upgrade).
+  // Esqueceu a senha? Link "Esqueci a senha do CNPJ" (prova a senha do
+  // gerente na nuvem e libera criar outra) — sem segredo no código.
+  const algumaTemSenha=(db.empresas||[]).some(e=>e&&(e.senha||e.senhaHash));
+  let emp=(db.empresas||[]).find(e=>onlyDigits(e.cnpj||'')===digits);
+  let ok=false, modoSetup=false;
+  if(!algumaTemSenha){
+    if(digits.length!==14){toast('CNPJ precisa de 14 dígitos','error'); return;}
+    emp=emp || db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
     if(!emp){toast('Empresa não encontrada','error'); return;}
-    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.senha='digicopy8698'; emp.fantasia=emp.fantasia||'DIGICOPY';
+    emp.cnpj=cnpjInput; emp.cnpjDigits=digits; emp.fantasia=emp.fantasia||'DIGICOPY';
     if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
-    db.usuarios.filter(u=>u.empresaId===emp.id).forEach(u=>{ if(u.senha==='admin123'||u.senha==='123456') u.ativo=true; });
     saveDB();
+    ok=true; modoSetup=true;
+  }else if(emp){
+    if(typeof confereSenha==='function'){
+      try{ const r=await confereSenha(senha,emp); ok=!!r;
+        if(ok&&r==='texto'&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(emp,senha); saveDB(); }catch(e){} }
+      }catch(e){ ok=(String(emp.senha||'')===String(senha||'')); }
+    }else ok=(String(emp.senha||'')===String(senha||''));
   }
-  if(!emp){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
+  if(!ok){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
   setPendingEmpresa(emp);
   document.getElementById('login-step-cnpj').classList.add('hidden');
   document.getElementById('login-step-user').classList.remove('hidden');
@@ -397,26 +434,42 @@ function doLoginCNPJ(){
   // prefill usuarios demo list
   const users=db.usuarios.filter(u=>u.empresaId===emp.id && u.ativo);
   if(users.length) document.getElementById('login-user').value=users[0].login;
+  if(modoSetup){ // primeira vez: cria a senha do CNPJ agora (sem ela, pede de novo a cada entrada)
+    try{ toast('Primeiro acesso: crie a senha do CNPJ','success'); }catch(e){}
+    try{ if(typeof senhaDefinirCNPJ==='function') setTimeout(function(){ senhaDefinirCNPJ(true); },600); }catch(e2){}
+  }
 }
 function backToCNPJ(){
   localStorage.removeItem(PENDING_CNPJ_KEY);
   document.getElementById('login-step-user').classList.add('hidden');
   document.getElementById('login-step-cnpj').classList.remove('hidden');
 }
-function doLoginUser(){
+async function doLoginUser(){
   const login=(document.getElementById('login-user')?.value||'').trim().toLowerCase();
   const senha=(document.getElementById('login-senha-user')?.value||'').trim();
   if(!login || !senha){toast('Informe usuário e senha','error'); return;}
   // Busca empresa (pega a primeira disponível)
   let emp=db.empresas.find(e=>e.id) || escolherEmpresaPadrao(db);
-  const user=db.usuarios.find(u=>u.empresaId===emp.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
-  if(!user){alert('Usuário ou senha incorreto'); return;}
+  // v7.1.0-r54 (P1): confere hash primeiro; texto puro só na transição (com upgrade automático).
+  const user=db.usuarios.find(u=>u.empresaId===emp.id && String(u.login||'').toLowerCase()===login && u.ativo);
+  let okU=false;
+  if(user){
+    if(typeof confereSenha==='function'){
+      try{ const r=await confereSenha(senha,user); okU=!!r;
+        if(okU&&r==='texto'&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(user,senha); }catch(e){} }
+      }catch(e){ okU=(user.senha===senha); }
+    }else okU=(user.senha===senha);
+  }
+  if(!okU){ if(typeof window.lfbAlert==='function') window.lfbAlert('Usuário ou senha incorreto','Não foi possível entrar'); else toast('Usuário ou senha incorreto','error'); return; }
   const session={empresaId:emp.id, empresaNome:emp.fantasia||emp.nome, cnpj:emp.cnpj||'', cnpjDigits:onlyDigits(emp.cnpj||''), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
   setSession(session);
   db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login ${user.login} perfil ${user.perfil}`});
   saveDB();
   showApp();
   toast('Bem-vindo, '+user.nome+'!','success');
+  if(user.senhaPadrao&&typeof openModal==='function'){ // senha de fábrica: troca agora (abre o próprio cadastro)
+    try{ setTimeout(function(){ try{ toast('Senha padrão: troque pela sua senha','error'); }catch(e){} openModal('usuario',user.id); },900); }catch(e2){}
+  }
 }
 function showApp(){
   const sess=getSession(); if(!sess) {showLogin(); return;}
@@ -463,16 +516,22 @@ function doLogout(){
 // REMOVIDO v5.20.23: "Cadastrar nova empresa" (openModalEmpresa/saveNovaEmpresa) criava
 // uma SEGUNDA empresa com id aleatorio (+ usuario admin/admin123) — quebrava a empresa
 // unica e fazia dados parecerem diferentes entre os PCs. O sistema tem UMA empresa so
-// (emp_digicopy). Dados da empresa/notinha se editam nas Configuracoes ("Dados da loja").
+// (a única, criada no setup). Dados da empresa/notinha se editam nas Configuracoes ("Dados da loja").
 
 function openModalCriarUsuarioPublic(){
   const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
   openModalCriarUsuario(pending.id);
 }
 function listUsuariosDemo(){
-  const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
-  const users=db.usuarios.filter(u=>u.empresaId===pending.id);
-  alert('Usuários deste CNPJ:\n\n'+users.map(u=>`${u.login} / ${u.senha} - ${u.nome} (${u.perfil})`).join('\n'));
+  // AUDITORIA 23/09/2026 — o dono pediu que esta tela não mostre NADA de
+  // usuário. Antes ela listava login / SENHA / nome de todos; depois só
+  // login/nome/perfil; agora não mostra dado nenhum.
+  // Nada no sistema chama esta função (conferido em .js, .html, no bundle
+  // gerado e nas cópias do celular) — ou seja, não mostrar nada NÃO quebra
+  // nada. O nome fica de pé só para que, se algum dia alguém a chamar, ela
+  // responda sem vazar dado nenhum.
+  const aviso='Listagem de usuários desativada por segurança.\n\nOs usuários do sistema ficam em "Usuários e permissões".';
+  if(typeof window.lfbAlert==='function') window.lfbAlert(aviso,'Acesso protegido'); else toast(aviso,'info');
 }
 function closeModal(){document.getElementById('modal-root').classList.add('hidden')}
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
@@ -484,12 +543,20 @@ function setPageHeader(title, subtitle){
 }
 
 function navigateTo(view){
-  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  document.querySelectorAll('.view').forEach(v=>{
+    v.classList.add('hidden');
+    v.style.removeProperty('display');
+    v.style.removeProperty('visibility');
+  });
 
   const target=document.getElementById('view-'+view);
   if(target) target.classList.remove('hidden');
-  document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
-  const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
+  document.querySelectorAll('[data-nav],[data-side-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10','active'); b.classList.add('text-white/60')});
+  const act=document.querySelector(`#shell-sidebar-links [data-nav="${view}"], #shell-sidebar-links [data-side-nav="${view}"], [data-nav="${view}"]`);
+  if(act){
+    act.classList.add('bg-white/[0.12]','text-white','border','border-white/10','active'); act.classList.remove('text-white/60');
+    const group=act.closest('details'); if(group) group.open=true;
+  }
   const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito'],'buscador-escola':['Buscador Escola','Orçamentos escolares Caixa Escolar MG']};
   const t=titles[view]||[view,'']; setPageHeader(t[0], t[1]);
   if(view==='dashboard') renderDashboard();
@@ -521,6 +588,8 @@ function navigateTo(view){
   }
   window.scrollTo({top:0,behavior:'smooth'});
   if(window.innerWidth<1024) toggleSidebar(true);
+  // v7.0.26 — abrir a tela busca o novo na nuvem (só leitura, sem travar a troca de tela)
+  try{ var snc=window.DIGICOPY_CLOUD_SYNC; if(snc&&typeof snc.puxarAoAbrirTela==='function') snc.puxarAoAbrirTela(); }catch(e){}
 }
 function toggleSidebar(forceClose=false){
   const sb=document.getElementById('sidebar'); const ov=document.getElementById('overlay');
@@ -528,10 +597,23 @@ function toggleSidebar(forceClose=false){
   if(forceClose===true||!isClosed){sb.classList.add('-translate-x-full'); ov.classList.add('hidden');}
   else{sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden');}
 }
+function reporMenusDinamicos(catsOrdem){
+  const grupos=Array.isArray(catsOrdem)?catsOrdem:(window.__migCategorias||[]);
+  const destinos={locacao:'menu-outsourcing',movimentacao:'menu-outsourcing',financeiro:'menu-financeiro',produtos:'menu-cadastros',cadastros:'menu-cadastros',fiscal:'menu-cadastros',sistema:'menu-config',outros:'menu-cadastros'};
+  const rotulos={locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'};
+  Object.entries(rotulos).forEach(([id,label])=>{
+    const menu=document.getElementById(destinos[id]); if(!menu) return;
+    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
+    const grupo=grupos.find(g=>g.cat.id===id); if(!grupo) return;
+    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
+    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.dataset.nav=item.id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
+  });
+}
 function buildNav(){
   const sess=getSession();
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
-  const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Chamados'}];
+  // v5.22.77: Chamados não é submenu de Contratos. Saiu daqui a pedido.
+  const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'}];
   const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'buscador-escola',icon:'ph-magnifying-glass',label:'Buscador Escola'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
   
   // Adicionar módulos dinâmicos (tabelas importadas sem mapeamento)
@@ -565,19 +647,7 @@ function buildNav(){
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
   
   // Distribui módulos migrados diretamente nas áreas principais, sem uma aba separada.
-  const destinos={
-    locacao:'menu-outsourcing', movimentacao:'menu-outsourcing',
-    financeiro:'menu-financeiro', produtos:'menu-cadastros',
-    cadastros:'menu-cadastros', fiscal:'menu-cadastros',
-    sistema:'menu-config', outros:'menu-cadastros'
-  };
-  Object.entries({locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'}).forEach(([id,label])=>{
-    const menu=document.getElementById(destinos[id]); if(!menu) return;
-    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
-    const grupo=catsOrdem.find(g=>g.cat.id===id); if(!grupo) return;
-    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
-    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
-  });
+  reporMenusDinamicos(catsOrdem);
   const obsolete=document.getElementById('topmod-migrados'); if(obsolete) obsolete.remove();
 
   // Renderizar seção de módulos dinâmicos se houver
@@ -770,114 +840,48 @@ function sugerirIcone(nomeTabela){
 
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
-  <div class="space-y-6">
-    <div class="rounded-[20px] bg-gradient-to-r from-[#0a1e8a] to-[#142ecc] text-white p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center p-2"><img src="./logo.png" alt="DIGICOPY" class="w-full h-full object-contain"></div>
-        <div>
-          <h1 class="text-[22px] font-extrabold tracking-tight">DIGICOPY ERP</h1>
-          <p class="text-[13px] text-white/80">Painel Geral • Gestão de Locação, Assistência Técnica e Vendas</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-shopping-cart-simple text-[16px]"></i> Nova venda</button>
-        <button onclick="navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-list-magnifying-glass text-[16px]"></i> Notinhas</button>
-        <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-wrench text-[16px]"></i> Chamado</button>
-        <button onclick="navigateTo('clientes')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-users text-[16px]"></i> Clientes</button>
-      </div>
+  <div class="dash-shell">
+    <div class="dash-breadcrumb"><span>Início</span><i class="ph ph-caret-right"></i><b>Visão geral</b></div>
+    <div class="dash-heading">
+      <div><h1>Visão geral</h1><p>Acompanhe os principais indicadores da sua empresa em tempo real.</p></div>
+      <div class="dash-heading-actions"><button onclick="navigateTo('vendas')" class="dash-outline"><i class="ph ph-calendar-blank"></i><span id="dash-periodo">Este mês</span></button><button onclick="navigateTo('config')" class="dash-outline"><i class="ph ph-sliders-horizontal"></i>Preferências</button></div>
     </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('contratos')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 grid place-items-center text-[22px]"><i class="ph ph-file-text"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Contratos ativos</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-contratos">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('parque')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center text-[22px]"><i class="ph ph-map-pin"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Parque instalado</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-parque">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('manutencao')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-[22px]"><i class="ph ph-wrench"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">OS em aberto</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-os">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('impressoras')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 grid place-items-center text-[22px]"><i class="ph ph-printer"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Máq. disponíveis</p>
-          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-disponiveis">0</p>
-        </div>
-      </div>
-      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('financeiro')" style="cursor:pointer">
-        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center text-[22px]"><i class="ph ph-currency-dollar"></i></div>
-        <div>
-          <p class="text-[11px] font-bold uppercase text-slate-500">Faturamento Mês</p>
-          <p class="text-[18px] font-extrabold text-emerald-700" id="kpi-faturamento">R$ 0,00</p>
-        </div>
-      </div>
+    <div class="dash-kpis">
+      <button class="dash-kpi" onclick="navigateTo('clientes')"><span class="dash-kpi-icon blue"><i class="ph ph-users-three"></i></span><span><small>Clientes ativos</small><strong id="kpi-clientes">0</strong><em class="positive">Cadastros</em></span></button>
+      <button class="dash-kpi" onclick="navigateTo('produtos')"><span class="dash-kpi-icon purple"><i class="ph ph-cube"></i></span><span><small>Produtos</small><strong id="kpi-produtos">0</strong><em class="positive">Estoque</em></span></button>
+      <button class="dash-kpi" onclick="navigateTo('contratos')"><span class="dash-kpi-icon orange"><i class="ph ph-file-text"></i></span><span><small>Contratos ativos</small><strong id="kpi-contratos">0</strong><em class="positive">Locação</em></span></button>
+      <button class="dash-kpi" onclick="navigateTo('financeiro')"><span class="dash-kpi-icon green"><i class="ph ph-chart-line-up"></i></span><span><small>Financeiro do mês</small><strong id="kpi-faturamento">R$ 0,00</strong><em class="positive">Recebimentos</em></span></button>
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="rounded-[18px] bg-white border shadow-sm p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-wrench text-[#0a1e8a]"></i> Chamados & OS Recentes</h3>
-          <button onclick="navigateTo('manutencao')" class="text-[12px] font-bold text-[#0a1e8a] hover:underline">Ver todos →</button>
-        </div>
-        <div id="list-chamados-recentes" class="divide-y border rounded-xl overflow-hidden"></div>
-      </div>
-
-      <div class="rounded-[18px] bg-white border shadow-sm p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-speedometer text-[#0a1e8a]"></i> Leituras Pendentes</h3>
-          <button onclick="navigateTo('leituras')" class="text-[12px] font-bold text-[#0a1e8a] hover:underline">Ver todas →</button>
-        </div>
-        <div id="list-leituras-pendentes" class="divide-y border rounded-xl overflow-hidden"></div>
-      </div>
+    <div class="dash-columns">
+      <div class="dash-card dash-activity"><div class="dash-card-title"><div><h2><i class="ph ph-clock-counter-clockwise"></i> Atividade recente</h2><p>Últimos registros e ações do sistema</p></div><button onclick="navigateTo('auditoria')">Ver todas <i class="ph ph-arrow-right"></i></button></div><div id="list-alertas" class="dash-activity-list"></div></div>
+      <div class="dash-card dash-actions"><div class="dash-card-title"><div><h2><i class="ph ph-lightning"></i> Ações rápidas</h2><p>Acesse as tarefas mais usadas</p></div></div><div class="dash-action-list"><button onclick="openQuickOS()"><span><i class="ph ph-headset"></i><b>Novo atendimento</b><small>Registrar um novo chamado</small></span><i class="ph ph-caret-right"></i></button><button onclick="openModal('cliente')"><span><i class="ph ph-user-plus"></i><b>Cadastrar cliente</b><small>Adicionar um novo cliente</small></span><i class="ph ph-caret-right"></i></button><button onclick="navigateTo('vendas')"><span><i class="ph ph-shopping-cart"></i><b>Registrar venda</b><small>Lançar uma nova venda</small></span><i class="ph ph-caret-right"></i></button><button onclick="openModal('contrato')"><span><i class="ph ph-file-text"></i><b>Novo contrato de locação</b><small>Criar um contrato</small></span><i class="ph ph-caret-right"></i></button><button onclick="navigateTo('financeiro')"><span><i class="ph ph-currency-circle-dollar"></i><b>Lançar recebimento</b><small>Registrar um recebimento</small></span><i class="ph ph-caret-right"></i></button></div></div>
     </div>
-
-    <div class="rounded-[18px] bg-white border shadow-sm p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-clipboard-text text-[#0a1e8a]"></i> Últimas Atividades (Auditoria)</h3>
-        <span class="text-[12px] text-slate-500" id="kpi-auditoria">0 hoje</span>
-      </div>
-      <div id="list-alertas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-    </div>
-
-    <div class="hidden">
-      <span id="alert-vencendo">0</span>
-      <canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div>
-    </div>
+    <div class="dash-columns dash-secondary"><div class="dash-card"><div class="dash-card-title"><div><h2><i class="ph ph-wrench"></i> Chamados em aberto</h2><p>Atendimentos que precisam de acompanhamento</p></div><button onclick="navigateTo('manutencao')">Ver todos <i class="ph ph-arrow-right"></i></button></div><div id="list-chamados-recentes" class="dash-activity-list"></div></div><div class="dash-card"><div class="dash-card-title"><div><h2><i class="ph ph-speedometer"></i> Leituras pendentes</h2><p>Coletas aguardando conferência</p></div><button onclick="navigateTo('leituras')">Ver todas <i class="ph ph-arrow-right"></i></button></div><div id="list-leituras-pendentes" class="dash-activity-list"></div></div></div>
+    <div class="dash-footer-note"><span class="dash-note-icon"><i class="ph ph-check"></i></span><div><b>Tudo sob controle</b><p>Seu sistema está atualizado e funcionando normalmente.</p></div><span class="dash-note-status"><span></span>Nuvem sincronizada</span></div>
+    <div class="dash-hidden-metrics"><span id="kpi-clientes-hidden">0</span><span id="kpi-produtos-hidden">0</span><span id="kpi-parque">0</span><span id="kpi-os">0</span><span id="kpi-disponiveis">0</span><span id="kpi-vendas">0</span><span id="kpi-vendas-valor">R$ 0,00</span><span id="kpi-orcamentos">0</span><span id="kpi-auditoria">0 hoje</span><span id="alert-vencendo">0</span><canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div></div>
   </div>`;
 
   document.getElementById('view-clientes').innerHTML=`<div class="flex flex-wrap items-center gap-3 justify-between"><div class="flex gap-2"><button onclick="openModal('cliente')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1.5"></i>Novo cliente</button><button onclick="exportClientes()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Exportar</button></div><div class="flex gap-2"><select id="filter-clientes-status" onchange="renderClientes()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="inadimplente">Inadimplente</option></select><div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="search-clientes" oninput="renderClientes()" placeholder="Buscar..." class="h-10 pl-9 pr-4 rounded-xl bg-white border text-[13.5px] w-[260px]"></div></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] tracking-widest uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Cliente / Quem criou</th><th class="px-5 py-3">Documento</th><th class="px-5 py-3">Contato</th><th class="px-5 py-3">Contratos</th><th class="px-5 py-3">Status</th><th class="px-5 py-3"></th></tr></thead><tbody id="tbody-clientes" class="divide-y divide-slate-50"></tbody></table></div><div id="pagination-clientes" class="p-3 border-t flex items-center justify-between text-[12px] text-slate-500"></div></div>`;
 
-  document.getElementById('view-produtos').innerHTML=`<div class="flex flex-wrap gap-3 justify-between"><div class="flex gap-2"><button onclick="openModal('produto')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Novo produto</button><button onclick="openModal('entradaEstoque')" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px]">Entrada estoque</button></div><div class="flex gap-2"><select id="filter-prod-cat" onchange="renderProdutos()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todas categorias</option><option value="Suprimento">Suprimento</option><option value="Peça">Peça</option><option value="Impressora">Impressora</option><option value="Serviço">Serviço</option></select><input id="search-produtos" oninput="renderProdutos()" placeholder="Buscar SKU, nome..." class="h-10 px-4 rounded-xl bg-white border text-[13.5px] w-[260px]"></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="cards-estoque"></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[680px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">SKU / Produto / Criado por</th><th class="px-5 py-3">Categoria</th><th class="px-5 py-3">Estoque</th><th class="px-5 py-3">Custo / Venda</th><th class="px-5 py-3">Local</th><th class="px-5 py-3"></th></tr></thead><tbody id="tbody-produtos" class="divide-y"></tbody></table></div></div>`;
+  document.getElementById('view-produtos').innerHTML=`<div class="flex flex-wrap gap-3 justify-between"><div class="flex gap-2"><button onclick="openModal('produto')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Novo produto</button><button onclick="openModal('entradaEstoque')" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px]">Entrada estoque</button></div><div class="flex gap-2"><select id="filter-prod-cat" onchange="renderProdutos()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todas categorias</option><option value="Suprimento">Suprimento</option><option value="Peça">Peça</option><option value="Impressora">Impressora</option><option value="Serviço">Serviço</option></select><input id="search-produtos" oninput="renderProdutos()" placeholder="Buscar SKU, nome..." class="h-10 px-4 rounded-xl bg-white border text-[13.5px] w-[260px]"></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="cards-estoque"></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[680px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">SKU / Produto / Criado por</th><th class="px-5 py-3">Categoria</th><th class="px-5 py-3">Estoque</th><th class="px-5 py-3">Custo / Venda</th><th class="px-5 py-3"></th></tr></thead><tbody id="tbody-produtos" class="divide-y"></tbody></table></div></div>`;
 
   document.getElementById('view-impressoras').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div class="flex gap-2"><button onclick="openModal('equipamento')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Nova impressora</button><div class="flex rounded-xl overflow-hidden border bg-white p-1"><button id="btn-view-grid" onclick="setEquipView('grid')" class="px-3 h-8 rounded-lg bg-slate-900 text-white text-[12px]">Grade</button><button id="btn-view-list" onclick="setEquipView('list')" class="px-3 h-8 rounded-lg text-slate-600 text-[12px]">Lista</button></div></div><div class="flex gap-2"><select id="filter-equip-status" onchange="renderEquipamentos()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="disponivel">Disponível</option><option value="locado">Locado</option><option value="manutencao">Manutenção</option><option value="inativo">Inativo</option></select><input id="search-equip" oninput="renderEquipamentos()" placeholder="Patrimônio, série, modelo..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div id="grid-equipamentos" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"></div><div id="list-equipamentos" class="hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Equipamento / Criado por</th><th class="px-5 py-3">Patrimônio / Série</th><th class="px-5 py-3">Contadores</th><th class="px-5 py-3">Local / Cliente</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-equip" class="divide-y"></tbody></table></div>`;
 
   document.getElementById('view-contratos').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><button onclick="openModal('contrato')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Novo contrato</button><div class="flex gap-2"><select id="filter-contrato-status" onchange="renderContratos()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo">Ativo</option><option value="pendente">Pendente</option><option value="vencido">Vencido</option><option value="encerrado">Encerrado</option></select><input id="search-contratos" oninput="renderContratos()" placeholder="Número, cliente..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div class="grid grid-cols-1 lg:grid-cols-12 gap-4"><div class="lg:col-span-8 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Contrato / Cliente / Criado por</th><th class="px-5 py-3">Vigência</th><th class="px-5 py-3">Franquia</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-contratos" class="divide-y"></tbody></table></div><div class="lg:col-span-4 space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] p-5 text-white"><h4 class="font-semibold text-[14px]">Resumo financeiro contratos</h4><div class="mt-4 space-y-3 text-[13px]" id="resumo-contratos"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-4">Próximos vencimentos</h4><div id="list-contratos-vencendo" class="space-y-3"></div></div></div></div><div id="contrato-detail" class="hidden mt-4 rounded-[20px] bg-white border shadow-sm p-0 overflow-hidden"></div>`;
 
-  document.getElementById('view-parque').innerHTML=`<div class="flex justify-between gap-3 flex-wrap"><h3 class="font-bold text-[16px]">Parque instalado por cliente</h3><div class="flex gap-2"><select id="filter-parque-cliente" onchange="renderParque()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos clientes</option></select><input id="search-parque" oninput="renderParque()" placeholder="Setor, patrimônio..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div id="grid-parque" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>`;
+  document.getElementById('view-parque').innerHTML=`<div class="flex justify-between gap-3 flex-wrap"><h3 class="font-bold text-[16px]">Parque instalado por cliente</h3><div class="flex gap-2"><select id="filter-parque-cliente" onchange="renderParque()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos clientes</option></select><input id="search-parque" oninput="renderParque()" placeholder="Setor, patrimônio..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div id="grid-parque" class="grid grid-cols-1 lg:grid-cols-2 gap-4" style="max-height:calc(100vh - 250px);overflow-y:auto;align-content:start;padding-bottom:24px"></div>`;
 
   document.getElementById('view-leituras').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-12 gap-4"><div class="lg:col-span-8 space-y-4"><div class="flex gap-2 flex-wrap"><button onclick="openModal('leitura')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold">+ Lançar leitura</button><button onclick="gerarFaturasPendentes()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px]">Gerar faturas pendentes</button></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[720px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-4 py-3">Data / Equip / Cliente / Por</th><th class="px-4 py-3">Contadores</th><th class="px-4 py-3">Consumo</th><th class="px-4 py-3">Franquia vs Exced.</th><th class="px-4 py-3">Valor extra</th><th class="px-4 py-3">Status</th><th></th></tr></thead><tbody id="tbody-leituras" class="divide-y"></tbody></table></div></div></div><div class="lg:col-span-4 space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px]">Coleta rápida por contrato</h4><div class="mt-4 space-y-3"><select id="coleta-contrato" onchange="loadColetaForm()" class="w-full h-11 px-3 rounded-xl bg-slate-50 border text-[13.5px]"><option value="">Selecione o contrato</option></select><div id="coleta-form" class="space-y-3"></div></div></div><div class="rounded-[16px] bg-amber-50 border border-amber-200 p-5"><h4 class="font-bold text-[13px] text-amber-900">Divergências</h4><div id="list-divergencias" class="mt-3 space-y-2 text-[12.5px]"></div></div></div></div>`;
 
   document.getElementById('view-manutencao').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div class="flex gap-2"><button onclick="openModal('os')" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Abrir chamado</button><button onclick="toggleOsView()" id="btn-os-kanban" class="h-11 px-4 rounded-xl bg-white border text-[13px]">Kanban</button></div><div class="flex gap-2"><select id="filter-os-status" onchange="renderOs()" class="h-11 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_peca">Aguard. peça</option><option value="concluido">Concluído</option></select><input id="search-os" oninput="renderOs()" placeholder="Buscar OS..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div id="os-kanban" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div><div id="os-list" class="hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">OS / Cliente / Criado por</th><th class="px-5 py-3">Tipo / Prioridade</th><th class="px-5 py-3">Técnico</th><th class="px-5 py-3">SLA</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-os" class="divide-y"></tbody></table></div>`;
 
-  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><button onclick="novaVenda()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px]">+ Nova venda / Orçamento</button><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
+  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
 
-  document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select><button onclick="baixarMultiplasCR()" id="btn-baixa-multi" class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hidden">Baixa múltipla</button></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-8"><input type="checkbox" id="cr-select-all" onchange="toggleSelectAllCR()"></th><th class="px-5 py-3">Venc / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
+  document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-24"></th><th class="px-5 py-3">Datas / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
-  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Exportar backup JSON</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
+  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Backup do sistema</button><button onclick="abrirTelaBackup()" class="w-full h-11 mt-2 rounded-xl bg-white border text-[13px] font-semibold">📥 Restaurar a partir de um arquivo</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
   document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários e permissões</h3><p class="text-[13px] text-slate-500 mt-1">Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">Perfis:</b> Admin e Dono têm permissão total.</p><p><b class="text-white">Funcionários:</b> editam apenas o próprio cadastro.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
@@ -911,9 +915,11 @@ function saveCliente(){
   const sess=getSession(); const id=window.modalContext?.id;
   const payload={empresaId:sess.empresaId, nome:document.getElementById('f-cli-nome').value.trim(), documento:document.getElementById('f-cli-doc').value.trim(), tipo:document.getElementById('f-cli-tipo').value, email:document.getElementById('f-cli-email').value.trim(), telefone:document.getElementById('f-cli-tel').value.trim(), endereco:document.getElementById('f-cli-end').value.trim(), cidade:document.getElementById('f-cli-cidade').value.trim(), estado:document.getElementById('f-cli-estado').value.trim(), cep:document.getElementById('f-cli-cep').value.trim(), status:document.getElementById('f-cli-status').value};
   if(!payload.nome) return toast('Informe nome','error');
-  if(id){
-    const existing=db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    Object.assign(existing,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
+  // v5.24.3 — procura UMA vez: se o id está fantasma (cliente sumiu da base
+  // local), cai para o cadastro NOVO em vez de estourar e perder o digitado.
+  const existingCli=id?db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId):null;
+  if(existingCli){
+    Object.assign(existingCli,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome}`);
   }else{
     const novo={id:uid('cli'),...payload,mensalidade:0,criadoEm:new Date().toISOString(),criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome};
@@ -927,17 +933,21 @@ function renderModalUsuario(id){
   const sess=getSession(); const isEdit=!!id;
   const u=isEdit?db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId):{nome:'',login:'',senha:'',perfil:'Comercial',ativo:true};
   document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${u.senha||''}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div></div>`;
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário${id ? '' : ' *'}</label><input id="u-senha" type="password" value="" placeholder="${id ? 'deixe em branco para manter a senha atual' : 'senha do usuário'}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div></div>`;
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">${isEdit?'Salvar':'Criar usuário'}</button>`;
 }
 function openModalCriarUsuario(){renderModalUsuario(null); document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'usuario',id:null};}
-function saveUsuario(){
+async function saveUsuario(){
   const sess=getSession(); const id=window.modalContext?.id;
   const payload={empresaId:sess.empresaId, nome:document.getElementById('u-nome').value.trim(), login:document.getElementById('u-login').value.trim().toLowerCase(), senha:document.getElementById('u-senha').value.trim(), perfil:document.getElementById('u-perfil').value, ativo:document.getElementById('u-ativo').value==='true'};
   if(!payload.nome||!payload.login||!payload.senha) return toast('Preencha nome, login e senha','error');
   if(!id && db.usuarios.find(u=>u.empresaId===sess.empresaId && u.login===payload.login)) return toast('Login já existe neste CNPJ','error');
+  const u=id?db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId):null;
+  // v7.1.0-r54 (P1): grava hash+salt junto (texto puro segue junto na transição p/ os PCs velhos).
+  const precisaHash=!id||!u||!u.senhaHash||(u.senha!==payload.senha);
+  if(precisaHash&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(payload,payload.senha); }catch(e){} }
+  if(u&&payload.senha) payload.senhaPadrao=false; // senha informada = troca confirmada; invalida a senha inicial
   if(id){
-    const u=db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId);
     Object.assign(u,payload,{atualizadoEm:new Date().toISOString(), atualizadoPor:sess.usuarioId});
     logAction('usuario','editar',id,`Editado usuário ${payload.login} perfil ${payload.perfil}`);
   }else{
@@ -971,7 +981,7 @@ function renderProdutos(){
   document.getElementById('cards-estoque').innerHTML=`<div class="rounded-[14px] bg-white border p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph ph-package"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Total SKUs</p><p class="text-[18px] font-bold">${db.produtos.filter(p=>p.empresaId===sess.empresaId).length}</p></div></div><div class="rounded-[14px] bg-white border ${baixo?'border-red-300 bg-red-50/50':''} p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl ${baixo?'bg-red-600 text-white':'bg-amber-50 text-amber-600'} grid place-items-center"><i class="ph ph-warning"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Estoque baixo</p><p class="text-[18px] font-bold">${baixo}</p></div></div><div class="rounded-[14px] bg-white border p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Valor custo</p><p class="text-[18px] font-bold">${fmtMoney(db.produtos.filter(p=>p.empresaId===sess.empresaId).reduce((s,p)=>s+p.custo*p.estoque,0))}</p></div></div><div class="rounded-[14px] bg-white border p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-currency-dollar"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Valor venda</p><p class="text-[18px] font-bold">${fmtMoney(db.produtos.filter(p=>p.empresaId===sess.empresaId).reduce((s,p)=>s+p.preco*p.estoque,0))}</p></div></div>`;
   // Nunca renderiza milhares de linhas: mostra os 300 primeiros
   const __pTotal=list.length; const __pExced=__pTotal>300; const listVis=__pExced?list.slice(0,300):list;
-  document.getElementById('tbody-produtos').innerHTML=listVis.map(p=>{const isLow=p.estoque<=p.estoqueMin; return `<tr class="hover:bg-slate-50 ${isLow?'bg-red-50/40':''}"><td class="px-5 py-3"><div><p class="font-mono text-[11px] text-slate-500">${p.sku}</p><p class="font-semibold text-[13px]">${p.nome}</p><p class="text-[11px] text-slate-500">Criado por <b>${p.criadoPorNome||'-'}</b> • ${fmtDate(p.criadoEm)} • ${p.fabricante}</p></div></td><td class="px-5 py-3"><span class="px-2 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${p.categoria}</span></td><td class="px-5 py-3"><p class="font-bold ${isLow?'text-red-600':''}">${p.estoque} un</p><p class="text-[11px] text-slate-500">mín ${p.estoqueMin}</p></td><td class="px-5 py-3"><p class="text-[12px]">${fmtMoney(p.custo)} → <b>${fmtMoney(p.preco)}</b></p></td><td class="px-5 py-3"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${p.local||'-'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('')+(__pExced?`<tr><td colspan="6" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${__pTotal} produtos — use a busca para refinar</td></tr>`:'');
+  document.getElementById('tbody-produtos').innerHTML=listVis.map(p=>{const isLow=p.estoque<=p.estoqueMin; return `<tr class="hover:bg-slate-50 ${isLow?'bg-red-50/40':''}"><td class="px-5 py-3"><div><p class="font-mono text-[11px] text-slate-500">${p.sku}</p><p class="font-semibold text-[13px]">${p.nome}</p><p class="text-[11px] text-slate-500">Criado por <b>${p.criadoPorNome||'-'}</b> • ${fmtDate(p.criadoEm)} • ${p.fabricante}</p></div></td><td class="px-5 py-3"><span class="px-2 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${p.categoria}</span></td><td class="px-5 py-3"><p class="font-bold ${isLow?'text-red-600':''}">${p.estoque} un</p><p class="text-[11px] text-slate-500">mín ${p.estoqueMin}</p></td><td class="px-5 py-3"><p class="text-[12px]">${fmtMoney(p.custo)} → <b>${fmtMoney(p.preco)}</b></p></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('')+(__pExced?`<tr><td colspan="6" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${__pTotal} produtos — use a busca para refinar</td></tr>`:'');
 }
 function deleteProduto(id){const sess=getSession(); if(confirm('Excluir produto?')){db.produtos=db.produtos.filter(p=>!(p.id===id && p.empresaId===sess.empresaId)); logAction('produto','excluir',id,'Excluído produto'); saveDB(); renderProdutos(); renderAuditoria();}}
 
@@ -985,13 +995,36 @@ function getFiltered(list){const sess=getSession(); if(!sess) return []; return 
 function renderDashboard(){
   const sess=getSession(); if(!sess) return;
   const empFilter=id=>!id||id===sess.empresaId;
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
+  const clientesAtivos=(db.clientes||[]).filter(c=>c.empresaId===sess.empresaId && c.status!=='inativo').length;
+  const produtosAtivos=(db.produtos||[]).filter(p=>p.empresaId===sess.empresaId && p.status!=='inativo').length;
+  const kpiClientes=document.getElementById('kpi-clientes'); if(kpiClientes) kpiClientes.innerText=clientesAtivos;
+  const kpiProdutos=document.getElementById('kpi-produtos'); if(kpiProdutos) kpiProdutos.innerText=produtosAtivos;
   document.getElementById('kpi-contratos').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length;
   document.getElementById('kpi-parque').innerText=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length;
   document.getElementById('kpi-os').innerText=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length;
   document.getElementById('kpi-disponiveis').innerText=db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length;
   const faturamentoMes=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth()).reduce((s,c)=>s+c.valor,0)+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0);
   document.getElementById('kpi-faturamento').innerText=fmtMoney(faturamentoMes);
+  // v6.1.4 (22/09/2026) — DONO: "dessa parte do dashboard do início, coloca pra
+  // mostrar também o de vendas/orçamentos". Vendas do mês = notinhas do mês sem
+  // as estornadas/canceladas/excluídas; Orçamentos abertos = os que ainda não
+  // viraram venda nem foram recusados.
+  try{
+    const hoje=new Date();
+    const vendasMes=db.vendas.filter(v=>empFilter(v.empresaId)
+      && !['excluido','estornado','cancelado'].includes(String(v.status||'').toLowerCase())
+      && (!v.tipo || String(v.tipo).toLowerCase()!=='orcamento')
+      && (function(d){ return d && !Number.isNaN(d.getTime()) && d.getMonth()===hoje.getMonth() && d.getFullYear()===hoje.getFullYear(); })(new Date(v.data||v.dataVenda||v.criadoEm)));
+    const elVendas=document.getElementById('kpi-vendas');
+    if(elVendas) elVendas.innerText=vendasMes.length;
+    const elVendasValor=document.getElementById('kpi-vendas-valor');
+    if(elVendasValor) elVendasValor.innerText=fmtMoney(vendasMes.reduce((s2,v)=>s2+(Number(String(v.total||v.valorTotal||v.valor||0).replace(',','.'))||0),0));
+    const abertos=db.orcamentos.filter(o=>empFilter(o.empresaId)
+      && !['aprovado','reprovado','cancelado','excluido','convertido','vendido'].includes(String(o.status||'').toLowerCase()));
+    const elOrc=document.getElementById('kpi-orcamentos');
+    if(elOrc) elOrc.innerText=abertos.length;
+  }catch(e){ /* se uma lista não existir, o painel continua de pé */ }
   document.getElementById('alert-vencendo').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && ((new Date(c.dataFim)-new Date())/(1000*60*60*24)>0 && (new Date(c.dataFim)-new Date())/(1000*60*60*24)<30)).length;
   document.getElementById('kpi-auditoria').innerText=db.logs.filter(l=>l.empresaId===sess.empresaId && new Date(l.dataHora).toDateString()===new Date().toDateString()).length+' hoje';
   const ctx=document.getElementById('chartFinance');
@@ -1015,10 +1048,11 @@ function renderDashboard(){
 }
 
 // USUARIOS RENDER
+// SUBSTITUICAO DE PROPOSITO (r54): renderUsuarios é embrulhada no fim do app.js (botões de senha) e na v5214 (botão de logins repetidos); cada embrulho chama a original.
 function renderUsuarios(){
   const sess=getSession(); if(!sess) return;
   const list=db.usuarios.filter(u=>u.empresaId===sess.empresaId);
-  document.getElementById('tbody-usuarios').innerHTML=list.map(u=>{const status=u.ativo?'bg-emerald-50 text-emerald-700 border-emerald-100':'bg-red-50 text-red-700 border-red-100'; return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[11px]">${initials(u.nome)}</div><div><p class="font-semibold text-[13px]">${u.nome}</p><p class="text-[11px] text-slate-500">${u.perfil} • criado por ${u.criadoPorNome||'sistema'}</p></div></div></td><td class="px-5 py-3"><p class="font-mono text-[12px] font-bold">${u.login}</p></td><td class="px-5 py-3"><p class="text-[12px]">${u.criadoPorNome||'sistema'}</p><p class="text-[11px] text-slate-500">${fmtDateTime(u.criadoEm)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${status}">${u.ativo?'Ativo':'Inativo'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('usuario','${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteUsuario('${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
+  document.getElementById('tbody-usuarios').innerHTML=list.map(u=>{const status=u.ativo?'bg-emerald-50 text-emerald-700 border-emerald-100':'bg-red-50 text-red-700 border-red-100'; return `<tr ondblclick="openModal('usuario','${u.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[11px]">${initials(u.nome)}</div><div><p class="font-semibold text-[13px]">${u.nome}</p><p class="text-[11px] text-slate-500">${u.perfil} • criado por ${u.criadoPorNome||'sistema'}</p></div></div></td><td class="px-5 py-3"><p class="font-mono text-[12px] font-bold">${u.login}</p></td><td class="px-5 py-3"><p class="text-[12px]">${u.criadoPorNome||'sistema'}</p><p class="text-[11px] text-slate-500">${fmtDateTime(u.criadoEm)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${status}">${u.ativo?'Ativo':'Inativo'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('usuario','${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteUsuario('${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
   const perfis={}; list.forEach(u=>{perfis[u.perfil]=(perfis[u.perfil]||0)+1}); document.getElementById('usuarios-por-perfil').innerHTML=Object.entries(perfis).map(([k,v])=>`<div class="flex justify-between p-2 rounded-xl bg-slate-50 border"><span>${k}</span><b>${v}</b></div>`).join('')||'<p class="text-[12px] text-slate-500">Nenhum</p>';
 }
 function deleteUsuario(id){const sess=getSession(); const u=db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!u) return; if(u.login==='admin' && db.usuarios.filter(x=>x.empresaId===sess.empresaId && x.login==='admin').length===1) return toast('Não pode excluir único admin','error'); if(confirm('Excluir usuário '+u.nome+'?')){db.usuarios=db.usuarios.filter(x=>x.id!==id); logAction('usuario','excluir',id,`Excluído usuário ${u.login}`); saveDB(); renderUsuarios(); renderAuditoria(); toast('Usuário excluído','success');}}
@@ -1028,7 +1062,7 @@ function renderAuditoria(){
   const sess=getSession(); if(!sess) return;
   const entidade=document.getElementById('filter-aud-entidade')?.value||''; const search=(document.getElementById('search-auditoria')?.value||'').toLowerCase();
   let list=db.logs.filter(l=>l.empresaId===sess.empresaId && (!entidade||l.entidade===entidade) && (!search||l.usuarioNome.toLowerCase().includes(search)||l.usuarioLogin.toLowerCase().includes(search)||l.acao.toLowerCase().includes(search)||l.entidade.toLowerCase().includes(search)||l.detalhes.toLowerCase().includes(search))).slice(0,100);
-  document.getElementById('tbody-auditoria').innerHTML=list.map(l=>{return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="text-[12px] font-mono">${fmtDateTime(l.dataHora)}</p></td><td class="px-5 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-[#0a1e8a] text-white grid place-items-center font-bold text-[10px]">${initials(l.usuarioNome)}</div><div><p class="font-semibold text-[12.5px]">${l.usuarioNome}</p><p class="text-[11px] text-slate-500">${l.usuarioLogin} • ${l.entidade==='auth'?'Sistema':''}</p></div></div></td><td class="px-5 py-3"><p class="text-[12px]"><b>${l.entidade}</b> • <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] font-bold uppercase">${l.acao}</span></p></td><td class="px-5 py-3"><span class="font-mono text-[11px]">${(l.entidadeId||'').slice(-8)}</span></td><td class="px-5 py-3"><p class="text-[12px]">${l.detalhes}</p></td></tr>`;}).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhum log</td></tr>';
+  document.getElementById('tbody-auditoria').innerHTML=list.map(l=>{return `<tr class="hover:bg-slate-50"><td class="px-5 py-3"><p class="text-[12px] font-mono">${fmtDateTime(l.dataHora)}</p></td><td class="px-5 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-[#0a1e8a] text-white grid place-items-center font-bold text-[10px]">${initials(l.usuarioNome)}</div><div><p class="font-semibold text-[12.5px]">${l.usuarioNome}</p><p class="text-[11px] text-slate-500">${l.usuarioLogin} • ${l.entidade==='auth'?'Sistema':''}</p></div></div></td><td class="px-5 py-3"><p class="text-[12px]"><b>${l.entidade}</b> • <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] font-bold uppercase">${l.acao}</span></p></td><td class="px-5 py-3"><span class="font-mono text-[11px]">${(l.entidadeId||'').slice(-8)}</span></td><td class="px-5 py-3"><p class="text-[12px]">${l.detalhes}</p></td></tr>`;}).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhum log</td></tr>';
 }
 
 // REUSAR FUNÇÕES DE MODAIS E RENDERS ANTERIORES ADAPTADAS COM FILTRO EMPRESA - simplificado chamando versões anteriores se existirem, senão stub
@@ -1053,7 +1087,7 @@ function renderModalProduto(id){
   const proximoCod = db._seq.produto[sess.empresaId||'global'];
   const skuAuto = isEdit ? (p?.sku||'') : String(proximoCod);
   document.getElementById('modal-title').innerText=isEdit?'Editar produto':'Novo produto';
-  document.getElementById('modal-body').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Código</label><input id="f-prd-sku" value="${skuAuto}" ${isEdit?'':'readonly'} class="mt-1 w-full h-11 px-3 rounded-xl border ${isEdit?'':'bg-slate-100'}"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Categoria</label><select id="f-prd-cat" class="mt-1 w-full h-11 px-3 rounded-xl border"><option>Suprimento</option><option>Peça</option><option>Impressora</option><option>Serviço</option></select></div><div class="md:col-span-2"><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="f-prd-nome" value="${p?p.nome||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Fabricante</label><input id="f-prd-fab" value="${p?p.fabricante||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Local</label><input id="f-prd-local" value="${p?p.local||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Estoque</label><input id="f-prd-est" type="number" value="${p?p.estoque||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Mínimo</label><input id="f-prd-min" type="number" value="${p?p.estoqueMin||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Custo</label><input id="f-prd-custo" type="number" step="0.01" value="${p?p.custo||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Preço venda</label><input id="f-prd-preco" type="number" step="0.01" value="${p?p.preco||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>`;
+  document.getElementById('modal-body').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Código</label><input id="f-prd-sku" value="${skuAuto}" ${isEdit?'':'readonly'} class="mt-1 w-full h-11 px-3 rounded-xl border ${isEdit?'':'bg-slate-100'}"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Categoria</label><select id="f-prd-cat" class="mt-1 w-full h-11 px-3 rounded-xl border"><option>Suprimento</option><option>Peça</option><option>Impressora</option><option>Serviço</option></select></div><div class="md:col-span-2"><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="f-prd-nome" value="${p?p.nome||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Fabricante</label><input id="f-prd-fab" value="${p?p.fabricante||'':''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Estoque</label><input id="f-prd-est" type="number" value="${p?p.estoque||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Mínimo</label><input id="f-prd-min" type="number" value="${p?p.estoqueMin||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Custo</label><input id="f-prd-custo" type="text" inputmode="decimal" onblur="try{var f=(typeof parseMoedaBR==='function')?parseMoedaBR:parseFloat;var v=f(this.value)||0;this.value=v?String(v).replace('.',','):'';}catch(e){}" value="${p?p.custo||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Preço venda</label><input id="f-prd-preco" type="text" inputmode="decimal" onblur="try{var f=(typeof parseMoedaBR==='function')?parseMoedaBR:parseFloat;var v=f(this.value)||0;this.value=v?String(v).replace('.',','):'';}catch(e){}" value="${p?p.preco||0:0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>`;
   if(p) document.getElementById('f-prd-cat').value=p.categoria||'Suprimento';
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveProduto()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button>`;
 }
@@ -1070,7 +1104,7 @@ function saveProduto(){
     }
   }
   const sess=getSession(); const id=window.modalContext?.id;
-  const payload={empresaId:sess.empresaId, sku:document.getElementById('f-prd-sku').value.trim(), nome:document.getElementById('f-prd-nome').value.trim(), categoria:document.getElementById('f-prd-cat').value, fabricante:document.getElementById('f-prd-fab').value.trim(), estoque:Math.max(0,parseInt(document.getElementById('f-prd-est').value)||0), estoqueMin:parseInt(document.getElementById('f-prd-min').value)||0, custo:parseFloat(document.getElementById('f-prd-custo').value)||0, preco:parseFloat(document.getElementById('f-prd-preco').value)||0, local:document.getElementById('f-prd-local').value.trim(), status:'ativo'};
+  const payload={empresaId:sess.empresaId, sku:document.getElementById('f-prd-sku').value.trim(), nome:document.getElementById('f-prd-nome').value.trim(), categoria:document.getElementById('f-prd-cat').value, fabricante:document.getElementById('f-prd-fab').value.trim(), estoque:Math.max(0,parseInt(document.getElementById('f-prd-est').value)||0), estoqueMin:parseInt(document.getElementById('f-prd-min').value)||0, custo:((typeof parseMoedaBR==='function')?parseMoedaBR(document.getElementById('f-prd-custo').value):parseFloat(document.getElementById('f-prd-custo').value))||0, preco:((typeof parseMoedaBR==='function')?parseMoedaBR(document.getElementById('f-prd-preco').value):parseFloat(document.getElementById('f-prd-preco').value))||0, local:'', status:'ativo'};
   if(!payload.nome) return toast('Nome obrigatório','error');
   if(id){const ex=db.produtos.find(p=>p.id===id && p.empresaId===sess.empresaId); Object.assign(ex,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome}); logAction('produto','editar',id,`${payload.nome}`);}
   else{const novo={id:uid('prd'),...payload, criadoEm:new Date().toISOString(), criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}; db.produtos.push(novo); logAction('produto','criar',novo.id,`${novo.nome} sku ${novo.sku}`);}
@@ -1097,7 +1131,7 @@ function renderEquipamentos(){
   const search=(document.getElementById('search-equip')?.value||'').toLowerCase(); const status=document.getElementById('filter-equip-status')?.value||'';
   let list=db.equipamentos.filter(e=>e.empresaId===sess.empresaId && (e.modelo+e.patrimonio+e.serie+e.fabricante).toLowerCase().includes(search) && (!status||e.status===status));
   document.getElementById('grid-equipamentos').innerHTML=list.map(e=>{const sm={disponivel:'bg-emerald-50 text-emerald-700 border-emerald-100', locado:'bg-[#e8eaf8] text-[#0a1e8a] border-[#c9ceef]', manutencao:'bg-amber-50 text-amber-700 border-amber-100', inativo:'bg-slate-100 text-slate-600'}; const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<div class="rounded-[18px] bg-white border p-5 hover:shadow-md transition"><div class="flex justify-between items-start"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph ph-printer text-[22px]"></i></div><div><p class="font-bold text-[13.5px] leading-tight">${e.modelo}</p><p class="text-[11.5px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></div></div><span class="text-[10.5px] font-bold uppercase px-2.5 py-1 rounded-full border ${sm[e.status]||''}">${e.status}</span></div><div class="mt-4 grid grid-cols-2 gap-3 text-[11.5px]"><div class="rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">Patrimônio</p><p class="font-mono font-semibold mt-0.5">${e.patrimonio}</p></div><div class="rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">Série</p><p class="font-mono font-semibold mt-0.5 truncate">${e.serie}</p></div></div><div class="mt-3 flex gap-2 text-[11.5px]"><div class="flex-1 rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">PB</p><p class="font-mono font-bold">${e.contadorPB.toLocaleString('pt-BR')}</p></div><div class="flex-1 rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">COR</p><p class="font-mono font-bold">${e.contadorCor.toLocaleString('pt-BR')}</p></div></div><div class="mt-3 text-[11.5px]">${cli?`<p class="text-slate-600"><i class="ph ph-map-pin"></i> ${cli.nome} • ${parque.setor}</p>`:`<p class="text-slate-400 italic">Sem alocação • disponível</p>`}</div><div class="mt-4 flex gap-2"><button onclick="openModal('equipamento','${e.id}')" class="flex-1 h-9 rounded-xl bg-white border text-[12px] font-semibold">Editar</button><button onclick="toast('Histórico auditado por ${e.criadoPorNome||'-'}','info')" class="h-9 px-3 rounded-xl bg-slate-900 text-white text-[12px] font-semibold">Histórico</button></div></div>`;}).join('')||'<div class="col-span-full p-12 text-center text-slate-500">Nenhum equipamento</div>';
-  document.getElementById('tbody-equip').innerHTML=list.map(e=>{const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-semibold text-[13px]">${e.modelo}</p><p class="text-[11px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.patrimonio}</p><p class="font-mono text-[11px] text-slate-500">${e.serie}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.contadorPB.toLocaleString()} PB</p><p class="font-mono text-[11px] text-slate-500">${e.contadorCor.toLocaleString()} COR</p></td><td class="px-5 py-3"><p class="text-[12px]">${cli?cli.nome:'—'}</p><p class="text-[11px] text-slate-500">${parque?.setor||'Sem alocação'}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#e8eaf8] text-[#0a1e8a]">${e.status}</span></td><td class="px-5 py-3"><button onclick="openModal('equipamento','${e.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
+  document.getElementById('tbody-equip').innerHTML=list.map(e=>{const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<tr ondblclick="openModal('equipamento','${e.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-semibold text-[13px]">${e.modelo}</p><p class="text-[11px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.patrimonio}</p><p class="font-mono text-[11px] text-slate-500">${e.serie}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.contadorPB.toLocaleString()} PB</p><p class="font-mono text-[11px] text-slate-500">${e.contadorCor.toLocaleString()} COR</p></td><td class="px-5 py-3"><p class="text-[12px]">${cli?cli.nome:'—'}</p><p class="text-[11px] text-slate-500">${parque?.setor||'Sem alocação'}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#e8eaf8] text-[#0a1e8a]">${e.status}</span></td><td class="px-5 py-3"><button onclick="openModal('equipamento','${e.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
 }
 let equipView='grid';
 function setEquipView(v){equipView=v; document.getElementById('btn-view-grid').className=v==='grid'?'px-3 h-8 rounded-lg bg-slate-900 text-white text-[12px]':'px-3 h-8 rounded-lg text-slate-600 text-[12px]'; document.getElementById('btn-view-list').className=v==='list'?'px-3 h-8 rounded-lg bg-slate-900 text-white text-[12px]':'px-3 h-8 rounded-lg text-slate-600 text-[12px]'; document.getElementById('grid-equipamentos').classList.toggle('hidden', v!=='grid'); document.getElementById('list-equipamentos').classList.toggle('hidden', v!=='list');}
@@ -1138,11 +1172,11 @@ function renderParque(){
   const search=(document.getElementById('search-parque')?.value||'').toLowerCase(); const cliFilter=document.getElementById('filter-parque-cliente')?.value||'';
   let list=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo' && (!cliFilter||p.clienteId===cliFilter) && (!search|| (db.clientes.find(c=>c.id===p.clienteId)?.nome||'').toLowerCase().includes(search) || (db.equipamentos.find(e=>e.id===p.equipamentoId)?.modelo||'').toLowerCase().includes(search) || p.setor.toLowerCase().includes(search)));
   const grouped={}; list.forEach(p=>{ (grouped[p.clienteId]=grouped[p.clienteId]||[]).push(p); });
-  document.getElementById('grid-parque').innerHTML=Object.keys(grouped).map(cliId=>{const cli=db.clientes.find(c=>c.id===cliId); const items=grouped[cliId]; return `<div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 border-b bg-slate-50/70 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[12px]">${initials(cli?.nome||'?')}</div><div><p class="font-bold text-[13.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${items.length} equip • por ${items[0]?.criadoPorNome||'-'}</p></div></div></div><div class="divide-y">${items.map(p=>{const eq=db.equipamentos.find(e=>e.id===p.equipamentoId); const leit=db.leituras.filter(l=>l.parqueId===p.id).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura))[0]; return `<div class="p-4 flex items-start gap-3 hover:bg-slate-50/70"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-printer"></i></div><div class="flex-1"><p class="font-semibold text-[13px]">${eq?.modelo} • ${eq?.patrimonio}</p><p class="text-[11.5px] text-slate-500">Setor: ${p.setor} • criado por ${p.criadoPorNome||'-'}</p><p class="text-[11px] text-slate-400">PB: ${(leit?leit.contadorPB:eq?.contadorPB||0).toLocaleString()} • COR: ${(leit?leit.contadorCor:eq?.contadorCor||0).toLocaleString()}</p></div></div>`}).join('')}</div></div>`}).join('')||'<div class="p-12 text-center bg-white border rounded-[16px] text-slate-500">Nenhum parque</div>';
+  document.getElementById('grid-parque').innerHTML=Object.keys(grouped).map(cliId=>{const cli=db.clientes.find(c=>c.id===cliId); const items=grouped[cliId]; return `<div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 border-b bg-slate-50/70 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[12px]">${initials(cli?.nome||'?')}</div><div><p class="font-bold text-[13.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${items.length} equip • por ${items[0]?.criadoPorNome||'-'}</p></div></div></div><div class="divide-y">${items.map(p=>{const eq=db.equipamentos.find(e=>e.id===p.equipamentoId); const leit=db.leituras.filter(l=>l.parqueId===p.id).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura))[0]; return `<div class="p-4 flex items-start gap-3 hover:bg-slate-50/70"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-printer"></i></div><div class="flex-1"><p class="font-semibold text-[13px]">${eq?.modelo} • ${eq?.patrimonio}</p><p class="text-[11.5px] text-slate-500">Setor: ${p.setor} • criado por ${p.criadoPorNome||'-'}</p><p class="text-[11px] text-slate-400">PB: ${(leit?leit.contadorPB:eq?.contadorPB||0).toLocaleString()} • COR: ${(leit?leit.contadorCor:eq?.contadorCor||0).toLocaleString()}</p></div></div>`}).join('')}</div></div>`}).join('')||'<div class="p-5 text-center bg-white border rounded-[16px] text-slate-500"><b>Nenhum parque instalado encontrado</b><p class="text-[12px] mt-1">Ajuste o cliente ou a busca, ou crie um contrato com equipamento para montar o parque.</p></div>';
 }
 function renderLeituras(){
   const sess=getSession(); if(!sess) return;
-  document.getElementById('tbody-leituras').innerHTML=db.leituras.filter(l=>l.empresaId===sess.empresaId).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura)).slice(0,20).map(l=>{const cli=db.clientes.find(c=>c.id===l.clienteId); const eq=db.equipamentos.find(e=>e.id===l.equipamentoId); return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-4 py-3"><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${eq?.modelo} • ${fmtDate(l.dataLeitura)} • por <b>${l.criadoPorNome||'-'}</b></p></td><td class="px-4 py-3 font-mono text-[11px]">PB ${l.contadorPBAnterior}→${l.contadorPB}<br>COR ${l.contadorCorAnterior}→${l.contadorCor}</td><td class="px-4 py-3">${l.consumoPB} PB / ${l.consumoCor} COR</td><td class="px-4 py-3">${fmtMoney(l.valorExcedente)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold border ${l.status==='pendente'?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700'}">${l.status}</span></td><td class="px-4 py-3"><button onclick="openModal('leitura','${l.id}')" class="w-7 h-7 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`}).join('');
+  document.getElementById('tbody-leituras').innerHTML=db.leituras.filter(l=>l.empresaId===sess.empresaId).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura)).slice(0,20).map(l=>{const cli=db.clientes.find(c=>c.id===l.clienteId); const eq=db.equipamentos.find(e=>e.id===l.equipamentoId); return `<tr ondblclick="openModal('leitura','${l.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-4 py-3"><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${eq?.modelo} • ${fmtDate(l.dataLeitura)} • por <b>${l.criadoPorNome||'-'}</b></p></td><td class="px-4 py-3 font-mono text-[11px]">PB ${l.contadorPBAnterior}→${l.contadorPB}<br>COR ${l.contadorCorAnterior}→${l.contadorCor}</td><td class="px-4 py-3">${l.consumoPB} PB / ${l.consumoCor} COR</td><td class="px-4 py-3">${fmtMoney(l.valorExcedente)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold border ${l.status==='pendente'?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700'}">${l.status}</span></td><td class="px-4 py-3"><button onclick="openModal('leitura','${l.id}')" class="w-7 h-7 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`}).join('');
   document.getElementById('list-divergencias').innerHTML='<p class="text-[12px] text-amber-800">Nenhuma divergência</p>';
   const sel=document.getElementById('coleta-contrato'); if(sel && !sel.innerHTML.includes('CT-')){sel.innerHTML='<option value="">Selecione o contrato</option>'+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').map(c=>{const cli=db.clientes.find(cl=>cl.id===c.clienteId); return `<option value="${c.id}">${c.numero} - ${cli?.nome}</option>`}).join('');}
 }
@@ -1170,7 +1204,7 @@ function renderOs(){
     const cols=[{id:'aberto',label:'Aberto',color:'border-slate-200 bg-slate-50'},{id:'em_atendimento',label:'Em atendimento',color:'border-blue-200 bg-blue-50/50'},{id:'aguardando_peca',label:'Aguardando peça',color:'border-amber-200 bg-amber-50/50'},{id:'concluido',label:'Concluído',color:'border-emerald-200 bg-emerald-50/50'}];
     document.getElementById('os-kanban').innerHTML=cols.map(col=>{const items=list.filter(o=>o.status===col.id); return `<div class="rounded-[16px] border ${col.color} p-3 flex flex-col"><div class="flex items-center justify-between mb-3"><h4 class="font-bold text-[12px] uppercase">${col.label}</h4><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white border">${items.length}</span></div><div class="space-y-3 flex-1 overflow-auto" style="min-height:400px">${items.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); return `<div class="rounded-xl bg-white border p-3 shadow-sm hover:shadow-md cursor-pointer" onclick="openModal('os','${o.id}')"><div class="flex justify-between"><span class="font-mono text-[11px] font-bold text-slate-500">${o.numero}</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-[#e8eaf8] text-[#0a1e8a] font-bold uppercase">${o.prioridade}</span></div><p class="font-semibold text-[13px] mt-2">${cli?.nome}</p><p class="text-[11px] text-slate-600 mt-1 line-clamp-2">${o.descricao}</p><p class="text-[11px] text-slate-400 mt-2">por ${o.criadoPorNome||'-'} • ${fmtDate(o.dataAbertura)}</p></div>`;}).join('')||'<p class="text-[12px] text-slate-400 p-4 text-center">Vazio</p>'}</div></div>`;}).join('');
   } else {
-    document.getElementById('tbody-os').innerHTML=list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const sm={aberto:'bg-[#0a1e8a] text-white', em_atendimento:'bg-blue-600 text-white', aguardando_peca:'bg-amber-500 text-white', concluido:'bg-emerald-600 text-white'}; const slaHoras=Math.floor((Date.now()-new Date(o.dataAbertura))/(1000*60*60)); return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${o.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${o.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[12px] capitalize">${o.tipo}</p><span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border font-bold uppercase">${o.prioridade}</span></td><td class="px-5 py-3"><p class="text-[12px]">${db.tecnicos.find(t=>t.id===o.tecnico)?.nome||'—'}</p></td><td class="px-5 py-3"><p class="text-[12px] font-mono">${slaHoras}h</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${sm[o.status]||'bg-slate-100'}">${o.status.replace('_',' ')}</span></td><td class="px-5 py-3"><button onclick="openModal('os','${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
+    document.getElementById('tbody-os').innerHTML=list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const sm={aberto:'bg-[#0a1e8a] text-white', em_atendimento:'bg-blue-600 text-white', aguardando_peca:'bg-amber-500 text-white', concluido:'bg-emerald-600 text-white'}; const slaHoras=Math.floor((Date.now()-new Date(o.dataAbertura))/(1000*60*60)); return `<tr ondblclick="openModal('os','${o.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${o.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${o.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[12px] capitalize">${o.tipo}</p><span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border font-bold uppercase">${o.prioridade}</span></td><td class="px-5 py-3"><p class="text-[12px]">${db.tecnicos.find(t=>t.id===o.tecnico)?.nome||'—'}</p></td><td class="px-5 py-3"><p class="text-[12px] font-mono">${slaHoras}h</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${sm[o.status]||'bg-slate-100'}">${o.status.replace('_',' ')}</span></td><td class="px-5 py-3"><button onclick="openModal('os','${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
   }
 }
 function renderModalOS(id){
@@ -1199,10 +1233,27 @@ function renderVendas(){
 }
 function showVenda(id){const v=db.vendas.find(x=>x.id===id); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); const isPix=v.formaPagamento&&/pix/i.test(v.formaPagamento); let botoes=''; if(v.status==='orcamento'||v.status==='aprovado'){botoes=`<button onclick="faturarVenda('${v.id}')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]">Faturar venda</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button>`;}else if(v.status==='faturado'){botoes=`<button onclick="estornarVenda('${v.id}')" class="h-11 rounded-xl bg-amber-500 text-white font-semibold text-[13px]">Estornar</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button>`;}else if(v.status==='estornada'){botoes=`<span class="text-[13px] text-amber-700 font-bold col-span-2 text-center py-2">Venda estornada</span>`;} const pixHtml=isPix?'<div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800">WhatsApp QR Code: +55 38 99109-8698</div>':''; document.getElementById('venda-detail').innerHTML=`<div class="flex justify-between"><div><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><h3 class="font-bold text-[16px] mt-1">${cli?.nome}</h3><p class="text-[12px] text-slate-500">por ${v.criadoPorNome||'-'} \u2022 ${fmtDateTime(v.data)} \u2022 ${v.formaPagamento}</p></div><span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase border bg-slate-50">${v.status}</span></div>${pixHtml}<div class="mt-6 space-y-2">${v.itens.map(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<div class="flex justify-between items-center p-3 rounded-xl border bg-slate-50/70"><div><p class="font-semibold text-[13px]">${p?.nome||it.descricao||'Produto removido'}</p><p class="text-[11px] text-slate-500">${it.qtd} x ${fmtMoney(it.preco)}</p></div><b class="text-[13px]">${fmtMoney(it.subtotal)}</b></div>`}).join('')}</div><div class="mt-6 border-t pt-4 space-y-2 text-[13px]"><div class="flex justify-between font-bold text-[16px] pt-2 border-t"><span>Total</span><span>${fmtMoney(v.total)}</span></div><p class="text-[11px] text-slate-500">Criado por ${v.criadoPorNome||'-'} em ${fmtDateTime(v.data||v.criadoEm)}</p></div><div class="mt-6 grid grid-cols-2 gap-2">${botoes}</div>`;}
 
-function faturarVenda(id){const sess=getSession(); const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!v) return; if(v.status==='faturado') return toast('Já faturado','error'); v.status='faturado'; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:v.clienteId,descricao:`Venda ${v.numero}`,valor:v.total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:v.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); logAction('venda','faturar',id,`Faturada venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderFinanceiro(); showVenda(id); renderAuditoria(); toast('Venda faturada','success');}
+function faturarVenda(id){const sess=getSession(); const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!v) return; if(v.status==='faturado') return toast('Já faturado','error'); v.status='faturado'; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',criadoEm:new Date().toISOString(),clienteId:v.clienteId,descricao:`Venda ${v.numero}`,vendaNumero:v.numero,valor:v.total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:v.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); logAction('venda','faturar',id,`Faturada venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderFinanceiro(); showVenda(id); renderAuditoria(); toast('Venda faturada','success');}
 function deleteVenda(id){const sess=getSession(); if(confirm('Excluir venda? Estoque estornado.')){const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(v){v.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId); if(p) p.estoque+=it.qtd;}); db.vendas=db.vendas.filter(x=>!(x.id===id && x.empresaId===sess.empresaId)); logAction('venda','excluir',id,`Excluída venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderProdutos(); document.getElementById('venda-detail').innerHTML='<div class="text-center py-20 text-slate-400 text-[13px]">Venda excluída</div>'; toast('Venda excluída','success'); renderAuditoria();}}}
 
 function setFinTab(tab){document.querySelectorAll('.fin-tab').forEach(b=>{b.classList.remove('bg-[#0a1e8a]','text-white'); b.classList.add('bg-white','border','border-slate-200');}); document.querySelector(`[data-fintab="${tab}"]`).classList.add('bg-[#0a1e8a]','text-white'); document.querySelector(`[data-fintab="${tab}"]`).classList.remove('bg-white','border'); document.querySelectorAll('.fin-panel').forEach(p=>p.classList.add('hidden')); document.getElementById('fin-'+tab).classList.remove('hidden'); if(tab==='visao') renderFluxoChart();}
+// Data em que o título nasceu. Títulos antigos não gravavam `criadoEm`, então
+// o sistema volta na origem (venda/leitura) para não mostrar traço na tela.
+function dataCriacaoCR(cr){
+  if(!cr) return '';
+  if(cr.criadoEm) return cr.criadoEm;
+  if(cr.vendaId){
+    const v=(db.vendas||[]).find(x=>x.id===cr.vendaId);
+    if(v && (v.data||v.criadoEm)) return v.data||v.criadoEm;
+  }
+  if(cr.leituraId){
+    const l=(db.leituras||[]).find(x=>x.id===cr.leituraId);
+    if(l && (l.dataLeitura||l.criadoEm)) return l.dataLeitura||l.criadoEm;
+  }
+  return cr.vencimento||'';
+}
+window.dataCriacaoCR = dataCriacaoCR;
+
 function renderFinanceiro(){
   const sess=getSession(); if(!sess) return;
   const totalReceberMes=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth() && new Date(cr.vencimento).getFullYear()===new Date().getFullYear()).reduce((s,c)=>s+c.valor,0);
@@ -1229,7 +1280,7 @@ function renderFinanceiro(){
     if(cr.contratoId) return "navigateTo('contratos')";
     return '';
   }
-  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3"><input type="checkbox" class="cr-check" data-id="'+cr.id+'" onchange="updateBaixaMulti()"></td><td class="px-5 py-3"><p class="text-[12px] font-semibold">'+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
+  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago' && cr.status!=='estornado'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200', estornado:'bg-slate-100 text-slate-500 border-slate-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3">'+(cr.status==='estornado'?'<span class="text-[10px] font-bold text-slate-400">EXTORNADO</span>':'')+'</td><td class="px-5 py-3"><p class="text-[12px] font-semibold">Vence '+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[11px] text-slate-500">Criado '+fmtDate(dataCriacaoCR(cr))+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
   const dreRows=[{label:'Receita Bruta - Locações', valor: db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0)*1.1},{label:'Receita - Excedentes', valor: db.leituras.filter(l=>l.empresaId===sess.empresaId).reduce((s,l)=>s+l.valorExcedente,0)},{label:'Receita - Vendas', valor: db.vendas.filter(v=>v.empresaId===sess.empresaId).reduce((s,v)=>s+v.total,0)},{label:'(=) Lucro Bruto', valor: 0, isTotal:true}];
   dreRows[3].valor=dreRows[0].valor+dreRows[1].valor+dreRows[2].valor;
   const dreEl=document.getElementById('dre-table'); if(dreEl) dreEl.innerHTML=dreRows.map(r=>'<div class="flex justify-between py-2 px-3 rounded-xl '+(r.isTotal?'bg-[#0a1e8a] text-white font-bold':'hover:bg-slate-50')+' text-[13px]"><span>'+r.label+'</span><span class="'+(r.isTotal?'text-white':'')+'">'+fmtMoney(r.valor)+'</span></div>').join('');
@@ -1281,7 +1332,7 @@ function gerarFaturasPendentes(){const sess=getSession(); const pend=db.leituras
   console.log('DIGICOPY ERP — build 3.11.2 (upload a prova de painel duplicado: progresso ancorado no input clicado, re-selecionar mesmos arquivos funciona, erros visiveis na tela e no console)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   // permitir Enter nos logins
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
@@ -1362,12 +1413,14 @@ window.openModal = function(type,id=null){
 };
 function renderBanco(){
   const sess=getSession();
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   let el=document.getElementById('view-banco');
   if(!el){ el=ensureView('banco'); }
   el.innerHTML='';
   el.classList.remove('hidden');
   el.style.display='block';
   el.style.visibility='visible';
+  setPageHeader('Importar banco antigo','Migração segura de dados do Firebird/DBeaver');
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const kpiCont = db.contratos.filter(c=>c.empresaId===sess?.empresaId && c.status==='ativo').length;
   const kpiParq = db.parque.filter(p=>p.empresaId===sess?.empresaId && p.status==='ativo').length;
@@ -1384,7 +1437,7 @@ function renderBanco(){
         </div>
         <div class="flex flex-wrap gap-2">
           <button onclick="navigateTo('dashboard')" class="h-10 px-5 rounded-xl bg-white text-[#0a1e8a] font-bold text-[13px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-house text-[18px]"></i> Ver Dashboard (Início)</button>
-          <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
+          <button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Backup do sistema</button>
         </div>
       </div>
 
@@ -1463,6 +1516,7 @@ function renderBanco(){
             <p class="text-[12px] text-slate-500">Dados importados do banco para o ERP</p>
           </div>
         </div>
+        <p id="fb-import-progress" class="text-[12px] text-slate-500 mb-3">Aguardando confirmação para gravar.</p>
         <div id="fb-import-result" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>
       </div>
 
@@ -1566,19 +1620,39 @@ window.importarJsonDBeaver = function(dados){
     toast('Nenhum dado para importar','error');
     return;
   }
-  
-  if(!confirm(`Importar ${Object.keys(dadosImportar).length} tabelas para o ERP?\n\nIsso vai adicionar os dados aos módulos existentes ou criar novos módulos.`)){
-    return;
+  const executar = function(){
+    if(window.__importacaoLegadoEmAndamento || window.__fbImportEmAndamento){
+      toast('Já existe uma importação em andamento. Aguarde o término antes de iniciar outra.','info');
+      return;
+    }
+    const rawData = {};
+    for(const [tabela, registros] of Object.entries(dadosImportar)){
+      if(!legacyTabelaPermitida(tabela)) continue;
+      rawData[tabela] = { data: registros, error: null };
+    }
+    if(!Object.keys(rawData).length){
+      toast('Nenhuma tabela possui destino validado no ERP. Nada foi gravado.','info');
+      return;
+    }
+    window.__importacaoLegadoEmAndamento=true;
+    try{
+      fbImportToErp(rawData);
+      toast('Importação concluída!','success');
+    }catch(e){
+      console.error('[IMPORT] falha ao importar JSON',e);
+      toast('Falha ao importar: '+(e.message||e),'error');
+    } finally {
+      window.__importacaoLegadoEmAndamento=false;
+    }
+  };
+  const msg=`Importar ${Object.keys(dadosImportar).length} tabelas para o ERP?\n\nIsso vai adicionar os dados aos módulos existentes ou criar novos módulos.`;
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema(msg,'Importar banco antigo').then(function(ok){ if(ok===true) executar(); });
+  }else if(typeof window.lfbAlert==='function'){
+    window.lfbAlert('A janela de confirmação do sistema ainda está carregando. Tente novamente em alguns segundos.','Importar banco antigo');
+  }else{
+    toast('A confirmação visual ainda está carregando. Tente novamente.','info');
   }
-  
-  // Usar a mesma lógica do fbImportToErp
-  const rawData = {};
-  for(const [tabela, registros] of Object.entries(dadosImportar)){
-    rawData[tabela] = { data: registros, error: null };
-  }
-  
-  fbImportToErp(rawData);
-  toast('Importação concluída!','success');
 };
 
 window.handleRarUpload = window.handleDatabaseUpload;
@@ -1614,6 +1688,24 @@ window.fbMapNomeTabela = function(nomeArquivo, primeiraLinha){
   return nomeArquivo;
 };
 
+// Migração assistida: somente entidades com destino confirmado no ERP entram
+// no importador automático. As demais ficam fora até receberem um mapeamento
+// específico, evitando criar menus ou gravar dados sem uso.
+window.LEGACY_IMPORT_POLICY = {
+  permitidas: new Set(['CLIENTES','PRODUTOS','EQUIPAMENTOS','VENDAS','ITENS_VENDA','CONTAS_RECEBER','LOCACAO','LEITURAS']),
+  ignoradas: new Set(['CONTAS_PAGAR']),
+  destino: {
+    CLIENTES:'Cadastros > Clientes', PRODUTOS:'Produtos', EQUIPAMENTOS:'Locação > Cadastro de impressoras',
+    VENDAS:'Atendimento > Notinhas', ITENS_VENDA:'Atendimento > Notinhas (itens)',
+    CONTAS_RECEBER:'Financeiro > Contas a receber', LOCACAO:'Locação > Contratos', LEITURAS:'Locação > Leituras'
+  }
+};
+
+function legacyTabelaPermitida(nome){
+  const n=String(nome||'').toUpperCase();
+  return window.LEGACY_IMPORT_POLICY.permitidas.has(n);
+}
+
 // Upload de múltiplos arquivos JSON de uma vez
 window.handleMultipleUpload = async function(files, inputEl){
   // Localiza os elementos do painel subindo a partir do próprio input clicado.
@@ -1635,6 +1727,14 @@ window.handleMultipleUpload = async function(files, inputEl){
   const log = qs('#upload-log');
 
   if(!files || files.length === 0) return;
+  if(window.__uploadLeituraEmAndamento){
+    if(status) status.innerHTML='<p class="text-amber-600 font-bold">Já existe uma leitura em andamento. Aguarde a conclusão antes de escolher os arquivos novamente.</p>';
+    return;
+  }
+  const unicos = Array.from(files).filter((file, i, all) => i === all.findIndex(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified));
+  files = unicos;
+  window.__uploadLeituraEmAndamento = true;
+  window._rawDataParaImportar = null;
   console.log('[UPLOAD] inicio: '+files.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
 
   try {
@@ -1643,7 +1743,7 @@ window.handleMultipleUpload = async function(files, inputEl){
     if(status) status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Iniciando leitura de '+files.length+' arquivo(s)...</p>';
 
     const sess = getSession();
-    if(!sess) { if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
+    if(!sess) { window.__uploadLeituraEmAndamento=false; if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
 
     const total = files.length;
     let processados = 0;
@@ -1660,6 +1760,13 @@ window.handleMultipleUpload = async function(files, inputEl){
           const nomeArquivo = file.name.replace(/\.json$/i,'').toUpperCase();
           const nomeTabela = window.fbMapNomeTabela(nomeArquivo, imported.length > 0 ? imported[0] : null);
 
+          if(!legacyTabelaPermitida(nomeTabela)){
+            const motivo=window.LEGACY_IMPORT_POLICY.ignoradas.has(nomeTabela)?'sem uso no ERP atual':'sem destino validado';
+            if(log) log.innerHTML += '<div class="text-slate-500">↷ '+file.name+' ignorado ('+motivo+')</div>';
+            processados++;
+            continue;
+          }
+
           // Se a tabela já foi carregada de outro arquivo, JUNTAR os registros (não sobrescrever)
           if(rawData[nomeTabela] && Array.isArray(rawData[nomeTabela].data)){
             rawData[nomeTabela].data = rawData[nomeTabela].data.concat(imported);
@@ -1674,10 +1781,17 @@ window.handleMultipleUpload = async function(files, inputEl){
           const dadosObj = imported.tabelas || imported.data || imported.resultado || imported;
           for(const [key, value] of Object.entries(dadosObj)){
             if(Array.isArray(value) && value.length > 0){
-              rawData[key.toUpperCase()] = { data: value, error: null };
-              tabelasImportadas[key.toUpperCase()] = value.length;
-              totalRegistros += value.length;
-              if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+key+'</b> ('+value.length+' registros)</div>';
+            const tabelaKey=key.toUpperCase();
+            if(!legacyTabelaPermitida(tabelaKey)){
+              const motivo=window.LEGACY_IMPORT_POLICY.ignoradas.has(tabelaKey)?'sem uso no ERP atual':'sem destino validado';
+              if(log) log.innerHTML += '<div class="text-slate-500">↷ '+file.name+' → <b>'+tabelaKey+'</b> ignorada ('+motivo+')</div>';
+              continue;
+            }
+            if(rawData[tabelaKey] && Array.isArray(rawData[tabelaKey].data)) rawData[tabelaKey].data = rawData[tabelaKey].data.concat(value);
+            else rawData[tabelaKey] = { data: value, error: null };
+            tabelasImportadas[tabelaKey] = rawData[tabelaKey].data.length;
+            totalRegistros += value.length;
+            if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+tabelaKey+'</b> ('+value.length+' registros)</div>';
             }
           }
         }
@@ -1698,8 +1812,19 @@ window.handleMultipleUpload = async function(files, inputEl){
     const tabelasCount = Object.keys(tabelasImportadas).length;
 
     window._rawDataParaImportar = rawData;
+    if(status){
+      status.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+        <p class="font-bold text-emerald-800">✅ Leitura concluída: ${totalRegistros.toLocaleString('pt-BR')} registros em ${tabelasCount} tabelas.</p>
+        <p class="text-[11px] text-emerald-700 mt-1">Revise o log ao lado e confirme quando estiver pronto. Os dados só serão gravados após a confirmação.</p>
+        <button type="button" onclick="importarTudoDeUmaVez()" class="mt-3 w-full h-10 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition">
+          <i class="ph ph-download-simple"></i> Importar dados para o ERP
+        </button>
+      </div>`;
+    }
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
+    window.__uploadLeituraEmAndamento = false;
   } catch(e){
+    window.__uploadLeituraEmAndamento = false;
     console.error('[UPLOAD] falha geral', e);
     if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+e.message+'</p>';
   }
@@ -1710,8 +1835,33 @@ window.importarTudoDeUmaVez = function(){
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   const tabelas = Object.keys(rawData);
   const totalReg = tabelas.reduce(function(s,t){return s+(rawData[t].data?.length||0)},0);
-  if(!confirm('Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nTabelas sem correspondência viram menus novos no sidebar.')) return;
-  fbImportToErp(rawData);
+  if(window.__importacaoLegadoEmAndamento || window.__fbImportEmAndamento){
+    toast('Já existe uma importação em andamento. Aguarde o resultado antes de enviar outro lote.','info');
+    return;
+  }
+  const msg='Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nSomente tabelas com destino validado serão gravadas. As demais serão ignoradas sem criar menus.';
+  const executar = function(){
+    window.__importacaoLegadoEmAndamento=true;
+    const botao=document.querySelector('#upload-status button');
+    if(botao){ botao.disabled=true; botao.textContent='Importando… aguarde'; botao.classList.add('opacity-60','cursor-not-allowed'); }
+    try{
+      // Devolve o controle ao navegador antes do processamento para a tela não
+      // parecer congelada e para o usuário acompanhar o resultado do lote.
+      setTimeout(function(){
+        try{ fbImportToErp(rawData); }
+        catch(e){ console.error('[IMPORT] falha ao gravar lote',e); toast('Falha ao gravar o lote: '+(e.message||e),'error'); }
+        finally{ window.__importacaoLegadoEmAndamento=false; }
+      },0);
+    }catch(e){ window.__importacaoLegadoEmAndamento=false; toast('Falha ao iniciar a importação: '+(e.message||e),'error'); }
+  };
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema(msg,'Importar banco antigo').then(function(ok){ if(ok===true) executar(); });
+  }else{
+    // Nunca abrir o confirm nativo do navegador: no Electron ele pode
+    // bloquear a janela e, no navegador, aparece fora do padrão visual do ERP.
+    if(typeof window.lfbAlert==='function') window.lfbAlert('A janela de confirmação do sistema ainda está carregando. Tente novamente em alguns segundos.','Importar banco antigo');
+    else toast('A confirmação visual ainda está carregando. Tente novamente.','info');
+  }
 };
 
 window.copiarSqlExportarTudo = function(){
@@ -1720,7 +1870,8 @@ window.copiarSqlExportarTudo = function(){
   navigator.clipboard.writeText(sql).then(function(){
     toast('SQL copiado! Cole no DBeaver, execute, e exporte cada tabela clicando com botão direito','success');
     setTimeout(function(){
-      alert('INSTRUÇÕES:\n\n1. Cole o SQL no DBeaver e execute\n2. Vai aparecer a lista de tabelas\n3. Para cada tabela importante:\n   - Clique com botão direito na tabela (na árvore à esquerda)\n   - Escolha "Exportar Dados"\n   - Selecione "JSON"\n   - Salve o arquivo\n\nTabelas importantes:\n• CLIENTES\n• PRODUTOS\n• VENDAS\n• ITENS_VENDA\n• EQUIPAMENTOS\n• CONTAS_RECEBER\n• CONTAS_PAGAR\n\nDepois selecione todos os .json aqui no ERP.');
+      const instrucoes='INSTRUÇÕES:\n\n1. Cole o SQL no DBeaver e execute\n2. Vai aparecer a lista de tabelas\n3. Para cada tabela importante, use Exportar Dados > JSON e salve o arquivo.\n\nTabelas aproveitadas automaticamente:\n• CLIENTES\n• PRODUTOS\n• VENDAS\n• ITENS_VENDA\n• EQUIPAMENTOS\n• CONTAS_RECEBER\n\nCONTAS_PAGAR fica fora da migração automática por política. Depois selecione todos os .json aqui no ERP.';
+      if(typeof window.lfbAlert==='function') window.lfbAlert(instrucoes,'Como exportar o banco antigo'); else toast(instrucoes,'info');
     }, 500);
   }).catch(function(){
     const box = document.getElementById('supabase-schema-sql-box');
@@ -1811,7 +1962,7 @@ async function fbListTables(){
     document.getElementById('fb-tables-count').textContent = `${r.tables.length} tabelas encontradas • ${totalRegs.toLocaleString('pt-BR')} registros no total`;
 
     const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
-      'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
+      'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','RECIBOS_EMITIDOS',
       'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
 
     const grid = document.getElementById('fb-tables-grid');
@@ -1886,7 +2037,7 @@ async function fbPreviewTable(tableName){
 
 function fbSelectMigrationTables(){
   const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
-    'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
+    'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','RECIBOS_EMITIDOS',
     'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
   document.querySelectorAll('.fb-table-check').forEach(cb => {
     cb.checked = migrationTables.some(m => cb.value.toUpperCase().includes(m));
@@ -1905,7 +2056,7 @@ async function fbExtractAll(){
     tables = Array.from(checks).map(cb => cb.value);
   } else {
     // Se não listou tabelas ainda, usar padrões
-    tables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','FORMA_PAGAMENTO','EMPRESA','FORNECEDORES','FUNCIONARIOS'];
+    tables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','FORMA_PAGAMENTO','EMPRESA','FORNECEDORES','FUNCIONARIOS'];
   }
 
   if(!confirm(`Extrair dados de ${tables.length} tabelas e importar para o ERP?\n\nTabelas: ${tables.join(', ')}`)) return;
@@ -1945,14 +2096,42 @@ function fbImportToErp(rawData){
   const sess = getSession();
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
+  const userName = sess.usuarioNome || sess.login || 'Migração Firebird';
+  const importProgress = document.getElementById('fb-import-progress');
+  const reportProgress = text => { if(importProgress) importProgress.textContent=text; };
+  reportProgress('Preparando índices rápidos para a carga…');
 
-  const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
+  const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0, ignoradas:0 };
 
   // ── ÍNDICES DE VÍNCULO (sistema antigo → ERP novo) ──
   // Reimportação = modo "upsert/cura": registros migrados existentes são ATUALIZADOS,
   // nunca duplicados. Manuais (criadoPor!=='migracao') nunca são tocados.
   const ehMigracao = r => r && (r.criadoPor==='migracao' || r.origem==='migracao');
   const sStr = v => (v===undefined||v===null) ? '' : String(v).trim();
+  // Carga grande: nunca procurar com .find() dentro de cada linha importada.
+  // O banco particular pode ter dezenas de milhares de vendas/parcelas; mapas
+  // deixam o custo praticamente linear e também tornam o lote repetível.
+  const idx = (arr, keyFn) => {
+    const m = new Map();
+    (arr||[]).forEach(item => {
+      const key = keyFn(item);
+      if(key && !m.has(key)) m.set(key, item);
+    });
+    return m;
+  };
+  const clientesEmpresa = (db.clientes||[]).filter(c=>c && c.empresaId===empId);
+  const produtosEmpresa = (db.produtos||[]).filter(p=>p && p.empresaId===empId);
+  const equipamentosEmpresa = (db.equipamentos||[]).filter(e=>e && e.empresaId===empId);
+  const vendasEmpresa = (db.vendas||[]).filter(v=>v && v.empresaId===empId);
+  const receberEmpresa = (db.contasReceber||[]).filter(c=>c && c.empresaId===empId);
+  const idxClienteCodigo = idx(clientesEmpresa, c=>sStr(c.codigoAntigo||c.codigo));
+  const idxClienteDoc = idx(clientesEmpresa, c=>onlyDigits(c.documento||c.cnpj||c.cpf));
+  const idxClienteCodigoMigracao = idx(clientesEmpresa.filter(ehMigracao), c=>sStr(c.codigoAntigo||c.codigo));
+  const idxProdutoSku = idx(produtosEmpresa, p=>sStr(p.sku));
+  const idxEquipSerie = idx(equipamentosEmpresa, e=>sStr(e.serie));
+  const idxVendaNumero = idx(vendasEmpresa, v=>sStr(v.numero));
+  const idxReceberCodigo = idx(receberEmpresa.filter(ehMigracao), c=>sStr(c.legadoCodigo));
+  const idxReceberNatural = idx(receberEmpresa.filter(c=>ehMigracao(c)&&!c.legadoCodigo), c=>`${sStr(c.descricao)}|${Number(c.valor||0).toFixed(2)}|${sStr(c.vencimento).slice(0,10)}`);
   const rawCliAll = findTable(rawData, ['CLIENTES']) || [];
   const idxRawCliPorCodigo = {};
   rawCliAll.forEach(r=>{ const k=sStr(r.CODIGO||r.ID||r.COD_CLIENTE); if(k) idxRawCliPorCodigo[k]=r; });
@@ -1976,13 +2155,13 @@ function fbImportToErp(rawData){
   });
   const nomeClientePorCodigo = cod => {
     const k=sStr(cod); if(!k) return '';
-    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); if(vinc) return vinc.nome;
+    const vinc=idxClienteCodigo.get(k); if(vinc) return vinc.nome;
     const raw=idxRawCliPorCodigo[k]; if(raw) return sStr(raw.NOME||raw.RAZAO_SOCIAL||raw.NOME_FANTASIA||raw.FANTASIA);
     return '';
   };
   const idClientePorCodigo = cod => {
     const k=sStr(cod); if(!k) return null;
-    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); return vinc?vinc.id:null;
+    const vinc=idxClienteCodigo.get(k); return vinc?vinc.id:null;
   };
   const nomeVendedor = row => {
     const cod=sStr(row.COD_ENTREGADOR||row.COD_VENDEDOR||row.COD_FUNCIONARIO||row.COD_USUARIO||row.COD_ATENDENTE);
@@ -2002,19 +2181,20 @@ function fbImportToErp(rawData){
     return s.toLowerCase();
   };
 
+  reportProgress('Importando clientes, produtos e equipamentos…');
   // ── CLIENTES ──
   const rawClientes = findTable(rawData, ['CLIENTES','CLIENTE','CADASTRO_CLIENTES','CAD_CLIENTES','TB_CLIENTES','TB_CLIENTE','CLI','PESSOAS','V_CLIENTES','VW_CLIENTES','VIEW_CLIENTES']);
   if(rawClientes && rawClientes.length){
     rawClientes.forEach(row => {
-      const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || row.NOME_CLIENTE || row.CLIENTE || row.RAZAO || row.DESCRICAO || '';
+      const nome = row.NOME || row.NOME_RAZAOSOCIAL || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || row.NOME_CLIENTE || row.CLIENTE || row.RAZAO || row.DESCRICAO || '';
       if(!nome.trim()) return;
-      const doc = row.CNPJ || row.CPF || row.DOCUMENTO || row.DOC || '';
+      const doc = row.CNPJ || row.CPF || row.CPF_CNPJ || row.DOCUMENTO || row.DOC || '';
       const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || row.CODIGO_CLIENTE || row.COD_CLI || row.NUMERO || '');
       // Upsert: por código antigo, senão por documento válido (mínimo 8 dígitos para não mesclar "0"/"-"/"S/N")
-      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo)) : null;
+      let existing = codAntigo ? idxClienteCodigoMigracao.get(codAntigo) : null;
       const digDoc = onlyDigits(doc);
       if(!existing && digDoc && digDoc.length >= 8){
-        existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === digDoc);
+        existing = idxClienteDoc.get(digDoc) || null;
       }
       const dados = {
         codigoAntigo: codAntigo, codigo: codAntigo || (existing && existing.codigo) || '',
@@ -2024,7 +2204,7 @@ function fbImportToErp(rawData){
         tipo: (row.TIPO || (doc.length > 11 ? 'PJ' : 'PF')),
         email: row.EMAIL || row.EMAIL_CONTATO || '',
         telefone: row.FONE || row.TELEFONE || row.CELULAR || '',
-        endereco: row.ENDERECO || row.ENDERECO_COMPLETO || '',
+        endereco: row.ENDERECO || row.ENDERECO_COMPLETO || row.RUA || '',
         cidade: row.CIDADE || '',
         estado: row.ESTADO || row.UF || '',
         cep: row.CEP || '',
@@ -2032,9 +2212,12 @@ function fbImportToErp(rawData){
         mensalidade: parseFloat(row.MENSALIDADE || row.VALOR_MENSAL || 0) || 0,
       };
       if(existing){ Object.assign(existing, dados); result.clientes++; return; }
-      if(codAntigo && db.clientes.find(c => c.empresaId === empId && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo))) return; // manual com mesmo código: não duplica
+      if(codAntigo && idxClienteCodigo.has(codAntigo)) return; // manual com mesmo código: não duplica
       const id = uid('cli');
-      db.clientes.push(Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados));
+      const novoCliente = Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados);
+      db.clientes.push(novoCliente);
+      if(codAntigo){ idxClienteCodigo.set(codAntigo, novoCliente); idxClienteCodigoMigracao.set(codAntigo, novoCliente); }
+      if(digDoc && digDoc.length >= 8) idxClienteDoc.set(digDoc, novoCliente);
       result.clientes++;
     });
   }
@@ -2043,25 +2226,28 @@ function fbImportToErp(rawData){
   const rawProdutos = findTable(rawData, ['PRODUTOS','CARTUCHOS']);
   if(rawProdutos && rawProdutos.length){
     rawProdutos.forEach(row => {
+      if(String(row.DEL||'').toUpperCase()==='S') return;
       const nome = row.DESCRICAO || row.NOME || row.PRODUTO || '';
       if(!nome.trim()) return;
-      const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || uid('prd');
-      const existing = db.produtos.find(p => p.empresaId === empId && String(p.sku) === String(sku));
+      const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || row.NOSSO_CODIGO || uid('prd');
+      const existing = idxProdutoSku.get(String(sku));
       const dadosProd = {
         sku: String(sku),
         nome: nome.trim(),
-        categoria: row.CATEGORIA || row.TIPO || 'Geral',
-        fabricante: row.FABRICANTE || row.MARCA || '',
-        estoque: parseInt(row.ESTOQUE || row.QTD || row.QUANTIDADE || 0) || 0,
-        estoqueMin: parseInt(row.ESTOQUE_MINIMO || row.ESTOQUE_MIN || 0) || 0,
-        custo: parseFloat(row.CUSTO || row.PRECO_CUSTO || 0) || 0,
-        preco: parseFloat(row.PRECO || row.VALOR || row.PRECO_VENDA || 0) || 0,
+        categoria: row.CATEGORIA || row.PR_DESCRICAO_CATEGORIA || row.TIPO || 'Geral',
+        fabricante: row.FABRICANTE || row.PR_MARCA || row.MARCA || '',
+        estoque: parseInt(row.ESTOQUE || row.QTD || row.QTDE || row.QUANTIDADE || 0) || 0,
+        estoqueMin: parseInt(row.ESTOQUE_MINIMO || row.ESTOQUE_MIN || row.QTDE_MINIMA || 0) || 0,
+        custo: parseFloat(row.CUSTO || row.PRECO_CUSTO || row.VALOR_CUSTO || 0) || 0,
+        preco: parseFloat(row.PRECO || row.VALOR || row.PRECO_VENDA || row.VALOR_TOTAL || 0) || 0,
         local: row.LOCALIZACAO || row.LOCAL || '',
         status: 'ativo'
       };
       if(existing && ehMigracao(existing)){ Object.assign(existing, dadosProd); result.produtos++; return; }
       if(existing) return; // produto manual: não mexe
-      db.produtos.push(Object.assign({id: uid('prd'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosProd));
+      const novoProduto = Object.assign({id: uid('prd'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosProd);
+      db.produtos.push(novoProduto);
+      idxProdutoSku.set(String(sku), novoProduto);
       result.produtos++;
     });
   }
@@ -2070,30 +2256,37 @@ function fbImportToErp(rawData){
   const rawEquip = findTable(rawData, ['EQUIPAMENTOS']);
   if(rawEquip && rawEquip.length){
     rawEquip.forEach(row => {
+      if(String(row.EQ_DEL||row.DEL||'').toUpperCase()==='S') return;
       const modelo = row.MODELO || row.DESCRICAO || row.EQUIPAMENTO || '';
       if(!modelo.trim()) return;
-      const serie = row.SERIE || row.NUMERO_SERIE || row.PATRIMONIO || uid('eq');
-      const existing = db.equipamentos.find(e => e.empresaId === empId && String(e.serie) === String(serie));
+      const serie = row.SERIE || row.NUMERO_SERIE || row.N_SERIE || row.PATRIMONIO || `LEG-${row.COD_EQUIPAMENTO||uid('eq')}`;
+      const existing = idxEquipSerie.get(String(serie));
       const dadosEq = {
         modelo: modelo.trim(),
-        tipo: row.TIPO || 'Laser',
+        tipo: row.TIPO || row.EQ_TIPO || 'Laser',
         serie: String(serie),
         patrimonio: row.PATRIMONIO || String(serie),
         contadorPB: parseInt(row.CONTADOR_PB || row.CONTADOR || 0) || 0,
         contadorCor: parseInt(row.CONTADOR_COR || 0) || 0,
-        status: row.STATUS || 'disponivel'
+        status: row.STATUS || 'disponivel',
+        codigoAntigo: sStr(row.COD_EQUIPAMENTO||'')
       };
       if(existing && ehMigracao(existing)){ Object.assign(existing, dadosEq); result.equipamentos++; return; }
       if(existing) return;
-      db.equipamentos.push(Object.assign({id: uid('eq'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosEq));
+      const novoEquipamento = Object.assign({id: uid('eq'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosEq);
+      db.equipamentos.push(novoEquipamento);
+      idxEquipSerie.set(String(serie), novoEquipamento);
       result.equipamentos++;
     });
   }
 
   // ── VENDAS / OS (com cliente, vendedor original, ITENS e OS da notinha) ──
   const PROIBIDO_VENDAS = /ITENS|ITEM|PARAM|CONFIG|LOG|STATUS|ORDENS|USUARIO|FUNCIONARIO|VENDEDOR|DEPARTAMENTO|CAIXA|PERMISSAO|AUDIT|TEMP|MIGR|PRODUTO|CLIENTE|EQUIPAMENTO|LEITURA|LOCACAO|CONTRATO|PARQUE/i;
-  db.vendas = (db.vendas||[]).filter(v => !(v.empresaId === empId && ehMigracao(v)));
+  // v8.0.1 — o arquivo legado é importado em lotes para não estourar a fila da
+  // nuvem. Nunca apagar aqui as vendas de migração já gravadas: cada novo lote
+  // deve fazer upsert apenas das suas próprias vendas.
   const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS','V_VENDAS','VW_VENDAS','VIEW_VENDAS','V_NOTAS','VW_NOTAS'], PROIBIDO_VENDAS);
+  reportProgress('Importando vendas e itens sem duplicar registros…');
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
   rawItensAll.forEach(ir => {
@@ -2101,12 +2294,12 @@ function fbImportToErp(rawData){
     if(!codV) return;
     const codProd = sStr(ir.COD_PRODUTO || ir.PRODUTO_ID || ir.COD_CARTUCHO || ir.COD_ITEM_PRODUTO);
     const rawProd = idxRawProdPorCodigo[codProd];
-    const prodVinc = codProd ? db.produtos.find(p=>p.empresaId===empId && String(p.sku)===codProd) : null;
+    const prodVinc = codProd ? idxProdutoSku.get(codProd) || null : null;
     const qtd = parseFloat(ir.QUANTIDADE || ir.QTD || ir.QTDE || 1) || 1;
     const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
     const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || ir.VALOR_ITEM || ir.TOTAL || 0) || (qtd*unit);
     (itensPorVenda[codV] = itensPorVenda[codV] || []).push({
-      _seq: parseInt(ir.COD_ITEM || ir.CODIGO || ir.ID || 0) || 0,
+        _seq: parseInt(ir.COD_ITEM || ir.COD_ITENS_VENDA || ir.CODIGO || ir.ID || 0) || 0,
       produtoId: prodVinc ? prodVinc.id : null,
       descricao: sStr(ir.DESCRICAO || (rawProd && (rawProd.DESCRICAO || rawProd.NOME || rawProd.PRODUTO)) || (prodVinc && prodVinc.nome) || ''),
       qtd, preco: unit, subtotal: sub
@@ -2115,6 +2308,7 @@ function fbImportToErp(rawData){
   Object.values(itensPorVenda).forEach(l=>l.sort((a,b)=>a._seq-b._seq));
   if(rawVendas && rawVendas.length){
     rawVendas.forEach(row => {
+      if(String(row.DEL||'')==='1' || String(row.ESTORNAR||'').toUpperCase()==='S') return;
       const numero = sStr(row.NUMERO || row.CODIGO || row.ID || row.COD_VENDA || row.COD_NOTA || '');
       if(!numero) return;
       const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA || row.CODIGO_CLIENTE);
@@ -2147,58 +2341,65 @@ function fbImportToErp(rawData){
         desconto: parseFloat(row.DESCONTO || 0) || 0,
         total: totalFinal,
         formaPagamento: row.FORMA_PAGAMENTO || row.PAGAMENTO || '',
-        status: normStatusVenda(row.STATUS || row.SITUACAO),
+        status: normStatusVenda(row.STATUS || row.SITUACAO || (String(row.FINALIZADA||'').toUpperCase()==='S'?'FINALIZADA':'ABERTA')),
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || null,
         criadoPorNome: vendedor,
         os: osObj
       };
-      const existing = db.vendas.find(v => v.empresaId === empId && v.numero === numero);
+      const existing = idxVendaNumero.get(numero);
       if(existing && !ehMigracao(existing)) return; // venda manual: não mexe
       if(existing){ Object.assign(existing, dadosV); result.vendas++; return; }
-      db.vendas.push(Object.assign({id: uid('vda'), empresaId: empId, criadoPor: 'migracao', criadoEm: new Date().toISOString()}, dadosV));
+      const novaVenda = Object.assign({id: uid('vda'), empresaId: empId, criadoPor: 'migracao', criadoEm: new Date().toISOString()}, dadosV);
+      db.vendas.push(novaVenda);
+      idxVendaNumero.set(numero, novaVenda);
       result.vendas++;
     });
   }
 
   // ── FINANCEIRO (CONTAS_RECEBER + CONTAS_PAGAR) ──
   const rawCR = findTable(rawData, ['CONTAS_RECEBER']);
+  reportProgress('Importando contas a receber…');
   if(rawCR && rawCR.length){
     rawCR.forEach(row => {
-      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_TITULO || '');
+      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_TITULO || row.COD_PARCELA || '');
       const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA);
       const dadosCR = {
         legadoCodigo,
         clienteId: idClientePorCodigo(codCli),
         clienteNomeAntigo: nomeClientePorCodigo(codCli),
-        descricao: row.DESCRICAO || row.HISTORICO || `Título migrado ${row.CODIGO || row.ID || ''}`,
-        valor: parseFloat(row.VALOR || 0) || 0,
+        descricao: row.DESCRICAO || row.HISTORICO || row.OBS || `Título migrado ${row.CODIGO || row.ID || row.COD_PARCELA || ''}`,
+        valor: parseFloat(row.VALOR || row.VALOR_PARCELA || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
-        status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
+        status: String(row.STATUS || row.CR_SITUACAO || '').toLowerCase().includes('pag') || row.DATA_PAGAMENTO ? 'pago' : 'aberto',
       };
       // Match por código legado; rows antigas (import sem código) caem pela chave natural
-      let existing = (legadoCodigo && db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
-        || db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
-            && c.descricao === dadosCR.descricao && Math.abs((c.valor||0)-dadosCR.valor) < 0.005
-            && String(c.vencimento||'').slice(0,10) === String(dadosCR.vencimento||'').slice(0,10));
+      const chaveNatural = `${sStr(dadosCR.descricao)}|${Number(dadosCR.valor||0).toFixed(2)}|${sStr(dadosCR.vencimento).slice(0,10)}`;
+      let existing = (legadoCodigo && idxReceberCodigo.get(legadoCodigo)) || idxReceberNatural.get(chaveNatural);
       if(existing){ Object.assign(existing, dadosCR); result.financeiro++; return; }
-      db.contasReceber.push(Object.assign({id: uid('cr'), empresaId: empId, origem: 'migracao', contratoId: null, leituraId: null, vendaId: null, criadoPor: 'migracao', criadoPorNome: userName}, dadosCR));
+      const novaConta = Object.assign({id: uid('cr'), empresaId: empId, origem: 'migracao', contratoId: null, leituraId: null, vendaId: null, criadoPor: 'migracao', criadoPorNome: userName}, dadosCR);
+      db.contasReceber.push(novaConta);
+      if(legadoCodigo) idxReceberCodigo.set(legadoCodigo, novaConta);
+      idxReceberNatural.set(chaveNatural, novaConta);
       result.financeiro++;
     });
   }
 
-  const rawCP = findTable(rawData, ['CONTAS_PAGAR']);
+  // CONTAS_PAGAR fica deliberadamente fora da migração automática: o módulo
+  // não é usado no fluxo atual e os registros do legado não devem ocupar a
+  // nuvem nem aparecer no Financeiro sem revisão manual do usuário.
+  const rawCP = [];
   if(rawCP && rawCP.length){
     rawCP.forEach(row => {
-      const legadoCodigo = sStr(row.CODIGO || row.ID || '');
+      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_PAGAR || '');
       const dadosCP = {
         legadoCodigo,
         descricao: row.DESCRICAO || row.HISTORICO || `Conta migrada ${row.CODIGO || row.ID || ''}`,
-        valor: parseFloat(row.VALOR || 0) || 0,
+        valor: parseFloat(row.VALOR || row.VALOR_PARCELA || row.VALOR_TOTAL || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
         status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
-        categoria: row.CATEGORIA || row.TIPO || 'Geral'
+        categoria: row.CATEGORIA || row.COD_CAT_CONTAS_PAGAR || row.TIPO || 'Geral'
       };
       const existing = (legadoCodigo && db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
         || db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
@@ -2231,52 +2432,22 @@ function fbImportToErp(rawData){
     </div>
   `).join('');
 
-  // ── MÓDULOS DINÂMICOS — tabelas sem mapeamento direto ──
-  const tabelasMapeadas = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','FORMA_PAGAMENTO'];
-  const resultDinamico = {};
-  for(const [nome, info] of Object.entries(rawData)){
-    if(!info.data || !info.data.length) continue;
-    const jaMapeada = tabelasMapeadas.some(m => nome.toUpperCase().includes(m));
-    if(jaMapeada) continue;
-    // Criar módulo dinâmico
-    const icone = sugerirIcone(nome);
-    db.modulosDinamicos[nome] = {
-      label: formatarNomeTabela(nome),
-      icone: icone,
-      origem: 'Firebird',
-      importadoEm: new Date().toISOString(),
-      colunas: Object.keys(info.data[0]),
-      dados: info.data
-    };
-    resultDinamico[nome] = info.data.length;
-  }
-
-  // Se criou módulos dinâmicos, mostrar no resultado
-  const dinKeys = Object.keys(resultDinamico);
-  if(dinKeys.length > 0){
-    const dinTotal = Object.values(resultDinamico).reduce((s,v)=>s+v,0);
-    const panel = document.getElementById('fb-import-panel');
-    panel.classList.remove('hidden');
+  // ── TABELAS SEM DESTINO VALIDADO ──
+  // Não criar menus dinamicamente: isso poluía a navegação e podia gravar
+  // estruturas auxiliares em entidades que ainda não foram aprovadas.
+  const tabelasMapeadas = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER'];
+  const ignoradas = Object.entries(rawData).filter(([nome,info]) => info.data && info.data.length && !tabelasMapeadas.some(m=>nome.toUpperCase().includes(m)));
+  result.ignoradas = ignoradas.reduce((s,[,info])=>s+(info.data||[]).length,0);
+  if(ignoradas.length){
     const existResult = document.getElementById('fb-import-result');
-    existResult.innerHTML += `
-      <div class="sm:col-span-2 xl:col-span-4 rounded-xl border bg-purple-50 border-purple-200 p-4">
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-purple-100 grid place-items-center"><i class="ph ph-puzzle-piece text-[16px] text-purple-600"></i></div>
-          <p class="text-[13px] font-bold text-purple-800">Módulos novos criados automaticamente (${dinKeys.length} tabelas → ${dinTotal} registros)</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          ${dinKeys.map(k=>`<span class="px-3 py-1.5 rounded-lg bg-purple-100 border border-purple-200 text-[12px] font-bold text-purple-700">${formatarNomeTabela(k)} (${resultDinamico[k]})</span>`).join('')}
-        </div>
-        <p class="text-[11px] text-purple-600 mt-3">Esses módulos aparecem no menu lateral com badge roxo. Você pode visualizar, buscar e exportar os dados.</p>
-      </div>
-    `;
+    existResult.innerHTML += `<div class="sm:col-span-2 xl:col-span-4 rounded-xl border bg-slate-50 border-slate-200 p-4"><p class="text-[13px] font-bold text-slate-700"><i class="ph ph-info"></i> ${ignoradas.length} tabela(s) fora do escopo não foram gravadas (${result.ignoradas.toLocaleString('pt-BR')} registros)</p><p class="text-[11px] text-slate-500 mt-1">Sem destino validado no ERP atual; nenhum menu foi criado. Consulte a matriz de adaptação antes de pedir um novo mapeamento.</p></div>`;
   }
 
   db.meta = Object.assign({}, db.meta||{}, {importadoEm:new Date().toISOString(), importadoTabelas:Object.keys(rawData||{}).length});
   saveDB();
-  logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${dinKeys.length} módulos dinâmicos`);
-  buildNav(); // Atualizar menu para mostrar módulos dinâmicos
+  logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${result.ignoradas} registros ignorados por política`);
   renderDashboard();
+  reportProgress(`Importação concluída. A sincronização da nuvem continuará em lotes de até 50.`);
 }
 
 // Utilitário: encontrar tabela no raw data (case insensitive e combinando múltiplas tabelas)
@@ -2325,31 +2496,286 @@ async function fbExportExtracted(){
 }
 
 
-// AVISO DE ENDEREÇO PROVISÓRIO (raw.githack.com ≠ rawcdn.githack.com = cofres separados!)
-// O localStorage é por domínio: dados salvos aqui NÃO aparecem no link oficial.
-window.addEventListener('DOMContentLoaded',function(){
+
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.24.38 — Senhas com hash de verdade (r54, P1/P2/P3-cliente).
+// Auditoria externa r53: senhas em TEXTO PURO no banco/nuvem/34 PCs (S3),
+// prova de login sem salt (S4), backdoor master no código público.
+// O que este arquivo entrega:
+//   1) PBKDF2-SHA256 (100 mil voltas) + salt por usuário/empresa;
+//   2) login confere hash primeiro, texto puro só na transição — e na
+//      transição o próprio login grava o hash sozinho (upgrade automático);
+//   3) texto puro CONTINUA gravado junto (dual-write) até o dia do corte,
+//      para os PCs antigos (7.0.17) não travarem no meio da troca;
+//   4) corte do texto puro: chave `db.config.seguranca.corteTextoPuro`
+//      (viaja na nuvem); ligada, `senha` some do envio (mecanismo pronto +
+//      testado; LIGAR só com todos os PCs na 7.1.0+ e senhas trocadas);
+//   5) prova nova com salt (`prova2`), a antiga segue valendo na transição.
+// NADA aqui trava ninguém: sem `crypto.subtle`, cai no comportamento velho.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var ITERACOES=100000;
+
+function sutil(){ try{ if(typeof crypto!=='undefined'&&crypto.subtle) return crypto.subtle; }catch(e){} return null; }
+function hex(buf){ return Array.from(new Uint8Array(buf),function(b){ return b.toString(16).padStart(2,'0'); }).join(''); }
+function hexParaBytes(h){
+  h=String(h||''); var b=new Uint8Array(Math.floor(h.length/2));
+  for(var i=0;i<b.length;i++) b[i]=parseInt(h.substr(i*2,2),16)||0;
+  return b;
+}
+function senhaNovaSalt(){
   try{
-    if(location.hostname!=='raw.githack.com') return;
-    if(document.getElementById('rawgh-banner')) return;
-    const bar=document.createElement('div');
-    bar.id='rawgh-banner';
-    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;max-width:660px;width:calc(100% - 28px);background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);padding:12px 14px;font-family:inherit;';
-    const urlOficial=location.href.replace('raw.githack.com','rawcdn.githack.com');
-    bar.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
-      +'<div style="font-size:22px;line-height:1">⚠️</div>'
-      +'<div style="flex:1">'
-      +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
-      +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
-      +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
-      +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
-      +'</div></div></div>';
-    document.body.appendChild(bar);
-    const btnCopy=document.getElementById('rawgh-copy');
-    if(btnCopy) btnCopy.onclick=function(){
-      try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){ prompt('Copie o link oficial:', urlOficial); }
-    };
-    const btnClose=document.getElementById('rawgh-close');
-    if(btnClose) btnClose.onclick=function(){ bar.remove(); };
-  }catch(e){ /* silencioso */ }
-});
+    var c=(typeof crypto!=='undefined')?crypto:null;
+    if(c&&c.getRandomValues){ var b=new Uint8Array(16); c.getRandomValues(b); return hex(b.buffer); }
+  }catch(e){}
+  var s=''; for(var i=0;i<32;i++) s+='0123456789abcdef'[Math.floor(Math.random()*16)];
+  return s;
+}
+async function senhaHash(senha, saltHex){
+  var s=sutil(); if(!s) return '';
+  try{
+    var chave=await s.importKey('raw', new TextEncoder().encode(String(senha)), 'PBKDF2', false, ['deriveBits']);
+    var bits=await s.deriveBits({name:'PBKDF2', salt:hexParaBytes(saltHex), iterations:ITERACOES, hash:'SHA-256'}, chave, 256);
+    return hex(bits);
+  }catch(e){ return ''; }
+}
+// Devolve 'hash' | 'texto' | false. Com hash gravado, só o hash vale.
+async function confereSenha(digitada, reg){
+  try{
+    if(!reg) return false;
+    if(reg.senhaHash&&reg.senhaSalt){
+      var h=await senhaHash(digitada, reg.senhaSalt);
+      return (h&&h===reg.senhaHash)?'hash':false;
+    }
+    if(reg.senha!=null&&String(reg.senha)===String(digitada)) return 'texto';
+    return false;
+  }catch(e){ return false; }
+}
+// Grava hash+salt no registro (mantém `senha` em texto para os PCs velhos).
+async function atualizarHashRegistro(reg, senhaPlana){
+  if(!reg||senhaPlana==null||String(senhaPlana)==='') return false;
+  try{
+    var salt=reg.senhaSalt||senhaNovaSalt();
+    var h=await senhaHash(senhaPlana, salt);
+    if(!h) return false;
+    reg.senhaSalt=salt; reg.senhaHash=h;
+    return true;
+  }catch(e){ return false; }
+}
+async function provaSal(login, salt, hash){
+  var s=sutil(); if(!s) return '';
+  try{
+    var dados=new TextEncoder().encode(String(login)+'|'+String(salt)+'|'+String(hash));
+    var digest=await s.digest('SHA-256',dados);
+    return hex(digest);
+  }catch(e){ return ''; }
+}
+// PURA: tira `senha` do que viaja quando o corte está ligado.
+function tirarSegredosDoEnvioPuro(entity, data, corte){
+  if(!corte) return data;
+  if(entity!=='usuarios'&&entity!=='empresas') return data;
+  if(!data||typeof data!=='object') return data;
+  if(Array.isArray(data)) return data.map(function(x){ return tirarSegredosDoEnvioPuro(entity,x,corte); });
+  if(!('senha' in data)) return data;
+  var out={};
+  Object.keys(data).forEach(function(k){ if(k!=='senha') out[k]=data[k]; });
+  return out;
+}
+function corteTextoPuroLigado(){
+  try{
+    if(typeof db!=='undefined'&&db&&db.config&&db.config.seguranca) return db.config.seguranca.corteTextoPuro===true;
+  }catch(e){}
+  return false;
+}
+function tirarSegredosDoEnvio(entity, data){ return tirarSegredosDoEnvioPuro(entity, data, corteTextoPuroLigado()); }
+
+var G=(typeof window!=='undefined')?window:{};
+G.confereSenha=confereSenha;
+G.atualizarHashRegistro=atualizarHashRegistro;
+G.senhaHash=senhaHash;
+G.senhaNovaSalt=senhaNovaSalt;
+G.provaSal=provaSal;
+G.tirarSegredosDoEnvio=tirarSegredosDoEnvio;
+G.corteTextoPuroLigado=corteTextoPuroLigado;
+G.SENHA_HASH_PURE={senhaHash:senhaHash, senhaNovaSalt:senhaNovaSalt, confereSenha:confereSenha, atualizarHashRegistro:atualizarHashRegistro, provaSal:provaSal, tirarSegredosDoEnvioPuro:tirarSegredosDoEnvioPuro, ITERACOES:ITERACOES};
+if(typeof window==='undefined'&&typeof module!=='undefined'&&module.exports){ module.exports=G.SENHA_HASH_PURE; }
+
+if(typeof document==='undefined') return;
+
+function podeMexerSenha(){
+  try{
+    var s=(typeof getSession==='function')?getSession():null;
+    var p=String((s&&s.perfil)||'');
+    return p==='Admin'||p==='Dono';
+  }catch(e){ return false; }
+}
+function avisar(m,t){ try{ if(typeof toast==='function'){ toast(m,t||'success'); return; } }catch(e){} try{ if(typeof aviso==='function') aviso(m); }catch(e2){} }
+function salvarBanco(){ try{ if(typeof saveDB==='function') saveDB(); }catch(e){} }
+function auditar(acao,id,det){ try{ if(typeof logAction==='function') logAction('usuario',acao,id,det||''); }catch(e){} }
+
+// Modal própria com campos de senha mascarados (sem depender de outros patches).
+function modalSenha(titulo, texto, aoSalvar, op){
+  var soUm=!!(op&&op.soUm); // soUm: só pede a senha (recuperação), sem criar/repetir
+  var tid='senha-modal-'+Date.now();
+  var div=document.createElement('div'); div.id=tid;
+  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.55);';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  div.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px 24px;max-width:440px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0">'+esc(titulo)+'</p>'
+    +'<p style="font-size:13px;color:#334155;margin:10px 0 12px;line-height:1.5;white-space:pre-wrap">'+esc(texto)+'</p>'
+    +'<input id="'+tid+'-a" type="password" autocomplete="new-password" placeholder="Nova senha (4+ dígitos)" style="width:100%;height:44px;border:1.5px solid #cbd5e1;border-radius:12px;padding:0 14px;font-size:15px;margin-bottom:10px;box-sizing:border-box">'
+    +'<input id="'+tid+'-b" type="password" autocomplete="new-password" placeholder="Repete a senha" style="width:100%;height:44px;border:1.5px solid #cbd5e1;border-radius:12px;padding:0 14px;font-size:15px;margin-bottom:14px;box-sizing:border-box">'
+    +'<div style="display:flex;gap:10px;justify-content:flex-end"><button id="'+tid+'-c" style="height:42px;padding:0 18px;border-radius:12px;background:#fff;border:1.5px solid #cbd5e1;font-weight:700;cursor:pointer">Cancelar</button>'
+    +'<button id="'+tid+'-s" style="height:42px;padding:0 18px;border-radius:12px;background:#0a1e8a;color:#fff;border:none;font-weight:800;cursor:pointer">Salvar</button></div></div>';
+  document.body.appendChild(div);
+  function fechar(){ try{ div.remove(); }catch(e){} }
+  document.getElementById(tid+'-c').onclick=fechar;
+  div.onclick=function(ev){ if(ev.target===div) fechar(); };
+  if(soUm){ try{ document.getElementById(tid+'-b').style.display='none'; document.getElementById(tid+'-a').setAttribute('placeholder','Digite a senha'); }catch(e){} }
+  document.getElementById(tid+'-s').onclick=function(){
+    var a=document.getElementById(tid+'-a').value||'', b=document.getElementById(tid+'-b').value||'';
+    if(soUm){
+      if(!a){ avisar('Digite a senha.','error'); return; }
+      fechar();
+      aoSalvar(a);
+      return;
+    }
+    if(a.length<4){ avisar('Senha curta demais (mínimo 4).','error'); return; }
+    if(a!==b){ avisar('As duas senhas não conferem.','error'); return; }
+    fechar();
+    aoSalvar(a);
+  };
+  setTimeout(function(){ try{ document.getElementById(tid+'-a').focus(); }catch(e){} },60);
+}
+
+// Pede uma senha (mascarada) sem criar nada — usado pela recuperação do CNPJ.
+function senhaPedirTexto(titulo, texto, aoSalvar){
+  modalSenha(titulo, texto, aoSalvar, {soUm:true});
+}
+
+async function senhaDefinirCNPJ(forcar){
+  if(typeof db==='undefined') return;
+  // forcar=true só vem de dois lugares confiáveis: modo configuração (banco sem senha,
+  // chamado pelo doLoginCNPJ) e recuperação verificada (provou a senha do gerente
+  // na nuvem). Nunca de tela comum.
+  if(!forcar&&!podeMexerSenha()){ avisar('Só Admin/Dono troca a senha do CNPJ.','error'); return; }
+  var s=(typeof getSession==='function')?getSession():null;
+  var emp=((db.empresas||[]).find(function(e){ return e&&s&&e.id===s.empresaId; })||(db.empresas||[]).find(function(e){ return e&&e.id; }));
+  if(!emp){ avisar('Nenhuma empresa no banco.','error'); return; }
+  var corteOn=corteTextoPuroLigado();
+  modalSenha('Senha do CNPJ','Cria/troca a senha do CNPJ '+(emp.cnpj||'')+'. Ela é gravada com hash (código irreversível).',function(nova){
+    emp.senha=corteOn?'':nova;
+    atualizarHashRegistro(emp,nova).then(function(){
+      try{ salvarBanco(); }catch(e){}
+      try{ if(typeof logAction==='function') logAction('empresa','senha',emp.id,'Senha do CNPJ criada/trocada (com hash)'); }catch(e2){}
+      avisar('Senha do CNPJ pronta (com hash).');
+    });
+  });
+}
+
+async function senhaCorteAlternar(){
+  if(typeof db==='undefined') return;
+  if(!podeMexerSenha()){ avisar('Só Admin/Dono mexe no corte.','error'); return; }
+  var ligado=corteTextoPuroLigado();
+  if(!ligado){
+    var msg='LIGAR o corte do texto puro?\n\nDaqui em diante a senha em texto NÃO viaja mais na nuvem (só o hash).\n\nLIGUE SOMENTE SE:\n1) TODOS os PCs já estão na versão 7.1.0 ou maior;\n2) TODAS as senhas já foram trocadas pelo menos 1 vez nesta versão.\n\nLigar antes disso TRAVA o login nos PCs velhos.';
+    var ok=true;
+    try{
+      if(typeof window.confirmSistema==='function') ok=await window.confirmSistema(msg,'Cortar texto puro');
+      else if(typeof confirm==='function') ok=confirm(msg);
+    }catch(e){ ok=false; }
+    if(!ok) return;
+  }
+  try{
+    db.config=db.config||{}; db.config.seguranca=db.config.seguranca||{};
+    db.config.seguranca.corteTextoPuro=!ligado;
+    salvarBanco();
+    auditar('corte-texto-puro','config','Corte do texto puro '+(db.config.seguranca.corteTextoPuro?'LIGADO':'desligado'));
+    avisar(db.config.seguranca.corteTextoPuro?'Corte LIGADO: texto puro não viaja mais.':'Corte desligado.');
+  }catch(e){ avisar('Não deu: '+(e.message||e),'error'); }
+}
+
+// "Esqueci a senha do CNPJ": prova a senha do GERENTE na nuvem; conferindo,
+// libera criar uma senha nova do CNPJ na hora (sem segredo fixo no código).
+async function senhaRecuperarCNPJ(){
+  if(typeof db==='undefined') return;
+  var emp=((db.empresas||[]).find(function(e){ return e&&e.cnpj; })||(db.empresas||[]).find(function(e){ return e&&e.id; }));
+  if(!emp){ avisar('Sem empresa no banco para recuperar.','error'); return; }
+  var cnpjSoNum=String(emp.cnpj||'').replace(/\D/g,'');
+  if(cnpjSoNum.length!==14){ avisar('CNPJ da empresa está incompleto no banco.','error'); return; }
+  senhaPedirTexto('Esqueci a senha do CNPJ','Digite a senha do GERENTE (a da nuvem, não a do CNPJ). Se conferir, você cria uma senha nova do CNPJ na hora.',function(sg){
+    var base=''; try{ base=(typeof API!=='undefined'&&API)?API:''; }catch(e){ base=''; }
+    if(!base){ avisar('Nuvem não configurada neste PC.','error'); return; }
+    avisar('Conferindo com a nuvem...');
+    fetch(base+'/v1/company-pass-liberar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cnpj:cnpjSoNum,senhaGerente:sg})}).then(function(r){
+      if(r.ok){ senhaDefinirCNPJ(true); return; }
+      avisar(r.status===403?'Senha do gerente não confere.':'A nuvem não liberou (tente de novo).','error');
+    }).catch(function(){ avisar('Sem falar com a nuvem agora. Tente com internet.','error'); });
+  });
+}
+
+function injetarLinkRecuperar(){
+  try{
+    if(document.getElementById('link-esqueci-cnpj')) return true;
+    var step=document.getElementById('login-step-cnpj');
+    if(!step) return false;
+    var a=document.createElement('button'); a.id='link-esqueci-cnpj'; a.type='button';
+    a.textContent='Esqueci a senha do CNPJ';
+    a.style.cssText='background:none;border:none;color:#0a1e8a;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px;text-decoration:underline;padding:0';
+    a.onclick=function(){ senhaRecuperarCNPJ(); };
+    step.appendChild(a);
+    return true;
+  }catch(e){ return false; }
+}
+
+G.senhaDefinirCNPJ=senhaDefinirCNPJ;
+G.senhaCorteAlternar=senhaCorteAlternar;
+G.senhaPedirTexto=senhaPedirTexto;
+G.senhaRecuperarCNPJ=senhaRecuperarCNPJ;
+
+function injetarBotoesSenha(){
+  try{
+    var view=document.getElementById('view-usuarios');
+    if(!view||view.classList.contains('hidden')) return;
+    var barra=view.firstElementChild;
+    if(!barra) return;
+    if(view.querySelector('#btn-senha-cnpj')) return;
+    var alvo=barra.querySelector('.flex.gap-2')||barra;
+    var b1=document.createElement('button'); b1.id='btn-senha-cnpj'; b1.type='button';
+    b1.title='Cria/troca a senha do CNPJ (gravada com hash, código irreversível).';
+    b1.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:#fff;color:#334155;border:1px solid #dbe3ef;cursor:pointer';
+    b1.textContent='🔑 Senha do CNPJ';
+    b1.onclick=function(){ senhaDefinirCNPJ(); };
+    alvo.appendChild(b1);
+    var b2=document.createElement('button'); b2.id='btn-senha-corte'; b2.type='button';
+    var ligado=corteTextoPuroLigado();
+    b2.title='Quando LIGADO, a senha em texto não viaja mais (só o hash). Só ligue com todos os PCs atualizados.';
+    b2.style.cssText='height:40px;padding:0 14px;border-radius:12px;font-weight:800;font-size:13px;background:'+(ligado?'#ecfdf5':'#fff')+';color:'+(ligado?'#065f46':'#334155')+';border:1px solid '+(ligado?'#a7f3d0':'#dbe3ef')+';cursor:pointer';
+    b2.textContent=ligado?'🔒 Texto-puro: CORTADO':'🔒 Texto-puro: viajando';
+    b2.onclick=function(){ senhaCorteAlternar().then(function(){ try{ if(typeof renderUsuarios==='function') renderUsuarios(); }catch(e){} }); };
+    alvo.appendChild(b2);
+  }catch(e){}
+}
+// SUBSTITUICAO DE PROPOSITO (r54): embrulha renderUsuarios para injetar os botões de senha; chama a original.
+if(typeof window.renderUsuarios==='function'&&!window.renderUsuarios.__v52438){
+  var origRU=window.renderUsuarios;
+  window.renderUsuarios=function(){
+    var r=origRU.apply(this,arguments);
+    try{ injetarBotoesSenha(); }catch(e){}
+    return r;
+  };
+  window.renderUsuarios.__v52438=true;
+}
+setTimeout(injetarBotoesSenha,1500);
+// A tela de login é montada por outro patch depois do boot: tenta por 30s e para.
+var tentLinkRec=0;
+var ivLinkRec=setInterval(function(){
+  var feito=false; try{ feito=injetarLinkRecuperar(); }catch(e){}
+  tentLinkRec++;
+  if(feito||tentLinkRec>30){ try{ clearInterval(ivLinkRec); }catch(e2){} }
+},1000);
+
+console.log('[DIGICOPY] v5.24.38 senha: hash PBKDF2 + corte do texto puro');
+})();

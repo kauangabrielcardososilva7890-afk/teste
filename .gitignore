@@ -1,7 +1,10 @@
 # Dependências e builds
 node_modules/
 dist/
-build/
+!vendor/**
+build/*
+!build/profiles/
+!build/profiles/*.json
 out/
 coverage/
 playwright-report/
@@ -15,6 +18,10 @@ test-results/
 *.snap
 *.deb
 *.rpm
+
+# Zips NUNCA entram no git. Para baixar o sistema, use o zip da branch:
+# https://github.com/<repo>/archive/refs/heads/<branch>.zip
+*.zip
 
 # Backups/exportações locais
 backups/
@@ -36,3 +43,12 @@ Thumbs.db
 *.sqlite3
 *.db
 *.fdb.local
+
+# motor da nuvem compilado (só para gerar o motor_para_colar.js)
+cloudflare-worker/motor_compilado/
+.tmp_secao_*.js
+
+# r62 — testador automático: prints e estado de rodada ficam locais
+teste-auto/prints/
+teste-auto/.estado/ultimo.json
+teste-auto/.estado/navegador.json
