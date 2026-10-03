@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 217 | sha256: 6221c9cb2c252fb3
+ * scripts: 218 | sha256: ef94695d3f6874b1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -57337,8 +57337,14 @@ var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 function resolverApiUrl(cfg){
   var u = cfg && cfg.nuvem ? cfg.nuvem.apiUrl : '';
   u = String(u == null ? '' : u).trim().replace(/\/+$/, '');
-  if(!/^https?:\/\/.+\..+/i.test(u)) return API_OFICIAL;
-  return u;
+  if(!u) return API_OFICIAL;
+  try{
+    var x = new URL(u);
+    var h = String(x.hostname || '').toLowerCase().replace(/\.$/, '');
+    if(x.protocol !== 'https:' || x.username || x.password || x.port || x.pathname !== '/' || x.search || x.hash) return API_OFICIAL;
+    if(h !== 'digicopy-sync-api.digicopyonline.workers.dev' && !(h.endsWith('.workers.dev') && h.length > '.workers.dev'.length)) return API_OFICIAL;
+    return 'https://' + h;
+  }catch(e){ return API_OFICIAL; }
 }
 function precisaSetup(dbLike, temToken){
   try{
@@ -57360,7 +57366,7 @@ function validarSetup(d){
   if(String(d.login || '').trim().length < 3) erros.push('Login do admin (mín. 3 letras)');
   if(String(d.senha || '').length < 4) erros.push('Senha do admin (mín. 4 caracteres)');
   var url = String(d.apiUrl || '').trim();
-  if(url && !/^https?:\/\/.+\..+/i.test(url)) erros.push('Endereço da nuvem (https://...)');
+  if(url && !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/i.test(url)) erros.push('Endereço da nuvem (somente https://*.workers.dev)');
   return erros;
 }
 
@@ -57392,6 +57398,21 @@ function ehSetupPendente(){
   }catch(e){ return false; }
 }
 function soDig(v){ return String(v == null ? '' : v).replace(/\D/g, ''); }
+function abrirSetupControlado(){
+  var sec = (typeof window !== 'undefined') ? window.DIGICOPY_SECURITY : null;
+  if(!sec || typeof sec.remotoPermiteSetup !== 'function'){
+    try{ if(typeof toast === 'function') toast('Verificação de segurança ainda não carregou. Recarregue a página.', 'error'); }catch(e){}
+    return;
+  }
+  Promise.resolve(sec.remotoPermiteSetup()).then(function(ok){
+    if(ok){ renderSetup(); return; }
+    try{ if(typeof toast === 'function') toast('A nuvem já está configurada ou não pôde ser verificada. Use o login normal.', 'error'); }catch(e){}
+    if(typeof showLoginAnterior === 'function') showLoginAnterior.call(window);
+  }).catch(function(){
+    try{ if(typeof toast === 'function') toast('Não foi possível verificar a nuvem. O setup foi bloqueado.', 'error'); }catch(e){}
+    if(typeof showLoginAnterior === 'function') showLoginAnterior.call(window);
+  });
+}
 
 // ── tela de setup (cobre tudo; some depois de salvar) ──
 function renderSetup(){
@@ -57408,7 +57429,7 @@ function renderSetup(){
   if(velho) velho.remove();
   var capa = document.createElement('div');
   capa.id = 'v5900-setup';
-  capa.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1e8a,#0876c9);padding:20px;overflow:auto';
+  capa.style.cssText = 'position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1e8a,#0876c9);padding:20px;overflow:auto';
   capa.innerHTML =
     '<div style="width:min(560px,96vw);background:#fff;border-radius:18px;padding:26px 28px;box-shadow:0 25px 80px rgba(0,0,0,.35)">'+
     '<h2 style="font-size:19px;font-weight:900;color:#0a1e8a;margin:0">Bem-vindo ao DIGICOPY — instalação nova</h2>'+
@@ -57428,6 +57449,7 @@ function renderSetup(){
     '<div id="v5900-res" style="margin-top:10px"></div>'+
     '</div>';
   document.body.appendChild(capa);
+  capa.style.display = 'flex';
   capa.querySelector('#v5900-salvar').onclick = function(){ salvarSetup(capa); };
 }
 
@@ -57508,11 +57530,11 @@ function instalarCardNuvem(){
     var pergunta = (typeof window.pedirTextoSistema === 'function')
       ? function(t){ return window.pedirTextoSistema(t, { titulo: 'Trocar de nuvem' }); }
       : function(t){ return Promise.resolve(window.prompt(t)); };
-    var nova = await pergunta('Novo endereço da nuvem (https://...). Vazio volta para a OFICIAL.');
+    var nova = await pergunta('Novo endereço da nuvem (somente https://*.workers.dev). Vazio volta para a OFICIAL.');
     if(nova == null) return;
     nova = String(nova).trim().replace(/\/+$/, '');
-    if(nova && !/^https?:\/\/.+\..+/i.test(nova)){
-      res.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Endereço inválido. Tem que começar com https://</div>';
+    if(nova && !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/i.test(nova)){
+      res.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Endereço inválido. Use somente https://*.workers.dev</div>';
       return;
     }
     var confirma = (typeof window.confirmSistema === 'function')
@@ -57556,13 +57578,13 @@ window.showLogin = function(){
         .then(function(){
           v5900SetupEmAndamento = false;
           try{
-            if(ehSetupPendente()) { renderSetup(); return; }
+            if(ehSetupPendente()) { abrirSetupControlado(); return; }
           }catch(_e){}
           if(typeof showLoginAnterior === 'function') showLoginAnterior.apply(window, arguments);
         });
       return;
     }
-    if(vazio){ renderSetup(); return; }
+    if(vazio){ abrirSetupControlado(); return; }
   }catch(e){}
   if(typeof showLoginAnterior === 'function') return showLoginAnterior.apply(this, arguments);
 };
@@ -58099,15 +58121,142 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("layout_final_v8000.js", e); }
 ;
 
+/* ===== modulos/security_hardening_v8000.js ===== */
+try{
+/* DIGICOPY v8.0.0 — endurecimento defensivo do cliente.
+ * Não substitui a proteção do Worker: adiciona fail-closed no setup,
+ * whitelist de endpoints Cloudflare e atraso/bloqueio para tentativa local.
+ */
+(function(){
+  'use strict';
+  var OFICIAL = 'digicopy-sync-api.digicopyonline.workers.dev';
+  var STATE_KEY = 'digicopy_login_guard_v8000';
+  var MAX_FAILS = 5;
+  var WINDOW_MS = 60 * 1000;
+  var BASE_LOCK_MS = 30 * 1000;
+  var MAX_LOCK_MS = 15 * 60 * 1000;
+
+  function hostPermitido(host){
+    host = String(host || '').toLowerCase().replace(/\.$/, '');
+    return host === OFICIAL || (host.endsWith('.workers.dev') && host.length > '.workers.dev'.length);
+  }
+  function normalizarApiUrl(value){
+    var raw = String(value == null ? '' : value).trim().replace(/\/+$/, '');
+    if(!raw) return 'https://' + OFICIAL;
+    try{
+      var u = new URL(raw);
+      if(u.protocol !== 'https:' || u.username || u.password || u.port || u.pathname !== '/' || u.search || u.hash || !hostPermitido(u.hostname)) return 'https://' + OFICIAL;
+      return 'https://' + u.hostname;
+    }catch(e){ return 'https://' + OFICIAL; }
+  }
+  function urlValida(value){
+    var raw = String(value == null ? '' : value).trim();
+    return !raw || normalizarApiUrl(raw) === raw.replace(/\/+$/, '');
+  }
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_SECURITY = window.DIGICOPY_SECURITY || {};
+    window.DIGICOPY_SECURITY.OFICIAL_HOST = OFICIAL;
+    window.DIGICOPY_SECURITY.normalizarApiUrl = normalizarApiUrl;
+    window.DIGICOPY_SECURITY.urlValida = urlValida;
+  }
+  if(typeof document === 'undefined') return;
+
+  function lerEstado(){
+    try{ return JSON.parse(localStorage.getItem(STATE_KEY) || '{}') || {}; }catch(e){ return {}; }
+  }
+  function salvarEstado(s){
+    try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(e){}
+  }
+  function aviso(msg, tipo){
+    try{ if(typeof window.toast === 'function') window.toast(msg, tipo || 'error'); else if(typeof window.mostrarAvisoSistema === 'function') window.mostrarAvisoSistema(msg, tipo || 'error'); }catch(e){}
+  }
+  function setupApi(){
+    try{
+      var cfg = (typeof db !== 'undefined' && db && db.config) ? db.config : {};
+      return normalizarApiUrl(cfg && cfg.nuvem && cfg.nuvem.apiUrl);
+    }catch(e){ return 'https://' + OFICIAL; }
+  }
+  async function remotoPermiteSetup(){
+    try{
+      var controller = new AbortController();
+      var timer = setTimeout(function(){ controller.abort(); }, 5000);
+      var res = await fetch(setupApi() + '/v1/setup-status', { method:'GET', cache:'no-store', signal:controller.signal });
+      clearTimeout(timer);
+      if(!res.ok) return false;
+      var data = await res.json();
+      return data && data.ok === true && data.configured === false;
+    }catch(e){
+      // Falha fechada: sem confirmação do Worker, não criamos administrador local.
+      return false;
+    }
+  }
+  window.DIGICOPY_SECURITY.remotoPermiteSetup = remotoPermiteSetup;
+
+  // A URL também é revalidada no momento de salvar/trocar a configuração.
+  var oldValidar = window.SETUP_COMERCIAL_PURE && window.SETUP_COMERCIAL_PURE.validarSetup;
+  if(oldValidar){
+    var oldPure = oldValidar;
+    window.SETUP_COMERCIAL_PURE.validarSetup = function(d){
+      var erros = oldPure(d);
+      if(d && d.apiUrl && !urlValida(d.apiUrl)) erros.push('Endereço permitido: https://*.workers.dev');
+      return erros;
+    };
+  }
+
+  // Proteção adicional do login local. A autenticação real da nuvem continua
+  // protegida no Worker; este bloqueio impede tentativas automáticas no browser.
+  var oldLogin = window.doLoginUser;
+  if(typeof oldLogin === 'function' && !oldLogin.__v8000Security){
+    var guardedLogin = async function(){
+      var now = Date.now();
+      var state = lerEstado();
+      if(Number(state.blockedUntil || 0) > now){
+        var wait = Math.max(1, Math.ceil((state.blockedUntil - now) / 1000));
+        aviso('Muitas tentativas. Aguarde ' + wait + ' segundos.', 'error');
+        return false;
+      }
+      if(Number(state.windowStartedAt || 0) + WINDOW_MS <= now){ state = {}; }
+      state.windowStartedAt = state.windowStartedAt || now;
+      state.attempts = Number(state.attempts || 0) + 1;
+      salvarEstado(state);
+      await new Promise(function(resolve){ setTimeout(resolve, Math.min(1500, 250 * Math.max(1, state.attempts))); });
+      var before = document.getElementById('login-screen');
+      try{ await oldLogin.apply(this, arguments); }catch(e){ throw e; }
+      var shell = document.getElementById('app-shell');
+      var logged = !!(shell && !shell.classList.contains('hidden') && shell.style.display !== 'none');
+      if(logged){
+        try{ localStorage.removeItem(STATE_KEY); }catch(e){}
+        return true;
+      }
+      state.failures = Number(state.failures || 0) + 1;
+      if(state.failures >= MAX_FAILS){
+        var exp = Math.min(6, state.failures - MAX_FAILS);
+        state.blockedUntil = Date.now() + Math.min(MAX_LOCK_MS, BASE_LOCK_MS * Math.pow(2, exp));
+      }
+      salvarEstado(state);
+      return false;
+    };
+    guardedLogin.__v8000Security = true;
+    window.doLoginUser = guardedLogin;
+  }
+
+  // O fluxo de setup é controlado por abrirSetupControlado no módulo v5900.
+  // Mantemos aqui apenas a função remota, em modo fail-closed.
+
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("modulos/security_hardening_v8000.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 217;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 218;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 217 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 218 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

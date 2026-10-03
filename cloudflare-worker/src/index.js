@@ -371,6 +371,11 @@ async function handleHealth(env) {
   });
 }
 
+async function handleSetupStatus(env) {
+  const row = await env.DB.prepare('SELECT 1 AS configured FROM devices WHERE excluido_em IS NULL LIMIT 1').first();
+  return json({ ok: true, configured: !!row });
+}
+
 async function handleSetup(request, env) {
   if (!env.SETUP_SECRET) {
     throw new ApiError(503, 'SETUP_NOT_CONFIGURED', 'Segredo de ativação ainda não configurado.');
@@ -1876,6 +1881,7 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && url.pathname === '/orcamento') return handleOrcamentoGet(url, env);
   if (request.method === 'POST' && url.pathname === '/orcamento') return handleOrcamentoPost(request, env, ctx);
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
+  if (request.method === 'GET' && url.pathname === '/v1/setup-status') return handleSetupStatus(env);
   if (request.method === 'POST' && url.pathname === '/v1/setup') {
     const tentativa = await iniciarTentativaAuth(request, env, '/v1/setup');
     try { const r = await handleSetup(request, env); await tentativa.sucesso(); return r; }

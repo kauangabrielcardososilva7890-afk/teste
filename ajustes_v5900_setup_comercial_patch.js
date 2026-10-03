@@ -17,8 +17,14 @@ var API_OFICIAL = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 function resolverApiUrl(cfg){
   var u = cfg && cfg.nuvem ? cfg.nuvem.apiUrl : '';
   u = String(u == null ? '' : u).trim().replace(/\/+$/, '');
-  if(!/^https?:\/\/.+\..+/i.test(u)) return API_OFICIAL;
-  return u;
+  if(!u) return API_OFICIAL;
+  try{
+    var x = new URL(u);
+    var h = String(x.hostname || '').toLowerCase().replace(/\.$/, '');
+    if(x.protocol !== 'https:' || x.username || x.password || x.port || x.pathname !== '/' || x.search || x.hash) return API_OFICIAL;
+    if(h !== 'digicopy-sync-api.digicopyonline.workers.dev' && !(h.endsWith('.workers.dev') && h.length > '.workers.dev'.length)) return API_OFICIAL;
+    return 'https://' + h;
+  }catch(e){ return API_OFICIAL; }
 }
 function precisaSetup(dbLike, temToken){
   try{
@@ -40,7 +46,7 @@ function validarSetup(d){
   if(String(d.login || '').trim().length < 3) erros.push('Login do admin (mín. 3 letras)');
   if(String(d.senha || '').length < 4) erros.push('Senha do admin (mín. 4 caracteres)');
   var url = String(d.apiUrl || '').trim();
-  if(url && !/^https?:\/\/.+\..+/i.test(url)) erros.push('Endereço da nuvem (https://...)');
+  if(url && !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/i.test(url)) erros.push('Endereço da nuvem (somente https://*.workers.dev)');
   return erros;
 }
 
@@ -72,6 +78,21 @@ function ehSetupPendente(){
   }catch(e){ return false; }
 }
 function soDig(v){ return String(v == null ? '' : v).replace(/\D/g, ''); }
+function abrirSetupControlado(){
+  var sec = (typeof window !== 'undefined') ? window.DIGICOPY_SECURITY : null;
+  if(!sec || typeof sec.remotoPermiteSetup !== 'function'){
+    try{ if(typeof toast === 'function') toast('Verificação de segurança ainda não carregou. Recarregue a página.', 'error'); }catch(e){}
+    return;
+  }
+  Promise.resolve(sec.remotoPermiteSetup()).then(function(ok){
+    if(ok){ renderSetup(); return; }
+    try{ if(typeof toast === 'function') toast('A nuvem já está configurada ou não pôde ser verificada. Use o login normal.', 'error'); }catch(e){}
+    if(typeof showLoginAnterior === 'function') showLoginAnterior.call(window);
+  }).catch(function(){
+    try{ if(typeof toast === 'function') toast('Não foi possível verificar a nuvem. O setup foi bloqueado.', 'error'); }catch(e){}
+    if(typeof showLoginAnterior === 'function') showLoginAnterior.call(window);
+  });
+}
 
 // ── tela de setup (cobre tudo; some depois de salvar) ──
 function renderSetup(){
@@ -88,7 +109,7 @@ function renderSetup(){
   if(velho) velho.remove();
   var capa = document.createElement('div');
   capa.id = 'v5900-setup';
-  capa.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1e8a,#0876c9);padding:20px;overflow:auto';
+  capa.style.cssText = 'position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1e8a,#0876c9);padding:20px;overflow:auto';
   capa.innerHTML =
     '<div style="width:min(560px,96vw);background:#fff;border-radius:18px;padding:26px 28px;box-shadow:0 25px 80px rgba(0,0,0,.35)">'+
     '<h2 style="font-size:19px;font-weight:900;color:#0a1e8a;margin:0">Bem-vindo ao DIGICOPY — instalação nova</h2>'+
@@ -108,6 +129,7 @@ function renderSetup(){
     '<div id="v5900-res" style="margin-top:10px"></div>'+
     '</div>';
   document.body.appendChild(capa);
+  capa.style.display = 'flex';
   capa.querySelector('#v5900-salvar').onclick = function(){ salvarSetup(capa); };
 }
 
@@ -188,11 +210,11 @@ function instalarCardNuvem(){
     var pergunta = (typeof window.pedirTextoSistema === 'function')
       ? function(t){ return window.pedirTextoSistema(t, { titulo: 'Trocar de nuvem' }); }
       : function(t){ return Promise.resolve(window.prompt(t)); };
-    var nova = await pergunta('Novo endereço da nuvem (https://...). Vazio volta para a OFICIAL.');
+    var nova = await pergunta('Novo endereço da nuvem (somente https://*.workers.dev). Vazio volta para a OFICIAL.');
     if(nova == null) return;
     nova = String(nova).trim().replace(/\/+$/, '');
-    if(nova && !/^https?:\/\/.+\..+/i.test(nova)){
-      res.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Endereço inválido. Tem que começar com https://</div>';
+    if(nova && !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/i.test(nova)){
+      res.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Endereço inválido. Use somente https://*.workers.dev</div>';
       return;
     }
     var confirma = (typeof window.confirmSistema === 'function')
@@ -236,13 +258,13 @@ window.showLogin = function(){
         .then(function(){
           v5900SetupEmAndamento = false;
           try{
-            if(ehSetupPendente()) { renderSetup(); return; }
+            if(ehSetupPendente()) { abrirSetupControlado(); return; }
           }catch(_e){}
           if(typeof showLoginAnterior === 'function') showLoginAnterior.apply(window, arguments);
         });
       return;
     }
-    if(vazio){ renderSetup(); return; }
+    if(vazio){ abrirSetupControlado(); return; }
   }catch(e){}
   if(typeof showLoginAnterior === 'function') return showLoginAnterior.apply(this, arguments);
 };
