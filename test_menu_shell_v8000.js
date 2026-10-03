@@ -1,0 +1,12 @@
+'use strict';
+const fs=require('fs');
+const assert=require('assert');
+const html=fs.readFileSync('index.html','utf8');
+const mod=fs.readFileSync('modulos/menu_shell_v8000.js','utf8');
+assert(!/<button[^>]*data-nav="usuarios"[^>]*>Usuários<\/button>/.test(html),'Cadastros não deve conter o segundo Usuários');
+assert(/data-nav="importar"/.test(html),'Importar dados deve existir na sidebar');
+assert(/data-nav="etiquetas"/.test(html),'Etiquetas deve existir como menu independente');
+assert(/removeDuplicateUser/.test(mod)&&/data-nav="usuarios"/.test(mod),'módulo remove duplicidade de usuários');
+assert(/html\.digi-escuro,html\.digi-escuro body/.test(mod)&&/#app-shell/.test(mod),'modo escuro cobre documento e aplicação');
+assert(/G\.abrirEtiquetas=renderEtiquetas/.test(mod),'Etiquetas possui rota própria');
+console.log('menu_shell_v8000: OK');

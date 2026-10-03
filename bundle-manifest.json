@@ -236,5 +236,5 @@
   "patch_notes_local.js",
   "ajustes_v52266_versao_nova_banner_patch.js",
   "layout_final_v8000.js",
-  "ajustes_v8000_configuracoes_patch.js"
+  "modulos/menu_shell_v8000.js"
 ]

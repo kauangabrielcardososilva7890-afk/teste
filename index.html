@@ -255,11 +255,11 @@ html,body{max-width:100%;overflow-x:hidden}
         <details><summary class="shell-side-link"><i class="ph ph-file-text"></i><span>Fiscal</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button data-side-nav="central-nf" onclick="navigateTo('central-nf')">Nota fiscal</button><button data-side-nav="fiscal-perfil" onclick="navigateTo('fiscal-perfil')">Perfil tributário</button><button data-side-nav="fiscal-manifestacao" onclick="navigateTo('fiscal-manifestacao')">Manifestação</button><button data-side-nav="fiscal-ncm" onclick="navigateTo('fiscal-ncm')">NCM</button><button data-side-nav="fiscal-enviar-xml" onclick="navigateTo('fiscal-enviar-xml')">Enviar XML</button></div></details>
       </div>
       <div class="shell-menu-section"><div class="shell-menu-label">Cadastros e gestão</div>
-        <details><summary class="shell-side-link"><i class="ph ph-users-three"></i><span>Cadastros</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button data-nav="clientes" onclick="navigateTo('clientes')">Clientes</button><button onclick="openModal('cliente')">Novo cliente</button><button data-nav="usuarios" onclick="navigateTo('usuarios')">Usuários</button></div></details>
+        <details><summary class="shell-side-link"><i class="ph ph-users-three"></i><span>Cadastros</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button data-nav="clientes" onclick="navigateTo('clientes')">Clientes</button><button onclick="openModal('cliente')">Novo cliente</button></div></details>
         <button data-nav="financeiro" class="shell-side-link" onclick="navigateTo('financeiro')"><i class="ph ph-chart-line-up"></i><span>Financeiro</span></button>
         <details><summary class="shell-side-link"><i class="ph ph-gear"></i><span>Configurações</span><i class="ph ph-caret-right shell-caret"></i></summary><div class="shell-side-sub"><button data-nav="config" onclick="navigateTo('config')">Preferências</button><button data-nav="usuarios" onclick="navigateTo('usuarios')">Usuários e permissões</button><button data-nav="auditoria" onclick="navigateTo('auditoria')">Auditoria</button></div></details>
       </div>
-      <div class="shell-menu-section"><div class="shell-menu-label">Sistema</div><button id="btn-backup-top" class="shell-side-link" onclick="abrirTelaBackup()"><i class="ph ph-cloud-arrow-up"></i><span>Backup</span></button><button id="btn-nuvem" class="shell-side-link" onclick="abrirCloudflareNuvem()"><i class="ph ph-cloud-check"></i><span>Nuvem</span></button><button data-nav="buscador-escola" class="shell-side-link" onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i><span>Buscador Escola</span></button></div>
+      <div class="shell-menu-section"><div class="shell-menu-label">Sistema</div><button id="btn-backup-top" class="shell-side-link" onclick="abrirTelaBackup()"><i class="ph ph-cloud-arrow-up"></i><span>Backup</span></button><button id="btn-nuvem" class="shell-side-link" onclick="abrirCloudflareNuvem()"><i class="ph ph-cloud-check"></i><span>Nuvem</span></button><button data-nav="importar" class="shell-side-link" onclick="renderBanco()"><i class="ph ph-database"></i><span>Importar dados</span></button><button data-nav="etiquetas" class="shell-side-link" onclick="abrirEtiquetas()"><i class="ph ph-barcode"></i><span>Etiquetas de cartuchos</span></button><button data-nav="buscador-escola" class="shell-side-link" onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i><span>Buscador Escola</span></button></div>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
@@ -330,6 +330,6 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
 <script>window.__DIGICOPY_FALHAS=[];window.__DIGICOPY_FALHA=function(f,e){try{window.__DIGICOPY_FALHAS.push({arq:String(f),erro:String((e&&e.message)||e).slice(0,160)});}catch(_){}};</script>
-    <script src="./app.bundle.js?v=8.0.0-57f12c2115de"></script>
+    <script src="./app.bundle.js?v=8.0.0-5a0a070919c9"></script>
 </body>
 </html>
