@@ -2,6 +2,8 @@ const fs = require('fs');
 const assert = require('assert');
 
 const index = fs.readFileSync('index.html', 'utf8');
+const manifest = fs.readFileSync('bundle-manifest.json', 'utf8');
+const fluxos = fs.readFileSync('fluxos_operacionais_patch.js', 'utf8');
 const app = fs.readFileSync('app.js', 'utf8');
 
 assert(index.includes('var shellRefreshPending=false'), 'shell usa atualização coalescida');
@@ -16,6 +18,10 @@ assert(index.includes('digi-sidebar-top #shell-sidebar-links'), 'CSS do topo hor
 assert(index.includes('digi-sidebar-top #sidebar>div:nth-child(2){display:flex!important'), 'lista de menus permanece visível no topo');
 assert(index.includes('html.digi-escuro #app-shell [class*="bg-white"]'), 'tema escuro cobre fundos Tailwind dinâmicos');
 assert(index.includes('html.digi-escuro #app-shell input,html.digi-escuro #app-shell select'), 'tema escuro cobre controles de formulário');
+assert(index.includes('html.digi-escuro #app-shell .view,html.digi-escuro #app-shell .neo-shell'), 'tema escuro cobre o fundo das telas internas');
+assert(index.includes('html.digi-escuro #app-shell button.bg-white'), 'tema escuro cobre botões brancos das telas');
+assert(manifest.includes('ajustes_v52237_orcamentos_menu_patch.js'), 'módulo completo de Orçamentos está no bundle');
+assert(!fluxos.includes("|| '<tr><td colspan=\"8\" class=\"px-5 py-14 text-center text-slate-500\">${avisoLista}</td></tr>'"), 'Produtos não exibe interpolação literal');
 assert(index.includes('digicopy-v8-dark-complete'), 'tema escuro completo existe');
 assert(index.includes('data-sub-row') && index.includes('data-sub-name'), 'editor permite ordenar e renomear submenus');
 assert(index.includes('data-menu-hidden') && index.includes('data-sub-hidden'), 'editor permite ocultar menus e submenus');
