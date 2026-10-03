@@ -220,6 +220,7 @@ window.baixarContratoRTF = function(contratoId, tipo){
 };
 
 function renderCardConfig(){
+  return;
   const grid = document.querySelector('#view-config .grid');
   if(!grid || document.getElementById('rtf-template-card')) return;
   const c = cfg();

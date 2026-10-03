@@ -21,12 +21,29 @@ function gravarJson(chave, valor){
   try{ localStorage.setItem(chave, JSON.stringify(valor)); return true; }
   catch(e){ return false; }
 }
+function perfilBuild(){ try{return String(window.DIGICOPY_BUILD_PROFILE||'particular-cloud');}catch(e){return 'particular-cloud';} }
+function ehComercialComNuvem(){ return perfilBuild()==='commercial-cloud'; }
+function chaveUsuario(){ try{ var s=typeof getSession==='function'?getSession():null; return String((s&&s.usuarioId)||'anon'); }catch(e){ return 'anon'; } }
+function carregarPersonalizacaoComercial(){
+  if(!ehComercialComNuvem() || typeof db==='undefined') return;
+  db.config=db.config||{}; db.config.uiMenusPorUsuario=db.config.uiMenusPorUsuario||{};
+  var v=db.config.uiMenusPorUsuario[chaveUsuario()];
+  if(v) db.config.uiMenus=JSON.parse(JSON.stringify(v));
+}
+function salvarPersonalizacaoComercial(){
+  if(!ehComercialComNuvem() || typeof db==='undefined') return false;
+  db.config=db.config||{}; db.config.uiMenusPorUsuario=db.config.uiMenusPorUsuario||{};
+  if(db.config.uiMenus) db.config.uiMenusPorUsuario[chaveUsuario()]=JSON.parse(JSON.stringify(db.config.uiMenus));
+  return true;
+}
 function migrarSeVazio(){
   if(typeof db === 'undefined' || !db || !db.config) return;
+  if(ehComercialComNuvem()){ carregarPersonalizacaoComercial(); return; }
   if(!lerJson(KEY_MENUS) && db.config.uiMenus) gravarJson(KEY_MENUS, db.config.uiMenus);
   if(!lerJson(KEY_ATALHOS) && db.config.uiAtalhos) gravarJson(KEY_ATALHOS, db.config.uiAtalhos);
 }
 function tirarDaNuvem(){
+  if(ehComercialComNuvem()) return false;
   if(typeof db === 'undefined' || !db || !db.config) return false;
   var mudou = false;
   if(db.config.uiMenus){ delete db.config.uiMenus; mudou = true; }
@@ -45,6 +62,7 @@ if(typeof document === 'undefined') return;
 
 function comLayoutLocal(fn){
   if(typeof db === 'undefined') return fn();
+  if(ehComercialComNuvem()){ carregarPersonalizacaoComercial(); return fn(); }
   db.config = db.config || {};
   migrarSeVazio();
   var prevM = db.config.uiMenus;
@@ -111,10 +129,11 @@ if(typeof window.salvarEditorMenus === 'function' && !window.salvarEditorMenus._
   var oldSalvar = window.salvarEditorMenus;
   window.salvarEditorMenus = function(){
     var r = oldSalvar.apply(this, arguments);
+    salvarPersonalizacaoComercial();
     if(typeof db !== 'undefined' && db.config && db.config.uiMenus){
       gravarJson(KEY_MENUS, db.config.uiMenus);
     }
-    if(tirarDaNuvem() && typeof saveDB === 'function') saveDB();
+    if(!ehComercialComNuvem() && tirarDaNuvem() && typeof saveDB === 'function') saveDB();
     if(typeof window.pintarMenus === 'function') window.pintarMenus();
     return r;
   };
@@ -136,6 +155,7 @@ if(typeof window.salvarEditorAtalhos === 'function' && !window.salvarEditorAtalh
 }
 
 function cardMenusConfig(){
+  return;
   var grid = document.querySelector('#view-config .grid') || document.getElementById('view-config');
   if(!grid || document.getElementById('ui-menus-dispositivo-card')) return;
   var card = document.createElement('div');

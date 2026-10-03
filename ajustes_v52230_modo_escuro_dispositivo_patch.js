@@ -77,7 +77,13 @@ function garantirCss(){
     'html.digi-escuro #login-screen h2,html.digi-escuro #login-screen label{color:#e5e7eb!important}',
     'html.digi-escuro .bg-emerald-50,html.digi-escuro .bg-amber-50,html.digi-escuro .bg-blue-50,html.digi-escuro .bg-red-50{background:#1e293b!important}',
     'html.digi-escuro .neo-head{background:linear-gradient(135deg,#0a1e8a,#1e3a8a)!important}',
-    'html.digi-escuro #nfe-conf-modal>div,html.digi-escuro #nfe-senha-modal>div,html.digi-escuro #nfe-xml-modal>div{background:#111827!important;color:#e5e7eb!important}'
+    'html.digi-escuro #nfe-conf-modal>div,html.digi-escuro #nfe-senha-modal>div,html.digi-escuro #nfe-xml-modal>div{background:#111827!important;color:#e5e7eb!important}',
+    'html.digi-escuro #sidebar,html.digi-escuro #shell-sidebar-links,html.digi-escuro #app-shell,html.digi-escuro main{background:#0f172a!important;color:#e5e7eb!important;border-color:#334155!important}',
+    'html.digi-escuro .shell-menu-label{color:#94a3b8!important}',
+    'html.digi-escuro .shell-side-link,html.digi-escuro .shell-side-sub button,html.digi-escuro .shell-sidebar-links summary{color:#cbd5e1!important}',
+    'html.digi-escuro .shell-side-link:hover,html.digi-escuro .shell-side-link.active,html.digi-escuro .shell-sidebar-links details[open]>.shell-side-link,html.digi-escuro .shell-side-sub button:hover{background:#1e293b!important;color:#fff!important}',
+    'html.digi-escuro #view-config .rounded-\\[16px\\].bg-white{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}',
+    'html.digi-escuro #ui-escuro-dispositivo-card label{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}'
   ].join('\n');
   document.head.appendChild(s);
 }

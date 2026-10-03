@@ -53,6 +53,7 @@ async function atualizarStatusCert(){
 }
 
 function renderNfeCard(){
+  return;
   const grid=document.querySelector('#view-config .grid')||document.getElementById('view-config');
   if(!grid||document.getElementById('nfe-config-card')) return;
   const f=fiscalAtual();
