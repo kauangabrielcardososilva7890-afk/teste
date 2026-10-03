@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 218 | sha256: ef94695d3f6874b1
+ * scripts: 218 | sha256: 8cf810cb45f4b3c0
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1194,7 +1194,7 @@ async function saveUsuario(){
   // v7.1.0-r54 (P1): grava hash+salt junto (texto puro segue junto na transição p/ os PCs velhos).
   const precisaHash=!id||!u||!u.senhaHash||(u.senha!==payload.senha);
   if(precisaHash&&typeof atualizarHashRegistro==='function'){ try{ await atualizarHashRegistro(payload,payload.senha); }catch(e){} }
-  if(u&&u.senhaPadrao&&payload.senha!==u.senha) payload.senhaPadrao=false; // trocou a de fábrica: libera o login
+  if(u&&payload.senha) payload.senhaPadrao=false; // senha informada = troca confirmada; invalida a senha inicial
   if(id){
     Object.assign(u,payload,{atualizadoEm:new Date().toISOString(), atualizadoPor:sess.usuarioId});
     logAction('usuario','editar',id,`Editado usuário ${payload.login} perfil ${payload.perfil}`);
@@ -20370,10 +20370,6 @@ try{
 try{
 // PATCH todos os popups no estilo do sistema (igual login incorreto) - REMOVE popups antigos
 (function(){
-  // Preserva o confirm real como compatibilidade para fluxos legados ainda
-  // síncronos. Antes este patch sempre retornava false e vários botões
-  // cancelavam silenciosamente mesmo após o usuário confirmar no modal.
-  const nativeConfirm = (typeof window.confirm === 'function') ? window.confirm.bind(window) : null;
   window.__confirmSistemaBypass = 0;
   function allowLegacyConfirmOnce(){
     window.__confirmSistemaBypass = 1;
@@ -20421,9 +20417,10 @@ try{
     // Wrappers assíncronos já perguntaram no popup do sistema: a chamada
     // síncrona interna recebe um "sim" único, sem mostrar um segundo aviso.
     if(window.__confirmSistemaBypass > 0){ window.__confirmSistemaBypass--; return true; }
-    // Funções antigas ainda não migradas continuam operacionais com o diálogo
-    // nativo, em vez de falhar silenciosamente. Serão migradas gradualmente.
-    return nativeConfirm ? nativeConfirm(String(msg)) : false;
+    // Fluxos síncronos legados não podem abrir o confirm nativo. Falham fechado
+    // e mostram o motivo no popup visual, sem executar ação destrutiva.
+    showModal(String(msg), 'Confirmação necessária', true);
+    return false;
   };
 
   // Wrappers para ações que usavam confirm() - agora usam confirmSistema corretamente
@@ -27747,8 +27744,11 @@ window.saveUsuarioFinal = async function(id){
   // Bandeira: senha que OUTRA pessoa escolheu (criação ou troca por admin) → o dono troca no próximo login.
   const precisaHash = eraNovo || !u.senhaHash || (senhaAntiga !== senha);
   if(precisaHash && typeof atualizarHashRegistro === 'function'){ try{ await atualizarHashRegistro(u, senha); }catch(e){} }
+  // Qualquer senha explicitamente informada no cadastro é uma troca confirmada.
+  // A senha anterior (inclusive a senha inicial) nunca deve continuar exigindo
+  // troca nem ser aceita como senha válida depois desta operação.
   if(eraNovo) u.senhaPadrao = true;
-  else if(senhaDigitada && senhaDigitada !== senhaAntiga) u.senhaPadrao = (u.id === s.usuarioId) ? false : true;
+  else if(senhaDigitada) u.senhaPadrao = false;
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
@@ -57870,6 +57870,9 @@ var NOTAS_POR_VERSAO={
     'Os registros de negócio não são mais gravados em armazenamento permanente do navegador: a nuvem é a cópia oficial.',
     'Uma alteração só aparece como salva depois da confirmação da nuvem. Se a conexão cair, ela fica apenas na memória desta sessão; mantenha a janela aberta até a confirmação.',
     'Uma fila antiga já existente nesta máquina é preservada apenas até a nuvem confirmar o envio, para evitar perder alterações pendentes.'
+  ],
+  '8.1.0':[
+    'A versão 8.1.0 consolida as correções de segurança, tema global, autenticação e testes oficiais da linha 8.'
   ],
   '8.0.0':[
     'A versão 8.0.0 reúne a auditoria final do sistema, com menus e fluxos principais validados em testes automatizados.',

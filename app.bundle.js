@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 218 | sha256: 4465507337253dea
+ * scripts: 218 | sha256: 8cf810cb45f4b3c0
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -57870,6 +57870,9 @@ var NOTAS_POR_VERSAO={
     'Os registros de negócio não são mais gravados em armazenamento permanente do navegador: a nuvem é a cópia oficial.',
     'Uma alteração só aparece como salva depois da confirmação da nuvem. Se a conexão cair, ela fica apenas na memória desta sessão; mantenha a janela aberta até a confirmação.',
     'Uma fila antiga já existente nesta máquina é preservada apenas até a nuvem confirmar o envio, para evitar perder alterações pendentes.'
+  ],
+  '8.1.0':[
+    'A versão 8.1.0 consolida as correções de segurança, tema global, autenticação e testes oficiais da linha 8.'
   ],
   '8.0.0':[
     'A versão 8.0.0 reúne a auditoria final do sistema, com menus e fluxos principais validados em testes automatizados.',
