@@ -12,6 +12,7 @@ assert(index.includes('new MutationObserver(scheduleShellRefresh)'), 'observer u
 assert(index.includes('ordem.concat(groups.map'), 'reordenação preserva menus novos');
 assert(index.includes('function reorderChildren(parent, nodes)'), 'reordenação não duplica mutações do observer');
 assert(index.includes('current.every(function(n,i){return n===nodes[i]})'), 'reordenação evita append quando a ordem já está correta');
+assert(index.includes("qsa('details',g).forEach(function(d)"), 'submenus são reordenados dentro do próprio menu principal');
 assert(index.includes('label.textContent!==nome'), 'renomeação de menu evita mutação redundante');
 assert(index.includes('b.textContent!==savedSub[sid]'), 'renomeação de submenu evita mutação redundante');
 assert(index.includes('<option value="top">Topo horizontal</option>'), 'posição topo horizontal disponível');
