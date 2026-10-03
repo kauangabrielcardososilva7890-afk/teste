@@ -53,12 +53,11 @@
     grid.appendChild(card); var chk=card.querySelector('#ui-escuro-chk'); chk.checked=themeOn(); chk.onchange=function(){saveTheme(chk.checked)};
   }
   function ensureSidebarPositionCard(){
-    var root=document.getElementById('view-config'); if(!root||document.getElementById('ui-sidebar-position-card'))return;
-    var grid=root.querySelector('.grid')||root;
-    var card=document.createElement('div'); card.id='ui-sidebar-position-card'; card.className='rounded-[16px] bg-white border p-6';
-    card.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-sidebar"></i> Posição do menu lateral</h4><p class="text-[12px] text-slate-500 mt-1">Escolha em qual lado o menu lateral aparece neste computador. Esta opção está disponível em todos os perfis.</p><label class="mt-4 flex items-center gap-2 text-[13px] font-semibold">Lado do menu<select id="ui-sidebar-side" class="ml-2 h-10 rounded-xl border px-3 bg-white"><option value="left">Esquerdo</option><option value="right">Direito</option></select></label>';
-    grid.appendChild(card);
-    var select=card.querySelector('#ui-sidebar-side'); select.value=loadSidebarSide(); select.onchange=function(){saveSidebarSide(select.value)};
+    var card=document.getElementById('ui-escuro-dispositivo-card'); if(!card||document.getElementById('ui-sidebar-position-card'))return;
+    var control=document.createElement('div'); control.id='ui-sidebar-position-card'; control.className='mt-5 pt-4 border-t border-slate-200';
+    control.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-sidebar"></i> Posição do menu lateral</h4><p class="text-[12px] text-slate-500 mt-1">Escolha em qual lado o menu lateral aparece neste computador. Esta opção está disponível em todos os perfis.</p><label class="mt-4 flex items-center gap-2 text-[13px] font-semibold">Lado do menu<select id="ui-sidebar-side" class="ml-2 h-10 rounded-xl border px-3 bg-white"><option value="left">Esquerdo</option><option value="right">Direito</option></select></label>';
+    card.appendChild(control);
+    var select=control.querySelector('#ui-sidebar-side'); select.value=loadSidebarSide(); select.onchange=function(){saveSidebarSide(select.value)};
   }
   function sidebarPositionCss(){
     if(document.getElementById('digicopy-v8-sidebar-position-css'))return;
