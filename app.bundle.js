@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 238 | sha256: 3bd0adaa277b3214
+ * scripts: 237 | sha256: a617a3d90bcf7d08
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -39380,141 +39380,6 @@ console.log('[DIGICOPY] v5.24.34 — monitor SNMP fase 1 + hub da impressora no 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52232_parque_monitor_hub_patch.js", e); }
 ;
 
-/* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js ===== */
-try{
-// ═══════════════════════════════════════════════════════════════════════════
-// v5.22.30 — Modo escuro só neste aparelho
-// • Liga/desliga em Configurações. Não sobe na nuvem. Não muda outros PCs.
-// ═══════════════════════════════════════════════════════════════════════════
-(function(){
-'use strict';
-
-var KEY = 'digicopy_ui_modo_escuro_dispositivo_v1';
-
-function lerEscuro(){
-  try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; }
-}
-function gravarEscuro(on){
-  try{ localStorage.setItem(KEY, on ? '1' : '0'); return true; }
-  catch(e){ return false; }
-}
-
-window.MODO_ESCURO_PURE = {
-  KEY: KEY,
-  lerEscuro: lerEscuro,
-  gravarEscuro: gravarEscuro
-};
-
-if(typeof document === 'undefined') return;
-
-function aplicarEscuro(on){
-  var html = document.documentElement;
-  var body = document.body;
-  if(on){
-    html.classList.add('digi-escuro');
-    if(body) body.classList.add('digi-escuro');
-  }else{
-    html.classList.remove('digi-escuro');
-    if(body) body.classList.remove('digi-escuro');
-  }
-  var meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', on ? '#0b1220' : '#0a1e8a');
-  var chk = document.getElementById('ui-escuro-chk');
-  if(chk) chk.checked = !!on;
-}
-
-function garantirCss(){
-  if(document.getElementById('digi-escuro-css')) return;
-  var s = document.createElement('style');
-  s.id = 'digi-escuro-css';
-  s.textContent = [
-    'html.digi-escuro,html.digi-escuro body{background:#0b1220!important;color:#e5e7eb!important}',
-    'html.digi-escuro ::-webkit-scrollbar-thumb{background:#334155}',
-    'html.digi-escuro header.app-titlebar .h-\\[26px\\],html.digi-escuro .app-titlebar>div:first-child{background:#0a1e8a!important}',
-    'html.digi-escuro .modern-topnav,html.digi-escuro .module-row,html.digi-escuro .command-row{background:#111827!important;border-color:#1f2937!important;box-shadow:none!important}',
-    'html.digi-escuro .module-row{background:linear-gradient(180deg,#111827,#0f172a)!important}',
-    'html.digi-escuro .module>button,html.digi-escuro .module-menu button,html.digi-escuro .command-row .quick{color:#e5e7eb!important}',
-    'html.digi-escuro .module>button:hover,html.digi-escuro .module-menu button:hover{background:#1e293b!important;color:#fff!important}',
-    'html.digi-escuro .module-menu,html.digi-escuro .neo-suggest{background:#111827!important;border-color:#334155!important}',
-    'html.digi-escuro .command-row .quick{background:#1e293b!important;border-color:#334155!important}',
-    'html.digi-escuro .ml-auto.text-slate-500,html.digi-escuro .text-slate-500,html.digi-escuro .text-slate-400,html.digi-escuro .text-slate-600{color:#94a3b8!important}',
-    'html.digi-escuro footer,html.digi-escuro .statusbar{background:#0f172a!important;border-color:#1f2937!important;color:#94a3b8!important}',
-    'html.digi-escuro .neo-shell,html.digi-escuro .workspace-pad,html.digi-escuro .clean-home,html.digi-escuro .desktop-home{background:#0b1220!important}',
-    'html.digi-escuro .neo-panel,html.digi-escuro .neo-card,html.digi-escuro .rounded-\\[16px\\].bg-white,html.digi-escuro .rounded-\\[14px\\].bg-white,html.digi-escuro .bg-white,html.digi-escuro .bg-white\\/60,html.digi-escuro .bg-white\\/94{background:#111827!important;border-color:#334155!important;color:#e5e7eb!important}',
-    'html.digi-escuro .neo-table th{background:#0f172a!important;color:#94a3b8!important;border-color:#334155!important}',
-    'html.digi-escuro .neo-table td,html.digi-escuro table td,html.digi-escuro table th{border-color:#1f2937!important;color:#e5e7eb!important}',
-    'html.digi-escuro .neo-table tbody tr:hover,html.digi-escuro table tbody tr:hover{background:#1e293b!important}',
-    'html.digi-escuro .neo-selected,html.digi-escuro tr.neo-selected{background:#1e3a5f!important}',
-    'html.digi-escuro .neo-input,html.digi-escuro .neo-select,html.digi-escuro input,html.digi-escuro select,html.digi-escuro textarea{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}',
-    'html.digi-escuro input::placeholder,html.digi-escuro textarea::placeholder{color:#64748b!important}',
-    'html.digi-escuro .neo-btn{background:#1e293b!important;border-color:#334155!important;color:#e5e7eb!important}',
-    'html.digi-escuro .neo-btn.primary,html.digi-escuro .neo-tab.active,html.digi-escuro button.bg-\\[\\#0a1e8a\\]{background:#0a1e8a!important;border-color:#1d4ed8!important;color:#fff!important}',
-    'html.digi-escuro .neo-tab{background:#1e293b!important;border-color:#334155!important;color:#cbd5e1!important}',
-    'html.digi-escuro #modal-box,html.digi-escuro #modal-body,html.digi-escuro #modal-footer{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}',
-    'html.digi-escuro #modal-box .border-b,html.digi-escuro #modal-box .border-t{border-color:#334155!important}',
-    'html.digi-escuro #modal-box h3,html.digi-escuro #modal-title{color:#f1f5f9!important}',
-    'html.digi-escuro .bg-slate-50,html.digi-escuro .bg-slate-50\\/80,html.digi-escuro .bg-slate-100,html.digi-escuro .bg-\\[\\#f8f9ff\\],html.digi-escuro .bg-\\[\\#f8fbff\\],html.digi-escuro .bg-\\[\\#f4f5f9\\],html.digi-escuro .bg-\\[\\#f7f7f7\\]{background:#0f172a!important}',
-    'html.digi-escuro .border,html.digi-escuro .border-slate-100,html.digi-escuro .border-slate-200,html.digi-escuro .border-b,html.digi-escuro .border-t{border-color:#334155!important}',
-    'html.digi-escuro .text-slate-800,html.digi-escuro .text-slate-700,html.digi-escuro .text-slate-900,html.digi-escuro b{color:#e5e7eb}',
-    'html.digi-escuro .login-bg{background:radial-gradient(1200px 600px at 20% 10%,#1e3a8a 0%,#0a1e8a 35%,#020617 100%)}',
-    'html.digi-escuro #login-screen .bg-white,html.digi-escuro #login-step-user{background:#111827!important;color:#e5e7eb!important}',
-    'html.digi-escuro #login-screen h2,html.digi-escuro #login-screen label{color:#e5e7eb!important}',
-    'html.digi-escuro .bg-emerald-50,html.digi-escuro .bg-amber-50,html.digi-escuro .bg-blue-50,html.digi-escuro .bg-red-50{background:#1e293b!important}',
-    'html.digi-escuro .neo-head{background:linear-gradient(135deg,#0a1e8a,#1e3a8a)!important}',
-    'html.digi-escuro #nfe-conf-modal>div,html.digi-escuro #nfe-senha-modal>div,html.digi-escuro #nfe-xml-modal>div{background:#111827!important;color:#e5e7eb!important}',
-    'html.digi-escuro #sidebar,html.digi-escuro #shell-sidebar-links,html.digi-escuro #app-shell,html.digi-escuro main{background:#0f172a!important;color:#e5e7eb!important;border-color:#334155!important}',
-    'html.digi-escuro .shell-menu-label{color:#94a3b8!important}',
-    'html.digi-escuro .shell-side-link,html.digi-escuro .shell-side-sub button,html.digi-escuro .shell-sidebar-links summary{color:#cbd5e1!important}',
-    'html.digi-escuro .shell-side-link:hover,html.digi-escuro .shell-side-link.active,html.digi-escuro .shell-sidebar-links details[open]>.shell-side-link,html.digi-escuro .shell-side-sub button:hover{background:#1e293b!important;color:#fff!important}',
-    'html.digi-escuro #view-config .rounded-\\[16px\\].bg-white{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}',
-    'html.digi-escuro #ui-escuro-dispositivo-card label{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}'
-  ].join('\n');
-  document.head.appendChild(s);
-}
-
-function cardEscuro(){
-  var grid = document.querySelector('#view-config .grid') || document.getElementById('view-config');
-  if(!grid || document.getElementById('ui-escuro-dispositivo-card')) return;
-  var card = document.createElement('div');
-  card.id = 'ui-escuro-dispositivo-card';
-  card.className = 'rounded-[16px] bg-white border p-6';
-  var on = lerEscuro();
-  card.innerHTML = '<h4 class="font-bold text-[14px]"><i class="ph ph-moon"></i> Aparência deste computador</h4>'+
-    '<p class="text-[12px] text-slate-500 mt-1">Modo escuro vale só neste aparelho. Não muda os outros PCs e não sobe na nuvem.</p>'+
-    '<label class="mt-4 h-10 px-3 rounded-xl border bg-white flex items-center gap-2 font-semibold text-[13px] w-fit cursor-pointer">'+
-    '<input id="ui-escuro-chk" type="checkbox"'+(on?' checked':'')+'> Modo escuro</label>';
-  grid.appendChild(card);
-  var chk = document.getElementById('ui-escuro-chk');
-  if(chk){
-    chk.onchange = function(){
-      var liga = !!chk.checked;
-      gravarEscuro(liga);
-      aplicarEscuro(liga);
-    };
-  }
-}
-
-garantirCss();
-aplicarEscuro(lerEscuro());
-
-if(typeof window.renderConfig === 'function' && !window.renderConfig.__v52230escuro){
-  var old = window.renderConfig;
-  window.renderConfig = function(){
-    var r = old.apply(this, arguments);
-    setTimeout(cardEscuro, 220);
-    setTimeout(cardEscuro, 600);
-    return r;
-  };
-  window.renderConfig.__v52230escuro = true;
-}
-
-setTimeout(cardEscuro, 800);
-console.log('[DIGICOPY] v5.22.30 modo escuro só neste aparelho');
-})();
-
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52230_modo_escuro_dispositivo_patch.js", e); }
-;
-
 /* ===== ajustes_v52233_escuro_login_nuvem_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
@@ -63332,11 +63197,19 @@ try{
   }
   function loadTheme(){return safe(function(){return localStorage.getItem(themeKey())==='1'})===true}
   function saveTheme(on){safe(function(){localStorage.setItem(themeKey(),on?'1':'0')});applyTheme(on)}
+  G.MODO_ESCURO_PURE={KEY:themeKey(),lerEscuro:loadTheme,gravarEscuro:function(on){saveTheme(!!on);return true}};
+  function ensureDarkCard(){
+    var root=document.getElementById('view-config'); if(!root||document.getElementById('ui-escuro-dispositivo-card'))return;
+    var grid=root.querySelector('.grid')||root;
+    var card=document.createElement('div'); card.id='ui-escuro-dispositivo-card'; card.className='rounded-[16px] bg-white border p-6';
+    card.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-moon"></i> Aparência deste computador</h4><p class="text-[12px] text-slate-500 mt-1">Modo escuro vale só neste aparelho. Não muda os outros PCs e não sobe na nuvem.</p><label class="mt-4 h-10 px-3 rounded-xl border bg-white flex items-center gap-2 font-semibold text-[13px] w-fit cursor-pointer"><input id="ui-escuro-chk" type="checkbox"> Modo escuro</label>';
+    grid.appendChild(card); var chk=card.querySelector('#ui-escuro-chk'); chk.checked=themeOn(); chk.onchange=function(){saveTheme(chk.checked)};
+  }
   function darkCss(){
     if(document.getElementById('digicopy-v8-global-dark'))return;
     var s=document.createElement('style');s.id='digicopy-v8-global-dark';
     s.textContent='html.digi-escuro,html.digi-escuro body{background:#070b14!important;color:#e5e7eb!important}html.digi-escuro #app-shell,html.digi-escuro #app-shell>div,html.digi-escuro main,html.digi-escuro #workspace,html.digi-escuro #views{background:#070b14!important;color:#e5e7eb!important}html.digi-escuro .app-titlebar,html.digi-escuro footer,html.digi-escuro .statusbar{background:#0b1220!important;border-color:#263244!important;color:#cbd5e1!important}html.digi-escuro .view,html.digi-escuro .view>*,html.digi-escuro .view [class*="bg-white"],html.digi-escuro .view [class*="bg-slate-50"],html.digi-escuro .view [class*="bg-slate-100"]{background-color:#111827!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro .view [class*="text-slate-500"],html.digi-escuro .view [class*="text-slate-600"],html.digi-escuro .view [class*="text-slate-700"]{color:#aab7ca!important}html.digi-escuro input,html.digi-escuro select,html.digi-escuro textarea{background:#0f172a!important;color:#f1f5f9!important;border-color:#334155!important}html.digi-escuro table th{background:#0f172a!important;color:#cbd5e1!important}html.digi-escuro table td{color:#e5e7eb!important;border-color:#263244!important}html.digi-escuro #sidebar{background:#060e2f!important}html.digi-escuro .shell-side-sub{background:#0b163b!important}html.digi-escuro .shell-side-link,html.digi-escuro .shell-side-sub button{color:#e5e7eb!important}html.digi-escuro .modal,html.digi-escuro [role="dialog"],html.digi-escuro #modal-box{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}';document.head.appendChild(s);
-    var l=document.createElement('style');l.id='digicopy-v8-shell-css';l.textContent='#nfe-config-card,#rtf-template-card{display:none!important}@media(min-width:901px){#sidebar{display:flex!important;position:fixed!important;inset:0 auto 0 0!important;width:300px!important;height:100vh!important;transform:none!important;z-index:60!important}#shell-sidebar-links{min-height:0!important;height:calc(100vh - 220px)!important;max-height:calc(100vh - 220px)!important;overflow-y:scroll!important;overscroll-behavior:contain!important;scrollbar-width:thin!important}#sidebar>div:last-child{flex-shrink:0!important}#app-shell>div>main{margin-left:300px!important;min-height:100vh!important;background:#f8fafc!important}.modern-topnav,#app-shell .classic-toolbar,#app-shell .command-row{display:none!important}#app-shell>div>main>.flex-1{background:#f8fafc!important}#app-shell>div>main>.flex-1>.view{padding:24px 30px 42px!important}}@media(max-width:900px){#sidebar{display:flex!important}}';document.head.appendChild(l);
+    var l=document.createElement('style');l.id='digicopy-v8-shell-css';l.textContent='#nfe-config-card,#rtf-template-card{display:none!important}@media(min-width:901px){#sidebar{display:flex!important;position:fixed!important;inset:0 auto 0 0!important;width:300px!important;height:100vh!important;transform:none!important;z-index:60!important}#shell-sidebar-links{min-height:0!important;height:calc(100vh - 220px)!important;max-height:calc(100vh - 220px)!important;overflow-y:scroll!important;overscroll-behavior:contain!important;scrollbar-width:thin!important}#sidebar>div:last-child{flex-shrink:0!important}#app-shell>div>main{margin-left:300px!important;min-height:100vh!important;background:#f8fafc!important}.modern-topnav,#app-shell .classic-toolbar,#app-shell .command-row{display:none!important}#app-shell>div>main>.flex-1{background:#f8fafc!important}#app-shell>div>main>.flex-1>.view{padding:24px 30px 42px!important}html.digi-escuro #app-shell>div>main,html.digi-escuro #app-shell>div>main>.flex-1,html.digi-escuro #app-shell>div>main>.flex-1>.view{background:#070b14!important;color:#e5e7eb!important}}@media(max-width:900px){#sidebar{display:flex!important}html.digi-escuro #app-shell,html.digi-escuro main,html.digi-escuro #app-shell>div>main>.flex-1{background:#070b14!important;color:#e5e7eb!important}}';document.head.appendChild(l);
   }
   function removeDuplicateUser(){
     var cad=qsa('#shell-sidebar-links details').find(function(d){return /cadastros/i.test((qs('summary',d)||{}).textContent||'')});
@@ -63368,9 +63241,9 @@ try{
     qs('#v8-print-labels').onclick=function(){var a=Number(qs('#v8-etq-ini').value||1),b=Number(qs('#v8-etq-fim').value||a+cap-1);if(typeof G.imprimirEtiquetasCartucho==='function'){var old=qs('#cart-etq-inicio');if(old){old.value=a;var f=qs('#cart-etq-fim');if(f)f.value=b}G.imprimirEtiquetasCartucho()}else if(typeof G.toast==='function')G.toast('O módulo de etiquetas ainda está carregando.','info')};
   }
   G.abrirEtiquetas=renderEtiquetas;
-  G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();applyTheme(loadTheme());};
+  G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();applyTheme(loadTheme());safe(ensureDarkCard);};
   G.renderMenuShellV8000();
-  new MutationObserver(function(){safe(independentMenus);if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
+  new MutationObserver(function(){safe(independentMenus);safe(ensureDarkCard);if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
   setTimeout(G.renderMenuShellV8000,250);setTimeout(G.renderMenuShellV8000,1000);
   console.log('[DIGICOPY] menu_shell_v8000 carregado: fontes únicas de shell/importação/etiquetas/tema');
 })();
@@ -63382,11 +63255,11 @@ try{
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 238;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 237;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 238 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 237 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));
