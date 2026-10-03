@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 218 | sha256: 8ec5279a52bf016e
+ * scripts: 218 | sha256: 15c74d3a1c07e690
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */

@@ -18,6 +18,11 @@ const testsOficiais=[
   "test_r67_auth_ui.js",
   "test_r68_orcamento_cloud_guard.js",
   "test_regressao_dialogos.js",
+  "test_sync_secrets.js",
+  "test_data_changes_validation.js",
+  "test_leitura_uma_aberta.js",
+  "test_notificacoes_sync.js",
+  "cloudflare-worker/test-pure.mjs",
 ];
 const testsHistoricos=[
   "test_msg_01_infra.js",
