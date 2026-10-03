@@ -196,11 +196,7 @@ if (filesMudou) {
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. scripts.check — derivado do bundle + extras
 // ─────────────────────────────────────────────────────────────────────────────
-const checkEsperado = ['node build_bundle.js --check']
-  .concat(manifest.map(f => 'node --check ' + f))
-  .concat(scriptsSoltos.filter(f => !manifest.includes(f)).map(f => 'node --check ' + f))
-  .concat(CHECK_EXTRA.map(f => 'node --check ' + f))
-  .join(' && ');
+const checkEsperado = 'node check.js';
 
 if (pkg.scripts.check !== checkEsperado) {
   alteracoes.push('scripts.check');

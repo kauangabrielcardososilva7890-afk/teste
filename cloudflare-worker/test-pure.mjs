@@ -19,6 +19,20 @@ assert.equal(await __test.sameSecret('abc', 'abc'), true);
 assert.equal(await __test.sameSecret('abc', 'abd'), false);
 assert.equal(await __test.sameSecret('', ''), false);
 console.log('  ✔ comparação de segredo');
+assert.equal(__test.isValidEntity('_seq'), true, '_seq is the synchronized sequence root');
+assert.equal(__test.isValidEntity('clientes'), true, 'ordinary entity names remain valid');
+assert.equal(__test.isValidEntity('__orcBloqueio'), false, 'device-local internal names remain invalid');
+assert.equal(__test.isValidEntity('_other'), false, 'the leading underscore exception stays specific to _seq');
+console.log('  ✔ validates the _seq entity without allowing other underscore names');
+const configSincronizada = __test.dadosSincronizaveis('config', {
+  escolaAuth: { usuario: 'placeholder', senha: 'placeholder' },
+  fiscal: { serie: 2, a1Nuvem: { data: 'PFX-PLACEHOLDER', nome: 'a1.pfx' } }, tema: 'claro'
+});
+assert.equal('escolaAuth' in configSincronizada, false);
+assert.deepEqual(configSincronizada.fiscal, { serie: 2, a1Nuvem: { nome: 'a1.pfx' } });
+assert.equal(configSincronizada.tema, 'claro');
+assert.deepEqual(__test.dadosSincronizaveis('clientes', { escolaAuth: { senha: 'placeholder' } }), { escolaAuth: { senha: 'placeholder' } });
+console.log('  ✔ remove credenciais e material A1 da config sincronizada');
 const rate = __test.AUTH_RATE_POLICIES;
 assert.equal(rate['/v1/check-pass'].maxFailures, 5);
 assert.equal(rate['/v1/gerente-login'].maxFailures, 3);

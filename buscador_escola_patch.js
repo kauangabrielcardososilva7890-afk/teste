@@ -80,7 +80,7 @@ function pedirLoginEscola(aviso){
     root.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(15,23,42,.62);display:flex;align-items:center;justify-content:center;padding:18px';
     root.innerHTML='<div style="width:min(460px,96vw);background:white;border-radius:16px;box-shadow:0 25px 80px rgba(0,0,0,.35);padding:18px">'+
       '<b style="font-size:16px">Login da Caixa Escolar</b>'+
-      '<p style="font-size:12px;color:#64748b;margin:8px 0 12px">Salva na nuvem. Os outros PCs autorizados usam o mesmo login. Não fica no código.</p>'+
+      '<p style="font-size:12px;color:#64748b;margin:8px 0 12px">Salvo somente neste aparelho. Não é enviado para a nuvem.</p>'+
       (aviso?'<p style="font-size:12px;color:#991b1b;margin:0 0 10px">'+esc(aviso)+'</p>':'')+
       '<label style="display:block;font-size:11px;font-weight:800;color:#475569">CNPJ</label>'+
       '<input id="es-login-user" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 10px">'+
@@ -88,7 +88,7 @@ function pedirLoginEscola(aviso){
       '<input id="es-login-pass" type="password" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 14px">'+
       '<div style="display:flex;justify-content:flex-end;gap:8px">'+
       '<button id="es-login-cancel" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:white;font-weight:800">Cancelar</button>'+
-      '<button id="es-login-ok" style="height:38px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Salvar na nuvem</button>'+
+      '<button id="es-login-ok" style="height:38px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Salvar neste aparelho</button>'+
       '</div></div>';
     document.body.appendChild(root);
     function fechar(v){ root.remove(); resolve(v); }

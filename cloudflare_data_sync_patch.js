@@ -797,8 +797,31 @@ function posicaoNaLista(entity,id){
   // agora. Procurar na lista inteira aqui seria voltar à conta quadrática.
   return -1;
 }
+function tirarSegredosDoEnvio(entity,value){
+  if(entity!=='config'||!value||typeof value!=='object'||Array.isArray(value))return value;
+  const safe=clean(value);
+  delete safe.escolaAuth;
+  if(safe.fiscal&&typeof safe.fiscal==='object'&&!Array.isArray(safe.fiscal)&&safe.fiscal.a1Nuvem&&typeof safe.fiscal.a1Nuvem==='object'){
+    delete safe.fiscal.a1Nuvem.data;
+    if(!Object.keys(safe.fiscal.a1Nuvem).length)delete safe.fiscal.a1Nuvem;
+  }
+  return safe;
+}
+function mutacaoSeguraParaEnvio(mutation){
+  if(!mutation||mutation.entity!=='config'||!mutation.data)return mutation;
+  return Object.assign({},mutation,{data:tirarSegredosDoEnvio('config',mutation.data)});
+}
+function configRemotoComSegredosLocais(value){
+  const result=clean(tirarSegredosDoEnvio('config',value));
+  if(!result||typeof result!=='object')return result;
+  const local=typeof db!=='undefined'&&db&&db.config&&typeof db.config==='object'?db.config:{};
+  if(local.escolaAuth)result.escolaAuth=clean(local.escolaAuth);
+  const localA1=local.fiscal&&local.fiscal.a1Nuvem;
+  if(localA1&&localA1.data){result.fiscal=result.fiscal&&typeof result.fiscal==='object'?result.fiscal:{};result.fiscal.a1Nuvem=clean(localA1);}
+  return result;
+}
 function applyRemote(change,mapaDado){
-  const mode=(mapaDado||definicoes())[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
+  const mode=(mapaDado||definicoes())[change.entity]||(change.entity==='notificacoes'?'array':(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null));if(!mode)return false;
   const k=key(change.entity,change.recordId),knownVersion=Number(state.versions[k]||0);
   if(Number(change.version)<=knownVersion)return false;
   let changed=false;
@@ -820,7 +843,7 @@ function applyRemote(change,mapaDado){
     else if(change.data){if(idx>=0)arr[idx]=change.data;else arr.push(change.data);changed=true;}
   }else if(mode==='root'){
     if(change.operation==='delete'){/* objetos essenciais nunca são apagados por ausência */}
-    else if(change.data){db[change.entity]=change.data;changed=true;}
+    else if(change.data){db[change.entity]=change.entity==='config'?configRemotoComSegredosLocais(change.data):change.data;changed=true;}
   }else if(mode==='contador'){
     // Numeração de venda/OS/orçamento: nunca volta atrás. Cada contador fica
     // com o MAIOR número entre este PC e a nuvem, para dois computadores não
@@ -994,6 +1017,34 @@ async function fotoRapidaBoot(call,mapa,comAviso){
   if(seq>0){state.cursor=seq;marcarEstado();}
   return aplicados>0;
 }
+function validarPaginaChanges(data,cursorAtual){
+  const cursor=Number(cursorAtual)||0;
+  if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('resposta de sincronização inválida');
+  if(!Array.isArray(data.changes))throw new Error('resposta de sincronização sem lista changes válida');
+  if(!Number.isSafeInteger(data.nextCursor)||data.nextCursor<cursor)throw new Error('cursor inválido na resposta de sincronização');
+  if(typeof data.hasMore!=='boolean')throw new Error('indicador hasMore inválido na resposta de sincronização');
+  let ultimoSeq=cursor;
+  for(const item of data.changes){
+    if(!item||typeof item!=='object'||Array.isArray(item)||!Number.isSafeInteger(item.seq)||item.seq<=ultimoSeq){
+      throw new Error('item inválido na lista changes da sincronização');
+    }
+    const entidadeValida=typeof item.entity==='string'&&/^(?:_seq|[a-zA-Z][a-zA-Z0-9_]{0,63})$/.test(item.entity);
+    const registroValido=typeof item.recordId==='string'&&item.recordId.trim().length>0&&item.recordId.length<=160;
+    const versaoValida=Number.isSafeInteger(item.version)&&item.version>0;
+    const modo=entidadeValida?(definicoes()[item.entity]||(item.entity&&!NAO_SINCRONIZA.has(item.entity)?'array':null)):null;
+    const dadosValidos=item.operation==='delete'||(item.operation==='upsert'&&item.data!==null&&typeof item.data==='object'&&!Array.isArray(item.data)&&
+      (modo!=='map'||Object.prototype.hasOwnProperty.call(item.data,'value')));
+    if(!entidadeValida||!registroValido||!['upsert','delete'].includes(item.operation)||!versaoValida||!dadosValidos){
+      throw new Error('mudança incompleta ou inválida na lista changes da sincronização');
+    }
+    ultimoSeq=item.seq;
+  }
+  if(data.changes.length?ultimoSeq!==data.nextCursor:data.nextCursor!==cursor){
+    throw new Error('cursor não corresponde à lista changes da sincronização');
+  }
+  if(data.hasMore&&!data.changes.length)throw new Error('página vazia marcada como incompleta na sincronização');
+  return {changes:data.changes,nextCursor:data.nextCursor,hasMore:data.hasMore};
+}
 const PASSE_RAPIDO=3000;      // últimas 3 mil mudanças (3 páginas)
 let passeRapidoFeito=false;
 async function passeRapidoInicial(call){
@@ -1010,10 +1061,10 @@ async function passeRapidoInicial(call){
   let cursor=Math.max(0,maxSeq-PASSE_RAPIDO),paginas=0,changed=false;
   try{
     do{
-      const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursor)+'&limit='+POR_PAGINA,{method:'GET'}));
-      if(!data)break; // r59c: api() resolve null quando o corpo nao e JSON — pagina vazia nao e crash
-      for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
-      cursor=Number(data.nextCursor)||cursor;
+      const resposta=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursor)+'&limit='+POR_PAGINA,{method:'GET'}));
+      const data=validarPaginaChanges(resposta,cursor);
+      for(const item of data.changes){if(applyRemote(item,mapa))changed=true;}
+      cursor=data.nextCursor;
       paginas++;
       if(!data.hasMore)break;
     }while(paginas<5);
@@ -1057,15 +1108,15 @@ async function pullAll(opcoes){
   // embaixo, sem bloquear) e a tela se atualiza na hora; o resto compõe em silêncio.
   if(comAviso&&changed){mostrarCargaNuvem(true,'dados recentes na tela — trazendo o histórico… (pode usar)',true);tentarRedesenhoPendente();}
   do{
-    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
-    if(geracaoPull!==estadoGeracao)return changed;   // página pré-wipe: não aplica nem anda o cursor novo
-    if(data==null)throw new Error("nuvem devolveu resposta vazia (tenta de novo)"); // r59c: antes quebrava em data.changes com null
-    for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
     const cursorAntes=Number(state.cursor)||0;
-    state.cursor=Number(data.nextCursor)||cursorAntes;
+    const resposta=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursorAntes)+'&limit='+POR_PAGINA,{method:'GET'}));
+    if(geracaoPull!==estadoGeracao)return changed;   // página pré-wipe: não aplica nem anda o cursor novo
+    const data=validarPaginaChanges(resposta,cursorAntes);
+    for(const item of data.changes){if(applyRemote(item,mapa))changed=true;}
+    state.cursor=data.nextCursor;
     if(Number(state.cursor)!==cursorAntes)marcarEstado();
     pages++;
-    if(comAviso){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
+    if(comAviso){cargaItens+=data.changes.length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
   }while(pages<100);
   }finally{ if(comAviso)mostrarCargaNuvem(false); }
@@ -1447,7 +1498,7 @@ async function pushOutbox(){
     if(!batch.length)break;
     let response;
     try{
-      response=await comPaciencia(()=>call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>x.mutation)})}));
+      response=await comPaciencia(()=>call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>mutacaoSeguraParaEnvio(x.mutation))})}));
     }catch(e){
       if(ehSobrecarga(e)&&lote>1){
         // Ainda ocupada: manda menos por vez na próxima rodada em vez de desistir.
@@ -2435,7 +2486,7 @@ function redesenharTelaAtual(){
   }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,tudoConfirmadoNaNuvem,relatarSaude,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente,puxarAoAbrirTela};
+window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,tudoConfirmadoNaNuvem,relatarSaude,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,validarPaginaChanges,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente,puxarAoAbrirTela};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -2514,7 +2565,7 @@ function entregarAoSair(){
   }
   if(!lote.length)return;
   try{
-    const promessa=call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:lote.map(x=>x.mutation)}),keepalive:true});
+    const promessa=call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:lote.map(x=>mutacaoSeguraParaEnvio(x.mutation))}),keepalive:true});
     if(promessa&&typeof promessa.catch==='function')promessa.catch(()=>{});
   }catch(e){}
 }

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// v5.22.21 — A1 .pfx na nuvem (sem senha) + some o carregamento local
+// A1 local no config do aparelho; o segredo é removido antes da sincronização genérica.
 // • Senha continua só na hora de assinar. Ainda não envia à SEFAZ.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
@@ -60,9 +60,9 @@ function esconderCarregarLocal(){
   var a1 = a1DaConfig({ fiscal: fiscal() });
   if(a1){
     var quando = a1.enviadoEm ? new Date(a1.enviadoEm).toLocaleString('pt-BR') : '';
-    st.textContent = 'A1 na nuvem'+(a1.nome?' • '+a1.nome:'')+(quando?' • '+quando:'')+'. Senha só na hora de assinar. Ainda não emite na SEFAZ.';
+    st.textContent = 'A1 disponível neste aparelho'+(a1.nome?' • '+a1.nome:'')+(quando?' • '+quando:'')+'. Senha só na hora de assinar. Ainda não emite na SEFAZ.';
   }else{
-    st.textContent = 'Nenhum A1 na nuvem. Envie o .pfx pela página de envio de arquivos.';
+    st.textContent = 'Nenhum A1 salvo neste aparelho.';
   }
 }
 
@@ -78,7 +78,7 @@ function ajustarCard(){
   var p = document.querySelector('#nfe-config-card p');
   if(p && p.dataset && !p.dataset.v52221a1){
     p.dataset.v52221a1 = '1';
-    p.textContent = 'Ainda não emite nota na SEFAZ. O A1 sobe pela página de envio. Senha só na hora de assinar.';
+    p.textContent = 'Ainda não emite nota na SEFAZ. O A1 fica armazenado neste aparelho. Senha só na hora de assinar.';
   }
   var pub = document.getElementById('nfe-certs-nuvem');
   if(pub) pub.style.display = 'none';
@@ -117,5 +117,5 @@ if(window.nfeCertAPI && typeof window.nfeCertAPI.assinar === 'function' && !wind
 
 setTimeout(ajustarCard, 900);
 setTimeout(apagarA1LocalSeHouver, 1200);
-console.log('[DIGICOPY] v5.22.21 A1 na nuvem, sem senha gravada');
+console.log('[DIGICOPY] A1 local disponível; dados privados excluídos do sync');
 })();

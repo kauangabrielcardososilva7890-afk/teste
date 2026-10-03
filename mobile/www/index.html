@@ -220,7 +220,7 @@ html,body{max-width:100%;overflow-x:hidden}
             <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
           </div>
         </div>
-        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy</div>
+        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy 1.0</div>
       </div>
     </div>
   </div>
@@ -275,7 +275,7 @@ html,body{max-width:100%;overflow-x:hidden}
   <main class="flex-1 min-w-0 flex flex-col">
     <header class="app-titlebar sticky top-0 z-30">
   <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
-    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?h=9d33f8b8a0328659" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy</span></div>
+    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?h=9d33f8b8a0328659" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy 1.0</span></div>
     <span id="page-title" class="font-medium">Início</span>
     <div class="absolute right-2 flex items-center gap-2">
       <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
@@ -330,7 +330,8 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <script src="./assets/vendor/chart.umd.js?h=9d33f8b8a0328659"></script>
 <script>window.__DIGICOPY_FALHAS=[];window.__DIGICOPY_FALHA=function(f,e){try{window.__DIGICOPY_FALHAS.push({arq:String(f),erro:String((e&&e.message)||e).slice(0,160)});}catch(_){}};</script>
-    <script src="./app.bundle.js?v=8.1.0-fd6ff95b8d4f"></script>
+    <script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="1.0";window.DIGICOPY_BUILD_PROFILE="particular-cloud";</script>
+<script src="./app.bundle.js?v=1.0"></script>
 
 <!-- DIGICOPY_V8000_INLINE_MENU_SHELL -->
 <script>/* DIGICOPY v8.0.0 — módulo único do shell e menus principais

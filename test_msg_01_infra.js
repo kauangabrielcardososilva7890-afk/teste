@@ -3289,7 +3289,7 @@ console.log('== CARIMBO + MANIFESTO ==');
 ok('manifesto: posições históricas intactas (204 chamado, 203 login-nuvem, 202 v5.26.0); fila hoje fecha na 218 (as 6 telas fiscais completas v6.0.14)', manifest.length >= 225 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('package.json na 5.26.0', pkg.version === VERSAO_APP);
 ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('script check do package.json valida o patch novo', pkg.scripts.check.indexOf('ajustes_v5260_cnpj_gerente_patch.js') >= 0);
+ok('script check delega ao runner que deriva JS do manifest', pkg.scripts.check === 'node check.js' && fs.readFileSync('check.js','utf8').includes('manifest'));
 
 console.log('\nTudo OK — v5.26.0 (CNPJ+senha única · site restrito · sininho por destinatário com link secreto · gerente separado no PC do dono · imagens do tutorial no R2).');
 //<<<<SECAO:test_ajustes_v5260.js:FIM>>>>
@@ -3398,7 +3398,7 @@ ok('tela explica o que fazer (definir senha / rodar o .cmd do motor / sem intern
 console.log('== CARIMBO 5.26.2 (app inteiro) ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
+ok('script check delega ao runner que deriva JS do manifest', pkg.scripts.check === 'node check.js' && fs.readFileSync('check.js','utf8').includes('manifest'));
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
 console.log('\nTudo OK — v5.26.2 (login da nuvem ANTES do login de usuário · conexão automática sem perguntar nome do PC · olho para mostrar senha · sessão de usuário 1x por dia · Gerente .exe com avisos claros de falha).');
@@ -3577,7 +3577,7 @@ ok('window.open restaurada após a chamada', sandbox.window.open === openAntes);
 console.log('== CARIMBO (app agora em 6.0.6 após a escola; worker e gerente intactos) ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
+ok('script check delega ao runner que deriva JS do manifest', pkg.scripts.check === 'node check.js' && fs.readFileSync('check.js','utf8').includes('manifest'));
 ok('worker 5.28.4 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
@@ -3659,7 +3659,7 @@ ok('runner recria node_modules a partir do vendor (ensureDeps)', runner.indexOf(
 console.log('== CARIMBO 6.0.9 (app; worker e gerente intactos) ==');
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('script check valida o buscador_escola', pkg.scripts.check.indexOf('buscador_escola_patch.js') >= 0);
+ok('script check delega ao runner que deriva JS do manifest', pkg.scripts.check === 'node check.js' && fs.readFileSync('check.js','utf8').includes('manifest'));
 ok('worker 5.28.4 (re-ancorado) (motor COM mudança: foto /v1/snapshot)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.28.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
@@ -5698,7 +5698,7 @@ ok('o portão é barato (sem timer, sem rede, sem disco — regra 12)',
     .every((p) => codigo.indexOf(p) < 0));
 ok('o portão não mexe em tela (nada visual)', codigo.toLowerCase().indexOf('footer') < 0 && codigo.toLowerCase().indexOf('rodapé') < 0);
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-ok('o ritual confere o patch novo (scripts.check)', (pkg.scripts.check || '').indexOf(PATCH) >= 0);
+ok('o ritual usa check.js para derivar JS do manifest', pkg.scripts.check === 'node check.js' && fs.readFileSync('check.js','utf8').includes('manifest'));
 // A montanha (só informa — os blocos de migração vão derrubar este número):
 {
   let n = 0; const arqs = new Set();
@@ -5917,7 +5917,7 @@ ok('a função única é barata (sem timer, sem rede, sem disco — regra 12)',
   ['setTimeout', 'setInterval', 'localStorage', 'sessionStorage', 'fetch(', 'XMLHttpRequest', 'WebSocket']
     .every((p) => codigo.indexOf(p) < 0));
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-ok('o ritual confere o patch novo (scripts.check)', (pkg.scripts.check || '').indexOf(PATCH) >= 0);
+ok('o ritual usa check.js para derivar JS do manifest', pkg.scripts.check === 'node check.js' && fs.readFileSync('check.js','utf8').includes('manifest'));
 
 // carrega a função única REAL num window de mentira
 function carregar(window) {

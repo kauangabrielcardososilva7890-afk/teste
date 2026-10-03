@@ -61,7 +61,11 @@ function guarda(nomeFn, abridor){
   var old = window[nomeFn];
   window[nomeFn] = function(contratoId){
     if(typeof db!=='undefined'){
-      var aberta = leituraAbertaDoContrato(db, contratoId);
+      var contratoEfetivo=contratoId;
+      if(!contratoEfetivo&&nomeFn==='criarLeituraDefinitiva'&&typeof window.idContratoSelecionadoParaNovaLeitura==='function'){
+        contratoEfetivo=window.idContratoSelecionadoParaNovaLeitura();
+      }
+      var aberta = leituraAbertaDoContrato(db, contratoEfetivo);
       if(aberta){
         aviso(msgBloqueioNovaLeitura(aberta));
         abrirAberta(aberta, abridor);

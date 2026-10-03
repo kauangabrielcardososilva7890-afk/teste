@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 218 | sha256: 727d87fb148cfd7b
+ * scripts: 218 | sha256: 8ec5279a52bf016e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -18703,6 +18703,7 @@ let leituraContratoSel=null;
 window.novaLeituraDefinitiva=function(){ leituraContratoSel=null; abrirModal('Nova leitura',`<div class="space-y-4"><div class="relative"><label class="font-bold text-slate-600">Contrato / cliente</label><div class="flex gap-2 mt-1"><input id="leit-ctr-busca-def" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarContratoLeituraDefinitiva()}" class="flex-1 h-10 px-3 rounded-xl border" placeholder="Digite cliente ou contrato"><button onclick="buscarContratoLeituraDefinitiva()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white"><i class="ph ph-magnifying-glass"></i></button></div><div id="leit-ctr-result-def" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-[240px] overflow-auto bg-white border rounded-xl shadow-xl"></div><div id="leit-ctr-sel-def" class="hidden mt-2 p-3 rounded-xl bg-blue-50 border border-blue-200"></div></div><div class="grid grid-cols-2 gap-3"><label>Início<input id="leit-ini-def" type="date" class="mt-1 w-full h-10 px-3 rounded-xl border" value="${new Date().toISOString().slice(0,10)}"></label><label>Final<input id="leit-fim-def" type="date" class="mt-1 w-full h-10 px-3 rounded-xl border" value="${new Date().toISOString().slice(0,10)}"></label></div></div>`,`<button onclick="fecharOuVoltar()" class="neo-btn">Voltar</button><button onclick="criarLeituraDefinitiva()" class="neo-btn primary">Criar leitura</button>`,'720px'); };
 window.buscarContratoLeituraDefinitiva=function(){ const q=low(document.getElementById('leit-ctr-busca-def')?.value); const box=document.getElementById('leit-ctr-result-def'); if(!box) return; const list=(db.contratos||[]).filter(c=>{ const cl=cli(c.clienteId)||{}; return [c.numero,c.codigoAntigo,cl.nome,cl.codigo,cl.documento].some(x=>low(x).includes(q)); }).slice(0,20); box.classList.remove('hidden'); box.innerHTML=list.map(c=>{ const cl=cli(c.clienteId)||{}; return `<button class="w-full text-left px-3 py-2 border-b hover:bg-blue-50" onclick="selecionarContratoLeituraDefinitiva('${c.id}')"><b>${esc(c.numero||'')} — ${esc(cl.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(cl.documento||'')}</span></button>`; }).join('')||'<p class="p-3 text-slate-400">Nenhum contrato encontrado.</p>'; };
 window.selecionarContratoLeituraDefinitiva=function(id){ leituraContratoSel=ctr(id); const cl=cli(leituraContratoSel&&leituraContratoSel.clienteId)||{}; const b=document.getElementById('leit-ctr-sel-def'); if(b){ b.classList.remove('hidden'); b.innerHTML=`<b>${esc(leituraContratoSel.numero||'')}</b> — ${esc(cl.nome||'')}`; } document.getElementById('leit-ctr-result-def')?.classList.add('hidden'); };
+window.idContratoSelecionadoParaNovaLeitura=function(){ return leituraContratoSel&&leituraContratoSel.id||null; };
 window.criarLeituraDefinitiva=function(){ const s=sess(); if(!s) return; if(!leituraContratoSel) return toast('Escolha o contrato pela lupa','error'); const l={id:uidSafe('lei'),empresaId:s.empresaId,contratoId:leituraContratoSel.id,clienteId:leituraContratoSel.clienteId,numero:seq('leitura',db.leituras||[],s.empresaId),dataLeitura:new Date().toISOString(),dataInicio:document.getElementById('leit-ini-def')?.value,dataFim:document.getElementById('leit-fim-def')?.value,status:'aberta',itens:[],criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome,criadoEm:new Date().toISOString()}; db.leituras=db.leituras||[]; db.leituras.push(l); salvar(); abrirLeituraDefinitiva(l.id); };
 function medOptions(p){ return medidoresAtivos(p).map(m=>`<option value="${m.key}">${esc(m.label)} — ${esc(m.modalidade)}</option>`).join('')||'<option value="">Nenhum medidor ativo nesta impressora</option>'; }
 window.atualizarMedidoresLeituraDefinitiva=function(){ const p=prq(document.getElementById('lei-prq-def')?.value); const sel=document.getElementById('lei-med-def'); if(sel) sel.innerHTML=p?medOptions(p):'<option value="">Escolha a impressora</option>'; };
@@ -20021,7 +20022,7 @@ function pedirLoginEscola(aviso){
     root.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(15,23,42,.62);display:flex;align-items:center;justify-content:center;padding:18px';
     root.innerHTML='<div style="width:min(460px,96vw);background:white;border-radius:16px;box-shadow:0 25px 80px rgba(0,0,0,.35);padding:18px">'+
       '<b style="font-size:16px">Login da Caixa Escolar</b>'+
-      '<p style="font-size:12px;color:#64748b;margin:8px 0 12px">Salva na nuvem. Os outros PCs autorizados usam o mesmo login. Não fica no código.</p>'+
+      '<p style="font-size:12px;color:#64748b;margin:8px 0 12px">Salvo somente neste aparelho. Não é enviado para a nuvem.</p>'+
       (aviso?'<p style="font-size:12px;color:#991b1b;margin:0 0 10px">'+esc(aviso)+'</p>':'')+
       '<label style="display:block;font-size:11px;font-weight:800;color:#475569">CNPJ</label>'+
       '<input id="es-login-user" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 10px">'+
@@ -20029,7 +20030,7 @@ function pedirLoginEscola(aviso){
       '<input id="es-login-pass" type="password" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 14px">'+
       '<div style="display:flex;justify-content:flex-end;gap:8px">'+
       '<button id="es-login-cancel" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:white;font-weight:800">Cancelar</button>'+
-      '<button id="es-login-ok" style="height:38px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Salvar na nuvem</button>'+
+      '<button id="es-login-ok" style="height:38px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Salvar neste aparelho</button>'+
       '</div></div>';
     document.body.appendChild(root);
     function fechar(v){ root.remove(); resolve(v); }
@@ -30118,8 +30119,31 @@ function posicaoNaLista(entity,id){
   // agora. Procurar na lista inteira aqui seria voltar à conta quadrática.
   return -1;
 }
+function tirarSegredosDoEnvio(entity,value){
+  if(entity!=='config'||!value||typeof value!=='object'||Array.isArray(value))return value;
+  const safe=clean(value);
+  delete safe.escolaAuth;
+  if(safe.fiscal&&typeof safe.fiscal==='object'&&!Array.isArray(safe.fiscal)&&safe.fiscal.a1Nuvem&&typeof safe.fiscal.a1Nuvem==='object'){
+    delete safe.fiscal.a1Nuvem.data;
+    if(!Object.keys(safe.fiscal.a1Nuvem).length)delete safe.fiscal.a1Nuvem;
+  }
+  return safe;
+}
+function mutacaoSeguraParaEnvio(mutation){
+  if(!mutation||mutation.entity!=='config'||!mutation.data)return mutation;
+  return Object.assign({},mutation,{data:tirarSegredosDoEnvio('config',mutation.data)});
+}
+function configRemotoComSegredosLocais(value){
+  const result=clean(tirarSegredosDoEnvio('config',value));
+  if(!result||typeof result!=='object')return result;
+  const local=typeof db!=='undefined'&&db&&db.config&&typeof db.config==='object'?db.config:{};
+  if(local.escolaAuth)result.escolaAuth=clean(local.escolaAuth);
+  const localA1=local.fiscal&&local.fiscal.a1Nuvem;
+  if(localA1&&localA1.data){result.fiscal=result.fiscal&&typeof result.fiscal==='object'?result.fiscal:{};result.fiscal.a1Nuvem=clean(localA1);}
+  return result;
+}
 function applyRemote(change,mapaDado){
-  const mode=(mapaDado||definicoes())[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
+  const mode=(mapaDado||definicoes())[change.entity]||(change.entity==='notificacoes'?'array':(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null));if(!mode)return false;
   const k=key(change.entity,change.recordId),knownVersion=Number(state.versions[k]||0);
   if(Number(change.version)<=knownVersion)return false;
   let changed=false;
@@ -30141,7 +30165,7 @@ function applyRemote(change,mapaDado){
     else if(change.data){if(idx>=0)arr[idx]=change.data;else arr.push(change.data);changed=true;}
   }else if(mode==='root'){
     if(change.operation==='delete'){/* objetos essenciais nunca são apagados por ausência */}
-    else if(change.data){db[change.entity]=change.data;changed=true;}
+    else if(change.data){db[change.entity]=change.entity==='config'?configRemotoComSegredosLocais(change.data):change.data;changed=true;}
   }else if(mode==='contador'){
     // Numeração de venda/OS/orçamento: nunca volta atrás. Cada contador fica
     // com o MAIOR número entre este PC e a nuvem, para dois computadores não
@@ -30315,6 +30339,34 @@ async function fotoRapidaBoot(call,mapa,comAviso){
   if(seq>0){state.cursor=seq;marcarEstado();}
   return aplicados>0;
 }
+function validarPaginaChanges(data,cursorAtual){
+  const cursor=Number(cursorAtual)||0;
+  if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('resposta de sincronização inválida');
+  if(!Array.isArray(data.changes))throw new Error('resposta de sincronização sem lista changes válida');
+  if(!Number.isSafeInteger(data.nextCursor)||data.nextCursor<cursor)throw new Error('cursor inválido na resposta de sincronização');
+  if(typeof data.hasMore!=='boolean')throw new Error('indicador hasMore inválido na resposta de sincronização');
+  let ultimoSeq=cursor;
+  for(const item of data.changes){
+    if(!item||typeof item!=='object'||Array.isArray(item)||!Number.isSafeInteger(item.seq)||item.seq<=ultimoSeq){
+      throw new Error('item inválido na lista changes da sincronização');
+    }
+    const entidadeValida=typeof item.entity==='string'&&/^(?:_seq|[a-zA-Z][a-zA-Z0-9_]{0,63})$/.test(item.entity);
+    const registroValido=typeof item.recordId==='string'&&item.recordId.trim().length>0&&item.recordId.length<=160;
+    const versaoValida=Number.isSafeInteger(item.version)&&item.version>0;
+    const modo=entidadeValida?(definicoes()[item.entity]||(item.entity&&!NAO_SINCRONIZA.has(item.entity)?'array':null)):null;
+    const dadosValidos=item.operation==='delete'||(item.operation==='upsert'&&item.data!==null&&typeof item.data==='object'&&!Array.isArray(item.data)&&
+      (modo!=='map'||Object.prototype.hasOwnProperty.call(item.data,'value')));
+    if(!entidadeValida||!registroValido||!['upsert','delete'].includes(item.operation)||!versaoValida||!dadosValidos){
+      throw new Error('mudança incompleta ou inválida na lista changes da sincronização');
+    }
+    ultimoSeq=item.seq;
+  }
+  if(data.changes.length?ultimoSeq!==data.nextCursor:data.nextCursor!==cursor){
+    throw new Error('cursor não corresponde à lista changes da sincronização');
+  }
+  if(data.hasMore&&!data.changes.length)throw new Error('página vazia marcada como incompleta na sincronização');
+  return {changes:data.changes,nextCursor:data.nextCursor,hasMore:data.hasMore};
+}
 const PASSE_RAPIDO=3000;      // últimas 3 mil mudanças (3 páginas)
 let passeRapidoFeito=false;
 async function passeRapidoInicial(call){
@@ -30331,10 +30383,10 @@ async function passeRapidoInicial(call){
   let cursor=Math.max(0,maxSeq-PASSE_RAPIDO),paginas=0,changed=false;
   try{
     do{
-      const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursor)+'&limit='+POR_PAGINA,{method:'GET'}));
-      if(!data)break; // r59c: api() resolve null quando o corpo nao e JSON — pagina vazia nao e crash
-      for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
-      cursor=Number(data.nextCursor)||cursor;
+      const resposta=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursor)+'&limit='+POR_PAGINA,{method:'GET'}));
+      const data=validarPaginaChanges(resposta,cursor);
+      for(const item of data.changes){if(applyRemote(item,mapa))changed=true;}
+      cursor=data.nextCursor;
       paginas++;
       if(!data.hasMore)break;
     }while(paginas<5);
@@ -30378,15 +30430,15 @@ async function pullAll(opcoes){
   // embaixo, sem bloquear) e a tela se atualiza na hora; o resto compõe em silêncio.
   if(comAviso&&changed){mostrarCargaNuvem(true,'dados recentes na tela — trazendo o histórico… (pode usar)',true);tentarRedesenhoPendente();}
   do{
-    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
-    if(geracaoPull!==estadoGeracao)return changed;   // página pré-wipe: não aplica nem anda o cursor novo
-    if(data==null)throw new Error("nuvem devolveu resposta vazia (tenta de novo)"); // r59c: antes quebrava em data.changes com null
-    for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
     const cursorAntes=Number(state.cursor)||0;
-    state.cursor=Number(data.nextCursor)||cursorAntes;
+    const resposta=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursorAntes)+'&limit='+POR_PAGINA,{method:'GET'}));
+    if(geracaoPull!==estadoGeracao)return changed;   // página pré-wipe: não aplica nem anda o cursor novo
+    const data=validarPaginaChanges(resposta,cursorAntes);
+    for(const item of data.changes){if(applyRemote(item,mapa))changed=true;}
+    state.cursor=data.nextCursor;
     if(Number(state.cursor)!==cursorAntes)marcarEstado();
     pages++;
-    if(comAviso){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
+    if(comAviso){cargaItens+=data.changes.length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
   }while(pages<100);
   }finally{ if(comAviso)mostrarCargaNuvem(false); }
@@ -30768,7 +30820,7 @@ async function pushOutbox(){
     if(!batch.length)break;
     let response;
     try{
-      response=await comPaciencia(()=>call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>x.mutation)})}));
+      response=await comPaciencia(()=>call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>mutacaoSeguraParaEnvio(x.mutation))})}));
     }catch(e){
       if(ehSobrecarga(e)&&lote>1){
         // Ainda ocupada: manda menos por vez na próxima rodada em vez de desistir.
@@ -31756,7 +31808,7 @@ function redesenharTelaAtual(){
   }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,tudoConfirmadoNaNuvem,relatarSaude,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente,puxarAoAbrirTela};
+window.DIGICOPY_CLOUD_SYNC={tick,info,apiStatus,tudoConfirmadoNaNuvem,relatarSaude,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,validarPaginaChanges,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,fecharIntencaoDeExclusao,temMarcaDeExclusao,limparMarcaDeExclusao,podeMarcarExclusao,vigiarExclusoes,exclusaoVigiada,registrarExclusaoDeProposito,devolverLideranca,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,ehExclusaoDele,entregarRecados,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente,puxarAoAbrirTela};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -31835,7 +31887,7 @@ function entregarAoSair(){
   }
   if(!lote.length)return;
   try{
-    const promessa=call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:lote.map(x=>x.mutation)}),keepalive:true});
+    const promessa=call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:lote.map(x=>mutacaoSeguraParaEnvio(x.mutation))}),keepalive:true});
     if(promessa&&typeof promessa.catch==='function')promessa.catch(()=>{});
   }catch(e){}
 }
@@ -36616,7 +36668,7 @@ console.log('[DIGICOPY] v5.22.21 importação pontual de produtos');
 /* ===== ajustes_v52221_cert_nuvem_a1_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
-// v5.22.21 — A1 .pfx na nuvem (sem senha) + some o carregamento local
+// A1 local no config do aparelho; o segredo é removido antes da sincronização genérica.
 // • Senha continua só na hora de assinar. Ainda não envia à SEFAZ.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
@@ -36677,9 +36729,9 @@ function esconderCarregarLocal(){
   var a1 = a1DaConfig({ fiscal: fiscal() });
   if(a1){
     var quando = a1.enviadoEm ? new Date(a1.enviadoEm).toLocaleString('pt-BR') : '';
-    st.textContent = 'A1 na nuvem'+(a1.nome?' • '+a1.nome:'')+(quando?' • '+quando:'')+'. Senha só na hora de assinar. Ainda não emite na SEFAZ.';
+    st.textContent = 'A1 disponível neste aparelho'+(a1.nome?' • '+a1.nome:'')+(quando?' • '+quando:'')+'. Senha só na hora de assinar. Ainda não emite na SEFAZ.';
   }else{
-    st.textContent = 'Nenhum A1 na nuvem. Envie o .pfx pela página de envio de arquivos.';
+    st.textContent = 'Nenhum A1 salvo neste aparelho.';
   }
 }
 
@@ -36695,7 +36747,7 @@ function ajustarCard(){
   var p = document.querySelector('#nfe-config-card p');
   if(p && p.dataset && !p.dataset.v52221a1){
     p.dataset.v52221a1 = '1';
-    p.textContent = 'Ainda não emite nota na SEFAZ. O A1 sobe pela página de envio. Senha só na hora de assinar.';
+    p.textContent = 'Ainda não emite nota na SEFAZ. O A1 fica armazenado neste aparelho. Senha só na hora de assinar.';
   }
   var pub = document.getElementById('nfe-certs-nuvem');
   if(pub) pub.style.display = 'none';
@@ -36734,7 +36786,7 @@ if(window.nfeCertAPI && typeof window.nfeCertAPI.assinar === 'function' && !wind
 
 setTimeout(ajustarCard, 900);
 setTimeout(apagarA1LocalSeHouver, 1200);
-console.log('[DIGICOPY] v5.22.21 A1 na nuvem, sem senha gravada');
+console.log('[DIGICOPY] A1 local disponível; dados privados excluídos do sync');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_cert_nuvem_a1_patch.js", e); }
@@ -50139,7 +50191,11 @@ function guarda(nomeFn, abridor){
   var old = window[nomeFn];
   window[nomeFn] = function(contratoId){
     if(typeof db!=='undefined'){
-      var aberta = leituraAbertaDoContrato(db, contratoId);
+      var contratoEfetivo=contratoId;
+      if(!contratoEfetivo&&nomeFn==='criarLeituraDefinitiva'&&typeof window.idContratoSelecionadoParaNovaLeitura==='function'){
+        contratoEfetivo=window.idContratoSelecionadoParaNovaLeitura();
+      }
+      var aberta = leituraAbertaDoContrato(db, contratoEfetivo);
       if(aberta){
         aviso(msgBloqueioNovaLeitura(aberta));
         abrirAberta(aberta, abridor);
