@@ -18,6 +18,7 @@ const testsOficiais=[
   "test_r67_auth_ui.js",
   "test_r68_orcamento_cloud_guard.js",
   "test_regressao_dialogos.js",
+  "test_theme_import_regression.js",
   "test_sync_secrets.js",
   "test_data_changes_validation.js",
   "test_leitura_uma_aberta.js",

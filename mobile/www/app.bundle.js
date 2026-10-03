@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 218 | sha256: 15c74d3a1c07e690
+ * scripts: 218 | sha256: 14816d1ea39ac5fb
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1868,25 +1868,32 @@ window.importarJsonDBeaver = function(dados){
     toast('Nenhum dado para importar','error');
     return;
   }
-  
-  if(!confirm(`Importar ${Object.keys(dadosImportar).length} tabelas para o ERP?\n\nIsso vai adicionar os dados aos módulos existentes ou criar novos módulos.`)){
-    return;
+  const executar = function(){
+    const rawData = {};
+    for(const [tabela, registros] of Object.entries(dadosImportar)){
+      if(!legacyTabelaPermitida(tabela)) continue;
+      rawData[tabela] = { data: registros, error: null };
+    }
+    if(!Object.keys(rawData).length){
+      toast('Nenhuma tabela possui destino validado no ERP. Nada foi gravado.','info');
+      return;
+    }
+    try{
+      fbImportToErp(rawData);
+      toast('Importação concluída!','success');
+    }catch(e){
+      console.error('[IMPORT] falha ao importar JSON',e);
+      toast('Falha ao importar: '+(e.message||e),'error');
+    }
+  };
+  const msg=`Importar ${Object.keys(dadosImportar).length} tabelas para o ERP?\n\nIsso vai adicionar os dados aos módulos existentes ou criar novos módulos.`;
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema(msg,'Importar banco antigo').then(function(ok){ if(ok===true) executar(); });
+  }else if(typeof window.lfbAlert==='function'){
+    window.lfbAlert('A janela de confirmação do sistema ainda está carregando. Tente novamente em alguns segundos.','Importar banco antigo');
+  }else{
+    toast('A confirmação visual ainda está carregando. Tente novamente.','info');
   }
-  
-  // Usar a mesma lógica do fbImportToErp
-  const rawData = {};
-  for(const [tabela, registros] of Object.entries(dadosImportar)){
-    if(!legacyTabelaPermitida(tabela)) continue;
-    rawData[tabela] = { data: registros, error: null };
-  }
-
-  if(!Object.keys(rawData).length){
-    toast('Nenhuma tabela possui destino validado no ERP. Nada foi gravado.','info');
-    return;
-  }
-  
-  fbImportToErp(rawData);
-  toast('Importação concluída!','success');
 };
 
 window.handleRarUpload = window.handleDatabaseUpload;

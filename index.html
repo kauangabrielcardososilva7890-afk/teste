@@ -330,7 +330,7 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <script src="./assets/vendor/chart.umd.js?h=9d33f8b8a0328659"></script>
 <script>window.__DIGICOPY_FALHAS=[];window.__DIGICOPY_FALHA=function(f,e){try{window.__DIGICOPY_FALHAS.push({arq:String(f),erro:String((e&&e.message)||e).slice(0,160)});}catch(_){}};</script>
-    <script src="./app.bundle.js?v=8.1.0-115a05950417"></script>
+    <script src="./app.bundle.js?v=8.1.0-cac231700015"></script>
 
 <!-- DIGICOPY_V8000_INLINE_MENU_SHELL -->
 <script>/* DIGICOPY v8.0.0 — módulo único do shell e menus principais
@@ -396,7 +396,11 @@ html,body{max-width:100%;overflow-x:hidden}
     var side=document.getElementById('shell-sidebar-links'); if(!side)return;
     var groups=menuSections(), saved=safe(function(){return JSON.parse(localStorage.getItem(menuOrderKey())||'[]')})||[];
     if(!Array.isArray(saved)||!saved.length)return;
-    var byId={};groups.forEach(function(g){byId[g.dataset.menuId]=g}); saved.concat(groups.map(function(g){return g.dataset.menuId})).forEach(function(id){if(byId[id])side.appendChild(byId[id])});
+    var byId={};groups.forEach(function(g){byId[g.dataset.menuId]=g});
+    var desired=saved.concat(groups.map(function(g){return g.dataset.menuId})).filter(function(id,i,a){return byId[id]&&a.indexOf(id)===i});
+    var current=groups.map(function(g){return g.dataset.menuId});
+    if(desired.length===current.length&&desired.every(function(id,i){return id===current[i]}))return;
+    desired.forEach(function(id){side.appendChild(byId[id])});
   }
   function saveMenuOrder(order){safe(function(){localStorage.setItem(menuOrderKey(),JSON.stringify(order))});applyMenuOrder()}
   function openMenuEditor(){
@@ -474,7 +478,18 @@ html,body{max-width:100%;overflow-x:hidden}
   G.abrirEtiquetas=renderEtiquetas;
   G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();sidebarPositionCss();applyTheme(loadTheme());applySidebarSide(loadSidebarSide());applyMenuOrder();safe(ensureDarkCard);safe(ensureSidebarPositionCard);safe(ensureMenuEditorCard);};
   G.renderMenuShellV8000();
-  new MutationObserver(function(){safe(independentMenus);safe(ensureDarkCard);safe(ensureSidebarPositionCard);safe(ensureMenuEditorCard);applyMenuOrder();applySidebarSide(loadSidebarSide());if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
+  var shellRefreshPending=false;
+  function scheduleShellRefresh(){
+    if(shellRefreshPending)return;
+    shellRefreshPending=true;
+    setTimeout(function(){
+      shellRefreshPending=false;
+      safe(independentMenus);safe(ensureDarkCard);safe(ensureSidebarPositionCard);safe(ensureMenuEditorCard);
+      applyMenuOrder();applySidebarSide(loadSidebarSide());
+      if(themeOn()&&!document.documentElement.classList.contains('digi-escuro'))applyTheme(true);
+    },0);
+  }
+  new MutationObserver(scheduleShellRefresh).observe(document.body,{childList:true,subtree:true});
   setTimeout(G.renderMenuShellV8000,250);setTimeout(G.renderMenuShellV8000,1000);
   console.log('[DIGICOPY] menu_shell_v8000 carregado: fontes únicas de shell/importação/etiquetas/tema');
 })();
