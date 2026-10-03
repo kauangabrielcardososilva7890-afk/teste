@@ -19,6 +19,12 @@ assert.equal(await __test.sameSecret('abc', 'abc'), true);
 assert.equal(await __test.sameSecret('abc', 'abd'), false);
 assert.equal(await __test.sameSecret('', ''), false);
 console.log('  ✔ comparação de segredo');
+const rate = __test.AUTH_RATE_POLICIES;
+assert.equal(rate['/v1/check-pass'].maxFailures, 5);
+assert.equal(rate['/v1/gerente-login'].maxFailures, 3);
+assert.equal(rate['/v1/gerente-login'].maxBlockMs, 60 * 60 * 1000);
+assert.ok(Object.keys(rate).includes('/v1/setup'));
+console.log('  ✔ políticas de rate limit cobrem login, gerente, setup e recuperação');
 
 // v5.27.0 — O FREIO PREVENTIVO FALA A LÍNGUA DO PLANO (achado da rodada 28):
 // o dono está no plano PAGO e o freio ainda usava o número do GRÁTIS (95.000/dia).
