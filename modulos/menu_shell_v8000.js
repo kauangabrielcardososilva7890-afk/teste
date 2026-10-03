@@ -32,12 +32,39 @@
   function loadTheme(){return safe(function(){return localStorage.getItem(themeKey())==='1'})===true}
   function saveTheme(on){safe(function(){localStorage.setItem(themeKey(),on?'1':'0')});applyTheme(on)}
   G.MODO_ESCURO_PURE={KEY:themeKey(),lerEscuro:loadTheme,gravarEscuro:function(on){saveTheme(!!on);return true}};
+  function sidebarKey(){
+    var s=safe(function(){return typeof getSession==='function'?getSession():null});
+    var p=String(G.DIGICOPY_BUILD_PROFILE||'');
+    return p==='commercial-cloud'&&s?'digicopy_ui_sidebar_lado_'+(s.usuarioId||s.login||'usuario'):'digicopy_ui_sidebar_lado_dispositivo_v1';
+  }
+  function loadSidebarSide(){return safe(function(){return localStorage.getItem(sidebarKey())==='right'?'right':'left'})||'left'}
+  function applySidebarSide(side){
+    var right=side==='right';
+    document.documentElement.classList.toggle('digi-sidebar-right',right);
+    document.body.classList.toggle('digi-sidebar-right',right);
+  }
+  function saveSidebarSide(side){safe(function(){localStorage.setItem(sidebarKey(),side==='right'?'right':'left')});applySidebarSide(side)}
+  G.SIDEBAR_POSICAO_PURE={KEY:sidebarKey,ler:loadSidebarSide,gravar:function(side){saveSidebarSide(side);return true}};
   function ensureDarkCard(){
     var root=document.getElementById('view-config'); if(!root||document.getElementById('ui-escuro-dispositivo-card'))return;
     var grid=root.querySelector('.grid')||root;
     var card=document.createElement('div'); card.id='ui-escuro-dispositivo-card'; card.className='rounded-[16px] bg-white border p-6';
     card.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-moon"></i> Aparência deste computador</h4><p class="text-[12px] text-slate-500 mt-1">Modo escuro vale só neste aparelho. Não muda os outros PCs e não sobe na nuvem.</p><label class="mt-4 h-10 px-3 rounded-xl border bg-white flex items-center gap-2 font-semibold text-[13px] w-fit cursor-pointer"><input id="ui-escuro-chk" type="checkbox"> Modo escuro</label>';
     grid.appendChild(card); var chk=card.querySelector('#ui-escuro-chk'); chk.checked=themeOn(); chk.onchange=function(){saveTheme(chk.checked)};
+  }
+  function ensureSidebarPositionCard(){
+    var root=document.getElementById('view-config'); if(!root||document.getElementById('ui-sidebar-position-card'))return;
+    var grid=root.querySelector('.grid')||root;
+    var card=document.createElement('div'); card.id='ui-sidebar-position-card'; card.className='rounded-[16px] bg-white border p-6';
+    card.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-sidebar"></i> Posição do menu lateral</h4><p class="text-[12px] text-slate-500 mt-1">Escolha em qual lado o menu lateral aparece neste computador. Esta opção está disponível em todos os perfis.</p><label class="mt-4 flex items-center gap-2 text-[13px] font-semibold">Lado do menu<select id="ui-sidebar-side" class="ml-2 h-10 rounded-xl border px-3 bg-white"><option value="left">Esquerdo</option><option value="right">Direito</option></select></label>';
+    grid.appendChild(card);
+    var select=card.querySelector('#ui-sidebar-side'); select.value=loadSidebarSide(); select.onchange=function(){saveSidebarSide(select.value)};
+  }
+  function sidebarPositionCss(){
+    if(document.getElementById('digicopy-v8-sidebar-position-css'))return;
+    var s=document.createElement('style'); s.id='digicopy-v8-sidebar-position-css';
+    s.textContent='@media(min-width:901px){html.digi-sidebar-right #sidebar{left:auto!important;right:0!important}html.digi-sidebar-right #app-shell>div>main{margin-left:0!important;margin-right:300px!important}}@media(max-width:900px){html.digi-sidebar-right #sidebar{left:0!important;right:auto!important}}html.digi-escuro #ui-sidebar-position-card{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro #ui-sidebar-side{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}';
+    document.head.appendChild(s);
   }
   function darkCss(){
     if(document.getElementById('digicopy-v8-global-dark'))return;
@@ -75,9 +102,9 @@
     qs('#v8-print-labels').onclick=function(){var a=Number(qs('#v8-etq-ini').value||1),b=Number(qs('#v8-etq-fim').value||a+cap-1);if(typeof G.imprimirEtiquetasCartucho==='function'){var old=qs('#cart-etq-inicio');if(old){old.value=a;var f=qs('#cart-etq-fim');if(f)f.value=b}G.imprimirEtiquetasCartucho()}else if(typeof G.toast==='function')G.toast('O módulo de etiquetas ainda está carregando.','info')};
   }
   G.abrirEtiquetas=renderEtiquetas;
-  G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();applyTheme(loadTheme());safe(ensureDarkCard);};
+  G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();sidebarPositionCss();applyTheme(loadTheme());applySidebarSide(loadSidebarSide());safe(ensureDarkCard);safe(ensureSidebarPositionCard);};
   G.renderMenuShellV8000();
-  new MutationObserver(function(){safe(independentMenus);safe(ensureDarkCard);if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
+  new MutationObserver(function(){safe(independentMenus);safe(ensureDarkCard);safe(ensureSidebarPositionCard);applySidebarSide(loadSidebarSide());if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
   setTimeout(G.renderMenuShellV8000,250);setTimeout(G.renderMenuShellV8000,1000);
   console.log('[DIGICOPY] menu_shell_v8000 carregado: fontes únicas de shell/importação/etiquetas/tema');
 })();

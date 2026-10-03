@@ -9,4 +9,7 @@ assert(/data-nav="etiquetas"/.test(html),'Etiquetas deve existir como menu indep
 assert(/removeDuplicateUser/.test(mod)&&/data-nav="usuarios"/.test(mod),'módulo remove duplicidade de usuários');
 assert(/html\.digi-escuro,html\.digi-escuro body/.test(mod)&&/#app-shell/.test(mod),'modo escuro cobre documento e aplicação');
 assert(/G\.abrirEtiquetas=renderEtiquetas/.test(mod),'Etiquetas possui rota própria');
+assert(/ui-sidebar-position-card/.test(mod)&&/ui-sidebar-side/.test(mod),'Preferência de posição do menu existe em Configurações > Preferências');
+assert(/digi-sidebar-right/.test(mod)&&/margin-right:300px/.test(mod),'Sidebar pode ser movido para o lado direito');
+assert(/SIDEBAR_POSICAO_PURE/.test(mod)&&/sidebarKey/.test(mod),'Posição do sidebar possui persistência independente por perfil/dispositivo');
 console.log('menu_shell_v8000: OK');
