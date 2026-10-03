@@ -45,6 +45,36 @@
   }
   function saveSidebarSide(side){safe(function(){localStorage.setItem(sidebarKey(),side==='right'?'right':'left')});applySidebarSide(side)}
   G.SIDEBAR_POSICAO_PURE={KEY:sidebarKey,ler:loadSidebarSide,gravar:function(side){saveSidebarSide(side);return true}};
+  function menuOrderKey(){
+    var s=safe(function(){return typeof getSession==='function'?getSession():null});
+    var p=String(G.DIGICOPY_BUILD_PROFILE||'');
+    return p==='commercial-cloud'&&s?'digicopy_ui_menus_ordem_'+(s.usuarioId||s.login||'usuario'):'digicopy_ui_menus_ordem_dispositivo_v1';
+  }
+  function menuSections(){
+    var side=document.getElementById('shell-sidebar-links'); if(!side)return [];
+    return Array.from(side.querySelectorAll(':scope > .shell-menu-section')).map(function(el,i){
+      if(!el.dataset.menuId)el.dataset.menuId='sec-'+String((el.querySelector('.shell-menu-label')||{}).textContent||i).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+      return el;
+    });
+  }
+  function applyMenuOrder(){
+    var side=document.getElementById('shell-sidebar-links'); if(!side)return;
+    var groups=menuSections(), saved=safe(function(){return JSON.parse(localStorage.getItem(menuOrderKey())||'[]')})||[];
+    if(!Array.isArray(saved)||!saved.length)return;
+    var byId={};groups.forEach(function(g){byId[g.dataset.menuId]=g}); saved.concat(groups.map(function(g){return g.dataset.menuId})).forEach(function(id){if(byId[id])side.appendChild(byId[id])});
+  }
+  function saveMenuOrder(order){safe(function(){localStorage.setItem(menuOrderKey(),JSON.stringify(order))});applyMenuOrder()}
+  function openMenuEditor(){
+    var groups=menuSections(); if(!groups.length||!qs('#modal-root'))return;
+    var body=qs('#modal-body'), footer=qs('#modal-footer'); if(!body||!footer)return;
+    body.innerHTML='<p class="text-[12px] text-slate-500 mb-3">Arraste os blocos para escolher a ordem das seções da sidebar. A configuração fica neste dispositivo, ou no usuário Comercial.</p><div id="v8-menu-order-editor" class="space-y-2">'+groups.map(function(g){return '<div draggable="true" data-menu-id="'+g.dataset.menuId+'" class="rounded-xl border p-3 bg-white flex items-center gap-3 cursor-grab"><i class="ph ph-dots-six-vertical text-slate-400"></i><b>'+((g.querySelector('.shell-menu-label')||{}).textContent||g.dataset.menuId)+'</b></div>'}).join('')+'</div>';
+    footer.innerHTML='<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button><button id="v8-menu-order-save" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+    var ed=qs('#v8-menu-order-editor');
+    var dragged=null; qsa('[data-menu-id]',ed).forEach(function(row){row.ondragstart=function(){dragged=row};row.ondragover=function(e){e.preventDefault()};row.ondrop=function(e){e.preventDefault();if(dragged&&dragged!==row){var rect=row.getBoundingClientRect();ed.insertBefore(dragged,e.clientY<rect.top+rect.height/2?row:row.nextSibling)}}});
+    qs('#v8-menu-order-save').onclick=function(){saveMenuOrder(qsa('[data-menu-id]',ed).map(function(x){return x.dataset.menuId}));closeModal();if(typeof G.toast==='function')G.toast('Ordem dos menus atualizada','success')};
+    qs('#modal-root').classList.remove('hidden');
+  }
+  G.abrirEditorMenus=openMenuEditor;
   function ensureDarkCard(){
     var root=document.getElementById('view-config'); if(!root||document.getElementById('ui-escuro-dispositivo-card'))return;
     var grid=root.querySelector('.grid')||root;
@@ -58,6 +88,12 @@
     control.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-sidebar"></i> Posição do menu lateral</h4><p class="text-[12px] text-slate-500 mt-1">Escolha em qual lado o menu lateral aparece neste computador. Esta opção está disponível em todos os perfis.</p><label class="mt-4 flex items-center gap-2 text-[13px] font-semibold">Lado do menu<select id="ui-sidebar-side" class="ml-2 h-10 rounded-xl border px-3 bg-white"><option value="left">Esquerdo</option><option value="right">Direito</option></select></label>';
     card.appendChild(control);
     var select=control.querySelector('#ui-sidebar-side'); select.value=loadSidebarSide(); select.onchange=function(){saveSidebarSide(select.value)};
+  }
+  function ensureMenuEditorCard(){
+    var card=document.getElementById('ui-escuro-dispositivo-card'); if(!card||document.getElementById('ui-menu-order-control'))return;
+    var control=document.createElement('div'); control.id='ui-menu-order-control'; control.className='mt-5 pt-4 border-t border-slate-200';
+    control.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-list"></i> Ordem dos menus</h4><p class="text-[12px] text-slate-500 mt-1">Organize as seções da sidebar sem alterar os dados do sistema.</p><button type="button" id="ui-menu-order-btn" class="mt-3 h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]">Editar menus</button>';
+    card.appendChild(control); control.querySelector('#ui-menu-order-btn').onclick=openMenuEditor;
   }
   function sidebarPositionCss(){
     if(document.getElementById('digicopy-v8-sidebar-position-css'))return;
@@ -101,9 +137,9 @@
     qs('#v8-print-labels').onclick=function(){var a=Number(qs('#v8-etq-ini').value||1),b=Number(qs('#v8-etq-fim').value||a+cap-1);if(typeof G.imprimirEtiquetasCartucho==='function'){var old=qs('#cart-etq-inicio');if(old){old.value=a;var f=qs('#cart-etq-fim');if(f)f.value=b}G.imprimirEtiquetasCartucho()}else if(typeof G.toast==='function')G.toast('O módulo de etiquetas ainda está carregando.','info')};
   }
   G.abrirEtiquetas=renderEtiquetas;
-  G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();sidebarPositionCss();applyTheme(loadTheme());applySidebarSide(loadSidebarSide());safe(ensureDarkCard);safe(ensureSidebarPositionCard);};
+  G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();sidebarPositionCss();applyTheme(loadTheme());applySidebarSide(loadSidebarSide());applyMenuOrder();safe(ensureDarkCard);safe(ensureSidebarPositionCard);safe(ensureMenuEditorCard);};
   G.renderMenuShellV8000();
-  new MutationObserver(function(){safe(independentMenus);safe(ensureDarkCard);safe(ensureSidebarPositionCard);applySidebarSide(loadSidebarSide());if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
+  new MutationObserver(function(){safe(independentMenus);safe(ensureDarkCard);safe(ensureSidebarPositionCard);safe(ensureMenuEditorCard);applyMenuOrder();applySidebarSide(loadSidebarSide());if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
   setTimeout(G.renderMenuShellV8000,250);setTimeout(G.renderMenuShellV8000,1000);
   console.log('[DIGICOPY] menu_shell_v8000 carregado: fontes únicas de shell/importação/etiquetas/tema');
 })();
