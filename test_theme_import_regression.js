@@ -12,6 +12,8 @@ assert(index.includes('current.every(function(n,i){return n===nodes[i]})'), 'reo
 assert(index.includes('<option value="top">Topo horizontal</option>'), 'posição topo horizontal disponível');
 assert(index.includes('digi-sidebar-top #shell-sidebar-links'), 'CSS do topo horizontal existe');
 assert(index.includes('digi-sidebar-top #sidebar>div:nth-child(2){display:flex!important'), 'lista de menus permanece visível no topo');
+assert(index.includes('html.digi-escuro #app-shell [class*="bg-white"]'), 'tema escuro cobre fundos Tailwind dinâmicos');
+assert(index.includes('html.digi-escuro #app-shell input,html.digi-escuro #app-shell select'), 'tema escuro cobre controles de formulário');
 assert(index.includes('digicopy-v8-dark-complete'), 'tema escuro completo existe');
 assert(index.includes('data-sub-row') && index.includes('data-sub-name'), 'editor permite ordenar e renomear submenus');
 assert(index.includes('data-menu-hidden') && index.includes('data-sub-hidden'), 'editor permite ocultar menus e submenus');
