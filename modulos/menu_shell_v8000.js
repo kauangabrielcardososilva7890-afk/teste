@@ -48,7 +48,7 @@
   function independentMenus(){
     removeDuplicateUser();
     var side=qs('#shell-sidebar-links'); if(!side)return;
-    if(qs('[data-v8-menu]',side))return;
+    if(qs('[data-v8-menu][data-nav="importar"]',side)&&qs('[data-v8-menu][data-nav="etiquetas"]',side))return;
     var section=qsa('.shell-menu-section',side).find(function(x){return /sistema/i.test((qs('.shell-menu-label',x)||{}).textContent||'')});
     if(!section)return;
     var make=function(id,icon,label,fn){var b=document.createElement('button');b.type='button';b.className='shell-side-link';b.setAttribute('data-nav',id);b.setAttribute('data-v8-menu','1');b.innerHTML='<i class="ph '+icon+'"></i><span>'+label+'</span>';b.onclick=fn;return b};
