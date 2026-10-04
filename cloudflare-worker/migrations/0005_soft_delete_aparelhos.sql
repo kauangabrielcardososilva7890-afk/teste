@@ -7,4 +7,4 @@ PRAGMA foreign_keys = ON;
 
 ALTER TABLE devices ADD COLUMN excluido_em INTEGER;
 
-UPDATE system_meta SET value = '3', updated_at = unixepoch() * 1000 WHERE key = 'schemaVersion';
+UPDATE system_meta SET value = '2', updated_at = unixepoch() * 1000 WHERE key = 'schema_version';

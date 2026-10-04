@@ -20,9 +20,9 @@
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
  * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 8.1.0   (igual ao src/index.js)
- * GERADO EM: 2026-10-03 04:11 UTC
+ * GERADO EM: 2026-10-04 15:02 UTC
  * sha256 do código (sem este cabeçalho):
- *   2956efba8edec762a2981047e15e1c1ecd36c5840db55a8f95b518f20191a69d
+ *   d673c67179d1e00a51e7a9115ec60b98c1b78b9471e45cc64d196a2a93ecf5ca
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -48,7 +48,8 @@ var AUTH_RATE_POLICIES = Object.freeze({
 });
 var __AUTH_RATE_TABLE_OK = false;
 var MAX_CHANGE_LIMIT = 1e3;
-var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
+var ENTITY_RE = /^(?:_seq|[a-zA-Z][a-zA-Z0-9_]{0,63})$/;
+var isValidEntity = /* @__PURE__ */ __name((entity) => typeof entity === "string" && ENTITY_RE.test(entity), "isValidEntity");
 var JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
   "cache-control": "no-store",
@@ -533,12 +534,27 @@ function parseDataJson(value) {
   }
 }
 __name(parseDataJson, "parseDataJson");
+function dadosSincronizaveis(entity, data) {
+  if (entity !== "config" || !data || typeof data !== "object" || Array.isArray(data)) return data;
+  const safe = { ...data };
+  delete safe.escolaAuth;
+  if (safe.fiscal && typeof safe.fiscal === "object" && !Array.isArray(safe.fiscal) && safe.fiscal.a1Nuvem && typeof safe.fiscal.a1Nuvem === "object") {
+    const a1Nuvem = { ...safe.fiscal.a1Nuvem };
+    delete a1Nuvem.data;
+    safe.fiscal = { ...safe.fiscal };
+    if (Object.keys(a1Nuvem).length) safe.fiscal.a1Nuvem = a1Nuvem;
+    else delete safe.fiscal.a1Nuvem;
+    if (!Object.keys(safe.fiscal).length) delete safe.fiscal;
+  }
+  return safe;
+}
+__name(dadosSincronizaveis, "dadosSincronizaveis");
 function publicRecord(row) {
   if (!row) return null;
   return {
     entity: row.entity,
     recordId: row.record_id,
-    data: parseDataJson(row.data_json),
+    data: dadosSincronizaveis(row.entity, parseDataJson(row.data_json)),
     version: Number(row.version),
     updatedAt: Number(row.updated_at),
     deletedAt: row.deleted_at == null ? null : Number(row.deleted_at),
@@ -560,7 +576,7 @@ async function applyMutation(env, device, mutation) {
   const recordId = cleanText(mutation && mutation.recordId, 160);
   const operation = mutation && mutation.operation;
   const baseVersion = Number(mutation && mutation.baseVersion);
-  if (!mutationId || !entity || !ENTITY_RE.test(entity) || !recordId || !["upsert", "delete"].includes(operation) || !Number.isInteger(baseVersion) || baseVersion < 0) {
+  if (!mutationId || !isValidEntity(entity) || !recordId || !["upsert", "delete"].includes(operation) || !Number.isInteger(baseVersion) || baseVersion < 0) {
     throw new ApiError(400, "INVALID_MUTATION", "Altera\xE7\xE3o inv\xE1lida.");
   }
   const duplicate = await env.DB.prepare(
@@ -582,12 +598,12 @@ async function applyMutation(env, device, mutation) {
     if (!mutation.data || typeof mutation.data !== "object" || Array.isArray(mutation.data)) {
       throw new ApiError(400, "INVALID_RECORD_DATA", "O registro precisa ser um objeto JSON.");
     }
-    dataJson = JSON.stringify(mutation.data);
+    dataJson = JSON.stringify(dadosSincronizaveis(entity, mutation.data));
     if (new TextEncoder().encode(dataJson).byteLength > 7e5) {
       throw new ApiError(413, "RECORD_TOO_LARGE", "Registro maior que o permitido.");
     }
   } else if (current && current.data_json) {
-    dataJson = current.data_json;
+    dataJson = JSON.stringify(dadosSincronizaveis(entity, parseDataJson(current.data_json)));
   }
   if (current && operation === "upsert" && current.data_json === dataJson && current.deleted_at === null) {
     return { ok: true, duplicate: true, noop: true, version: currentVersion };
@@ -791,7 +807,7 @@ async function handleChanges(request, env, ctx) {
     entity: row.entity,
     recordId: row.record_id,
     operation: row.operation,
-    data: parseDataJson(row.data_json),
+    data: dadosSincronizaveis(row.entity, parseDataJson(row.data_json)),
     version: Number(row.version),
     deviceId: row.device_id,
     createdAt: Number(row.created_at)
@@ -856,7 +872,7 @@ async function handleSnapshot(request, env, ctx) {
     records: selected.map((row) => ({
       entity: row.entity,
       recordId: row.record_id,
-      data: parseDataJson(row.data_json),
+      data: dadosSincronizaveis(row.entity, parseDataJson(row.data_json)),
       version: Number(row.version)
     })),
     hasMore
@@ -910,7 +926,7 @@ async function handleRestore(request, env) {
   const body = await readBody(request);
   const entity = cleanText(body.entity, 64);
   const recordId = cleanText(body.recordId, 160);
-  if (!entity || !ENTITY_RE.test(entity) || !recordId) {
+  if (!isValidEntity(entity) || !recordId) {
     throw new ApiError(400, "INVALID_RECORD", "Registro inv\xE1lido.");
   }
   const current = await env.DB.prepare(
@@ -925,7 +941,7 @@ async function handleRestore(request, env) {
     recordId,
     operation: "upsert",
     baseVersion: Number(current.version),
-    data: parseDataJson(current.data_json)
+    data: dadosSincronizaveis(entity, parseDataJson(current.data_json))
   });
   if (!result.ok) return json({ ok: false, ...result }, 409);
   return json({ ok: true, restored: true, ...result });
@@ -960,7 +976,7 @@ async function handleRevokedDeviceRecords(request, env) {
   await requireAdmin(request, env);
   const url = new URL(request.url);
   const entity = cleanText(url.searchParams.get("entity") || "clientes", 64);
-  if (!entity || !ENTITY_RE.test(entity)) throw new ApiError(400, "INVALID_ENTITY", "Entidade inv\xE1lida.");
+  if (!isValidEntity(entity)) throw new ApiError(400, "INVALID_ENTITY", "Entidade inv\xE1lida.");
   const rows = await env.DB.prepare(
     `SELECT r.*, d.name AS source_device
      FROM records r
@@ -988,7 +1004,7 @@ async function handleRemoveRevokedDeviceRecords(request, env) {
   const body = await readBody(request);
   const entity = cleanText(body.entity || "clientes", 64);
   const ids = Array.isArray(body.recordIds) ? [...new Set(body.recordIds.map((x) => cleanText(x, 160)).filter(Boolean))] : [];
-  if (!entity || !ENTITY_RE.test(entity) || !ids.length || ids.length > 100) {
+  if (!isValidEntity(entity) || !ids.length || ids.length > 100) {
     throw new ApiError(400, "INVALID_REVIEW_BATCH", "Sele\xE7\xE3o inv\xE1lida para limpeza.");
   }
   const protectedTokens = entity === "clientes" ? await deletedActiveOriginTokens(env, entity) : /* @__PURE__ */ new Set();
@@ -2484,7 +2500,10 @@ async function gerarBackup(env, chave, meta) {
          FROM records ORDER BY entity ASC, record_id ASC LIMIT 1000 OFFSET ?`
     ).bind(pulados).all();
     const linhas = lote.results || [];
-    records.push(...linhas);
+    records.push(...linhas.map((row) => ({
+      ...row,
+      data_json: JSON.stringify(dadosSincronizaveis(row.entity, parseDataJson(row.data_json)))
+    })));
     if (linhas.length < 1e3) break;
     pulados += linhas.length;
   }
@@ -2674,7 +2693,7 @@ var index_default = {
     }
   }
 };
-var __test = { AUTH_RATE_POLICIES, freioDecide, PLANO_PAGO, PLANO_GRATIS, hojeUTC, cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
+var __test = { AUTH_RATE_POLICIES, freioDecide, PLANO_PAGO, PLANO_GRATIS, hojeUTC, cleanText, sha256, sameSecret, randomToken, publicRecord, dadosSincronizaveis, activityLabel, isValidEntity, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
 export {
   __test,
   index_default as default

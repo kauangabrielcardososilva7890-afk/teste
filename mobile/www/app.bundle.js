@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 219 | sha256: 617f7998780c6da0
+ * scripts: 219 | sha256: f63d6a3010693ed1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -30790,18 +30790,25 @@ function posicaoNaLista(entity,id){
   return -1;
 }
 function tirarSegredosDoEnvio(entity,value){
-  if(entity!=='config'||!value||typeof value!=='object'||Array.isArray(value))return value;
+  if(entity!=='config'&&entity!=='usuarios'&&entity!=='empresas')return value;
+  if(!value||typeof value!=='object'||Array.isArray(value))return value;
   const safe=clean(value);
-  delete safe.escolaAuth;
-  if(safe.fiscal&&typeof safe.fiscal==='object'&&!Array.isArray(safe.fiscal)&&safe.fiscal.a1Nuvem&&typeof safe.fiscal.a1Nuvem==='object'){
-    delete safe.fiscal.a1Nuvem.data;
-    if(!Object.keys(safe.fiscal.a1Nuvem).length)delete safe.fiscal.a1Nuvem;
+  if(entity==='config'){
+    delete safe.escolaAuth;
+    if(safe.fiscal&&typeof safe.fiscal==='object'&&!Array.isArray(safe.fiscal)&&safe.fiscal.a1Nuvem&&typeof safe.fiscal.a1Nuvem==='object'){
+      delete safe.fiscal.a1Nuvem.data;
+      if(!Object.keys(safe.fiscal.a1Nuvem).length)delete safe.fiscal.a1Nuvem;
+    }
+  }
+  if(entity==='usuarios'||entity==='empresas'){
+    const segredo=/^(senha|password|pass|salt|hash|senhaHash|passwordHash|token|tokenHash|segredo|secret|connHash|gerenteHash|prova)/i;
+    Object.keys(safe).forEach(k=>{if(segredo.test(k))delete safe[k];});
   }
   return safe;
 }
 function mutacaoSeguraParaEnvio(mutation){
-  if(!mutation||mutation.entity!=='config'||!mutation.data)return mutation;
-  return Object.assign({},mutation,{data:tirarSegredosDoEnvio('config',mutation.data)});
+  if(!mutation||!mutation.data)return mutation;
+  return Object.assign({},mutation,{data:tirarSegredosDoEnvio(mutation.entity,mutation.data)});
 }
 function configRemotoComSegredosLocais(value){
   const result=clean(tirarSegredosDoEnvio('config',value));
@@ -49320,6 +49327,7 @@ if(!window.__v800FecharBackupAoNavegar){
       if(alvo && !alvo.closest('#bk-overlay') && !alvo.closest('#modal-root')) fecharBackupAoNavegar();
     }catch(e){}
   }, true);
+  // SUBSTITUICAO DE PROPOSITO: navigateTo fecha o modal e encadeia a função anterior.
   if(typeof window.navigateTo==='function' && !window.navigateTo.__v800FechaBackup){
     const _navigateTo=window.navigateTo;
     window.navigateTo=function(){ fecharBackupAoNavegar(); return _navigateTo.apply(this,arguments); };

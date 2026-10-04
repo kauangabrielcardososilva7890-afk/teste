@@ -48,6 +48,13 @@ CREATE TABLE IF NOT EXISTS changes (
 CREATE INDEX IF NOT EXISTS idx_changes_cursor ON changes(seq);
 CREATE INDEX IF NOT EXISTS idx_changes_record ON changes(entity, record_id, seq);
 
+CREATE TABLE IF NOT EXISTS app_releases (
+  versao TEXT PRIMARY KEY,
+  url TEXT NOT NULL DEFAULT '',
+  notas TEXT NOT NULL DEFAULT '',
+  publicado_em INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS system_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL,

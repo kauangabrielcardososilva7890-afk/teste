@@ -175,8 +175,10 @@ function createWindow () {
         conteudo.session.setPermissionRequestHandler((wc, permissao, responder) => {
           let pedido = '';
           try{ pedido = String((wc && wc.getURL && wc.getURL()) || ''); }catch(e){}
-          const pode = (permissao === 'media' || permissao === 'clipboard-read' || permissao === 'fullscreen') &&
-            /whatsapp\.com|janauba\.mg\.gov\.br|sintesetecnologia\.com\.br|nfse\.gov\.br/i.test(pedido);
+          let host='';
+          try{ const u=new URL(pedido); if(u.protocol==='https:') host=u.hostname.toLowerCase(); }catch(e){}
+          const hostsPermitidos=new Set(['web.whatsapp.com','whatsapp.com','janauba.mg.gov.br','www.janauba.mg.gov.br','sintesetecnologia.com.br','www.sintesetecnologia.com.br','nfse.gov.br','www.nfse.gov.br']);
+          const pode = (permissao === 'media' || permissao === 'clipboard-read' || permissao === 'fullscreen') && hostsPermitidos.has(host);
           try{ responder(!!pode); }catch(e){}
         });
       }catch(e){}
@@ -241,9 +243,9 @@ app.whenReady().then(() => {
   // Word/LibreOffice, o que estiver associado ao .rtf).
   ipcMain.handle('rtf:abrir', async (_e, payload) => {
     try{
-      const osMod = require('os');
       const dir = app.getPath('temp');
       const nome = String((payload && payload.nome) || 'contrato.rtf').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 80) || 'contrato.rtf';
+      if(!/\.rtf$/i.test(nome)) return { ok:false, erro:'Somente arquivos .rtf são permitidos.' };
       const conteudo = String((payload && payload.conteudo) || '');
       const full = path.join(dir, 'digicopy-' + Date.now().toString(36) + '-' + nome);
       fs.writeFileSync(full, conteudo, 'utf8');
@@ -406,6 +408,7 @@ function registerFirebirdIPC(){
     const fb = getFirebird();
     if(!fb) return { ok:false, error:'node-firebird não instalado' };
     const opts = buildFbOpts(config);
+    tableName=validarFbIdentificador(tableName,'Tabela');
     return new Promise((resolve) => {
       fb.attach(opts, (err, db) => {
         if(err) return resolve({ ok:false, error: err.message });
@@ -433,6 +436,7 @@ function registerFirebirdIPC(){
     const fb = getFirebird();
     if(!fb) return { ok:false, error:'node-firebird não instalado' };
     const opts = buildFbOpts(config);
+    tableName=validarFbIdentificador(tableName,'Tabela');
     const lim = Math.min(limit || 50000, 200000);
     return new Promise((resolve) => {
       fb.attach(opts, (err, db) => {
@@ -463,7 +467,7 @@ function registerFirebirdIPC(){
     const fb = getFirebird();
     if(!fb) return { ok:false, error:'node-firebird não instalado' };
     const opts = buildFbOpts(config);
-    const tables = tableList || ['CLIENTES','PRODUTOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','CONTAS_RECEBER','CONTAS_PAGAR'];
+    const tables = validarFbTabelas(tableList || ['CLIENTES','PRODUTOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','CONTAS_RECEBER','CONTAS_PAGAR']);
     return new Promise((resolve) => {
       fb.attach(opts, (err, db) => {
         if(err) return resolve({ ok:false, error: err.message });
@@ -501,17 +505,28 @@ function registerFirebirdIPC(){
 }
 
 function buildFbOpts(config){
+  if(!config||typeof config!=='object') throw new Error('Configuração Firebird ausente.');
+  const password=String(config.password||'');
+  if(!password) throw new Error('Informe a senha do Firebird; não há senha padrão segura.');
   return {
     host: config.host || 'localhost',
     port: config.port || 3050,
     database: config.database || '',
     user: config.user || 'SYSDBA',
-    password: config.password || 'masterkey',
+    password,
     lowercase_keys: true,
     blobAsText: true
   };
 }
-
+function validarFbIdentificador(value, nome){
+  const v=String(value||'').trim();
+  if(!/^[A-Za-z][A-Za-z0-9_$]{0,62}$/.test(v)) throw new Error((nome||'Identificador')+' Firebird inválido.');
+  return v;
+}
+function validarFbTabelas(values){
+  const arr=Array.isArray(values)?values:[];
+  return [...new Set(arr.map(v=>validarFbIdentificador(v,'Tabela')).map(v=>v.toUpperCase()))].slice(0,100);
+}
 function mapFbType(typeNum){
   // Firebird field types
   const map = {

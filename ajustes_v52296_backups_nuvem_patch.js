@@ -563,6 +563,7 @@ if(!window.__v800FecharBackupAoNavegar){
       if(alvo && !alvo.closest('#bk-overlay') && !alvo.closest('#modal-root')) fecharBackupAoNavegar();
     }catch(e){}
   }, true);
+  // SUBSTITUICAO DE PROPOSITO: navigateTo fecha o modal e encadeia a função anterior.
   if(typeof window.navigateTo==='function' && !window.navigateTo.__v800FechaBackup){
     const _navigateTo=window.navigateTo;
     window.navigateTo=function(){ fecharBackupAoNavegar(); return _navigateTo.apply(this,arguments); };

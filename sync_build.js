@@ -28,6 +28,7 @@ const BASE_FILES = [
   'package.json',
   'index.html',
   'main.js',
+  'snmp_printer.js',
   'preload.js',
   'nfe_assinatura.js',
   'pix_pagar.html',

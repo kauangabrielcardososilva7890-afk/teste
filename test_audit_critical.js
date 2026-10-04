@@ -1,0 +1,34 @@
+const assert = require('assert');
+const fs = require('fs');
+const cp = require('child_process');
+const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+const lock = JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+const m1 = fs.readFileSync('cloudflare-worker/migrations/0001_initial.sql','utf8');
+const m2 = fs.readFileSync('cloudflare-worker/migrations/0002_device_recovery.sql','utf8');
+const m5 = fs.readFileSync('cloudflare-worker/migrations/0005_soft_delete_aparelhos.sql','utf8');
+const m6 = fs.readFileSync('cloudflare-worker/migrations/0006_cnpj_gerente.sql','utf8');
+const main = fs.readFileSync('main.js','utf8');
+const sync = fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
+const workflow = fs.readFileSync('deploy_github_actions/publicar-motor.yml','utf8');
+
+assert.strictEqual(lock.version, pkg.version, 'package-lock deve acompanhar package.json');
+assert.strictEqual(lock.packages[''].version, pkg.version, 'entrada raiz do lock deve acompanhar package.json');
+assert(pkg.scripts['build:win'].indexOf('npm run bundle') < pkg.scripts['build:win'].indexOf('node sync_build.js'), 'build deve gerar bundle antes de sincronizar');
+assert(pkg.build.files.includes('snmp_printer.js'), 'SNMP precisa entrar no empacotamento do Electron');
+assert(m1.includes('CREATE TABLE IF NOT EXISTS app_releases'), 'banco novo deve criar app_releases antes da 0006');
+assert(m2.includes("WHERE key = 'schema_version'"), '0002 deve atualizar a chave real do schema');
+assert(m5.includes("WHERE key = 'schema_version'"), '0005 deve atualizar a chave real do schema');
+assert(m5.includes("value = '2'"), 'health exige schema 2');
+assert(m6.includes('ALTER TABLE app_releases ADD COLUMN destino_tipo'), '0006 deve completar app_releases');
+assert(main.includes('não há senha padrão segura'), 'Firebird não pode usar masterkey implícito');
+assert(main.includes('validarFbIdentificador') && main.includes('validarFbTabelas'), 'identificadores Firebird devem ser validados');
+assert(main.includes('Somente arquivos .rtf são permitidos'), 'RTF deve aceitar somente extensão RTF');
+assert(main.includes('hostsPermitidos.has(host)'), 'permissões webview devem usar hostname exato');
+assert(sync.includes("entity==='usuarios'||entity==='empresas'"), 'usuários e empresas devem passar pelo sanitizador');
+assert(sync.includes('mutacaoSeguraParaEnvio') && /mutation\.entity,mutation\.data/.test(sync), 'todo payload deve ser sanitizado pela entidade');
+assert(/wrangler@4\.123\.0/.test(workflow), 'workflow deve fixar versão do Wrangler');
+
+const py = `import sqlite3, sys\nc=sqlite3.connect(':memory:')\nfor p in sys.argv[1:]:\n s=open(p, encoding='utf8').read()\n c.executescript(s)\nprint(c.execute("select value from system_meta where key='schema_version'").fetchone()[0])`;
+const out = cp.execFileSync('python3',['-c',py,'cloudflare-worker/migrations/0001_initial.sql','cloudflare-worker/migrations/0002_device_recovery.sql','cloudflare-worker/migrations/0005_soft_delete_aparelhos.sql'],{encoding:'utf8'}).trim();
+assert.strictEqual(out,'2','migrações base devem resultar em schema 2');
+console.log('OK: auditoria crítica de migrações, payloads, IPC e build');
