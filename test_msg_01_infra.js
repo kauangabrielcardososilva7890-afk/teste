@@ -226,12 +226,15 @@ console.log('== scanEstoqueBaixo ==');
     {id:'p2', empresaId:'E', nome:'Toner B', estoque:5, estoqueMin:5, status:'ativo'},
     {id:'p3', empresaId:'E', nome:'Toner C', estoque:40, estoqueMin:5, status:'ativo'},
     {id:'p4', empresaId:'E', nome:'Toner D', estoque:0, estoqueMin:2, status:'inativo'},
-    {id:'p5', empresaId:'OUTRA', nome:'Toner E', estoque:0, estoqueMin:9, status:'ativo'}
+    {id:'p5', empresaId:'OUTRA', nome:'Toner E', estoque:0, estoqueMin:9, status:'ativo'},
+    {id:'p6', empresaId:'E', nome:'Toner F', estoque:0, estoqueMin:0, status:'ativo'},
+    {id:'p7', empresaId:'E', nome:'Toner G', estoque:0, estoqueMin:9, status:'ativo', estoqueInfinito:true},
+    {id:'p8', empresaId:'E', nome:'Toner H', estoque:0, estoqueMin:9, status:'excluido'}
   ];
   const r = NOTIF_PURE.scanEstoqueBaixo(prods, 'E');
-  eq('só da empresa, ativos, estoque<=mínimo', r.map(x=>x.ref).sort(), ['p1','p2']);
+  eq('só da empresa, ativos e estoque abaixo do mínimo', r.map(x=>x.ref).sort(), ['p1']);
   eq('ordenado pelos mais críticos (zerado/abaixo primeiro)', r[0].ref, 'p1');
-  eq('traz dados p/ o aviso', {nome:r[1].nome, min:r[1].min}, {nome:'Toner B', min:5});
+  eq('traz dados p/ o aviso', {nome:r[0].nome, min:r[0].min}, {nome:'Toner A', min:5});
 }
 
 console.log('== scanContasReceber ==');

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 220 | sha256: 2b88fbec7a938d8e
+ * scripts: 220 | sha256: ea18c55117adc4de
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -55099,7 +55099,7 @@ try{
         '<button class="fx-btn dan" onclick="fxAcao(\'pf-excluir\',\'' + i + '\')">Excluir</button></td></tr>';
     });
     h += '</tbody></table>';
-    if (G.__fxPfEd != null && perfis[G.__fxPfEd]) h += fxRenderPerfilEdicao(perfis[G.__fxPfEd], G.__fxPfEd);
+    if (G.__fxPfObj && (G.__fxPfNovo || G.__fxPfEd != null)) h += fxRenderPerfilEdicao(G.__fxPfObj, G.__fxPfEd);
     return '<div class="fx-root-wrap">' + h + '</div>';
   }
   function fxRenderPerfilEdicao(pf, idx) {
@@ -55653,25 +55653,27 @@ try{
         var usados = I.perfis().map(function (x) { return x.cod; });
         var livre = 1; while (usados.indexOf(String(livre).padStart(5, '0')) >= 0) livre++;
         var pf2 = { cod: String(livre).padStart(5, '0'), descricao: '', tipo: 'ICMS', cfop: '5102', csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '', refClassif: '', ibsUf: '', ibsMun: '', cbs: '', reformaRevisado: false };
-        I.perfis().push(pf2); G.__fxPfEd = I.perfis().length - 1; G.__fxPfObj = pf2; G.__fxPfAba = 'ICMS';
+        G.__fxPfNovo = true; G.__fxPfEd = null; G.__fxPfObj = pf2; G.__fxPfAba = 'ICMS';
         return fxReRender('fiscal-perfil');
       }
-      if (acao === 'pf-alterar') { G.__fxPfEd = Number(a); G.__fxPfObj = I.perfis()[Number(a)]; G.__fxPfAba = 'ICMS'; return fxReRender('fiscal-perfil'); }
-      if (acao === 'pf-fechar') { G.__fxPfEd = null; G.__fxPfObj = null; return fxReRender('fiscal-perfil'); }
+      if (acao === 'pf-alterar') { G.__fxPfNovo = false; G.__fxPfEd = Number(a); G.__fxPfObj = Object.assign({}, I.perfis()[Number(a)]); G.__fxPfAba = 'ICMS'; return fxReRender('fiscal-perfil'); }
+      if (acao === 'pf-fechar') { G.__fxPfNovo = false; G.__fxPfEd = null; G.__fxPfObj = null; return fxReRender('fiscal-perfil'); }
       if (acao === 'pf-aba') { I.aplica({ pf: G.__fxPfObj || {} }); G.__fxPfAba = a; return fxReRender('fiscal-perfil'); }
       if (acao === 'pf-salvar') {
         var pfS = G.__fxPfObj; if (!pfS) return;
         I.aplica({ pf: pfS });
         if (!String(pfS.descricao || '').trim()) return I.alert('Falta a descrição', 'O perfil precisa de uma descrição (ex.: VENDA DENTRO DO ESTADO).');
         if (!/^\d{4}$/.test(String(pfS.cfop))) return I.alert('CFOP inválido', 'CFOP precisa ter 4 dígitos (ex.: 5102, 6102, 5915).');
+        if (G.__fxPfNovo) I.perfis().push(pfS);
+        else if (G.__fxPfEd != null) I.perfis()[G.__fxPfEd] = pfS;
         fxLimpaAliases(); I.save(); I.log('pf-salvo', pfS.cod + ' ' + pfS.descricao);
-        G.__fxPfEd = null; G.__fxPfObj = null; I.toast2('Perfil salvo ✅'); return fxReRender('fiscal-perfil');
+        G.__fxPfNovo = false; G.__fxPfEd = null; G.__fxPfObj = null; I.toast2('Perfil salvo ✅'); return fxReRender('fiscal-perfil');
       }
       if (acao === 'pf-excluir') {
         var pfX = I.perfis()[Number(a)]; if (!pfX) return;
         I.confirm('Excluir perfil', 'Excluir o perfil <b>' + P.esc(pfX.cod + ' ' + pfX.descricao) + '</b>?<br>Itens de notas antigas que usam esse código continuam com o texto gravado na nota.', function () {
           d.perfisNf.splice(Number(a), 1); I.save(); I.log('pf-excluido', pfX.cod + ' ' + pfX.descricao);
-          G.__fxPfEd = null; G.__fxPfObj = null; I.toast2('Perfil excluído'); fxReRender('fiscal-perfil');
+          G.__fxPfNovo = false; G.__fxPfEd = null; G.__fxPfObj = null; I.toast2('Perfil excluído'); fxReRender('fiscal-perfil');
         }, 'Excluir');
         return;
       }

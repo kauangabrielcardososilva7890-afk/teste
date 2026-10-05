@@ -667,7 +667,7 @@ global.window = global;
 global.document = {
   head: { appendChild: function () { } }, getElementById: function () { return null; },
   createElement: function () { return { style: {} }; }, addEventListener: function () { }, body: { appendChild: function () { } },
-  querySelector: function () { return null; }
+  querySelector: function () { return null; }, querySelectorAll: function () { return []; }
 };
 global.db = { config: { nfRegistro: [], nfManifestacoes: [] }, notasNf: [], clientes: [{ id: 'c1', nome: 'MERCADO X' }], fornecedores: [], produtos: [{ id: 'p1', nome: 'TONER', preco: 99, ncm: '84439923' }] };
 window.usuarioPodeEmitirNfe = function () { return true; };
@@ -696,6 +696,25 @@ ok('19 funções na infra (db/save/sess/log/cfg/perfis/notas/placa/pode/confirm/
   G.__v6014fxInfra && Object.keys(G.__v6014fxInfra).length === 19);
 ok('perfis() semeia os 5 (array vazio também herda o seed) e grava fxLog "perfis-seed"',
   G.__v6014fxInfra.perfis().length === 5 && (db.config.fxLogFiscal || []).some(function (l) { return l.acao === 'perfis-seed'; }));
+const perfisAntesRascunho = G.__v6014fxInfra.perfis().length;
+G.fxAcao('pf-novo');
+ok('Novo Perfil abre um rascunho sem inserir no cadastro persistido',
+  G.__fxPfNovo === true && !!G.__fxPfObj && G.__v6014fxInfra.perfis().length === perfisAntesRascunho);
+G.fxAcao('pf-fechar');
+ok('Fechar descarta o rascunho sem alterar os perfis',
+  G.__fxPfNovo === false && G.__fxPfObj === null && G.__v6014fxInfra.perfis().length === perfisAntesRascunho);
+const perfilOriginal = Object.assign({}, G.__v6014fxInfra.perfis()[0]);
+G.fxAcao('pf-alterar', 0);
+G.__fxPfObj.descricao = 'ALTERAÇÃO NÃO SALVA';
+G.fxAcao('pf-fechar');
+ok('Fechar alteração descarta mudanças sem tocar o perfil cadastrado',
+  G.__v6014fxInfra.perfis()[0].descricao === perfilOriginal.descricao && G.__v6014fxInfra.perfis()[0].cfop === perfilOriginal.cfop);
+G.fxAcao('pf-novo');
+G.__fxPfObj.descricao = 'PERFIL TESTE'; G.__fxPfObj.cfop = '5102';
+G.fxAcao('pf-salvar');
+ok('Salvar perfil válido adiciona o novo perfil uma única vez',
+  G.__v6014fxInfra.perfis().length === perfisAntesRascunho + 1 && G.__v6014fxInfra.perfis().slice(-1)[0].descricao === 'PERFIL TESTE');
+G.__v6014fxInfra.perfis().pop();
 ok('confirmação NUNCA é o confirm nativo: fxConfirm/alert existem na infra e pintam no modal-root do sistema',
   src.indexOf('window.confirm(') === -1 && src.indexOf("getElementById('modal-root')") >= 0 && typeof G.__v6014fxInfra.confirm === 'function' && typeof G.__v6014fxInfra.alert === 'function');
 ok('placa de ambiente: HOMOLOGAÇÃO vermelho / PRODUÇÃO verde',
