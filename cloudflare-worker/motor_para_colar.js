@@ -22,7 +22,7 @@
  * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 8.1.0   (igual ao src/index.js)
  * GERADO EM: 2026-10-04 15:02 UTC
  * sha256 do código (sem este cabeçalho):
- *   d673c67179d1e00a51e7a9115ec60b98c1b78b9471e45cc64d196a2a93ecf5ca
+ *   42cef37941dc68ce3980ff5f690d90a7253e9bfea5f9b6241215cb0d07fdf21e
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -357,8 +357,7 @@ async function handleHealth(env) {
         const reg = JSON.parse(linhaSaude.value);
         saude = {
           dia: reg.hoje && reg.hoje.dia || hojeUTC(),
-          contagem: reg.hoje && reg.hoje.contagem || {},
-          ultimo: reg.ultimo || {}
+          contagem: contagensRelatosPublicas(reg.hoje && reg.hoje.contagem)
         };
       }
     } catch (_s) {
@@ -1437,11 +1436,30 @@ async function usoHoje(env) {
 }
 __name(usoHoje, "usoHoje");
 var RELATOS_MAX = 12;
+var TIPOS_RELATO_TECNICO = new Set(["base_vazia", "recusado", "freio", "credencial", "falha", "fila_presa"]);
+function tipoRelatoTecnico(tipo) {
+  const valor = String(tipo || "").trim();
+  return TIPOS_RELATO_TECNICO.has(valor) ? valor : "";
+}
+function contagensRelatosPublicas(contagem) {
+  const publicas = {};
+  if (!contagem || typeof contagem !== "object" || Array.isArray(contagem)) return publicas;
+  for (const tipo of TIPOS_RELATO_TECNICO) {
+    const quantidade = Number(contagem[tipo]);
+    if (Number.isFinite(quantidade) && quantidade > 0) publicas[tipo] = Math.floor(quantidade);
+  }
+  return publicas;
+}
+function codigoRelatoTecnico(codigo) {
+  const valor = String(codigo || "").trim();
+  return /^[a-z][a-z0-9_.:-]{0,39}$/i.test(valor) ? valor : "";
+}
+__name(codigoRelatoTecnico, "codigoRelatoTecnico");
 async function handleRelato(request, env, ctx) {
   const device = await authenticate(request, env);
   const body = await readBody(request);
-  const tipo = String(body && body.tipo || "").slice(0, 40);
-  const codigo = String(body && body.codigo || "").slice(0, 140);
+  const tipo = tipoRelatoTecnico(body && body.tipo);
+  const codigo = codigoRelatoTecnico(body && body.codigo);
   const versao = String(body && body.versao || "").slice(0, 20);
   if (!tipo) throw new ApiError(400, "RELATO_SEM_TIPO", "Informe o tipo do relato.");
   const apelido = device && device.id ? (await sha256(String(device.id))).slice(0, 8) : "";

@@ -33,6 +33,14 @@ assert.deepEqual(configSincronizada.fiscal, { serie: 2, a1Nuvem: { nome: 'a1.pfx
 assert.equal(configSincronizada.tema, 'claro');
 assert.deepEqual(__test.dadosSincronizaveis('clientes', { escolaAuth: { senha: 'placeholder' } }), { escolaAuth: { senha: 'placeholder' } });
 console.log('  ✔ remove credenciais e material A1 da config sincronizada');
+assert.equal(__test.tipoRelatoTecnico('base_vazia'), 'base_vazia');
+assert.equal(__test.tipoRelatoTecnico('cliente Maria'), '');
+assert.equal(__test.tipoRelatoTecnico('someone@example.com'), '');
+assert.deepEqual(
+  __test.contagensRelatosPublicas({ falha: 2, 'cliente Maria': 8, 'someone@example.com': 4, ultimo: { segredo: 'x' } }),
+  { falha: 2 }
+);
+console.log('  ✔ relatos aceitam categorias conhecidas e /health filtra dados antigos');
 const rate = __test.AUTH_RATE_POLICIES;
 assert.equal(rate['/v1/check-pass'].maxFailures, 5);
 assert.equal(rate['/v1/gerente-login'].maxFailures, 3);

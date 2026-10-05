@@ -9,7 +9,8 @@ const m5 = fs.readFileSync('cloudflare-worker/migrations/0005_soft_delete_aparel
 const m6 = fs.readFileSync('cloudflare-worker/migrations/0006_cnpj_gerente.sql','utf8');
 const main = fs.readFileSync('main.js','utf8');
 const sync = fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
-const workflow = fs.readFileSync('deploy_github_actions/publicar-motor.yml','utf8');
+const workflow = fs.readFileSync('.github/workflows/publicar-motor.yml','utf8');
+const workflowCopy = fs.readFileSync('deploy_github_actions/publicar-motor.yml','utf8');
 
 assert.strictEqual(lock.version, pkg.version, 'package-lock deve acompanhar package.json');
 assert.strictEqual(lock.packages[''].version, pkg.version, 'entrada raiz do lock deve acompanhar package.json');
