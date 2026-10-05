@@ -809,8 +809,14 @@ function tirarSegredosDoEnvio(entity,value){
     }
   }
   if(entity==='usuarios'||entity==='empresas'){
-    const segredo=/^(senha|password|pass|salt|hash|senhaHash|passwordHash|token|tokenHash|segredo|secret|connHash|gerenteHash|prova)/i;
-    Object.keys(safe).forEach(k=>{if(segredo.test(k))delete safe[k];});
+    const segredo=/^(senha|password|pass|salt|hash|token|tokenHash|segredo|secret|connHash|gerenteHash|prova)/i;
+    Object.keys(safe).forEach(k=>{
+      // Só usuários recebem o verificador PBKDF2 e seu salt para validar o
+      // login em outros aparelhos. Senha em texto e qualquer outro segredo
+      // continuam locais. Empresas nunca sincronizam verificador de senha.
+      if(entity==='usuarios'&&(k==='senhaHash'||k==='senhaSalt'))return;
+      if(segredo.test(k))delete safe[k];
+    });
   }
   return safe;
 }

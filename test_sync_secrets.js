@@ -17,6 +17,13 @@ assert.equal('escolaAuth' in outbound, false);
 assert.deepEqual(outbound.fiscal, { serie: 4, a1Nuvem: { nome: 'certificado.pfx' } });
 assert.equal(config.escolaAuth.senha, 'secret-placeholder', 'sanitização não altera o banco local');
 assert.equal(helpers.tirarSegredosDoEnvio('clientes', config), config, 'outras entidades não são alteradas');
+const usuario = { id: 'u1', login: 'atendente', ativo: true, senha: 'texto-local', senhaHash: 'pbkdf2-verifier', senhaSalt: 'salt-unico', token: 'nao-sincronizar' };
+const usuarioSync = helpers.tirarSegredosDoEnvio('usuarios', usuario);
+assert.deepEqual(usuarioSync, { id: 'u1', login: 'atendente', ativo: true, senhaHash: 'pbkdf2-verifier', senhaSalt: 'salt-unico' });
+assert.equal(usuario.senha, 'texto-local', 'sanitização não altera senha local');
+const empresa = helpers.tirarSegredosDoEnvio('empresas', { id: 'e1', senhaHash: 'nao-enviar', senhaSalt: 'nao-enviar', nome: 'Empresa' });
+assert.deepEqual(empresa, { id: 'e1', nome: 'Empresa' }, 'empresa não sincroniza credencial');
+
 const queued = helpers.mutacaoSeguraParaEnvio({ entity: 'config', data: config, mutationId: 'test' });
 assert.equal('escolaAuth' in queued.data, false, 'outbox legado também remove credenciais');
 assert.equal('escolaAuth' in config, true, 'sanitização de outbox mantém a config local intacta');
@@ -25,4 +32,4 @@ assert.deepEqual(applied.escolaAuth, { usuario: 'local-user', senha: 'local-plac
 assert.equal(applied.fiscal.a1Nuvem.data, 'LOCAL-PFX-PLACEHOLDER', 'resposta remota preserva PFX local');
 assert.equal(applied.fiscal.serie, 5, 'configuração remota não secreta é aplicada');
 
-console.log('PASS: segredo da escola e PFX não entram no sync; cópias locais e demais config são preservadas');
+console.log('PASS: PFX, senhas em texto e segredos de empresa não entram no sync; verificador PBKDF2 de usuário é preservado');

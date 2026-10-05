@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 219 | sha256: 3844754464eca3a1
+ * scripts: 220 | sha256: 0b6862c213076dc4
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -30807,8 +30807,14 @@ function tirarSegredosDoEnvio(entity,value){
     }
   }
   if(entity==='usuarios'||entity==='empresas'){
-    const segredo=/^(senha|password|pass|salt|hash|senhaHash|passwordHash|token|tokenHash|segredo|secret|connHash|gerenteHash|prova)/i;
-    Object.keys(safe).forEach(k=>{if(segredo.test(k))delete safe[k];});
+    const segredo=/^(senha|password|pass|salt|hash|token|tokenHash|segredo|secret|connHash|gerenteHash|prova)/i;
+    Object.keys(safe).forEach(k=>{
+      // Só usuários recebem o verificador PBKDF2 e seu salt para validar o
+      // login em outros aparelhos. Senha em texto e qualquer outro segredo
+      // continuam locais. Empresas nunca sincronizam verificador de senha.
+      if(entity==='usuarios'&&(k==='senhaHash'||k==='senhaSalt'))return;
+      if(segredo.test(k))delete safe[k];
+    });
   }
   return safe;
 }
@@ -59004,15 +59010,106 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("modulos/security_hardening_v8000.js", e); }
 ;
 
+
+/* ===== ajustes_v813_login_recuperacao_patch.js ===== */
+try{
+// v8.1.3 — recuperação de acesso quando a sincronização antiga removeu o verificador.
+// A senha antiga não pode ser reconstruída: o responsável pela nuvem confirma a
+// identidade e cadastra novamente a senha (pode escolher a mesma). Senha em texto
+// nunca vai para a nuvem; somente PBKDF2 + salt, necessários ao login nos outros PCs.
+(function(){
+  'use strict';
+  if(typeof window==='undefined'||typeof document==='undefined'||window.__digiRecuperarSenhaV813)return;
+  window.__digiRecuperarSenhaV813=true;
+
+  function banco(){
+    try{if(typeof db!=='undefined'&&db)return db;}catch(e){}
+    return window.db||null;
+  }
+  function digitos(v){return String(v||'').replace(/\D/g,'');}
+  function fold(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+  function msg(texto,tipo){
+    try{if(typeof toast==='function'){toast(texto,tipo||'info');return;}}catch(e){}
+    try{alert(texto);}catch(e){}
+  }
+  async function recuperar(){
+    const b=banco();
+    if(!b||!Array.isArray(b.usuarios)||!Array.isArray(b.empresas)){
+      msg('Os dados da empresa ainda estão carregando. Aguarde alguns segundos e tente de novo.','error');return;
+    }
+    const campo=document.getElementById('login-user');
+    const login=String((campo&&campo.value)||prompt('Digite o login da conta que deseja reativar:')||'').trim();
+    if(!login){msg('Informe o login da conta.','error');return;}
+    const user=b.usuarios.find(u=>u&&u.ativo&&
+      (fold(u.login)===fold(login)||fold(u.nome)===fold(login)||fold(u.nome).split(/\s+/)[0]===fold(login)));
+    if(!user){msg('Esse usuário não está na base sincronizada. Confira o login ou a conexão da nuvem.','error');return;}
+    const emp=b.empresas.find(e=>e&&e.id===user.empresaId)||b.empresas.find(e=>e&&e.id);
+    const cnpj=digitos((emp&&emp.cnpj)||'');
+    if(cnpj.length!==14){msg('O CNPJ da empresa não foi carregado. Reconecte este computador à nuvem.','error');return;}
+    const api=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;
+    if(typeof api!=='function'){msg('A conexão da nuvem ainda não está pronta. Recarregue a página e tente novamente.','error');return;}
+    const senhaNuvem=prompt('Confirme a senha do GERENTE da nuvem. A senha de conexão comum não autoriza recuperar contas.');
+    if(!senhaNuvem)return;
+    const botao=document.getElementById('digi-recuperar-senha-v813');
+    if(botao){botao.disabled=true;botao.textContent='Conferindo acesso...';}
+    try{
+      const prova=await api('/v1/check-pass',{method:'POST',body:JSON.stringify({cnpj,senha:senhaNuvem})});
+      if(!prova||prova.ok!==true||prova.administrador!==true){
+        msg('A senha do gerente não foi confirmada. A recuperação exige a senha do gerente, que cria aparelhos Administradores.','error');return;
+      }
+      const nova=String(prompt('Cadastre a senha do usuário. A senha antiga não foi guardada pela nuvem; você pode definir a mesma novamente.')||'').trim();
+      if(nova.length<4){msg('A senha precisa ter pelo menos 4 caracteres.','error');return;}
+      const repetir=String(prompt('Digite a senha do usuário novamente para confirmar:')||'').trim();
+      if(nova!==repetir){msg('As senhas não são iguais. Nenhuma alteração foi feita.','error');return;}
+      if(typeof window.senhaNovaSalt!=='function'||typeof window.senhaHash!=='function'){
+        msg('O verificador seguro de senha não carregou. Recarregue o sistema e tente novamente.','error');return;
+      }
+      const salt=window.senhaNovaSalt();
+      const hash=await window.senhaHash(nova,salt);
+      if(!hash){msg('Não foi possível criar o verificador seguro. Tente em um navegador atualizado.','error');return;}
+      user.senhaSalt=salt;
+      user.senhaHash=hash;
+      delete user.senha;
+      user.senhaPadrao=false;
+      if(typeof saveDB==='function')saveDB();
+      else if(typeof window.saveDB==='function')window.saveDB();
+      const sync=window.DIGICOPY_CLOUD_SYNC;
+      if(sync&&typeof sync.tick==='function'){
+        const enviado=await sync.tick('recuperacao-senha');
+        if(enviado===false)msg('Senha cadastrada neste aparelho. A nuvem ainda não confirmou a sincronização; mantenha a página aberta e verifique a conexão.','error');
+        else msg('Senha cadastrada com segurança. Agora entre com esse usuário e senha.','success');
+      }else msg('Senha cadastrada neste aparelho. A sincronização da nuvem ainda não está disponível.','error');
+    }catch(e){
+      msg(String(e&&e.message||'Não foi possível conferir a nuvem agora. Tente novamente.'),'error');
+    }finally{
+      if(botao){botao.disabled=false;botao.textContent='Recuperar acesso';}
+    }
+  }
+  function instalar(){
+    const zona=document.querySelector('#login-step-user .space-y-4');
+    if(!zona||document.getElementById('digi-recuperar-senha-v813'))return;
+    const b=document.createElement('button');
+    b.id='digi-recuperar-senha-v813';b.type='button';b.textContent='Recuperar acesso';
+    b.style.cssText='width:100%;min-height:40px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;font-weight:700;font-size:12px;cursor:pointer';
+    b.addEventListener('click',recuperar);
+    zona.appendChild(b);
+  }
+  instalar();
+  let tent=0;
+  const timer=setInterval(function(){instalar();if(++tent>=40||document.getElementById('digi-recuperar-senha-v813'))clearInterval(timer);},250);
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v813_login_recuperacao_patch.js", e); }
+;
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 219;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 220;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 219 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 220 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

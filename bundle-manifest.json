@@ -217,5 +217,6 @@
   "patch_notes_local.js",
   "ajustes_v52266_versao_nova_banner_patch.js",
   "layout_final_v8000.js",
-  "modulos/security_hardening_v8000.js"
+  "modulos/security_hardening_v8000.js",
+  "ajustes_v813_login_recuperacao_patch.js"
 ]
