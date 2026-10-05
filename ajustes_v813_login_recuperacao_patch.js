@@ -30,7 +30,13 @@
       msg('Os dados da empresa ainda estão carregando. Aguarde alguns segundos e tente de novo.','error');return;
     }
     const campo=document.getElementById('login-user');
-    const login=String((campo&&campo.value)||prompt('Digite o login da conta que deseja reativar:')||'').trim();
+    let loginDigitado=campo&&campo.value||'';
+    if(!String(loginDigitado).trim()){
+      if(typeof window.pedirTextoSistema!=='function'){msg('O campo de login ainda está carregando. Recarregue a página e tente novamente.','error');return;}
+      loginDigitado=await window.pedirTextoSistema('Digite o login da conta que deseja reativar:',{mascara:false,titulo:'Login da conta'});
+      if(loginDigitado===null)return;
+    }
+    const login=String(loginDigitado||'').trim();
     if(!login){msg('Informe o login da conta.','error');return;}
     const user=b.usuarios.find(u=>u&&u.ativo&&
       (fold(u.login)===fold(login)||fold(u.nome)===fold(login)||fold(u.nome).split(/\s+/)[0]===fold(login)));
