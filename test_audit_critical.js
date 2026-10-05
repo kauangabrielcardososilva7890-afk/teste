@@ -11,6 +11,7 @@ const main = fs.readFileSync('main.js','utf8');
 const sync = fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
 const workflow = fs.readFileSync('.github/workflows/publicar-motor.yml','utf8');
 const workflowCopy = fs.readFileSync('deploy_github_actions/publicar-motor.yml','utf8');
+const nfe = fs.readFileSync('nf_transmissao_patch.js','utf8');
 
 assert.strictEqual(lock.version, pkg.version, 'package-lock deve acompanhar package.json');
 assert.strictEqual(lock.packages[''].version, pkg.version, 'entrada raiz do lock deve acompanhar package.json');
@@ -28,6 +29,11 @@ assert(main.includes('hostsPermitidos.has(host)'), 'permissões webview devem us
 assert(sync.includes("entity==='usuarios'||entity==='empresas'"), 'usuários e empresas devem passar pelo sanitizador');
 assert(sync.includes('mutacaoSeguraParaEnvio') && /mutation\.entity,mutation\.data/.test(sync), 'todo payload deve ser sanitizado pela entidade');
 assert(/wrangler@4\.123\.0/.test(workflow), 'workflow deve fixar versão do Wrangler');
+assert(/node-version: '22'/.test(workflow), 'workflow ativo deve usar Node.js 22');
+assert.strictEqual(workflow, workflowCopy, 'cópia do workflow deve permanecer alinhada ao arquivo ativo');
+assert(nfe.includes("https://hnfe.fazenda.mg.gov.br/nfe2/services/"), 'homologação NF-e deve usar o endpoint oficial de MG');
+assert(!nfe.includes("https://hnfe.nfe.fazenda.mg.gov.br"), 'endpoint antigo de homologação não pode voltar');
+assert(main.includes('(hnfe|nfe|hnfce|nfce)'), 'IPC do .exe deve permitir os hosts oficiais de MG');
 
 const py = `import sqlite3, sys\nc=sqlite3.connect(':memory:')\nfor p in sys.argv[1:]:\n s=open(p, encoding='utf8').read()\n c.executescript(s)\nprint(c.execute("select value from system_meta where key='schema_version'").fetchone()[0])`;
 const out = cp.execFileSync('python3',['-c',py,'cloudflare-worker/migrations/0001_initial.sql','cloudflare-worker/migrations/0002_device_recovery.sql','cloudflare-worker/migrations/0005_soft_delete_aparelhos.sql'],{encoding:'utf8'}).trim();

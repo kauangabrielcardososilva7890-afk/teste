@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 219 | sha256: 47e1e1a4d7b74cfc
+ * scripts: 219 | sha256: 3844754464eca3a1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -52407,7 +52407,7 @@ const NFX_WS = {
     nfce65: 'https://nfce.fazenda.mg.gov.br/nfce/services/'
   },
   homologacao: {
-    nfe55:  'https://hnfe.nfe.fazenda.mg.gov.br/nfe2/services/',
+    nfe55:  'https://hnfe.fazenda.mg.gov.br/nfe2/services/',
     nfce65: 'https://hnfce.fazenda.mg.gov.br/nfce/services/'
   }
 };

@@ -636,7 +636,7 @@ function registerNfeCertIPC(){
       const envelope = String((payload && payload.envelope) || '');
       const soapAction = String((payload && payload.soapAction) || '');
       const senhaCert = String((payload && payload.senhaCert) || '');
-      if(!/^https:\/\/(hnfe\.nfe|nfe|hnfce|nfce)\.fazenda\.mg\.gov\.br\/(nfe2|nfce)\/services\//.test(url)){
+      if(!/^https:\/\/(hnfe|nfe|hnfce|nfce)\.fazenda\.mg\.gov\.br\/(nfe2|nfce)\/services\//.test(url)){
         return { ok:false, error:'URL fora da lista branca (só SEFAZ-MG NF-e/NFC-e).' };
       }
       if(!envelope) return { ok:false, error:'Envelope vazio.' };

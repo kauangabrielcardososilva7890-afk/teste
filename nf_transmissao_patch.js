@@ -28,7 +28,7 @@ const NFX_WS = {
     nfce65: 'https://nfce.fazenda.mg.gov.br/nfce/services/'
   },
   homologacao: {
-    nfe55:  'https://hnfe.nfe.fazenda.mg.gov.br/nfe2/services/',
+    nfe55:  'https://hnfe.fazenda.mg.gov.br/nfe2/services/',
     nfce65: 'https://hnfce.fazenda.mg.gov.br/nfce/services/'
   }
 };
