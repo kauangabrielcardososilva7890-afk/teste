@@ -12,6 +12,8 @@ const sync = fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
 const workflow = fs.readFileSync('.github/workflows/publicar-motor.yml','utf8');
 const workflowCopy = fs.readFileSync('deploy_github_actions/publicar-motor.yml','utf8');
 const nfe = fs.readFileSync('nf_transmissao_patch.js','utf8');
+const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js','utf8');
+const bundle = fs.readFileSync('app.bundle.js','utf8');
 
 assert.strictEqual(lock.version, pkg.version, 'package-lock deve acompanhar package.json');
 assert.strictEqual(lock.packages[''].version, pkg.version, 'entrada raiz do lock deve acompanhar package.json');
@@ -34,6 +36,10 @@ assert.strictEqual(workflow, workflowCopy, 'cópia do workflow deve permanecer a
 assert(nfe.includes("https://hnfe.fazenda.mg.gov.br/nfe2/services/"), 'homologação NF-e deve usar o endpoint oficial de MG');
 assert(!nfe.includes("https://hnfe.nfe.fazenda.mg.gov.br"), 'endpoint antigo de homologação não pode voltar');
 assert(main.includes('(hnfe|nfe|hnfce|nfce)'), 'IPC do .exe deve permitir os hosts oficiais de MG');
+assert(bundle.includes("https://hnfe.fazenda.mg.gov.br/nfe2/services/"), 'bundle publicado deve usar a URL oficial de homologação');
+assert(!bundle.includes("https://hnfe.nfe.fazenda.mg.gov.br"), 'bundle não pode manter host antigo de homologação');
+assert(motor.includes('contagensRelatosPublicas'), 'artefato manual do Worker deve filtrar contagens públicas');
+assert(!motor.includes('ultimo: reg.ultimo || {}'), 'artefato manual não pode expor últimos relatos');
 
 const py = `import sqlite3, sys\nc=sqlite3.connect(':memory:')\nfor p in sys.argv[1:]:\n s=open(p, encoding='utf8').read()\n c.executescript(s)\nprint(c.execute("select value from system_meta where key='schema_version'").fetchone()[0])`;
 const out = cp.execFileSync('python3',['-c',py,'cloudflare-worker/migrations/0001_initial.sql','cloudflare-worker/migrations/0002_device_recovery.sql','cloudflare-worker/migrations/0005_soft_delete_aparelhos.sql'],{encoding:'utf8'}).trim();

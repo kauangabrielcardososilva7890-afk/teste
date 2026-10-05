@@ -1,8 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════
  * MOTOR DA NUVEM — DIGICOPY Cloud API (arquivo pronto para COLAR e publicar)
  *
- * O QUE É: este é o MESMO código que o comando `wrangler deploy` publica —
- * gerado com `wrangler deploy --dry-run` (só compila, NÃO publica nada).
+ * O QUE É: código standalone do Worker, compatível com o deploy do Wrangler.
+ * Nesta revisão, os filtros de relatos foram alinhados manualmente ao src/index.js;
+ * regenere com `npm run motor` antes de publicar por este caminho alternativo.
  * Está num arquivo só, sem precisar de Node, wrangler, token nem senha.
  *
  * COMO PUBLICAR COLANDO (plano B — o painel da Cloudflare):
@@ -20,7 +21,7 @@
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
  * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 8.1.0   (igual ao src/index.js)
- * GERADO EM: 2026-10-04 15:02 UTC
+ * ALINHADO MANUALMENTE: 2026-10-05
  * sha256 do código (sem este cabeçalho):
  *   42cef37941dc68ce3980ff5f690d90a7253e9bfea5f9b6241215cb0d07fdf21e
  *
