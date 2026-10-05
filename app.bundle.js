@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 220 | sha256: 0b6862c213076dc4
+ * scripts: 220 | sha256: 3b0cdeaedfd5fe5f
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -59010,10 +59010,9 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("modulos/security_hardening_v8000.js", e); }
 ;
 
-
 /* ===== ajustes_v813_login_recuperacao_patch.js ===== */
 try{
-// v8.1.3 — recuperação de acesso quando a sincronização antiga removeu o verificador.
+// v8.1.4 — recuperação de acesso quando a sincronização antiga removeu o verificador.
 // A senha antiga não pode ser reconstruída: o responsável pela nuvem confirma a
 // identidade e cadastra novamente a senha (pode escolher a mesma). Senha em texto
 // nunca vai para a nuvem; somente PBKDF2 + salt, necessários ao login nos outros PCs.
@@ -59044,8 +59043,10 @@ try{
       (fold(u.login)===fold(login)||fold(u.nome)===fold(login)||fold(u.nome).split(/\s+/)[0]===fold(login)));
     if(!user){msg('Esse usuário não está na base sincronizada. Confira o login ou a conexão da nuvem.','error');return;}
     const emp=b.empresas.find(e=>e&&e.id===user.empresaId)||b.empresas.find(e=>e&&e.id);
-    const cnpj=digitos((emp&&emp.cnpj)||'');
-    if(cnpj.length!==14){msg('O CNPJ da empresa não foi carregado. Reconecte este computador à nuvem.','error');return;}
+    const aparelho=window.DIGICOPY_CLOUD&&typeof window.DIGICOPY_CLOUD.deviceInfo==='function'?window.DIGICOPY_CLOUD.deviceInfo():null;
+    const cnpj=digitos((emp&&emp.cnpj)||(aparelho&&aparelho.cnpj)||'');
+    if(cnpj.length!==14){msg('O CNPJ não consta no cadastro da empresa nem no aparelho conectado à nuvem. Reconecte este computador à nuvem.','error');return;}
+    if(emp&&!digitos(emp.cnpj)){emp.cnpj=cnpj;emp.cnpjDigits=cnpj;}
     const api=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;
     if(typeof api!=='function'){msg('A conexão da nuvem ainda não está pronta. Recarregue a página e tente novamente.','error');return;}
     const senhaNuvem=prompt('Confirme a senha do GERENTE da nuvem. A senha de conexão comum não autoriza recuperar contas.');
@@ -59101,6 +59102,7 @@ try{
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v813_login_recuperacao_patch.js", e); }
 ;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
