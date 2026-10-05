@@ -1,4 +1,4 @@
-// v8.1.4 — recuperação de acesso quando a sincronização antiga removeu o verificador.
+// v8.1.5 — recuperação de acesso quando a sincronização antiga removeu o verificador.
 // A senha antiga não pode ser reconstruída: o responsável pela nuvem confirma a
 // identidade e cadastra novamente a senha (pode escolher a mesma). Senha em texto
 // nunca vai para a nuvem; somente PBKDF2 + salt, necessários ao login nos outros PCs.
@@ -13,6 +13,13 @@
   }
   function digitos(v){return String(v||'').replace(/\D/g,'');}
   function fold(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+  async function pedirSenhaSegura(texto,titulo){
+    if(typeof window.pedirTextoSistema!=='function'){
+      msg('O campo seguro de senha ainda está carregando. Recarregue a página e tente novamente.','error');
+      return null;
+    }
+    return await window.pedirTextoSistema(texto,{mascara:true,titulo:titulo||'Confirme a senha'});
+  }
   function msg(texto,tipo){
     try{if(typeof toast==='function'){toast(texto,tipo||'info');return;}}catch(e){}
     try{alert(texto);}catch(e){}
@@ -35,8 +42,8 @@
     if(emp&&!digitos(emp.cnpj)){emp.cnpj=cnpj;emp.cnpjDigits=cnpj;}
     const api=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;
     if(typeof api!=='function'){msg('A conexão da nuvem ainda não está pronta. Recarregue a página e tente novamente.','error');return;}
-    const senhaNuvem=prompt('Confirme a senha do GERENTE da nuvem. A senha de conexão comum não autoriza recuperar contas.');
-    if(!senhaNuvem)return;
+    const senhaNuvem=await pedirSenhaSegura('Confirme a senha do GERENTE da nuvem. A senha de conexão comum não autoriza recuperar contas.','Confirmar gerente');
+    if(senhaNuvem===null)return;
     const botao=document.getElementById('digi-recuperar-senha-v813');
     if(botao){botao.disabled=true;botao.textContent='Conferindo acesso...';}
     try{
@@ -44,9 +51,13 @@
       if(!prova||prova.ok!==true||prova.administrador!==true){
         msg('A senha do gerente não foi confirmada. A recuperação exige a senha do gerente, que cria aparelhos Administradores.','error');return;
       }
-      const nova=String(prompt('Cadastre a senha do usuário. A senha antiga não foi guardada pela nuvem; você pode definir a mesma novamente.')||'').trim();
+      const novaDigitada=await pedirSenhaSegura('Cadastre a senha do usuário. A senha antiga não foi guardada pela nuvem; você pode definir a mesma novamente.','Nova senha da conta');
+      if(novaDigitada===null)return;
+      const nova=String(novaDigitada||'').trim();
       if(nova.length<4){msg('A senha precisa ter pelo menos 4 caracteres.','error');return;}
-      const repetir=String(prompt('Digite a senha do usuário novamente para confirmar:')||'').trim();
+      const repetida=await pedirSenhaSegura('Digite a senha do usuário novamente para confirmar:','Confirmar nova senha');
+      if(repetida===null)return;
+      const repetir=String(repetida||'').trim();
       if(nova!==repetir){msg('As senhas não são iguais. Nenhuma alteração foi feita.','error');return;}
       if(typeof window.senhaNovaSalt!=='function'||typeof window.senhaHash!=='function'){
         msg('O verificador seguro de senha não carregou. Recarregue o sistema e tente novamente.','error');return;
