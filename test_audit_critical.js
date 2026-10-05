@@ -17,6 +17,13 @@ const bundle = fs.readFileSync('app.bundle.js','utf8');
 
 assert.strictEqual(lock.version, pkg.version, 'package-lock deve acompanhar package.json');
 assert.strictEqual(lock.packages[''].version, pkg.version, 'entrada raiz do lock deve acompanhar package.json');
+const appHtml = fs.readFileSync('index.html','utf8');
+const mobileHtml = fs.readFileSync('mobile/www/index.html','utf8');
+const workerSource = fs.readFileSync('cloudflare-worker/src/index.js','utf8');
+const workerManual = fs.readFileSync('cloudflare-worker/motor_para_colar.js','utf8');
+assert(appHtml.includes("window.DIGICOPY_APP_VERSION = '"+pkg.version+"';"), 'index deve acompanhar a versão do pacote');
+assert(mobileHtml.includes("window.DIGICOPY_APP_VERSION = '"+pkg.version+"';"), 'site mobile deve acompanhar a versão do pacote');
+assert(workerSource.includes("WORKER_VERSION = '8.1.1'") && workerManual.includes('Worker 8.1.1'), 'versão do Worker deve bater entre fonte e artefato manual');
 assert(pkg.scripts['build:win'].indexOf('npm run bundle') < pkg.scripts['build:win'].indexOf('node sync_build.js'), 'build deve gerar bundle antes de sincronizar');
 assert(pkg.build.files.includes('snmp_printer.js'), 'SNMP precisa entrar no empacotamento do Electron');
 assert(m1.includes('CREATE TABLE IF NOT EXISTS app_releases'), 'banco novo deve criar app_releases antes da 0006');

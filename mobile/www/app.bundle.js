@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 219 | sha256: f63d6a3010693ed1
+ * scripts: 219 | sha256: 3844754464eca3a1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2311,7 +2311,13 @@ async function fbExtractAll(){
     tables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','FORMA_PAGAMENTO','EMPRESA','FORNECEDORES','FUNCIONARIOS'];
   }
 
-  if(!confirm(`Extrair dados de ${tables.length} tabelas e importar para o ERP?\n\nTabelas: ${tables.join(', ')}`)) return;
+  const confirmacao = `Extrair dados de ${tables.length} tabelas e importar para o ERP?\n\nTabelas: ${tables.join(', ')}`;
+  if(typeof window.confirmSistema !== 'function'){
+    fbSetStatus('A confirmação do sistema não está disponível. Abra a tela novamente e tente de novo.','error');
+    return;
+  }
+  const confirmado = await window.confirmSistema(confirmacao, 'Importar banco antigo');
+  if(confirmado !== true) return;
 
   fbSetStatus(`Extraindo ${tables.length} tabelas... Isso pode demorar.`,'loading');
 
@@ -51246,8 +51252,18 @@ if(typeof window.renderLeituras==='function' && !window.renderLeituras.__v5250lo
 }
 if(typeof window.openModal==='function' && !window.openModal.__v5250lo){
   var oldOM=window.openModal;
-  window.openModal=function(tipo){
-    if(tipo==='leitura'){ aviso('Lançamento de leitura direto por impressora foi aposentado. Use o contrato do cliente → aba Leituras.','Leituras'); if(typeof navigateTo==='function') navigateTo('leituras'); return; }
+  window.openModal=function(tipo,id){
+    if(tipo==='leitura'){
+      var leituraLegada=(id&&typeof db!=='undefined')?leituraPorId(db,id):null;
+      if(leituraLegada && typeof window.abrirLeituraContratoDetalhe==='function'){
+        if(typeof navigateTo==='function') navigateTo('leituras');
+        setTimeout(function(){ try{ window.abrirLeituraContratoDetalhe(leituraLegada.id); }catch(e){} },0);
+        return;
+      }
+      aviso('Lançamento de leitura direto por impressora foi aposentado. Use o contrato do cliente → aba Leituras.','Leituras');
+      if(typeof navigateTo==='function') navigateTo('leituras');
+      return;
+    }
     return oldOM.apply(this,arguments);
   };
   window.openModal.__v5250lo=true;
@@ -52391,7 +52407,7 @@ const NFX_WS = {
     nfce65: 'https://nfce.fazenda.mg.gov.br/nfce/services/'
   },
   homologacao: {
-    nfe55:  'https://hnfe.nfe.fazenda.mg.gov.br/nfe2/services/',
+    nfe55:  'https://hnfe.fazenda.mg.gov.br/nfe2/services/',
     nfce65: 'https://hnfce.fazenda.mg.gov.br/nfce/services/'
   }
 };

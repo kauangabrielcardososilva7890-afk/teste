@@ -20,10 +20,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 8.1.0   (igual ao src/index.js)
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 8.1.1   (igual ao src/index.js)
  * ALINHADO MANUALMENTE: 2026-10-05
  * sha256 do código (sem este cabeçalho):
- *   42cef37941dc68ce3980ff5f690d90a7253e9bfea5f9b6241215cb0d07fdf21e
+ *   77fb048ce73ea021edfa6fb289bacc1d542c2a2065ddcead873cada5e1a2399f
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -36,7 +36,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/index.js
 var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "8.1.0";
+var WORKER_VERSION = "8.1.1";
 var MAX_MUTATIONS = 100;
 var AUTH_RATE_POLICIES = Object.freeze({
   "/v1/check-pass": { windowMs: 6e4, maxAttempts: 8, maxFailures: 5, baseBlockMs: 6e4, maxBlockMs: 15 * 6e4 },
