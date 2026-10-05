@@ -100,6 +100,9 @@ assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS backups_chunks (id TEXT NOT
 assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS uso_diario (dia TEXT PRIMARY KEY'), 'ddl uso_diario em uma linha só (v5.24.3)');
 assert.ok(!/CREATE TABLE IF NOT EXISTS \w+ \(\s*\n/.test(__src), 'nenhum CREATE TABLE multilinha restante');
 console.log('  ✔ DDL de backups/medidor em uma linha (v5.24.3): D1 .exec() quebra por linha');
+assert.ok(__src.includes('codigoRelatoTecnico'), 'relatos de saúde normalizam código técnico');
+assert.ok(/saude = \{ dia: \(reg\.hoje && reg\.hoje\.dia\) \|\| hojeUTC\(\),\s*contagem:/.test(__src), 'health público não devolve texto livre de relatos');
+console.log('  ✔ /health não expõe texto livre de relatos de saúde');
 
 // 00:30 UTC = 21:30 do DIA ANTERIOR em SP — não pode pular dia
 const madrugada = new Date('2026-09-09T00:30:00Z');

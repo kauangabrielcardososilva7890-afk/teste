@@ -2059,7 +2059,13 @@ async function fbExtractAll(){
     tables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_RECEBER','FORMA_PAGAMENTO','EMPRESA','FORNECEDORES','FUNCIONARIOS'];
   }
 
-  if(!confirm(`Extrair dados de ${tables.length} tabelas e importar para o ERP?\n\nTabelas: ${tables.join(', ')}`)) return;
+  const confirmacao = `Extrair dados de ${tables.length} tabelas e importar para o ERP?\n\nTabelas: ${tables.join(', ')}`;
+  if(typeof window.confirmSistema !== 'function'){
+    fbSetStatus('A confirmação do sistema não está disponível. Abra a tela novamente e tente de novo.','error');
+    return;
+  }
+  const confirmado = await window.confirmSistema(confirmacao, 'Importar banco antigo');
+  if(confirmado !== true) return;
 
   fbSetStatus(`Extraindo ${tables.length} tabelas... Isso pode demorar.`,'loading');
 

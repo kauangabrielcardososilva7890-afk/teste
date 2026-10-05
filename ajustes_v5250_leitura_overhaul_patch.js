@@ -325,8 +325,18 @@ if(typeof window.renderLeituras==='function' && !window.renderLeituras.__v5250lo
 }
 if(typeof window.openModal==='function' && !window.openModal.__v5250lo){
   var oldOM=window.openModal;
-  window.openModal=function(tipo){
-    if(tipo==='leitura'){ aviso('Lançamento de leitura direto por impressora foi aposentado. Use o contrato do cliente → aba Leituras.','Leituras'); if(typeof navigateTo==='function') navigateTo('leituras'); return; }
+  window.openModal=function(tipo,id){
+    if(tipo==='leitura'){
+      var leituraLegada=(id&&typeof db!=='undefined')?leituraPorId(db,id):null;
+      if(leituraLegada && typeof window.abrirLeituraContratoDetalhe==='function'){
+        if(typeof navigateTo==='function') navigateTo('leituras');
+        setTimeout(function(){ try{ window.abrirLeituraContratoDetalhe(leituraLegada.id); }catch(e){} },0);
+        return;
+      }
+      aviso('Lançamento de leitura direto por impressora foi aposentado. Use o contrato do cliente → aba Leituras.','Leituras');
+      if(typeof navigateTo==='function') navigateTo('leituras');
+      return;
+    }
     return oldOM.apply(this,arguments);
   };
   window.openModal.__v5250lo=true;

@@ -343,7 +343,8 @@ async function handleHealth(env) {
   }
   // v5.27.0 — o que os APPS relataram (técnico, sem dado de negócio): é o que
   // permite à manutenção saber de fora o que a máquina do dono está enfrentando.
-  let saude = { dia: hojeUTC(), contagem: {}, ultimo: {} };
+  // O texto do relato nunca é público: /health expõe apenas contagens técnicas.
+  let saude = { dia: hojeUTC(), contagem: {} };
   if (env.DB) {
     try {
       const linhaSaude = await env.DB.prepare(
@@ -352,8 +353,7 @@ async function handleHealth(env) {
       if (linhaSaude && linhaSaude.value) {
         const reg = JSON.parse(linhaSaude.value);
         saude = { dia: (reg.hoje && reg.hoje.dia) || hojeUTC(),
-                  contagem: (reg.hoje && reg.hoje.contagem) || {},
-                  ultimo: reg.ultimo || {} };
+                  contagem: (reg.hoje && reg.hoje.contagem) || {} };
       }
     } catch (_s) { /* sem relatos ainda */ }
   }
@@ -1545,11 +1545,17 @@ async function usoHoje(env){
 // Custo: só quando algo dá errado, no máximo 1 do mesmo tipo por minuto, e a
 // resposta disso é o campo `saude` do /health (conferência de fora, sem token).
 const RELATOS_MAX = 12;
+function codigoRelatoTecnico(codigo) {
+  const valor = String(codigo || '').trim();
+  // Os clientes antigos enviam mensagens livres (às vezes com empresa, fila,
+  // horário ou texto de erro). Só persiste um rótulo técnico curto e estável.
+  return /^[a-z][a-z0-9_.:-]{0,39}$/i.test(valor) ? valor : '';
+}
 async function handleRelato(request, env, ctx) {
   const device = await authenticate(request, env);
   const body = await readBody(request);
   const tipo = String((body && body.tipo) || '').slice(0, 40);
-  const codigo = String((body && body.codigo) || '').slice(0, 140);
+  const codigo = codigoRelatoTecnico(body && body.codigo);
   const versao = String((body && body.versao) || '').slice(0, 20);
   if (!tipo) throw new ApiError(400, 'RELATO_SEM_TIPO', 'Informe o tipo do relato.');
   const apelido = device && device.id ? (await sha256(String(device.id))).slice(0, 8) : '';
