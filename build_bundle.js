@@ -70,7 +70,8 @@ const PRELUDIO = `
 
 let isolados = 0, globais = [];
 const partes = manifest.map(file => {
-  const src = fs.readFileSync(file, 'utf8');
+  // Normalize source line endings so Windows and Linux produce the same bundle.
+  const src = fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n');
   if (declaraNoEscopoGlobal(src, file)) {
     globais.push(file);
     return `\n/* ===== ${file} (escopo global) ===== */\n${src}\n;\n`;
