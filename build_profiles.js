@@ -27,11 +27,6 @@ function gradleBin() { return process.platform === 'win32' ? 'gradlew.bat' : './
 function assertFile(file, label) {
   if (!fs.existsSync(file) || fs.statSync(file).size < 1000) throw new Error(`${label} não foi gerado: ${file}`);
 }
-function cleanGeneratedReports() {
-  for (const dir of ['e2e/playwright-report', 'e2e/test-results']) {
-    fs.rmSync(path.join(ROOT, dir), { recursive: true, force: true });
-  }
-}
 function buildExe(spec) {
   node('sync_build.js');
   node('build_bundle.js');
@@ -44,8 +39,10 @@ function buildExe(spec) {
 function buildApk(spec) {
   node('sync-www.js', ['--profile', spec.profile], { cwd: path.join(ROOT, 'mobile') });
   run(npxBin(), ['cap', 'copy', 'android'], { cwd: path.join(ROOT, 'mobile') });
-  run(gradleBin(), ['assembleRelease'], { cwd: path.join(ROOT, 'mobile', 'android') });
-  const source = path.join(ROOT, 'mobile', 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
+  // Debug APKs are signed automatically; this repo does not configure a release keystore.
+  // Do not use these test builds for Play Store distribution.
+  run(gradleBin(), ['assembleDebug'], { cwd: path.join(ROOT, 'mobile', 'android') });
+  const source = path.join(ROOT, 'mobile', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
   assertFile(source, 'APK');
   const destDir = path.join(ROOT, spec.output);
   fs.mkdirSync(destDir, { recursive: true });
@@ -68,7 +65,6 @@ function main() {
     console.error('Uso: node build_profiles.js <all|particularExe|particularApk|commercialExe|commercialApk|commercialLocalExe|commercialLocalApk|managerExe>');
     process.exit(2);
   }
-  cleanGeneratedReports();
   const buildOne = (name) => {
     const spec = PROFILES[name];
     console.log(`\n===== ${name} =====`);

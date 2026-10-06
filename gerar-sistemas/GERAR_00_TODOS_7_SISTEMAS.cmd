@@ -1,35 +1,53 @@
 @echo off
-setlocal EnableExtensions
+setlocal
 chcp 65001 >nul
 cd /d "%~dp0.."
-title DIGICOPY v8.0.0 - Gerar TODOS os 7 sistemas
+title DIGICOPY - Gerar os 7 sistemas
 
 echo ================================================================
-echo  DIGICOPY v8.0.0 - GERAR OS 7 SISTEMAS
+echo  DIGICOPY - GERAR OS 7 SISTEMAS
 echo ================================================================
-echo  Este processo gera, em sequencia, os 7 produtos:
 echo  01 Particular Nuvem EXE
-echo  02 Particular Nuvem APK
+echo  02 Particular Nuvem APK de teste
 echo  03 Comercial Nuvem EXE
-echo  04 Comercial Nuvem APK
+echo  04 Comercial Nuvem APK de teste
 echo  05 Comercial Local sem Nuvem EXE
-echo  06 Comercial Local sem Nuvem APK
+echo  06 Comercial Local sem Nuvem APK de teste
 echo  07 Gerente EXE
 echo ================================================================
 echo.
+
+where node >nul 2>nul
+if errorlevel 1 goto :node_ausente
+if not exist build_profiles.js goto :script_ausente
+
 node build_profiles.js all
-if errorlevel 1 (
-  echo.
-  echo FALHA: um dos sete produtos nao foi gerado.
-  echo Leia a etapa indicada acima e corrija o requisito informado.
-  goto fim
-)
+set "RC=%ERRORLEVEL%"
+if not "%RC%"=="0" goto :falha
+
 echo.
 echo ================================================================
 echo SUCESSO: OS 7 PRODUTOS FORAM GERADOS.
-echo As saidas ficam separadas nas pastas dist correspondentes.
+echo Confira as pastas de saida descritas em gerar-sistemas\README.md.
 echo ================================================================
+goto :fim
+
+:node_ausente
+set "RC=2"
+echo FALHA: Node.js nao foi encontrado no PATH.
+goto :fim
+
+:script_ausente
+set "RC=2"
+echo FALHA: build_profiles.js nao foi encontrado na pasta do sistema.
+goto :fim
+
+:falha
+echo.
+echo FALHA: um dos sete produtos nao foi gerado. Codigo: %RC%
+echo Leia a etapa indicada acima e corrija o requisito informado.
+
 :fim
 echo.
 pause
-endlocal
+endlocal & exit /b %RC%
