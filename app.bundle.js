@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 220 | sha256: 76cd57bb755857d0
+ * scripts: 220 | sha256: 0d8f4780c5174f42
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -845,9 +845,13 @@ function navigateTo(view){
 }
 function toggleSidebar(forceClose=false){
   const sb=document.getElementById('sidebar'); const ov=document.getElementById('overlay');
+  if(!sb||!ov) return;
   const isClosed=sb.classList.contains('-translate-x-full');
-  if(forceClose===true||!isClosed){sb.classList.add('-translate-x-full'); ov.classList.add('hidden');}
-  else{sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden');}
+  const shouldOpen=forceClose===true?false:isClosed;
+  if(shouldOpen){sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden');}
+  else{sb.classList.add('-translate-x-full'); ov.classList.add('hidden');}
+  const opener=document.getElementById('btn-open-sidebar');
+  if(opener) opener.setAttribute('aria-expanded',String(shouldOpen));
 }
 function reporMenusDinamicos(catsOrdem){
   const grupos=Array.isArray(catsOrdem)?catsOrdem:(window.__migCategorias||[]);

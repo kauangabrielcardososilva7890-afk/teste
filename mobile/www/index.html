@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a1e8a">
 <script>
-window.DIGICOPY_APP_VERSION = '8.1.8';
+window.DIGICOPY_APP_VERSION = '8.1.9';
 try{window.DIGICOPY_BUILD_PROFILE=new URLSearchParams(location.search).get('profile')||window.DIGICOPY_BUILD_PROFILE||'particular-cloud';}catch(e){window.DIGICOPY_BUILD_PROFILE=window.DIGICOPY_BUILD_PROFILE||'particular-cloud';}
 
 // v6.0.3 — tranca do menu Backup: roda antes de qualquer bundle; por CAPTURA
@@ -53,7 +53,7 @@ try{if(localStorage.getItem('digicopy_ui_modo_escuro_dispositivo_v1')==='1')docu
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Digicopy">
-<title>Sistema Digicopy v8.1.8</title>
+<title>Sistema Digicopy v8.1.9</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./logo_2.png">
 <link rel="stylesheet" href="./assets/vendor/tailwind.min.css?h=9d33f8b8a0328659">
@@ -160,6 +160,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
   .app-titlebar>div:first-child{height:60px!important;background:#0b3d7d!important;justify-content:flex-start!important;padding:0 24px!important}
   .app-titlebar img{height:34px!important;width:auto!important}
   #app-title-version{font-size:13px!important;font-weight:700!important;color:#fff!important;margin-left:8px!important}
+  #btn-open-sidebar{display:none!important}
   #page-title{display:none!important}
   .app-titlebar .absolute.right-2{right:24px!important}
   .app-titlebar .absolute.right-2 #current-date{color:rgba(255,255,255,.75)!important}
@@ -174,6 +175,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
   #sidebar{background:#f7f9fd!important;color:#173d70!important}
   #sidebar nav button{color:#315273!important}
   .app-titlebar{display:block!important;background:#0b3d7d!important}
+  #btn-open-sidebar{display:grid!important}
   #shell-sidebar-links{display:none!important}
   .modern-topnav{display:block!important}
 }
@@ -290,7 +292,7 @@ html,body{max-width:100%;overflow-x:hidden}
   <main class="flex-1 min-w-0 flex flex-col">
     <header class="app-titlebar sticky top-0 z-30">
   <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
-    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?h=9d33f8b8a0328659" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy 1.0</span></div>
+    <div class="absolute left-2 flex items-center gap-2"><button type="button" id="btn-open-sidebar" onclick="toggleSidebar()" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false" title="Abrir menu" class="w-8 h-8 place-items-center rounded-lg bg-white/10 text-white"><i class="ph ph-list text-[18px]"></i></button><img src="./logo_2.png?h=9d33f8b8a0328659" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy 1.0</span></div>
     <span id="page-title" class="font-medium">Início</span>
     <div class="absolute right-2 flex items-center gap-2">
       <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
@@ -332,7 +334,7 @@ html,body{max-width:100%;overflow-x:hidden}
       <section id="view-usuarios" class="view hidden space-y-4"></section>
       <section id="view-auditoria" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v8.1.8</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v8.1.9</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
