@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 220 | sha256: ea18c55117adc4de
+ * scripts: 220 | sha256: 76cd57bb755857d0
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -7976,10 +7976,10 @@ try{
 /* NOTIF_PURE_START */
 // Núcleo puro e testável: o que conta como alerta.
 const NOTIF_PURE = (function(){
-  // Produtos no nível crítico: em estoque menor ou igual ao mínimo (mesma regra da tela de produtos)
+  // Produtos abaixo do mínimo, seguindo a regra usada pela tela de produtos.
   function scanEstoqueBaixo(produtos, empresaId){
     return (produtos||[])
-      .filter(p=>p && p.empresaId===empresaId && p.status!=='inativo' && Number(p.estoque||0) <= Number(p.estoqueMin||0))
+      .filter(p=>p && p.empresaId===empresaId && p.status!=='inativo' && p.status!=='excluido' && !p.estoqueInfinito && Number(p.estoque||0) < Number(p.estoqueMin||0))
       .map(p=>({ ref:p.id, sku:p.sku||'', nome:p.nome||'', estoque:Number(p.estoque||0), min:Number(p.estoqueMin||0) }))
       .sort((a,b)=> (a.estoque-a.min) - (b.estoque-b.min));
   }
@@ -20480,7 +20480,7 @@ window.renderClientes=function(){
   if(status==='ativos') list=list.filter(c=>c.status!=='inativo'&&c.status!=='oculto');
   else if(status==='inadimplente') list=list.filter(c=>c.status==='inadimplente');
   else if(status==='ocultos') list=list.filter(c=>c.status==='inativo'||c.status==='oculto');
-  else if(status==='sem_telefone') list=list.filter(c=>!txt(c.telefone)&&!txt(c.whatsapp));
+  else if(status==='sem_telefone') list=list.filter(c=>!String(c.telefone||'').replace(/\D/g,'')&&!String(c.whatsapp||'').replace(/\D/g,''));
   else if(status==='sem_endereco') list=list.filter(c=>!txt(c.endereco)&&!txt(c.rua));
   if(deveListar) list=filtrarClientesFinal(list,busca,campo); else list=[];
   list=ordenarLista(list,sort.col,sort.dir);

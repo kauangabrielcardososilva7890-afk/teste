@@ -132,7 +132,7 @@ window.renderClientes=function(){
   if(status==='ativos') list=list.filter(c=>c.status!=='inativo'&&c.status!=='oculto');
   else if(status==='inadimplente') list=list.filter(c=>c.status==='inadimplente');
   else if(status==='ocultos') list=list.filter(c=>c.status==='inativo'||c.status==='oculto');
-  else if(status==='sem_telefone') list=list.filter(c=>!txt(c.telefone)&&!txt(c.whatsapp));
+  else if(status==='sem_telefone') list=list.filter(c=>!String(c.telefone||'').replace(/\D/g,'')&&!String(c.whatsapp||'').replace(/\D/g,''));
   else if(status==='sem_endereco') list=list.filter(c=>!txt(c.endereco)&&!txt(c.rua));
   if(deveListar) list=filtrarClientesFinal(list,busca,campo); else list=[];
   list=ordenarLista(list,sort.col,sort.dir);
