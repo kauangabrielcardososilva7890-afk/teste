@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 220 | sha256: 5bfa7750fc9f676a
+ * scripts: 220 | sha256: cdb380290dc8d135
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1250,25 +1250,30 @@ function getFiltered(list){const sess=getSession(); if(!sess) return []; return 
 // DASHBOARD
 function renderDashboard(){
   const sess=getSession(); if(!sess) return;
+  if(typeof db==='undefined'||!db) return;
   const empFilter=id=>!id||id===sess.empresaId;
+  const lista=nome=>Array.isArray(db[nome])?db[nome]:[];
+  const atualizarTexto=(id,valor)=>{const el=document.getElementById(id);if(el)el.textContent=valor;};
+  const atualizarHtml=(id,valor)=>{const el=document.getElementById(id);if(el)el.innerHTML=valor;};
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
-  const clientesAtivos=(db.clientes||[]).filter(c=>c.empresaId===sess.empresaId && c.status!=='inativo').length;
-  const produtosAtivos=(db.produtos||[]).filter(p=>p.empresaId===sess.empresaId && p.status!=='inativo').length;
-  const kpiClientes=document.getElementById('kpi-clientes'); if(kpiClientes) kpiClientes.innerText=clientesAtivos;
-  const kpiProdutos=document.getElementById('kpi-produtos'); if(kpiProdutos) kpiProdutos.innerText=produtosAtivos;
-  document.getElementById('kpi-contratos').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length;
-  document.getElementById('kpi-parque').innerText=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length;
-  document.getElementById('kpi-os').innerText=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length;
-  document.getElementById('kpi-disponiveis').innerText=db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length;
-  const faturamentoMes=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth()).reduce((s,c)=>s+c.valor,0)+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0);
-  document.getElementById('kpi-faturamento').innerText=fmtMoney(faturamentoMes);
+  const clientes=lista('clientes'),produtos=lista('produtos'),contratos=lista('contratos'),parque=lista('parque'),os=lista('os'),equipamentos=lista('equipamentos'),contasReceber=lista('contasReceber'),vendas=lista('vendas'),orcamentos=lista('orcamentos'),leituras=lista('leituras'),logs=lista('logs');
+  const clientesAtivos=clientes.filter(c=>c.empresaId===sess.empresaId && c.status!=='inativo').length;
+  const produtosAtivos=produtos.filter(p=>p.empresaId===sess.empresaId && p.status!=='inativo').length;
+  atualizarTexto('kpi-clientes',clientesAtivos);
+  atualizarTexto('kpi-produtos',produtosAtivos);
+  atualizarTexto('kpi-contratos',contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length);
+  atualizarTexto('kpi-parque',parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length);
+  atualizarTexto('kpi-os',os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length);
+  atualizarTexto('kpi-disponiveis',equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length);
+  const faturamentoMes=contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth()).reduce((s,c)=>s+(Number(c.valor)||0),0)+contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+(Number(c.valorMensalFixo)||0),0);
+  atualizarTexto('kpi-faturamento',fmtMoney(faturamentoMes));
   // v6.1.4 (22/09/2026) — DONO: "dessa parte do dashboard do início, coloca pra
   // mostrar também o de vendas/orçamentos". Vendas do mês = notinhas do mês sem
   // as estornadas/canceladas/excluídas; Orçamentos abertos = os que ainda não
   // viraram venda nem foram recusados.
   try{
     const hoje=new Date();
-    const vendasMes=db.vendas.filter(v=>empFilter(v.empresaId)
+    const vendasMes=vendas.filter(v=>empFilter(v.empresaId)
       && !['excluido','estornado','cancelado'].includes(String(v.status||'').toLowerCase())
       && (!v.tipo || String(v.tipo).toLowerCase()!=='orcamento')
       && (function(d){ return d && !Number.isNaN(d.getTime()) && d.getMonth()===hoje.getMonth() && d.getFullYear()===hoje.getFullYear(); })(new Date(v.data||v.dataVenda||v.criadoEm)));
@@ -1276,31 +1281,30 @@ function renderDashboard(){
     if(elVendas) elVendas.innerText=vendasMes.length;
     const elVendasValor=document.getElementById('kpi-vendas-valor');
     if(elVendasValor) elVendasValor.innerText=fmtMoney(vendasMes.reduce((s2,v)=>s2+(Number(String(v.total||v.valorTotal||v.valor||0).replace(',','.'))||0),0));
-    const abertos=db.orcamentos.filter(o=>empFilter(o.empresaId)
+    const abertos=orcamentos.filter(o=>empFilter(o.empresaId)
       && !['aprovado','reprovado','cancelado','excluido','convertido','vendido'].includes(String(o.status||'').toLowerCase()));
     const elOrc=document.getElementById('kpi-orcamentos');
     if(elOrc) elOrc.innerText=abertos.length;
   }catch(e){ /* se uma lista não existir, o painel continua de pé */ }
-  document.getElementById('alert-vencendo').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && ((new Date(c.dataFim)-new Date())/(1000*60*60*24)>0 && (new Date(c.dataFim)-new Date())/(1000*60*60*24)<30)).length;
-  document.getElementById('kpi-auditoria').innerText=db.logs.filter(l=>l.empresaId===sess.empresaId && new Date(l.dataHora).toDateString()===new Date().toDateString()).length+' hoje';
+  atualizarTexto('alert-vencendo',contratos.filter(c=>c.empresaId===sess.empresaId && ((new Date(c.dataFim)-new Date())/(1000*60*60*24)>0 && (new Date(c.dataFim)-new Date())/(1000*60*60*24)<30)).length);
+  atualizarTexto('kpi-auditoria',logs.filter(l=>l.empresaId===sess.empresaId && new Date(l.dataHora).toDateString()===new Date().toDateString()).length+' hoje');
   const ctx=document.getElementById('chartFinance');
   if(ctx && ctx.offsetParent!==null){
     if(window.chartFinanceInst) window.chartFinanceInst.destroy();
-    window.chartFinanceInst=new Chart(ctx,{type:'line',data:{labels:['Fev','Mar','Abr','Mai','Jun','Jul'],datasets:[{label:'Faturamento',data:[18200,22400,19800,24500,22100,faturamentoMes],borderColor:'#0a1e8a',backgroundColor:'rgba(10,30,138,0.08)',tension:0.4,fill:true,pointRadius:0,borderWidth:2.5},{label:'Custos',data:[9200,11000,9800,11200,10500,11800],borderColor:'#cbd5e1',backgroundColor:'transparent',tension:0.4,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'},beginAtZero:true}}}});
+    if(typeof Chart==='function') window.chartFinanceInst=new Chart(ctx,{type:'line',data:{labels:['Fev','Mar','Abr','Mai','Jun','Jul'],datasets:[{label:'Faturamento',data:[18200,22400,19800,24500,22100,faturamentoMes],borderColor:'#0a1e8a',backgroundColor:'rgba(10,30,138,0.08)',tension:0.4,fill:true,pointRadius:0,borderWidth:2.5},{label:'Custos',data:[9200,11000,9800,11200,10500,11800],borderColor:'#cbd5e1',backgroundColor:'transparent',tension:0.4,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'},beginAtZero:true}}}});
   }
   const ctx2=document.getElementById('chartParque');
   if(ctx2 && ctx2.offsetParent!==null){
     if(window.chartParqueInst) window.chartParqueInst.destroy();
-    const sc={disponivel:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length, locado:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='locado').length, manutencao:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='manutencao').length, inativo:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='inativo').length};
-    window.chartParqueInst=new Chart(ctx2,{type:'doughnut',data:{labels:['Disponível','Locado','Manutenção','Inativo'],datasets:[{data:[sc.disponivel,sc.locado,sc.manutencao,sc.inativo],backgroundColor:['#10b981','#0a1e8a','#f59e0b','#94a3b8'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
-    document.getElementById('parque-legend').innerHTML=`<div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Disponível <b class="ml-auto">${sc.disponivel}</b></div><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#0a1e8a]"></span>Locado <b class="ml-auto">${sc.locado}</b></div><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>Manutenção <b class="ml-auto">${sc.manutencao}</b></div><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>Inativo <b class="ml-auto">${sc.inativo}</b></div>`;
+    const sc={disponivel:equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length, locado:equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='locado').length, manutencao:equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='manutencao').length, inativo:equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='inativo').length};
+    if(typeof Chart==='function') window.chartParqueInst=new Chart(ctx2,{type:'doughnut',data:{labels:['Disponível','Locado','Manutenção','Inativo'],datasets:[{data:[sc.disponivel,sc.locado,sc.manutencao,sc.inativo],backgroundColor:['#10b981','#0a1e8a','#f59e0b','#94a3b8'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+    atualizarHtml('parque-legend',`<div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Disponível <b class="ml-auto">${sc.disponivel}</b></div><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#0a1e8a]"></span>Locado <b class="ml-auto">${sc.locado}</b></div><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>Manutenção <b class="ml-auto">${sc.manutencao}</b></div><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>Inativo <b class="ml-auto">${sc.inativo}</b></div>`);
   }
-  const pendLeit=db.leituras.filter(l=>l.empresaId===sess.empresaId && l.status==='pendente').slice(0,4);
-  document.getElementById('list-leituras-pendentes').innerHTML=pendLeit.length?pendLeit.map(l=>{const cli=db.clientes.find(c=>c.id===l.clienteId); const eq=db.equipamentos.find(e=>e.id===l.equipamentoId); return `<div class="p-4 flex items-center gap-3 hover:bg-slate-50"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-printer"></i></div><div class="flex-1 min-w-0"><p class="font-semibold text-[13px] truncate">${cli?.nome}</p><p class="text-[11.5px] text-slate-500 truncate">${eq?.modelo} • ${l.consumoPB} PB • por ${l.criadoPorNome||'-'}</p></div><span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${l.valorExcedente>0?'bg-amber-50 text-amber-700 border border-amber-200':'bg-slate-100 text-slate-600'}">${l.valorExcedente>0?fmtMoney(l.valorExcedente):'Franquia'}</span></div>`;}).join(''):'<div class="p-8 text-center text-[12px] text-slate-500">Nenhuma pendência 🎉</div>';
-  const recOs=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').slice(0,4);
-  document.getElementById('list-chamados-recentes').innerHTML=recOs.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); return `<div class="p-4 flex items-center gap-3 hover:bg-slate-50"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-mono text-[10px] font-bold">${o.numero.slice(-4)}</div><div class="flex-1 min-w-0"><p class="font-semibold text-[13px] truncate">${cli?.nome} • ${o.tipo}</p><p class="text-[11.5px] text-slate-500 truncate">por ${o.criadoPorNome||'-'} • ${o.descricao.slice(0,40)}</p></div><span class="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800 uppercase">${o.prioridade}</span></div>`;}).join('')||'<div class="p-8 text-center text-[12px] text-slate-500">Sem chamados</div>';
-  const logs=db.logs.filter(l=>l.empresaId===sess.empresaId).slice(0,5);
-  document.getElementById('list-alertas').innerHTML=logs.map(l=>`<div class="rounded-xl border p-3 flex gap-3 bg-white hover:bg-slate-50"><div class="w-8 h-8 rounded-lg bg-[#0a1e8a] text-white grid place-items-center text-[12px] font-bold">${initials(l.usuarioNome)}</div><div class="flex-1"><p class="font-semibold text-[12px] leading-tight">${l.usuarioNome} ${l.acao} ${l.entidade}</p><p class="text-[11px] text-slate-500 mt-0.5">${fmtDateTime(l.dataHora)} • ${l.detalhes.slice(0,60)}</p></div></div>`).join('')||'<p class="text-[12px] text-slate-500">Sem logs</p>';
+  const pendLeit=leituras.filter(l=>l.empresaId===sess.empresaId && l.status==='pendente').slice(0,4);
+  atualizarHtml('list-leituras-pendentes',pendLeit.length?pendLeit.map(l=>{const cli=clientes.find(c=>c.id===l.clienteId); const eq=equipamentos.find(e=>e.id===l.equipamentoId); return `<div class="p-4 flex items-center gap-3 hover:bg-slate-50"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-printer"></i></div><div class="flex-1 min-w-0"><p class="font-semibold text-[13px] truncate">${cli?.nome||'(cliente removido)'}</p><p class="text-[11.5px] text-slate-500 truncate">${eq?.modelo||'(equipamento removido)'} • ${l.consumoPB??'—'} PB • por ${l.criadoPorNome||'-'}</p></div><span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${l.valorExcedente>0?'bg-amber-50 text-amber-700 border border-amber-200':'bg-slate-100 text-slate-600'}">${l.valorExcedente>0?fmtMoney(l.valorExcedente):'Franquia'}</span></div>`;}).join(''):'<div class="p-8 text-center text-[12px] text-slate-500">Nenhuma pendência 🎉</div>');
+  const recOs=os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').slice(0,4);
+  atualizarHtml('list-chamados-recentes',recOs.map(o=>{const cli=clientes.find(c=>c.id===o.clienteId); return `<div class="p-4 flex items-center gap-3 hover:bg-slate-50"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-mono text-[10px] font-bold">${String(o.numero||'—').slice(-4)}</div><div class="flex-1 min-w-0"><p class="font-semibold text-[13px] truncate">${cli?.nome||'(cliente removido)'}${o.tipo?' • '+o.tipo:''}</p><p class="text-[11.5px] text-slate-500 truncate">por ${o.criadoPorNome||'-'}${o.descricao?' • '+String(o.descricao).slice(0,40):''}</p></div><span class="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800 uppercase">${o.prioridade||'normal'}</span></div>`;}).join('')||'<div class="p-8 text-center text-[12px] text-slate-500">Sem chamados</div>');
+  atualizarHtml('list-alertas',logs.slice(0,5).map(l=>`<div class="rounded-xl border p-3 flex gap-3 bg-white hover:bg-slate-50"><div class="w-8 h-8 rounded-lg bg-[#0a1e8a] text-white grid place-items-center text-[12px] font-bold">${initials(l.usuarioNome)}</div><div class="flex-1"><p class="font-semibold text-[12px] leading-tight">${l.usuarioNome||'Usuário'} ${l.acao||''} ${l.entidade||''}</p><p class="text-[11px] text-slate-500 mt-0.5">${fmtDateTime(l.dataHora)} • ${String(l.detalhes||'').slice(0,60)}</p></div></div>`).join('')||'<p class="text-[12px] text-slate-500">Sem logs</p>');
 }
 
 // USUARIOS RENDER

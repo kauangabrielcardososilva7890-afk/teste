@@ -14,6 +14,7 @@ const {spawnSync}=require('child_process');
   }
 })();
 const testsOficiais=[
+  "test_dashboard_dom_guards.js",
   "test_menu_shell_v8000.js",
   "test_login_enter_scope.js",
   "test_r67_auth_ui.js",
