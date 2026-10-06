@@ -1,0 +1,1030 @@
+{
+ "geradoEm": "2026-09-25",
+ "ideia": "D — foto das redefinições existentes em 25/09/2026 (v7.0.20). Tudo aqui é PERDOADO (código velho). Redefinição NOVA, em arquivo novo ou em arquivo velho, só passa com marcador SUBSTITUICAO DE PROPOSITO citando o nome ou encadeando a anterior.",
+ "arquivos": 185,
+ "redefinicoes": {
+  "ajustes_v5189_patch.js": [
+   "DIGICOPY_LOGO",
+   "imprimirChamadoPDF",
+   "renderConfig"
+  ],
+  "app.js": [
+   "TECNICOS_DEMO",
+   "__saveDBDrainSync",
+   "dataCriacaoCR",
+   "db",
+   "ehTecnicoDemo",
+   "openModal",
+   "parseDataLocal"
+  ],
+  "ajustes_v52253_login_tela_branca_patch.js": [
+   "db",
+   "doLoginUser"
+  ],
+  "fluxos_operacionais_patch.js": [
+   "abrirChamadosContrato",
+   "abrirLeiturasContrato",
+   "abrirModalEquipamentoContrato",
+   "autoPreencherDadosChamado",
+   "calcImpressoesChamado",
+   "deleteLeituraContrato",
+   "deleteProduto",
+   "imprimirRelatorioLeiturasPDF",
+   "openContratoCompleto",
+   "openModal",
+   "openModalChamadoCompleto",
+   "reconhecerImpressoraContrato",
+   "renderContratos",
+   "renderModalContrato",
+   "renderModalProduto",
+   "renderProdutos",
+   "salvarChamadoCompleto",
+   "salvarImpressoraContrato",
+   "scanEstoqueBaixo",
+   "verificarEstoqueBaixo"
+  ],
+  "contratos_refino_patch.js": [
+   "abrirChamadosContrato",
+   "abrirEditorLeituraContrato",
+   "abrirLancamentoContadorContrato",
+   "abrirLeiturasContrato",
+   "abrirListaImpressorasParaLeitura",
+   "abrirModalEquipamentoContrato",
+   "autoPreencherDadosChamado",
+   "calcImpressoesChamado",
+   "fecharModalOperacional",
+   "imprimirContratoLocacaoOperacional",
+   "imprimirRelatorioLeiturasPDF",
+   "navigateTo",
+   "openContratoCompleto",
+   "openModal",
+   "openModalChamadoCompleto",
+   "reconhecerImpressoraContrato",
+   "renderContratos",
+   "renderModalContrato",
+   "renderOs",
+   "salvarChamadoCompleto",
+   "salvarImpressoraContrato"
+  ],
+  "chamados_avulsos_aberto_patch.js": [
+   "openModal"
+  ],
+  "ajustes_pos_final_patch.js": [
+   "openModal",
+   "renderModalUsuario",
+   "renderProdutos",
+   "vosGerarHtmlNotinha"
+  ],
+  "ajustes_v52227_ncm_origem_patch.js": [
+   "openModal",
+   "renderModalProduto"
+  ],
+  "ajustes_v52228_a1_nuvem_lupa_ncm_patch.js": [
+   "conferirNfe",
+   "openModal",
+   "renderConfig",
+   "renderModalProduto"
+  ],
+  "ajustes_v52295_venda_volta_patch.js": [
+   "closeModal",
+   "openModal"
+  ],
+  "ajustes_v5250_leitura_overhaul_patch.js": [
+   "abrirLancamentoContador",
+   "abrirLeituraContratoDetalhe",
+   "abrirLeiturasContrato",
+   "atualizarTiposLancamento",
+   "buildNav",
+   "faturarLeituraContrato",
+   "openModal",
+   "renderLeituras"
+  ],
+  "performance_patch.js": [
+   "saveDB"
+  ],
+  "indexeddb_persistence_patch.js": [
+   "saveDB",
+   "saveDBAgora"
+  ],
+  "cloudflare_data_sync_patch.js": [
+   "saveDB",
+   "saveDBAgora"
+  ],
+  "interface_patch.js": [
+   "navigateTo",
+   "renderClientes",
+   "toast"
+  ],
+  "ajustes_v5171_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "abrirLeiturasContrato",
+   "autoPreencherDadosChamado",
+   "openModalChamadoCompleto",
+   "renderEquipamentos",
+   "toast"
+  ],
+  "ajustes_v52289_orcamento_carimbo_autocura_patch.js": [
+   "avisoSistema",
+   "lfbAlert",
+   "renderOrcamentos",
+   "toast"
+  ],
+  "perfis_nuvem_cura_sessao_patch.js": [
+   "setSession"
+  ],
+  "vendas_patch.js": [
+   "doLoginCNPJ",
+   "saveCliente",
+   "seedData",
+   "showLogin",
+   "showVenda"
+  ],
+  "ajustes_v5214_clientes_visiveis_patch.js": [
+   "renderClientes",
+   "renderClientes",
+   "seedData"
+  ],
+  "login_dados_automaticos_patch.js": [
+   "backToCNPJ",
+   "buildNav",
+   "doLoginUser",
+   "showLogin"
+  ],
+  "login_otimizacao_patch.js": [
+   "doLoginUser",
+   "showApp"
+  ],
+  "sistema_clientes_loja_patch.js": [
+   "doLoginUser",
+   "renderClientes",
+   "renderConfig"
+  ],
+  "ajustes_v5186_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "doLoginUser",
+   "openModalChamadoCompleto"
+  ],
+  "contratos_final_patch.js": [
+   "openContratoCompleto",
+   "renderContratos",
+   "showApp"
+  ],
+  "automacoes_triggers_patch.js": [
+   "renderVendas",
+   "showApp"
+  ],
+  "automacoes_financeiro_estoque_patch.js": [
+   "deleteLeituraContrato",
+   "renderFinanceiro",
+   "renderLeituras",
+   "showApp"
+  ],
+  "automacoes_locacao_visitas_patch.js": [
+   "renderContratos",
+   "renderOs",
+   "showApp"
+  ],
+  "automacoes_contratos_caixa_fiscal_patch.js": [
+   "renderContratos",
+   "renderFinanceiro",
+   "renderProdutos",
+   "showApp"
+  ],
+  "automacoes_fiscal_cartuchos_patch.js": [
+   "renderFinanceiro",
+   "renderProdutos",
+   "renderVendas",
+   "showApp"
+  ],
+  "automacoes_vendas_compras_cadastros_patch.js": [
+   "renderProdutos",
+   "renderVendas",
+   "showApp"
+  ],
+  "automacoes_orcamentos_clientes_auxiliares_patch.js": [
+   "renderClientes",
+   "renderFinanceiro",
+   "renderVendas",
+   "showApp"
+  ],
+  "automacoes_pix_contadores_auxiliares_patch.js": [
+   "renderConfig",
+   "renderEquipamentos",
+   "renderFinanceiro",
+   "showApp"
+  ],
+  "automacoes_vendas_fiscal_auxiliares_patch.js": [
+   "renderClientes",
+   "renderFinanceiro",
+   "renderProdutos",
+   "renderVendas",
+   "showApp"
+  ],
+  "automacoes_compras_recebimentos_contadores_patch.js": [
+   "renderContratos",
+   "renderFinanceiro",
+   "renderVendas",
+   "showApp"
+  ],
+  "automacoes_caixa_chat_auxiliares_patch.js": [
+   "renderClientes",
+   "renderConfig",
+   "renderFinanceiro",
+   "renderOs",
+   "showApp"
+  ],
+  "automacoes_finais_locacao_auxiliares_patch.js": [
+   "renderConfig",
+   "renderContratos",
+   "renderFinanceiro",
+   "showApp"
+  ],
+  "automacoes_procedures_operacionais_patch.js": [
+   "showApp"
+  ],
+  "cadastros_nomes_patch.js": [
+   "renderClientes",
+   "showApp"
+  ],
+  "patch_relatorio.js": [
+   "showApp"
+  ],
+  "ajustes_v5188_patch.js": [
+   "showApp"
+  ],
+  "cloudflare_sync_patch.js": [
+   "exportBackup",
+   "showApp",
+   "syncCarregarDaNuvem"
+  ],
+  "ajustes_v52217_menus_arrastar_visibilidade_patch.js": [
+   "abrirEditorMenus",
+   "pintarMenus",
+   "salvarEditorMenus",
+   "showApp",
+   "uiSubMenuMover"
+  ],
+  "ajustes_v52239_menus_imediato_patch.js": [
+   "pintarMenus",
+   "salvarEditorMenus",
+   "showApp"
+  ],
+  "navegacao_fiscal_barra_escuro_patch.js": [
+   "navigateTo",
+   "showApp"
+  ],
+  "notinha_patch.js": [
+   "closeModal",
+   "filtrarModuloDinamico",
+   "gerarOrcamentoPDF",
+   "imprimirNotinha",
+   "navigateTo",
+   "navigateTo",
+   "neoSalvarVenda",
+   "novaVenda",
+   "novaVenda",
+   "novaVenda",
+   "renderAuditoria",
+   "renderClientes",
+   "renderClientes",
+   "renderConfig",
+   "renderContratos",
+   "renderEquipamentos",
+   "renderFinanceiro",
+   "renderFinanceiro",
+   "renderLeituras",
+   "renderModuloDinamico",
+   "renderModuloDinamico",
+   "renderOs",
+   "renderParque",
+   "renderProdutos",
+   "renderUsuarios",
+   "renderVendas",
+   "renderVendas",
+   "renderVendas",
+   "showVenda"
+  ],
+  "vendas_otimizacao_patch.js": [
+   "closeModal",
+   "historicoVenda",
+   "renderVendas"
+  ],
+  "ajustes_relatorio_pai_patch.js": [
+   "closeModal",
+   "novaVenda",
+   "renderClientes",
+   "renderLeituras",
+   "renderModalContrato",
+   "vosVendaSearchClienteDeb",
+   "vosVendaSearchProdDeb"
+  ],
+  "finalizacao_sistema_patch.js": [
+   "buildNav",
+   "closeModal",
+   "navigateTo",
+   "renderClientes",
+   "vosGerarHtmlNotinha"
+  ],
+  "vendas_notinhas_fix_patch.js": [
+   "closeModal",
+   "estornarNotinha",
+   "estornarVenda",
+   "faturarVenda",
+   "historicoVenda",
+   "historicoVenda",
+   "neoSearchProdutoVenda",
+   "novaVenda",
+   "novaVenda",
+   "renderVendas",
+   "renderVendas",
+   "showVenda",
+   "voltarNivelModal",
+   "vosAbrirRecebimento",
+   "vosConcluirFaturamento",
+   "vosConcluirFaturamento",
+   "vosGerarHtmlNotinha",
+   "vosOnTipoItem",
+   "vosRemoveItem",
+   "vosRenderItens",
+   "vosSalvarVenda",
+   "vosVendaSearchProd"
+  ],
+  "locacao_chamados_fix_patch.js": [
+   "abrirChamadosContrato",
+   "abrirLeiturasContrato",
+   "abrirLeiturasContrato",
+   "abrirModalEquipamentoContrato",
+   "autoPreencherDadosChamado",
+   "closeModal",
+   "navigateTo",
+   "openModalChamadoCompleto",
+   "openQuickOS",
+   "renderEquipamentos",
+   "selecionarClienteChamadoAvulso",
+   "voltarNivelModal"
+  ],
+  "ajustes_v5172_patch.js": [
+   "__lcAtualizarColor",
+   "__lcChamFiltro",
+   "__lcMontarChamadoUI",
+   "abrirChamadosContrato",
+   "abrirHistoricoChamadosGeral",
+   "abrirLeiturasContrato",
+   "closeModal",
+   "openModalChamadoCompleto",
+   "salvarChamadoCompleto",
+   "voltarNivelModal"
+  ],
+  "ajustes_v5193_patch.js": [
+   "closeModal",
+   "renderModalCliente",
+   "saveCliente"
+  ],
+  "ajustes_v52237_estoque_zero_volta_patch.js": [
+   "closeModal",
+   "vosAddItem",
+   "vosVendaSelectProd"
+  ],
+  "ajustes_v52238_orcamentos_ajustes_patch.js": [
+   "abrirTelaOrcamento",
+   "closeModal",
+   "gerarHtmlOrcamento",
+   "orcAddItem",
+   "orcBuscarProd",
+   "salvarOrcamentoTela"
+  ],
+  "ajustes_v52241_venda_salvar_fechar_patch.js": [
+   "closeModal",
+   "vosSalvarVenda"
+  ],
+  "etiqueta_busca_patch.js": [
+   "navigateTo",
+   "renderDashboard"
+  ],
+  "ajustes_v5197_patch.js": [
+   "buildNav",
+   "navigateTo",
+   "renderAuditoria"
+  ],
+  "ajustes_v52237_orcamentos_menu_patch.js": [
+   "navigateTo",
+   "renderOrcamentos"
+  ],
+  "ajustes_v52243_menu_versao_boleto_patch.js": [
+   "finAcaoReceber",
+   "finConfirmarBaixa",
+   "navigateTo",
+   "pintarMenus",
+   "vosAbrirRecebimento"
+  ],
+  "ajustes_v52244_financeiro_datas_patch.js": [
+   "__FIN_ST",
+   "finModoV52243",
+   "navigateTo",
+   "renderFinanceiro"
+  ],
+  "ajustes_v52245_rodape_versao_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v52246_nuvem_nao_autorizar_patch.js": [
+   "abrirCloudflareNuvem",
+   "navigateTo"
+  ],
+  "ajustes_v52247_exe_atualiza_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v52248_exe_cache_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v52249_relatorio_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v52250_exe_bundle_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v52251_exe_resiliencia_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v52252_resolucao_loop_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v52254_orcamentos_pages_patch.js": [
+   "gerarHtmlOrcamento",
+   "navigateTo"
+  ],
+  "ajustes_v52255_orcamento_aprovacao_venda_patch.js": [
+   "DIGICOPY_APP_VERSION",
+   "__digicopySincronizarVersao",
+   "aprovarOrcamentoInterno",
+   "navigateTo"
+  ],
+  "ajustes_v52256_orcamento_venda_limpa_patch.js": [
+   "DIGICOPY_APP_VERSION",
+   "__digicopySincronizarVersao",
+   "abrirTelaOrcamento",
+   "aprovarOrcamentoInterno",
+   "aprovarOrcamentoManual",
+   "navigateTo",
+   "recusarOrcamentoManual"
+  ],
+  "ajustes_v52257_orcamento_sync_total_patch.js": [
+   "DIGICOPY_APP_VERSION",
+   "__digicopySincronizarVersao",
+   "aprovarOrcamentoInterno",
+   "aprovarOrcamentoManual",
+   "navigateTo",
+   "recusarOrcamentoManual"
+  ],
+  "ajustes_v52258_orcamento_os_revalidar_patch.js": [
+   "DIGICOPY_APP_VERSION",
+   "__digicopySincronizarVersao",
+   "abrirTelaOrcamento",
+   "aprovarOrcamentoInterno",
+   "navigateTo",
+   "orcMostrarTodos",
+   "renderOrcamentos",
+   "salvarOrcamentoTela"
+  ],
+  "ajustes_v52259_orcamento_filtros_item_patch.js": [
+   "DIGICOPY_APP_VERSION",
+   "abrirTelaOrcamento",
+   "navigateTo",
+   "orcAddItem",
+   "orcBuscarCliente",
+   "orcBuscarProd"
+  ],
+  "ajustes_v52260_orcamento_trava_venda_atalho_patch.js": [
+   "DIGICOPY_APP_VERSION",
+   "abrirTelaOrcamento",
+   "excluirOrcamentosMarcados",
+   "navigateTo",
+   "orcBuscarCliente",
+   "orcBuscarEtiqueta",
+   "orcBuscarProd",
+   "orcLimparCliente",
+   "orcOnTipoItem",
+   "orcRenderItens",
+   "orcSelCliente",
+   "orcSelProd",
+   "orcSelRecarga",
+   "salvarOrcamentoTela"
+  ],
+  "ajustes_v52261_orcamento_nao_volta_patch.js": [
+   "aprovarOrcamentoInterno",
+   "excluirOrcamento",
+   "excluirOrcamentosMarcados",
+   "excluirVendaUnificado",
+   "lfbAlert",
+   "navigateTo"
+  ],
+  "ajustes_v52263_exe_completo_patch.js": [
+   "navigateTo"
+  ],
+  "painel_gerente_patch.js": [
+   "navigateTo"
+  ],
+  "autocura_empresa_central_nf_tela_patch.js": [
+   "abrirCentralNfe",
+   "navigateTo",
+   "saveConfig"
+  ],
+  "menus_fiscais_separados_patch.js": [
+   "navigateTo",
+   "renderCentralNf"
+  ],
+  "permissoes_override_menus_fiscais_patch.js": [
+   "navigateTo",
+   "renderUsuarios",
+   "usuarioPodeApagar",
+   "usuarioPodeEstornar"
+  ],
+  "seis_submenus_velho_patch.js": [
+   "navigateTo"
+  ],
+  "navegador_embutido_patch.js": [
+   "navigateTo"
+  ],
+  "ajustes_v6108_lembrar_tela_patch.js": [
+   "navigateTo"
+  ],
+  "correcoes_uso_diario_patch.js": [
+   "buildNav",
+   "historicoVenda",
+   "renderDashboard",
+   "renderVendas",
+   "setNeoVendasTab",
+   "vosLegadosVendas"
+  ],
+  "leitura_impressao_compacta_produtos_patch.js": [
+   "buildNav",
+   "imprimirLeituraContrato"
+  ],
+  "locacao_patch.js": [
+   "categoriaModulo",
+   "fbImportToErp"
+  ],
+  "migrados_print_patch.js": [
+   "visualizarRegistroDinamico"
+  ],
+  "evolucao_patch.js": [
+   "imprimirNotinha",
+   "renderModalCliente",
+   "renderModalContrato",
+   "renderOs",
+   "renderOs",
+   "renderVendas"
+  ],
+  "clientes_patch.js": [
+   "buscarCNPJAutomatico",
+   "renderClientes",
+   "renderModalCliente",
+   "saveCliente"
+  ],
+  "ajustes_v5243_cliente_abas_patch.js": [
+   "CLITAB_PURE",
+   "renderModalCliente",
+   "saveCliente",
+   "vosVendaSearchCliente",
+   "vosVendaSelectCliente"
+  ],
+  "ajustes_v5196_patch.js": [
+   "openModalCriarUsuario",
+   "renderModalUsuario",
+   "renderUsuarios",
+   "saveUsuario",
+   "saveUsuarioFinal"
+  ],
+  "permissoes_estorno_venda_patch.js": [
+   "historicoVenda",
+   "renderModalUsuario",
+   "renderUsuarios",
+   "saveUsuario"
+  ],
+  "ajustes_v52023_patch.js": [
+   "renderClientes",
+   "renderFinanceiro"
+  ],
+  "locacao_contratos_patch.js": [
+   "renderModalProduto",
+   "renderProdutos"
+  ],
+  "ajustes_v52214_recargas_patch.js": [
+   "renderProdutos",
+   "vosAddItem",
+   "vosOnTipoItem",
+   "vosVendaSearchProd"
+  ],
+  "ajustes_v52224_cat_letra_uma_vez_patch.js": [
+   "renderProdutos"
+  ],
+  "ajustes_v51916_patch.js": [
+   "deleteProduto",
+   "excluirContratoOperacional",
+   "historicoVenda",
+   "showVenda"
+  ],
+  "notificacoes_patch.js": [
+   "baixarCR",
+   "renderDashboard"
+  ],
+  "ajustes_v52213_menus_atalhos_patch.js": [
+   "renderDashboard"
+  ],
+  "ajustes_v52221_nfe_permissao_patch.js": [
+   "conferirNfe",
+   "renderUsuarios"
+  ],
+  "contratos_visitas_vinculo_patch.js": [
+   "openContratoCompleto",
+   "renderContratos"
+  ],
+  "ajustes_v52237_contratos_filtros_patch.js": [
+   "contratosFinalBuscar",
+   "renderContratos"
+  ],
+  "ajustes_v52243_contratos_sort_patch.js": [
+   "contratosFinalSort",
+   "contratosSortRefino",
+   "renderContratos"
+  ],
+  "contratos_leituras_definitivo_patch.js": [
+   "abrirModalEquipamentoContrato",
+   "renderLeituras",
+   "renderModalContrato",
+   "salvarImpressoraContrato"
+  ],
+  "fluxo_contrato_leitura_corrigido_patch.js": [
+   "abrirLeiturasContrato",
+   "abrirModalEquipamentoContrato",
+   "openContratoCompleto",
+   "renderModalContrato",
+   "salvarImpressoraContrato"
+  ],
+  "patch_chamados.js": [
+   "renderModalOS",
+   "saveOS"
+  ],
+  "vendas_os_patch.js": [
+   "faturarVenda",
+   "historicoVenda",
+   "imprimirNotinha",
+   "novaVenda",
+   "renderVendas",
+   "showVenda"
+  ],
+  "ajustes_v52218_pix_prazo_print_venda_patch.js": [
+   "novaVenda",
+   "renderVendas",
+   "vosEscolherForma"
+  ],
+  "ajustes_v5240_relatorio_grande_patch.js": [
+   "abrirTelaOrcamento",
+   "estornarVenda",
+   "renderVendas"
+  ],
+  "patch_vendas_financeiro.js": [
+   "showVenda",
+   "showVenda"
+  ],
+  "ajustes_v52024_patch.js": [
+   "exportBackup",
+   "renderFinanceiro"
+  ],
+  "ajustes_v52213_financeiro_receber_patch.js": [
+   "renderFinanceiro"
+  ],
+  "ajustes_v52217_financeiro_recibo_patch.js": [
+   "renderFinanceiro"
+  ],
+  "ajustes_v52243_financeiro_filtros_patch.js": [
+   "renderFinanceiro",
+   "vosConcluirFaturamento"
+  ],
+  "ajustes_v52245_financeiro_hist_datas_patch.js": [
+   "__FIN_ST",
+   "finModoV52243",
+   "finModoV52244",
+   "historicoLancamento",
+   "renderFinanceiro"
+  ],
+  "pix_patch.js": [
+   "renderConfig",
+   "vosEscolherForma",
+   "vosGerarHtmlNotinha"
+  ],
+  "contratos_rtf_template_patch.js": [
+   "baixarContratoRTF",
+   "renderConfig"
+  ],
+  "cartuchos_etiquetas_config_patch.js": [
+   "renderConfig"
+  ],
+  "ajustes_v5215_cnpj_inteligente_patch.js": [
+   "buscarCNPJAutomatico",
+   "renderConfig"
+  ],
+  "ajustes_v5220_nfe_config_patch.js": [
+   "renderConfig"
+  ],
+  "ajustes_v5221_nfe_emissao_patch.js": [
+   "lockVendaFaturadaUI",
+   "renderConfig"
+  ],
+  "ajustes_v52217_cert_nuvem_patch.js": [
+   "renderConfig"
+  ],
+  "ajustes_v52221_menus_dispositivo_patch.js": [
+   "abrirEditorAtalhos",
+   "abrirEditorMenus",
+   "pintarAtalhos",
+   "pintarMenus",
+   "renderConfig",
+   "salvarEditorAtalhos",
+   "salvarEditorMenus"
+  ],
+  "ajustes_v52221_cert_nuvem_a1_patch.js": [
+   "renderConfig"
+  ],
+  "ajustes_v52229_nfe_ie_im_cnae_patch.js": [
+   "renderConfig"
+  ],
+  "ajustes_v52230_modo_escuro_dispositivo_patch.js": [
+   "renderConfig"
+  ],
+  "ajustes_v52234_config_aviso_salvou_patch.js": [
+   "renderConfig"
+  ],
+  "ajustes_v52296_backups_nuvem_patch.js": [
+   "abrirCloudflareNuvem",
+   "exportBackup"
+  ],
+  "ajustes_v52239_print_escolha_patch.js": [
+   "imprimirNotinha",
+   "vosGerarHtmlNotinha",
+   "vosOsCompleta"
+  ],
+  "ajustes_v52245_venda_salvar_print_patch.js": [
+   "imprimirNotinha",
+   "vosConcluirFaturamento",
+   "vosSalvarVenda"
+  ],
+  "ajustes_v52243_orcamentos_status_patch.js": [
+   "abrirTelaOrcamento",
+   "renderOrcamentos"
+  ],
+  "ajustes_v52244_orcamentos_autorizar_patch.js": [
+   "imprimirOrcamento",
+   "renderOrcamentos",
+   "salvarOrcamentoTela"
+  ],
+  "vendas_extra_patch.js": [
+   "historicoVenda"
+  ],
+  "ajustes_v52219_filtros_busca_patch.js": [
+   "buscarClientesChamadoAvulso",
+   "finBuscarCliente",
+   "vosOnTipoItem",
+   "vosVendaSearchCliente",
+   "vosVendaSearchProd"
+  ],
+  "ajustes_v52218_etiqueta_recarga_venda_patch.js": [
+   "estornarNotinha",
+   "estornarVenda",
+   "vosAddItem",
+   "vosBuscarEtiquetaNaVenda",
+   "vosCadastrarEtiquetaRecarga",
+   "vosOnTipoItem",
+   "vosVendaSearchProd"
+  ],
+  "ajustes_v52237_vendas_os_visual_patch.js": [
+   "vosBuscarSerial",
+   "vosGerarHtmlNotinha",
+   "vosOsRuleHint"
+  ],
+  "ajustes_v52239_patri_nao_obrigatorio_patch.js": [
+   "vosOsCompleta",
+   "vosOsRuleHint"
+  ],
+  "ajustes_v52238_vendas_os_ajustes_patch.js": [
+   "vosGerarHtmlNotinha",
+   "vosGravarVenda",
+   "vosOsCompleta",
+   "vosSalvarVenda"
+  ],
+  "pix_comprovante_manual_patch.js": [
+   "pixRenderPainelFaturamento",
+   "vosConcluirFaturamento",
+   "vosGerarHtmlNotinha"
+  ],
+  "ajustes_v52217_print_sem_rodape_patch.js": [
+   "open",
+   "vosGerarHtmlNotinha"
+  ],
+  "ajustes_v52235_codigo_sem_sku_patch.js": [
+   "vosGerarHtmlNotinha"
+  ],
+  "ajustes_v52219_pix_link_publico_patch.js": [
+   "pixPagamentoUrl"
+  ],
+  "leitura_busca_fluxo_patch.js": [
+   "abrirLancamentoContador",
+   "abrirLeiturasContrato",
+   "atualizarTiposLancamento",
+   "openContratoCompleto",
+   "salvarLancamentoContador"
+  ],
+  "ajustes_v52243_impressora_remanejar_patch.js": [
+   "abrirModalEquipamentoContrato",
+   "openContratoCompleto",
+   "salvarImpressoraContrato"
+  ],
+  "ajustes_v52245_impressora_serial_ocultar_patch.js": [
+   "abrirModalEquipamentoContrato",
+   "openContratoCompleto",
+   "salvarImpressoraContrato"
+  ],
+  "ajustes_v52435_impressora_remanejo_final_patch.js": [
+   "abrirModalEquipamentoContrato",
+   "openContratoCompleto",
+   "salvarImpressoraContrato"
+  ],
+  "leitura_detalhada_departamentos_patch.js": [
+   "abrirLancamentoContador",
+   "abrirLeituraContratoDetalhe",
+   "abrirLeiturasContrato",
+   "atualizarTiposLancamento",
+   "buscarImpressorasLancamento",
+   "faturarLeituraContrato",
+   "imprimirLeituraContrato",
+   "novaLeituraContrato",
+   "salvarLancamentoContador"
+  ],
+  "ajustes_v52245_leitura_apagar_patch.js": [
+   "deleteLeituraContrato"
+  ],
+  "ajustes_v5174_patch.js": [
+   "__lcAtualizarColor",
+   "__lcMontarChamadoUI",
+   "autoPreencherDadosChamado",
+   "lcAddProdutoChamado",
+   "lcBuscarImpressoraChamado",
+   "lcBuscarProdutoChamado",
+   "lcCalcColor",
+   "lcLeiturasTodos",
+   "openModalChamadoCompleto"
+  ],
+  "ajustes_v5175_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "lcBuscarImpressoraChamado",
+   "lcCalcColor",
+   "openModalChamadoCompleto",
+   "salvarChamadoAvulso",
+   "salvarChamadoCompleto",
+   "selecionarImpressoraChamadoAvulso"
+  ],
+  "ajustes_v5176_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "autoPreencherDadosChamado",
+   "lcAddPeca",
+   "lcBuscarPeca",
+   "openModalChamadoCompleto",
+   "salvarChamadoAvulso",
+   "salvarChamadoCompleto"
+  ],
+  "ajustes_v5177_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "autoPreencherDadosChamado",
+   "lcAddPeca",
+   "lcBuscarPeca",
+   "lcRemoverPeca",
+   "lcRenderPecas",
+   "openModalChamadoCompleto"
+  ],
+  "ajustes_v5181_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "lcAddPeca",
+   "lcRenderPecas",
+   "openModalChamadoCompleto",
+   "salvarChamadoAvulso",
+   "salvarChamadoCompleto"
+  ],
+  "ajustes_v5182_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "lcAddPeca",
+   "lcBuscarPeca",
+   "lcRenderPecas",
+   "lcUpdPeca",
+   "openModalChamadoCompleto",
+   "salvarChamadoAvulso",
+   "salvarChamadoCompleto"
+  ],
+  "ajustes_v5183_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "abrirLancamentoContador",
+   "abrirLeituraContratoDetalhe",
+   "openModalChamadoCompleto",
+   "openModalChamadoCompleto",
+   "salvarLancamentoContador"
+  ],
+  "ajustes_v5185_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "openModalChamadoCompleto"
+  ],
+  "ajustes_v5192_patch.js": [
+   "salvarChamadoAvulso",
+   "salvarChamadoCompleto"
+  ],
+  "ajustes_v51920_patch.js": [
+   "salvarChamadoAvulso",
+   "salvarChamadoCompleto"
+  ],
+  "ajustes_v5179_patch.js": [
+   "abrirChamadoAvulsoForm",
+   "buscarClientesChamadoAvulso",
+   "selecionarClienteChamadoAvulso"
+  ],
+  "ajustes_v52436_leitura_uma_aberta_patch.js": [
+   "salvarLancamentoContador"
+  ],
+  "navegacao_voltar_patch.js": [
+   "__abaHistFinal",
+   "voltarAbaAnteriorFinal"
+  ],
+  "ajustes_v52211_logo_impressao_unica_patch.js": [
+   "open"
+  ],
+  "popup_sistema_patch.js": [
+   "lfbAlert"
+  ],
+  "ajustes_v5180_patch.js": [
+   "imprimirChamado"
+  ],
+  "ajustes_v5178_patch.js": [
+   "lcRemoverPeca",
+   "lcRenderPecas"
+  ],
+  "ajustes_v5187_patch.js": [
+   "imprimirChamadoPDF"
+  ],
+  "ajustes_v5227_nuvem_acompanhamento_patch.js": [
+   "abrirCloudflareNuvem",
+   "abrirCloudflareNuvem"
+  ],
+  "ajustes_v52212_celular_nuvem_patch.js": [
+   "abrirCloudflareNuvem"
+  ],
+  "ajustes_v5228_nfe_assinatura_patch.js": [
+   "conferirNfe"
+  ],
+  "ajustes_v5229_nfe_atalho_historico_patch.js": [
+   "conferirNfe"
+  ],
+  "fiscal_guard_patch.js": [
+   "abrirCentralNfe",
+   "conferirNfe"
+  ],
+  "ajustes_v52216_menus_submenus_patch.js": [
+   "abrirEditorAtalhos",
+   "abrirEditorMenus",
+   "pintarAtalhos",
+   "pintarMenus",
+   "salvarEditorAtalhos",
+   "salvarEditorMenus",
+   "uiAtalhoMover",
+   "uiMenuMover"
+  ],
+  "ajustes_v52222_menus_arrastar_patch.js": [
+   "abrirEditorMenus"
+  ],
+  "ajustes_v52223_menus_arraste_patch.js": [
+   "abrirEditorMenus"
+  ],
+  "ajustes_v52243_financeiro_menu_patch.js": [
+   "pintarMenus"
+  ],
+  "ajustes_v52220_lupa_alinha_patch.js": [
+   "LUPA_ALINHA_PURE"
+  ],
+  "nf_transmissao_patch.js": [
+   "abrirCentralNfe"
+  ],
+  "ajustes_v52237_orcamentos_aprovacao_patch.js": [
+   "salvarOrcamentoTela"
+  ],
+  "ajustes_v52262_orcamento_uma_vez_loop_patch.js": [
+   "aprovarOrcamentoInterno"
+  ],
+  "ajustes_v52240_orcamento_pages_patch.js": [
+   "gerarHtmlOrcamento"
+  ],
+  "ajustes_v52264_exe_numero_novo_patch.js": [
+   "DIGICOPY_APP_VERSION"
+  ],
+  "ajustes_v52265_script_isolado_patch.js": [
+   "DIGICOPY_APP_VERSION"
+  ],
+  "fiscal_menu_completo_patch.js": [
+   "renderCentralNf"
+  ]
+ }
+}

@@ -16,6 +16,11 @@ function loguinCompativel(u, typed){
   return (l === t || n === t || primeiroNome === t);
 }
 
+function avisarLogin(mensagem){
+  if(typeof toast==='function') toast(mensagem,'error');
+  else if(typeof window.lfbAlert==='function') window.lfbAlert(mensagem,'Login');
+}
+
 function normalizarAdminPrincipal(sess, dbRef){
   const _db = dbRef || (typeof db !== 'undefined' ? db : window.db);
   if(!sess || !_db) return;
@@ -98,17 +103,17 @@ window.doLoginUser = function(){
   const loginInput = document.getElementById('login-user')?.value?.trim() || '';
   const senhaInput = document.getElementById('login-senha-user')?.value?.trim() || '';
   if(!loginInput || !senhaInput){
-    alert('Informe usuário e senha');
+    avisarLogin('Informe usuário e senha');
     return;
   }
   // Busca empresa (pega a primeira disponível)
   let emp = (db.empresas||[]).find(e=>e.id);
   if(!emp && typeof escolherEmpresaPadrao==='function') emp = escolherEmpresaPadrao(db);
-  if(!emp){ alert('Empresa não encontrada'); return; }
+  if(!emp){ avisarLogin('Empresa não encontrada'); return; }
   const user = (db.usuarios||[]).find(u => u.empresaId === emp.id && u.ativo &&
     loguinCompativel(u, loginInput) && String(u.senha) === senhaInput);
   if(!user){
-    alert('Usuário ou senha incorreto');
+    avisarLogin('Usuário ou senha incorreto');
     return;
   }
   const session = {

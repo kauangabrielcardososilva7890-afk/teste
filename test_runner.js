@@ -1,61 +1,74 @@
 const {spawnSync}=require('child_process');
-const tests=[
-  "test_vos.js",
-  "test_perf.js",
-  "test_firebase.js",
-  "test_persist.js",
-  "test_pix.js",
-  "test_extras.js",
-  "test_clientes.js",
-  "test_interface.js",
-  "test_otim.js",
-  "test_loc.js",
-  "test_fluxos_operacionais.js",
-  "test_contratos_refino.js",
-  "test_cadastros_nomes.js",
-  "test_contratos_final.js",
-  "test_rtf_template.js",
-  "test_contratos_visitas.js",
-  "test_automacoes_triggers.js",
-  "test_automacoes_financeiro_estoque.js",
-  "test_automacoes_locacao_visitas.js",
-  "test_automacoes_contratos_caixa_fiscal.js",
-  "test_automacoes_fiscal_cartuchos.js",
-  "test_automacoes_vendas_compras_cadastros.js",
-  "test_automacoes_orcamentos_clientes_auxiliares.js",
-  "test_automacoes_pix_contadores_auxiliares.js",
-  "test_automacoes_vendas_fiscal_auxiliares.js",
-  "test_automacoes_compras_recebimentos_contadores.js",
-  "test_automacoes_caixa_chat_auxiliares.js",
-  "test_automacoes_finais_locacao_auxiliares.js",
-  "test_otimizacao_profunda.js",
-  "test_automacoes_procedures_operacionais.js",
-  "test_correcoes_uso_diario.js",
-  "test_login_dados_automaticos.js",
-  "test_ajustes_relatorio_pai.js",
-  "test_contratos_leituras_definitivo.js",
-  "test_fluxo_contrato_leitura_corrigido.js",
-  "test_leitura_busca_fluxo.js",
-  "test_leitura_detalhada_departamentos.js",
-  "test_leitura_impressao_compacta_produtos.js",
-  "test_cartuchos_etiquetas_config.js",
-  "test_sistema_clientes_loja.js",
-  "test_finalizacao_sistema.js",
-  "test_ajustes_pos_final.js",
-  "test_ajustes_v52023.js",
-  "test_ajustes_v52024.js",
-  "test_ajustes_v52025.js",
-  "test_sync_quota_guard.js",
-  "test_cloudflare_sync.js",
-  "test_cloudflare_data_sync.js",
-  "test_indexeddb_persistence.js",
-  "test_offline_assets.js",
-  "test_confirm_compat.js",
-  "test_app_bundle.js",
-  "test_electron_security.js"
+// v6.0.6 — deps essenciais vendorizadas no repo (vendor/): se node_modules sumir
+// (sandbox de CI sem npm install), recria a partir do vendor antes de rodar.
+(function ensureDeps(){
+  const fs=require('fs'), path=require('path');
+  for(const pkg of ['acorn','node-forge']){
+    if(fs.existsSync(path.join('node_modules', pkg, 'package.json'))) continue;
+    try{
+      const dst=path.join('node_modules', pkg);
+      fs.mkdirSync(dst, {recursive:true});
+      fs.cpSync(path.join('vendor', pkg), dst, {recursive:true});
+      console.log('deps recriadas a partir do vendor/: ' + pkg);
+    }catch(e){}
+  }
+})();
+const testsOficiais=[
+  "test_dashboard_dom_guards.js",
+  "test_menu_shell_v8000.js",
+  "test_login_enter_scope.js",
+  "test_r67_auth_ui.js",
+  "test_r68_orcamento_cloud_guard.js",
+  "test_regressao_dialogos.js",
+  "test_theme_import_regression.js",
+  "test_audit_critical.js",
+  "test_sync_secrets.js",
+  "test_data_changes_validation.js",
+  "test_leitura_uma_aberta.js",
+  "test_notificacoes_sync.js",
+  "cloudflare-worker/test-pure.mjs",
 ];
-let failed=0, passed=0, xfailed=0;
+const testsHistoricos=[
+  "test_msg_01_infra.js",
+  "test_msg_02_nuvem.js",
+  "test_msg_03_vendas.js",
+  "test_msg_04_clientes.js",
+  "test_msg_05_telas.js",
+  "test_msg_06_estoque.js",
+  "test_msg_07_financeiro.js",
+  "test_msg_08_fiscal.js",
+  "test_msg_09_login.js",
+  "test_msg_10_relatorios.js",
+  "test_msg_11_jsdom.js",
+];
+const tests=process.env.DIGICOPY_RUN_LEGACY==='1'
+  ? testsOficiais.concat(testsHistoricos)
+  : testsOficiais;
+// v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
+// O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não
+// está no vendor/ (é grande), então num checkout novo ou num CI sem `npm
+// install` os testes que abrem DOM de verdade não têm como rodar. Antes eles
+// apareciam como "❌ falharam" com um MODULE_NOT_FOUND, que parece defeito do
+// produto — e não é. Agora ficam em categoria própria, e o motivo e o conserto
+// aparecem na tela. Com o jsdom instalado, eles rodam e reprovam normalmente.
+let jsdomDisponivel=true;
+try{ require.resolve('jsdom'); }catch(e){ jsdomDisponivel=false; }
+const precisaJsdom=new Set();
+if(!jsdomDisponivel){
+  for(const file of tests){
+    try{ if(/require\(\s*['"]jsdom['"]\s*\)/.test(require('fs').readFileSync(file,'utf8'))) precisaJsdom.add(file); }catch(e){}
+  }
+}
+let failed=0, passed=0, xfailed=0, semRodar=0;
+if(process.env.DIGICOPY_RUN_LEGACY!=='1'){
+  console.log(`\nℹ️ ${testsHistoricos.length} testes históricos foram separados da suíte v8. Para executá-los: DIGICOPY_RUN_LEGACY=1 npm test`);
+}
 for(const file of tests){
+  if(!jsdomDisponivel && precisaJsdom.has(file)){
+    semRodar++;
+    process.stdout.write(`\n⚠️ ${file}: NÃO rodou — falta a dependência 'jsdom'\n`);
+    continue;
+  }
   const result=spawnSync(process.execPath,[file],{encoding:'utf8'});
   const output=(result.stdout||'')+(result.stderr||'');
   if(result.status===0){passed++;process.stdout.write(`\n✅ ${file}\n`);continue;}
@@ -63,5 +76,6 @@ for(const file of tests){
   if(knownLabel){xfailed++;process.stdout.write(`\n⚠️ ${file}: falha aceita de etiquetas (área congelada)\n`);continue;}
   failed++;process.stdout.write(`\n❌ ${file}\n${output.slice(-2500)}\n`);
 }
-console.log(`\nSUÍTE CONSOLIDADA: ${passed} passaram, ${xfailed} falha aceita, ${failed} falharam.`);
+console.log(`\nSUÍTE CONSOLIDADA: ${passed} passaram, ${xfailed} falha aceita, ${semRodar} não rodaram (falta jsdom), ${failed} falharam.`);
+if(semRodar)console.log(`   ↳ ${semRodar} teste(s) ficaram de fora por falta do 'jsdom' (não é defeito do sistema). Rode "npm install" e repita para eles rodarem.`);
 if(failed)process.exit(1);

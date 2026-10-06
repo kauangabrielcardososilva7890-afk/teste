@@ -26,21 +26,16 @@ function uidSafe(p){ return typeof uid === 'function' ? uid(p) : (p + '_' + Date
 // Lógica pura (testável)
 // ─────────────────────────────────────────────────────────────────────────
 
-// Perfil efetivo de um usuário (hierarquia do sistema).
+// Perfil efetivo de um usuário (hierarquia do sistema). r59: só o perfil manda.
 function perfilEfetivo(u){
-  const l = fold((u && (u.login || u.nome)) || '');
-  if(l === 'kauan') return 'Admin';
-  if(l === 'denivaldo') return 'Dono';
   const p = txt(u && u.perfil);
   if(p === 'Admin') return 'Admin';
   if(p === 'Dono') return 'Dono';
   return 'Funcionário';
 }
 
-// Sessão atual tem permissão total? (Admin = Kauan / Dono = Denivaldo)
+// Sessão atual tem permissão total? (só perfil Admin/Dono — r59, sem nome de gente)
 function temPermissaoTotal(s){
-  const l = fold((s && (s.login || s.usuarioNome)) || '');
-  if(l === 'kauan' || l === 'denivaldo') return true;
   const p = txt(s && s.perfil);
   return p === 'Admin' || p === 'Dono';
 }
@@ -81,7 +76,7 @@ window.excluirUsuario = function(id){
     if(!ok) return;
     db.usuarios = (db.usuarios || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('usuario', 'excluir', id, 'Excluído usuário ' + u.login);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('usuarios',null,'usuário excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     if(typeof renderAuditoria === 'function') renderAuditoria();
     toastMsg('Usuário excluído', 'success');
@@ -100,7 +95,7 @@ window.excluirTecnico = function(id){
     if(!ok) return;
     db.tecnicos = (db.tecnicos || []).filter(x => x.id !== id);
     if(typeof logAction === 'function') logAction('tecnico', 'excluir', id, 'Excluído técnico ' + t.nome);
-    if(typeof saveDB === 'function') saveDB();
+    if(typeof salvarAlteracao==='function')salvarAlteracao('tecnicos',null,'técnico excluído');else if(typeof saveDB==='function')saveDB(); // r38 bloco 2
     if(typeof renderUsuarios === 'function') renderUsuarios();
     toastMsg('Técnico excluído', 'success');
   });
@@ -141,7 +136,7 @@ window.renderUsuarios = function(){
 
   view.innerHTML = `<div class="neo-shell"><div class="neo-panel neo-float-in">
     <div class="neo-head">
-      <div><h3>Usuários e permissões</h3><p>Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div>
+      <div><h3>Usuários e permissões</h3></div>
       <div class="neo-actions">
         <button onclick="openModalCriarUsuario()" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo usuário</button>
         <button onclick="openModalNovoTecnico()" class="neo-btn"><i class="ph ph-plus-circle"></i>Novo técnico</button>
@@ -190,7 +185,7 @@ window.renderModalUsuario = function(id){
     <div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${esc(u ? u.nome : '')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     <div class="grid grid-cols-2 gap-3">
       <div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${esc(u ? u.login : '')}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${esc(u ? u.senha : '')}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário${isEdit ? '' : ' *'}</label><input id="u-senha" type="password" value="" placeholder="${isEdit ? 'deixe em branco para manter a senha atual' : 'senha do usuário'}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     </div>
     <div class="grid grid-cols-2 gap-3">
       ${perfilHtml}
@@ -202,16 +197,23 @@ window.renderModalUsuario = function(id){
 };
 
 // Salvar usuário (sem senha CNPJ; perfil conforme hierarquia)
-window.saveUsuarioFinal = function(id){
+// r58 (auditoria, bug #0): virou async — quando a senha muda, re-hash + bandeira senhaPadrao (espelha r54 P1)
+window.saveUsuarioFinal = async function(id){
   const s = sess(); if(!s) return;
   const privilegiado = temPermissaoTotal(s);
   const nome = txt(document.getElementById('u-nome') && document.getElementById('u-nome').value);
   const login = fold(document.getElementById('u-login') && document.getElementById('u-login').value);
-  const senha = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
+  const senhaDigitada = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
   const ativo = document.getElementById('u-ativo') ? document.getElementById('u-ativo').value === 'true' : true;
-  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
 
   let u = id ? (db.usuarios || []).find(x => x.id === id) : null;
+  // v7.0.2 (23/09/2026) — ORDEM DO DONO: "queria algo que não é possível ver a
+  // senha de nenhuma forma". O campo do modal não vem mais preenchido com a
+  // senha do usuário (ela ficava visível no código-fonte da página). Agora:
+  //   • criar usuário  → a senha é obrigatória;
+  //   • editar usuário → em branco = MANTÉM a senha atual (não apaga, não troca).
+  const senha = senhaDigitada || (u ? txt(u.senha) : '');
+  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
   if(u && !podeEditarUsuario(s, u.id)) return toastMsg('Você só pode editar o seu próprio usuário', 'error');
   if(!u && (db.usuarios || []).some(x => x.empresaId === s.empresaId && fold(x.login) === login)) return toastMsg('Login já existe', 'error');
 
@@ -223,6 +225,8 @@ window.saveUsuarioFinal = function(id){
     perfil = 'Funcionário';
   }
 
+  const eraNovo = !u;
+  const senhaAntiga = u ? txt(u.senha) : '';
   if(u){
     Object.assign(u, { nome: nome, login: login, senha: senha, ativo: ativo, perfil: perfil, atualizadoEm: new Date().toISOString(), atualizadoPor: s.usuarioId });
     if(typeof logAction === 'function') logAction('usuario', 'editar', u.id, 'Editado usuário ' + login + ' perfil ' + perfil);
@@ -231,10 +235,29 @@ window.saveUsuarioFinal = function(id){
     (db.usuarios = db.usuarios || []).push(u);
     if(typeof logAction === 'function') logAction('usuario', 'criar', u.id, 'Criado usuário ' + login + ' perfil ' + perfil);
   }
+  // r58 (auditoria, bug #0 — espelha r54 P1): senha mudou (ou não tinha hash) → re-hash ANTES de gravar.
+  // Bandeira: criação exige troca; uma senha explicitamente trocada é confirmada.
+  const precisaHash = eraNovo || !u.senhaHash || (senhaAntiga !== senha);
+  if(precisaHash && typeof atualizarHashRegistro === 'function'){ try{ await atualizarHashRegistro(u, senha); }catch(e){} }
+  // Qualquer senha explicitamente informada no cadastro é uma troca confirmada.
+  // A senha anterior (inclusive a senha inicial) nunca deve continuar exigindo
+  // troca nem ser aceita como senha válida depois desta operação.
+  if(eraNovo) u.senhaPadrao = true;
+  else if(senhaDigitada) u.senhaPadrao = false;
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  toastMsg('Usuário salvo', 'success');
+  // v5.24.34 — PROVA DE GRAVAÇÃO. Confere se os dados salvos correspondem ao
+  // estado escolhido no formulário. Um usuário inativo também foi salvo com
+  // sucesso; a inatividade só impede login e não deve gerar falso alerta.
+  var provaLogin = (db.usuarios || []).some(function(x){ return x && x.empresaId === s.empresaId && fold(x.login) === login && txt(x.senha) === senha && !!x.ativo === ativo && perfilEfetivo(x) === perfil; });
+  if(provaLogin){
+    toastMsg(ativo ? 'Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.' : 'Usuário salvo como inativo; o login está desativado.', 'success');
+  } else if(typeof window.lfbAlert === 'function'){
+    window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
+  } else {
+    toastMsg('O usuário NÃO ficou gravado — tenta salvar de novo.', 'error');
+  }
 };
 
 // Sobrescreve o saveUsuario antigo (app.js) — remove a exigência de senha CNPJ.

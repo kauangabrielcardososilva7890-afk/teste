@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PERSISTÊNCIA INDEXEDDB v2 — incremental por entidade
-// Migra automaticamente o snapshot v1 e grava apenas entidades alteradas.
-// O localStorage permanece como compatibilidade; IndexedDB é a cópia ampla.
+// INDEXEDDB — compatibilidade de leitura de cópias legadas no modo SÓ NUVEM.
+// Dados novos de negócio ficam apenas na memória até confirmação da nuvem;
+// nenhuma base ou cópia de recuperação nova é persistida neste navegador.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -10,23 +10,30 @@ const SNAPSHOTS='snapshots';
 const ENTITIES='entities';
 const META='meta';
 const KEY='main';
-let database=null,writeTimer=null,lastSavedAt=0,lastError='',clearing=false,entityHashes={};
-window.__indexedDbPersistAtivo=true;
+const CLOUD_ONLY=true;
+const volatileRecoverySnapshots=new Map();
+let database=null,openPromise=null,writeTimer=null,lastSavedAt=0,lastError='',clearing=false,entityHashes={};
+window.__indexedDbPersistAtivo=false;
+window.__dbPersistenciaSomenteNuvem=true;
 
 function open(){
   if(database)return Promise.resolve(database);
-  return new Promise((resolve,reject)=>{
-    if(!window.indexedDB)return reject(new Error('IndexedDB não disponível'));
-    const req=indexedDB.open(IDB_NAME,2);
+  if(openPromise)return openPromise; // r59b: uma abertura por vez (duas em voo órfãs travavam o apagar)
+  openPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){openPromise=null;return reject(new Error('IndexedDB não disponível'));}
+    var req=null; try{ req=indexedDB.open(IDB_NAME,2); }catch(e){ openPromise=null; return reject(e); } // r59b-audit: throw síncrono não envenena as próximas aberturas
     req.onupgradeneeded=()=>{
       const x=req.result;
       if(!x.objectStoreNames.contains(SNAPSHOTS))x.createObjectStore(SNAPSHOTS,{keyPath:'key'});
       if(!x.objectStoreNames.contains(ENTITIES))x.createObjectStore(ENTITIES,{keyPath:'key'});
       if(!x.objectStoreNames.contains(META))x.createObjectStore(META,{keyPath:'key'});
     };
-    req.onsuccess=()=>{database=req.result;database.onversionchange=()=>{database.close();database=null;};resolve(database);};
-    req.onerror=()=>reject(req.error||new Error('Falha abrindo IndexedDB'));
+    // r59b: o versionchange fecha a PRÓPRIA conexão (não a da vez) e só zera se for a atual —
+    // antes, conexão órfã fechava a errada e o segundo disparo quebrava em null.close().
+    req.onsuccess=()=>{database=req.result;var conn=req.result;conn.onversionchange=()=>{try{conn.close();}catch(e){} if(database===conn)database=null;};openPromise=null;resolve(database);};
+    req.onerror=()=>{openPromise=null;reject(req.error||new Error('Falha abrindo IndexedDB'));};
   });
+  return openPromise;
 }
 function getSnapshot(key){return open().then(x=>new Promise((resolve,reject)=>{const r=x.transaction(SNAPSHOTS,'readonly').objectStore(SNAPSHOTS).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);}));}
 function putSnapshot(snapshot){return open().then(x=>new Promise((resolve,reject)=>{const tx=x.transaction(SNAPSHOTS,'readwrite');tx.objectStore(SNAPSHOTS).put(snapshot);tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Snapshot cancelado'));}));}
@@ -53,7 +60,8 @@ function signature(campo,value,manifest){
   try{return 'j:'+hashText(JSON.stringify(value));}catch(e){return 't:'+Date.now();}
 }
 async function writeNow(reason){
-  if(clearing||typeof db==='undefined'||!valid(db))return false;
+  if(CLOUD_ONLY){window.__dbPersistidoOk=false;window.__dbIDBOk=true;return {ok:true,changed:0,removed:0,stored:false,cloudOnly:true};}
+  if(clearing||typeof db==='undefined'||!valid(db)){window.__dbIDBOk=false;return false;}
   try{
     const x=await open(),keys=Object.keys(db),manifest=localManifest(),hashes={},changed=[];
     keys.forEach(campo=>{const h=signature(campo,db[campo],manifest);hashes[campo]=h;if(entityHashes[campo]!==h)changed.push(campo);});
@@ -66,9 +74,9 @@ async function writeNow(reason){
       tx.objectStore(META).put({key:KEY,savedAt,reason:reason||'save',keys,hashes});
       tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Gravação incremental cancelada'));
     });
-    entityHashes=hashes;lastSavedAt=savedAt;lastError='';window.__dbPersistidoOk=true;
+    entityHashes=hashes;lastSavedAt=savedAt;lastError='';window.__dbPersistidoOk=true;window.__dbIDBOk=true;
     return {ok:true,changed:changed.length,removed:removed.length};
-  }catch(e){lastError=e&&e.message?e.message:String(e);console.error('[DIGICOPY][IndexedDB] falha ao salvar',e);return false;}
+  }catch(e){lastError=e&&e.message?e.message:String(e);window.__dbIDBOk=false;console.error('[DIGICOPY][IndexedDB] falha ao salvar',e);return false;}
 }
 function schedule(reason){if(writeTimer)clearTimeout(writeTimer);writeTimer=setTimeout(()=>{writeTimer=null;writeNow(reason);},500);}
 async function boot(){
@@ -86,11 +94,12 @@ async function boot(){
       if(typeof normalizeDbShape==='function')db=normalizeDbShape(db);
       lastSavedAt=legacyTs;entityHashes={};
       await writeNow('migracao-snapshot-v1');
-      console.log('[DIGICOPY][IndexedDB] snapshot v1 migrado para entidades');
+      console.log('[DIGICOPY][IndexedDB] cópia legada lida para memória; sem gravação local');
     }else{
       entityHashes={};await writeNow('migracao-localStorage');
-      console.log('[DIGICOPY][IndexedDB] base atual migrada com sucesso');
+      console.log('[DIGICOPY][IndexedDB] cópia legada carregada; gravações locais desativadas');
     }
+    if(typeof seedData==='function')seedData(false);
     if(typeof getSession==='function'&&getSession()&&typeof showApp==='function')showApp();
     else if(typeof showLogin==='function')showLogin();
     return true;
@@ -99,18 +108,63 @@ async function boot(){
 async function writeRecoverySnapshot(name,data){
   try{
     const copy=typeof structuredClone==='function'?structuredClone(data):JSON.parse(JSON.stringify(data));
-    await putSnapshot({key:'recovery_'+String(name||Date.now()),savedAt:Date.now(),reason:'recovery',data:copy});return true;
+    const key='recovery_'+String(name||Date.now());
+    if(CLOUD_ONLY){volatileRecoverySnapshots.set(key,{key,savedAt:Date.now(),reason:'recovery-volatile',data:copy});return true;}
+    await putSnapshot({key,savedAt:Date.now(),reason:'recovery',data:copy});return true;
   }catch(e){lastError=e&&e.message?e.message:String(e);return false;}
+}
+// Ler de volta uma cópia de recuperação (usado pelo conserto da nuvem).
+async function readRecoverySnapshot(name){
+  try{
+    const key='recovery_'+String(name||'');
+    const volatile=volatileRecoverySnapshots.get(key);
+    if(volatile&&volatile.data)return typeof structuredClone==='function'?structuredClone(volatile.data):JSON.parse(JSON.stringify(volatile.data));
+    const snap=await getSnapshot(key);return snap&&snap.data?snap.data:null;
+  }
+  catch(e){lastError=e&&e.message?e.message:String(e);return null;}
 }
 async function clearLocalData(){
   clearing=true;if(writeTimer)clearTimeout(writeTimer);
+  volatileRecoverySnapshots.clear();
+  try{
   try{if(database){database.close();database=null;}}catch(e){}
   await new Promise((resolve,reject)=>{const req=indexedDB.deleteDatabase(IDB_NAME);req.onsuccess=()=>resolve(true);req.onerror=()=>reject(req.error||new Error('Falha ao apagar IndexedDB'));req.onblocked=()=>reject(new Error('Feche as outras abas do DIGICOPY e tente novamente.'));});
   try{Object.keys(localStorage).forEach(k=>{if(/^digicopy/i.test(k))localStorage.removeItem(k);});}catch(e){}
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
+  }finally{clearing=false;} // r59d: wipe bloqueado NAO trava as gravacoes (era o sumico silencioso)
 }
-window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
+// r60 v7.3.0 (30/09/2026) — APAGAR JUNTO: o botão "apagar dados deste PC" avisa
+// as outras abas pelo BroadcastChannel; cada aba limpa o próprio banco e recarrega.
+// Sem isso a 2ª aba segurava o banco aberto e o delete falhava ("feche as outras
+// abas"). Quem recebe o aviso também recarrega — e o login se cura sozinho (v5901).
+try{
+  if(typeof BroadcastChannel!=='undefined'){
+    var __wipeCanal=new BroadcastChannel('digicopy-wipe-local');
+    __wipeCanal.onmessage=function(ev){
+      if(!ev||!ev.data||ev.data.__wipe!=='digicopy') return;
+      try{ __wipeCanal.close(); }catch(e0){}
+      try{ if(window.__digicopyWipeCanal===__wipeCanal) window.__digicopyWipeCanal=null; }catch(e0b){}
+      (async function(){
+        try{ await clearLocalData(); }catch(e2){}
+        try{ window.location.reload(); }catch(e3){}
+      })();
+    };
+    window.__digicopyWipeCanal=window.__digicopyWipeCanal||__wipeCanal;
+  }
+}catch(eWipe){}
+// v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
+// recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode
+// estar numa destas fotos).
+function getAllSnapshots(){
+  return open().then(x=>new Promise((resolve,reject)=>{
+    const tx=x.transaction(SNAPSHOTS,'readonly');
+    const r=tx.objectStore(SNAPSHOTS).getAll();
+    r.onsuccess=()=>resolve(r.result||[]);
+    r.onerror=()=>reject(r.error);
+  }));
+}
+window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,listSnapshots:getAllSnapshots,clearLocalData,info:()=>({active:false,cloudOnly:true,legacyReadable:true,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
 window.DIGICOPY_DB_READY=boot();
 try{
   const original=window.saveDB;

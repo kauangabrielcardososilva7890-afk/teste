@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Conceito de dashboard ERP Digicopy</title>
+  <desc id="desc">Mockup de uma tela de gestão empresarial com navegação lateral, indicadores, fluxo de caixa, tarefas e atividade recente.</desc>
+  <defs>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="9" flood-color="#183755" flood-opacity=".06"/></filter>
+    <style>
+      text{font-family:Inter,"Segoe UI",Arial,sans-serif}
+      .muted{fill:#8392a2}.small{font-size:12px}.label{font-size:11px;font-weight:700;letter-spacing:.08em}.card{fill:#fff;stroke:#e6ebf1;stroke-width:1}
+    </style>
+  </defs>
+  <rect width="1440" height="1000" fill="#f4f7fa"/>
+  <rect width="236" height="1000" fill="#12365a"/>
+  <rect x="0" y="0" width="236" height="76" fill="#0d2d4e"/>
+  <rect x="24" y="20" width="36" height="36" rx="10" fill="#fff"/>
+  <path d="M34 45V31h4v9l5-6 5 6v-9h4v14h-4l-5-6-5 6z" fill="#1f70bd"/>
+  <text x="70" y="42" fill="#fff" font-size="16" font-weight="750">DIGICOPY</text>
+  <text x="70" y="57" fill="#a8c0d7" font-size="9" font-weight="700" letter-spacing="1.5">GESTÃO EMPRESARIAL</text>
+
+  <text x="24" y="108" fill="#8ea9c2" class="label">MENU PRINCIPAL</text>
+  <rect x="12" y="124" width="212" height="44" rx="9" fill="#e7f1fb"/>
+  <rect x="12" y="124" width="3" height="44" rx="2" fill="#36a0ef"/>
+  <path d="M31 143h13v12H31zM33 139h9v4h-9z" fill="none" stroke="#1769aa" stroke-width="1.7"/>
+  <text x="55" y="152" fill="#164d7d" font-size="13" font-weight="700">Visão geral</text>
+  <g fill="none" stroke="#9ab3ca" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="38" cy="204" r="7"/><path d="M27 222c1-7 5-10 11-10s10 3 11 10"/>
+    <path d="M30 257h17l-2 15H32zM33 253h11"/>
+    <rect x="30" y="294" width="17" height="19" rx="2"/><path d="M34 300h9m-9 5h9"/>
+    <path d="M30 340h18M33 336v9m6-14v14m6-19v19"/>
+    <circle cx="38" cy="389" r="9"/><path d="M38 383v12m-4-8h6a2 2 0 010 4h-5"/>
+    <path d="M30 429l8-6 8 6v10H30zM36 439v-6h4v6"/>
+  </g>
+  <g fill="#c2d3e2" font-size="13">
+    <text x="55" y="209">Atendimento</text><text x="55" y="263">Produtos e estoque</text>
+    <text x="55" y="306">Locação</text><text x="55" y="354">Fiscal</text>
+    <text x="55" y="394">Financeiro</text><text x="55" y="439">Cadastros</text>
+  </g>
+  <g stroke="#52708c" stroke-width="1"><path d="M24 466h188"/><path d="M24 626h188"/></g>
+  <text x="24" y="495" fill="#8ea9c2" class="label">SISTEMA</text>
+  <g fill="#c2d3e2" font-size="13"><text x="55" y="528">Configurações</text><text x="55" y="570">Backup e nuvem</text></g>
+  <g fill="none" stroke="#9ab3ca" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="38" cy="524" r="8"/><path d="M38 519v5l4 2"/><path d="M29 570a9 9 0 0118 0m-9-9v9h9"/>
+  </g>
+  <rect x="14" y="894" width="208" height="76" rx="12" fill="#1d496d"/>
+  <circle cx="42" cy="926" r="16" fill="#cfe2f2"/><text x="42" y="931" text-anchor="middle" fill="#1b5c91" font-size="12" font-weight="800">KG</text>
+  <text x="68" y="923" fill="#fff" font-size="12" font-weight="700">Kauan Gabriel</text>
+  <text x="68" y="942" fill="#a8c0d7" font-size="10">Administrador</text>
+  <circle cx="202" cy="927" r="3" fill="#45ce9a"/>
+
+  <rect x="236" width="1204" height="76" fill="#fff"/>
+  <path d="M236 75.5h1204" stroke="#e5ebf1"/>
+  <text x="274" y="33" class="muted" font-size="11">Digicopy</text><text x="319" y="33" class="muted" font-size="11">/</text><text x="333" y="33" font-size="11" font-weight="700">Visão geral</text>
+  <rect x="1060" y="18" width="190" height="40" rx="9" fill="#f7f9fb" stroke="#e5ebf1"/>
+  <circle cx="1081" cy="38" r="6" fill="none" stroke="#7c8c9c" stroke-width="1.4"/><path d="M1081 34v4l3 2" fill="none" stroke="#7c8c9c" stroke-width="1.4"/>
+  <text x="1095" y="42" font-size="11" fill="#52667a">06 de outubro de 2026</text>
+  <circle cx="1290" cy="38" r="19" fill="#f4f7fa"/><path d="M1285 40h10l-1-2v-3a4 4 0 00-8 0v3zM1287 43h6" fill="none" stroke="#52667a" stroke-width="1.4" stroke-linecap="round"/>
+  <circle cx="1298" cy="24" r="4" fill="#e85b58"/>
+  <circle cx="1340" cy="38" r="19" fill="#e9f2fb"/><text x="1340" y="42" text-anchor="middle" fill="#286da7" font-size="11" font-weight="800">KG</text>
+
+  <text x="274" y="130" font-size="26" font-weight="750" letter-spacing="-.6">Bom dia, Kauan</text>
+  <text x="274" y="154" font-size="13" class="muted">Aqui está o resumo da operação da sua empresa.</text>
+  <rect x="1194" y="111" width="196" height="42" rx="9" fill="#176bb0"/>
+  <path d="M1215 132h13m-6-6v12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+  <text x="1238" y="136" fill="#fff" font-size="12" font-weight="700">Nova movimentação</text>
+
+  <!-- Indicadores do negócio -->
+  <g filter="url(#shadow)">
+    <rect class="card" x="274" y="178" width="264" height="124" rx="12"/>
+    <rect class="card" x="554" y="178" width="264" height="124" rx="12"/>
+    <rect class="card" x="834" y="178" width="264" height="124" rx="12"/>
+    <rect class="card" x="1114" y="178" width="276" height="124" rx="12"/>
+  </g>
+  <rect x="292" y="197" width="38" height="38" rx="10" fill="#eaf3fc"/><path d="M303 221v-10l8-6 8 6v10h-6v-7h-5v7z" fill="none" stroke="#347fb9" stroke-width="1.6"/>
+  <text x="342" y="207" font-size="11" class="muted" font-weight="600">A RECEBER NO MÊS</text><text x="342" y="238" font-size="24" font-weight="750">R$ 38.420</text><text x="292" y="278" font-size="10" fill="#3c9875">↑ 8,4% <tspan fill="#8392a2">em relação ao mês passado</tspan></text>
+  <rect x="572" y="197" width="38" height="38" rx="10" fill="#eaf7f1"/><path d="M582 222l7-8 5 4 7-9m-6 0h6v6" fill="none" stroke="#319879" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="622" y="207" font-size="11" class="muted" font-weight="600">VENDAS NO MÊS</text><text x="622" y="238" font-size="24" font-weight="750">R$ 24.860</text><text x="572" y="278" font-size="10" fill="#3c9875">↑ 12,1% <tspan fill="#8392a2">em relação ao mês passado</tspan></text>
+  <rect x="852" y="197" width="38" height="38" rx="10" fill="#fff4e7"/><path d="M862 207h18v17h-18zM865 203h12v4m-11 6h10m-10 4h6" fill="none" stroke="#d48c36" stroke-width="1.5" stroke-linejoin="round"/>
+  <text x="902" y="207" font-size="11" class="muted" font-weight="600">CONTAS A PAGAR</text><text x="902" y="238" font-size="24" font-weight="750">R$ 12.540</text><text x="852" y="278" font-size="10" fill="#8392a2">5 contas <tspan fill="#8392a2">vencem nos próximos 7 dias</tspan></text>
+  <rect x="1132" y="197" width="38" height="38" rx="10" fill="#f1edfb"/><path d="M1140 223v-8h5v8m2 0v-14h5v14m2 0v-10h5v10" fill="none" stroke="#7862b2" stroke-width="1.5"/>
+  <text x="1182" y="207" font-size="11" class="muted" font-weight="600">ESTOQUE BAIXO</text><text x="1182" y="238" font-size="24" font-weight="750">8 produtos</text><text x="1132" y="278" font-size="10" fill="#bc7b34">Ver itens que precisam de reposição →</text>
+
+  <!-- Fluxo de caixa -->
+  <g filter="url(#shadow)"><rect class="card" x="274" y="322" width="738" height="328" rx="12"/><rect class="card" x="1028" y="322" width="362" height="328" rx="12"/></g>
+  <text x="298" y="354" font-size="15" font-weight="700">Fluxo de caixa</text><text x="298" y="374" font-size="11" class="muted">Entradas e saídas ao longo do mês</text>
+  <rect x="888" y="338" width="98" height="30" rx="7" fill="#fff" stroke="#e2e8ef"/><text x="904" y="357" font-size="10" fill="#52667a">Este mês⌄</text>
+  <circle cx="305" cy="402" r="4" fill="#2b8b70"/><text x="315" y="406" font-size="10" class="muted">Entradas</text><circle cx="390" cy="402" r="4" fill="#df8b77"/><text x="400" y="406" font-size="10" class="muted">Saídas</text>
+  <g stroke="#edf1f5" stroke-width="1"><path d="M330 438h650M330 484h650M330 530h650M330 576h650M330 622h650"/></g>
+  <g font-size="9" class="muted" text-anchor="end"><text x="320" y="441">40k</text><text x="320" y="487">30k</text><text x="320" y="533">20k</text><text x="320" y="579">10k</text><text x="320" y="625">0</text></g>
+  <path d="M345 544 C390 532 405 490 450 500 S515 535 555 477 S620 468 660 484 S720 438 765 458 S820 493 870 444 S935 454 970 426" fill="none" stroke="#2b8b70" stroke-width="3" stroke-linecap="round"/>
+  <path d="M345 568 C390 560 408 544 450 554 S515 562 555 530 S620 542 660 550 S720 520 765 532 S820 560 870 539 S935 548 970 518" fill="none" stroke="#df8b77" stroke-width="2.4" stroke-linecap="round"/>
+  <g fill="#2b8b70"><circle cx="345" cy="544" r="3.5"/><circle cx="450" cy="500" r="3.5"/><circle cx="555" cy="477" r="3.5"/><circle cx="660" cy="484" r="3.5"/><circle cx="765" cy="458" r="3.5"/><circle cx="870" cy="444" r="3.5"/><circle cx="970" cy="426" r="3.5"/></g>
+  <g font-size="9" class="muted" text-anchor="middle"><text x="345" y="640">01</text><text x="450" y="640">05</text><text x="555" y="640">10</text><text x="660" y="640">15</text><text x="765" y="640">20</text><text x="870" y="640">25</text><text x="970" y="640">30</text></g>
+  <text x="1052" y="354" font-size="15" font-weight="700">Para hoje</text><text x="1052" y="374" font-size="11" class="muted">O que merece sua atenção</text>
+  <rect x="1052" y="396" width="314" height="58" rx="9" fill="#fff9ed" stroke="#f4e3c4"/><circle cx="1073" cy="425" r="12" fill="#ffefcf"/><path d="M1073 418v8m0 4v.5" stroke="#bd802e" stroke-width="1.7" stroke-linecap="round"/><text x="1094" y="420" font-size="11" font-weight="700">3 contas vencem hoje</text><text x="1094" y="438" font-size="10" class="muted">Total de R$ 2.180,00</text><text x="1338" y="429" font-size="15" fill="#8292a2">›</text>
+  <rect x="1052" y="464" width="314" height="58" rx="9" fill="#f5f9fd" stroke="#e5edf4"/><circle cx="1073" cy="493" r="12" fill="#e4effa"/><path d="M1068 493h10m-5-5v10" stroke="#3978ad" stroke-width="1.5"/><text x="1094" y="488" font-size="11" font-weight="700">2 chamados aguardam retorno</text><text x="1094" y="506" font-size="10" class="muted">Clientes aguardam atualização</text><text x="1338" y="497" font-size="15" fill="#8292a2">›</text>
+  <rect x="1052" y="532" width="314" height="58" rx="9" fill="#f4faf7" stroke="#dceee4"/><circle cx="1073" cy="561" r="12" fill="#e1f2e9"/><path d="M1068 561l4 4 7-8" fill="none" stroke="#38916e" stroke-width="1.7"/><text x="1094" y="556" font-size="11" font-weight="700">Sincronização em dia</text><text x="1094" y="574" font-size="10" class="muted">Última atualização há 2 minutos</text><text x="1338" y="565" font-size="15" fill="#8292a2">›</text>
+  <text x="1052" y="621" font-size="10" fill="#176bb0" font-weight="700">Ver todas as pendências →</text>
+
+  <!-- Atividade e atalhos -->
+  <g filter="url(#shadow)"><rect class="card" x="274" y="670" width="738" height="278" rx="12"/><rect class="card" x="1028" y="670" width="362" height="278" rx="12"/></g>
+  <text x="298" y="703" font-size="15" font-weight="700">Movimentações recentes</text><text x="298" y="723" font-size="11" class="muted">Últimos registros de vendas e financeiro</text><text x="930" y="703" font-size="10" fill="#176bb0" font-weight="700">Ver tudo →</text>
+  <path d="M298 744h690" stroke="#edf1f5"/><g class="label muted"><text x="300" y="765">DESCRIÇÃO</text><text x="594" y="765">CLIENTE</text><text x="787" y="765">DATA</text><text x="914" y="765">VALOR</text></g>
+  <g font-size="11"><text x="300" y="798" font-weight="650">Venda #003842</text><text x="594" y="798">Papelaria Central</text><text x="787" y="798" class="muted">06 out, 10:42</text><text x="914" y="798" font-weight="700">R$ 840,00</text>
+    <text x="300" y="843" font-weight="650">Recebimento mensal</text><text x="594" y="843">Gráfica Horizonte</text><text x="787" y="843" class="muted">06 out, 09:18</text><text x="914" y="843" font-weight="700">R$ 1.250,00</text>
+    <text x="300" y="888" font-weight="650">Contrato #001207</text><text x="594" y="888">Escola Vila Nova</text><text x="787" y="888" class="muted">05 out, 16:30</text><text x="914" y="888" font-weight="700">R$ 680,00/mês</text></g>
+  <g stroke="#edf1f5"><path d="M298 814h690M298 859h690M298 904h690"/></g>
+  <text x="1052" y="703" font-size="15" font-weight="700">Acesso rápido</text><text x="1052" y="723" font-size="11" class="muted">Comece uma tarefa comum</text>
+  <g>
+    <rect x="1052" y="744" width="145" height="74" rx="9" fill="#f6f9fc" stroke="#e8edf3"/><rect x="1064" y="756" width="28" height="28" rx="8" fill="#e4f0fb"/><path d="M1071 770h14m-7-7v14" stroke="#347fb9" stroke-width="1.7"/><text x="1064" y="802" font-size="10" font-weight="700">Nova venda</text>
+    <rect x="1207" y="744" width="159" height="74" rx="9" fill="#f6f9fc" stroke="#e8edf3"/><rect x="1219" y="756" width="28" height="28" rx="8" fill="#e9f6ef"/><path d="M1226 773h14m-7-7v14" stroke="#348a69" stroke-width="1.7"/><text x="1219" y="802" font-size="10" font-weight="700">Cadastrar cliente</text>
+    <rect x="1052" y="828" width="145" height="74" rx="9" fill="#f6f9fc" stroke="#e8edf3"/><rect x="1064" y="840" width="28" height="28" rx="8" fill="#fff1e2"/><path d="M1070 848h16v12h-16zM1073 845h10" fill="none" stroke="#ce873c" stroke-width="1.5"/><text x="1064" y="886" font-size="10" font-weight="700">Novo contrato</text>
+    <rect x="1207" y="828" width="159" height="74" rx="9" fill="#f6f9fc" stroke="#e8edf3"/><rect x="1219" y="840" width="28" height="28" rx="8" fill="#f0ecfb"/><path d="M1226 855h14m-7-7v14" stroke="#7b64b5" stroke-width="1.6"/><text x="1219" y="886" font-size="10" font-weight="700">Lançar recebimento</text>
+  </g>
+  <text x="274" y="980" font-size="10" class="muted">Digicopy ERP · Painel inicial · Dados ilustrativos</text>
+  <text x="1390" y="980" text-anchor="end" font-size="10" class="muted">Conceito visual · outubro 2026</text>
+</svg>

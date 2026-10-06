@@ -1,0 +1,145 @@
+/* DIGICOPY v8.0.0 — módulo único do shell e menus principais
+ * Fonte de verdade para: Usuários, Importação, Etiquetas e tema global.
+ * Este arquivo substitui correções visuais dispersas; não cria dados e não altera a nuvem.
+ */
+(function(){
+  'use strict';
+  if(typeof window==='undefined'||typeof document==='undefined') return;
+  var G=window;
+  function qs(s,r){return (r||document).querySelector(s)}
+  function qsa(s,r){return Array.from((r||document).querySelectorAll(s))}
+  function safe(fn){try{return fn()}catch(e){console.error('[DIGICOPY][menu-shell]',e);return undefined}}
+  function hideViews(){qsa('.view').forEach(function(v){v.classList.add('hidden')})}
+  function ensureView(id){
+    var el=document.getElementById('view-'+id);
+    if(!el){el=document.createElement('section');el.id='view-'+id;el.className='view hidden space-y-4';(qs('#views')||qs('main')||document.body).appendChild(el)}
+    return el;
+  }
+  function setActive(nav){
+    qsa('[data-nav],[data-side-nav]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-nav')===nav||b.getAttribute('data-side-nav')===nav)})
+  }
+  function themeOn(){return document.documentElement.classList.contains('digi-escuro')}
+  function applyTheme(on){
+    document.documentElement.classList.toggle('digi-escuro',!!on);
+    document.body.classList.toggle('digi-escuro',!!on);
+    var m=qs('meta[name="theme-color"]'); if(m)m.content=on?'#070b14':'#0a1e8a';
+  }
+  function themeKey(){
+    var s=safe(function(){return typeof getSession==='function'?getSession():null});
+    var p=String(G.DIGICOPY_BUILD_PROFILE||'');
+    return p==='commercial-cloud'&&s?'digicopy_ui_modo_escuro_'+(s.usuarioId||s.login||'usuario'):'digicopy_ui_modo_escuro_dispositivo_v1';
+  }
+  function loadTheme(){return safe(function(){return localStorage.getItem(themeKey())==='1'})===true}
+  function saveTheme(on){safe(function(){localStorage.setItem(themeKey(),on?'1':'0')});applyTheme(on)}
+  G.MODO_ESCURO_PURE={KEY:themeKey(),lerEscuro:loadTheme,gravarEscuro:function(on){saveTheme(!!on);return true}};
+  function sidebarKey(){
+    var s=safe(function(){return typeof getSession==='function'?getSession():null});
+    var p=String(G.DIGICOPY_BUILD_PROFILE||'');
+    return p==='commercial-cloud'&&s?'digicopy_ui_sidebar_lado_'+(s.usuarioId||s.login||'usuario'):'digicopy_ui_sidebar_lado_dispositivo_v1';
+  }
+  function loadSidebarSide(){return safe(function(){return localStorage.getItem(sidebarKey())==='right'?'right':'left'})||'left'}
+  function applySidebarSide(side){
+    var right=side==='right';
+    document.documentElement.classList.toggle('digi-sidebar-right',right);
+    document.body.classList.toggle('digi-sidebar-right',right);
+  }
+  function saveSidebarSide(side){safe(function(){localStorage.setItem(sidebarKey(),side==='right'?'right':'left')});applySidebarSide(side)}
+  G.SIDEBAR_POSICAO_PURE={KEY:sidebarKey,ler:loadSidebarSide,gravar:function(side){saveSidebarSide(side);return true}};
+  function menuOrderKey(){
+    var s=safe(function(){return typeof getSession==='function'?getSession():null});
+    var p=String(G.DIGICOPY_BUILD_PROFILE||'');
+    return p==='commercial-cloud'&&s?'digicopy_ui_menus_ordem_'+(s.usuarioId||s.login||'usuario'):'digicopy_ui_menus_ordem_dispositivo_v1';
+  }
+  function menuSections(){
+    var side=document.getElementById('shell-sidebar-links'); if(!side)return [];
+    return Array.from(side.querySelectorAll(':scope > .shell-menu-section')).map(function(el,i){
+      if(!el.dataset.menuId)el.dataset.menuId='sec-'+String((el.querySelector('.shell-menu-label')||{}).textContent||i).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+      return el;
+    });
+  }
+  function applyMenuOrder(){
+    var side=document.getElementById('shell-sidebar-links'); if(!side)return;
+    var groups=menuSections(), saved=safe(function(){return JSON.parse(localStorage.getItem(menuOrderKey())||'[]')})||[];
+    if(!Array.isArray(saved)||!saved.length)return;
+    var byId={};groups.forEach(function(g){byId[g.dataset.menuId]=g}); saved.concat(groups.map(function(g){return g.dataset.menuId})).forEach(function(id){if(byId[id])side.appendChild(byId[id])});
+  }
+  function saveMenuOrder(order){safe(function(){localStorage.setItem(menuOrderKey(),JSON.stringify(order))});applyMenuOrder()}
+  function openMenuEditor(){
+    var groups=menuSections(); if(!groups.length||!qs('#modal-root'))return;
+    var body=qs('#modal-body'), footer=qs('#modal-footer'); if(!body||!footer)return;
+    body.innerHTML='<p class="text-[12px] text-slate-500 mb-3">Arraste os blocos para escolher a ordem das seções da sidebar. A configuração fica neste dispositivo, ou no usuário Comercial.</p><div id="v8-menu-order-editor" class="space-y-2">'+groups.map(function(g){return '<div draggable="true" data-menu-id="'+g.dataset.menuId+'" class="v8-menu-order-row rounded-xl border p-3 bg-white flex items-center gap-3 cursor-grab"><i class="ph ph-dots-six-vertical text-slate-400"></i><b>'+((g.querySelector('.shell-menu-label')||{}).textContent||g.dataset.menuId)+'</b></div>'}).join('')+'</div>';
+    footer.innerHTML='<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button><button id="v8-menu-order-save" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+    var ed=qs('#v8-menu-order-editor');
+    var dragged=null; qsa('[data-menu-id]',ed).forEach(function(row){row.ondragstart=function(){dragged=row};row.ondragover=function(e){e.preventDefault()};row.ondrop=function(e){e.preventDefault();if(dragged&&dragged!==row){var rect=row.getBoundingClientRect();ed.insertBefore(dragged,e.clientY<rect.top+rect.height/2?row:row.nextSibling)}}});
+    qs('#v8-menu-order-save').onclick=function(){saveMenuOrder(qsa('[data-menu-id]',ed).map(function(x){return x.dataset.menuId}));closeModal();if(typeof G.toast==='function')G.toast('Ordem dos menus atualizada','success')};
+    qs('#modal-root').classList.remove('hidden');
+  }
+  G.abrirEditorMenus=openMenuEditor;
+  function ensureDarkCard(){
+    var root=document.getElementById('view-config'); if(!root||document.getElementById('ui-escuro-dispositivo-card'))return;
+    var grid=root.querySelector('.grid')||root;
+    var card=document.createElement('div'); card.id='ui-escuro-dispositivo-card'; card.className='rounded-[16px] bg-white border p-6';
+    card.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-moon"></i> Aparência deste computador</h4><p class="text-[12px] text-slate-500 mt-1">Modo escuro vale só neste aparelho. Não muda os outros PCs e não sobe na nuvem.</p><label class="mt-4 h-10 px-3 rounded-xl border bg-white flex items-center gap-2 font-semibold text-[13px] w-fit cursor-pointer"><input id="ui-escuro-chk" type="checkbox"> Modo escuro</label>';
+    grid.appendChild(card); var chk=card.querySelector('#ui-escuro-chk'); chk.checked=themeOn(); chk.onchange=function(){saveTheme(chk.checked)};
+  }
+  function ensureSidebarPositionCard(){
+    var card=document.getElementById('ui-escuro-dispositivo-card'); if(!card||document.getElementById('ui-sidebar-position-card'))return;
+    var control=document.createElement('div'); control.id='ui-sidebar-position-card'; control.className='mt-5 pt-4 border-t border-slate-200';
+    control.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-sidebar"></i> Posição do menu lateral</h4><p class="text-[12px] text-slate-500 mt-1">Escolha em qual lado o menu lateral aparece neste computador. Esta opção está disponível em todos os perfis.</p><label class="mt-4 flex items-center gap-2 text-[13px] font-semibold">Lado do menu<select id="ui-sidebar-side" class="ml-2 h-10 rounded-xl border px-3 bg-white"><option value="left">Esquerdo</option><option value="right">Direito</option></select></label>';
+    card.appendChild(control);
+    var select=control.querySelector('#ui-sidebar-side'); select.value=loadSidebarSide(); select.onchange=function(){saveSidebarSide(select.value)};
+  }
+  function ensureMenuEditorCard(){
+    var card=document.getElementById('ui-escuro-dispositivo-card'); if(!card||document.getElementById('ui-menu-order-control'))return;
+    var control=document.createElement('div'); control.id='ui-menu-order-control'; control.className='mt-5 pt-4 border-t border-slate-200';
+    control.innerHTML='<h4 class="font-bold text-[14px]"><i class="ph ph-list"></i> Ordem dos menus</h4><p class="text-[12px] text-slate-500 mt-1">Organize as seções da sidebar sem alterar os dados do sistema.</p><button type="button" id="ui-menu-order-btn" class="mt-3 h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]">Editar menus</button>';
+    card.appendChild(control); control.querySelector('#ui-menu-order-btn').onclick=openMenuEditor;
+  }
+  function sidebarPositionCss(){
+    if(document.getElementById('digicopy-v8-sidebar-position-css'))return;
+    var s=document.createElement('style'); s.id='digicopy-v8-sidebar-position-css';
+    s.textContent='@media(min-width:901px){html.digi-sidebar-right #sidebar{left:auto!important;right:0!important}html.digi-sidebar-right #app-shell>div>main{margin-left:0!important;margin-right:300px!important}}@media(max-width:900px){html.digi-sidebar-right #sidebar{left:0!important;right:auto!important}}html.digi-escuro #ui-escuro-dispositivo-card,html.digi-escuro #ui-escuro-dispositivo-card .bg-white,html.digi-escuro #ui-escuro-dispositivo-card [class*="bg-white"]{background:#111827!important;background-color:#111827!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro #ui-sidebar-position-card{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro #ui-sidebar-side{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}';
+    document.head.appendChild(s);
+  }
+  function darkCss(){
+    if(document.getElementById('digicopy-v8-global-dark'))return;
+    var s=document.createElement('style');s.id='digicopy-v8-global-dark';
+    s.textContent='html.digi-escuro,html.digi-escuro body{background:#070b14!important;color:#e5e7eb!important}html.digi-escuro #app-shell,html.digi-escuro #app-shell>div,html.digi-escuro main,html.digi-escuro #workspace,html.digi-escuro #views{background:#070b14!important;color:#e5e7eb!important}html.digi-escuro .app-titlebar,html.digi-escuro footer,html.digi-escuro .statusbar{background:#0b1220!important;border-color:#263244!important;color:#cbd5e1!important}html.digi-escuro .view,html.digi-escuro .view>*,html.digi-escuro .view [class*="bg-white"],html.digi-escuro .view [class*="bg-slate-50"],html.digi-escuro .view [class*="bg-slate-100"],html.digi-escuro #view-dashboard .dash-shell,html.digi-escuro #view-dashboard .dash-kpi,html.digi-escuro #view-dashboard .dash-card,html.digi-escuro #view-dashboard .dash-action-list button,html.digi-escuro #view-dashboard .dash-activity-list>div,html.digi-escuro #view-dashboard .dash-footer-note,html.digi-escuro #view-dashboard .neo-card,html.digi-escuro #view-dashboard section,html.digi-escuro #view-dashboard [class*="bg-white"],html.digi-escuro #etq-busca-box,html.digi-escuro #etq-busca-box>*{background-color:#111827!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro #view-dashboard .dash-heading h1,html.digi-escuro #view-dashboard .dash-card-title h2,html.digi-escuro #view-dashboard .dash-kpi strong,html.digi-escuro #view-dashboard .dash-action-list b,html.digi-escuro #view-dashboard .dash-footer-note b{color:#e5e7eb!important}html.digi-escuro #view-dashboard .dash-heading p,html.digi-escuro #view-dashboard .dash-card-title p,html.digi-escuro #view-dashboard .dash-kpi small,html.digi-escuro #view-dashboard .dash-action-list small{color:#aab7ca!important}html.digi-escuro #view-dashboard .dash-outline{background:#0f172a!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro .view [class*="text-slate-500"],html.digi-escuro .view [class*="text-slate-600"],html.digi-escuro .view [class*="text-slate-700"]{color:#aab7ca!important}html.digi-escuro input,html.digi-escuro select,html.digi-escuro textarea{background:#0f172a!important;color:#f1f5f9!important;border-color:#334155!important}html.digi-escuro table th{background:#0f172a!important;color:#cbd5e1!important}html.digi-escuro table td{color:#e5e7eb!important;border-color:#263244!important}html.digi-escuro #sidebar{background:#060e2f!important}html.digi-escuro .shell-side-sub{background:#0b163b!important}html.digi-escuro .shell-side-link,html.digi-escuro .shell-side-sub button{color:#e5e7eb!important}html.digi-escuro .modal,html.digi-escuro [role="dialog"],html.digi-escuro #modal-box{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}';document.head.appendChild(s);
+    var l=document.createElement('style');l.id='digicopy-v8-shell-css';l.textContent='#nfe-config-card,#rtf-template-card{display:none!important}html.digi-escuro #view-config .rounded-\\[16px\\],html.digi-escuro #view-config .rounded-\\[18px\\],html.digi-escuro #view-config .rounded-xl,html.digi-escuro #view-config .bg-white,html.digi-escuro #view-config [class*="bg-white"],html.digi-escuro #view-config [class*="bg-slate-50"],html.digi-escuro #view-dashboard .neo-card,html.digi-escuro #view-dashboard section,html.digi-escuro #view-dashboard [class*="bg-white"],html.digi-escuro #etq-busca-box,html.digi-escuro #etq-busca-box>*{background:#111827!important;background-color:#111827!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro #modal-root,html.digi-escuro #modal-root #modal-box,html.digi-escuro #modal-root #modal-body,html.digi-escuro #modal-root #modal-footer,html.digi-escuro #modal-root .v8-menu-order-row,html.digi-escuro #modal-root [class*="bg-white"],html.digi-escuro #modal-root [class*="bg-slate-50"]{background:#111827!important;background-color:#111827!important;color:#e5e7eb!important;border-color:#334155!important}html.digi-escuro #modal-root .text-slate-400,html.digi-escuro #modal-root .text-slate-500,html.digi-escuro #modal-root .text-slate-600,html.digi-escuro #modal-root .text-slate-700{color:#aab7ca!important}@media(min-width:901px){#sidebar{display:flex!important;position:fixed!important;inset:0 auto 0 0!important;width:300px!important;height:100vh!important;transform:none!important;z-index:60!important}#shell-sidebar-links{min-height:0!important;height:calc(100vh - 220px)!important;max-height:calc(100vh - 220px)!important;overflow-y:scroll!important;overscroll-behavior:contain!important;scrollbar-width:thin!important}#sidebar>div:last-child{flex-shrink:0!important}#app-shell>div>main{margin-left:300px!important;min-height:100vh!important;background:#f8fafc!important}.modern-topnav,#app-shell .classic-toolbar,#app-shell .command-row{display:none!important}#app-shell>div>main>.flex-1{background:#f8fafc!important}#app-shell>div>main>.flex-1>.view{padding:24px 30px 42px!important}html.digi-escuro #app-shell>div>main,html.digi-escuro #app-shell>div>main>.flex-1,html.digi-escuro #app-shell>div>main>.flex-1>.view,html.digi-escuro #app-shell footer{background:#070b14!important;color:#e5e7eb!important}html.digi-escuro #app-shell>div>main{padding-bottom:0!important}}@media(max-width:900px){#sidebar{display:flex!important}html.digi-escuro #app-shell,html.digi-escuro main,html.digi-escuro #app-shell>div>main>.flex-1,html.digi-escuro #app-shell footer{background:#070b14!important;color:#e5e7eb!important}}';document.head.appendChild(l);
+  }
+  function removeDuplicateUser(){
+    var cad=qsa('#shell-sidebar-links details').find(function(d){return /cadastros/i.test((qs('summary',d)||{}).textContent||'')});
+    if(cad)qsa('[data-nav="usuarios"]',cad).forEach(function(b){b.remove()});
+    var cfg=qsa('#shell-sidebar-links details').find(function(d){return /configurações/i.test((qs('summary',d)||{}).textContent||'')});
+    if(cfg)qsa('button',cfg).filter(function(b){return /etiquetas de cartuchos/i.test(b.textContent||'')||b.hasAttribute('data-v8-etiquetas')}).forEach(function(b){b.remove()});
+    var oldCard=document.getElementById('cartuchos-etiquetas-card');
+    if(oldCard && oldCard.closest('#view-config'))oldCard.remove();
+  }
+  function independentMenus(){
+    removeDuplicateUser();
+    var side=qs('#shell-sidebar-links'); if(!side)return;
+    if(qs('[data-v8-menu][data-nav="importar"]',side)&&qs('[data-v8-menu][data-nav="etiquetas"]',side))return;
+    var section=qsa('.shell-menu-section',side).find(function(x){return /sistema/i.test((qs('.shell-menu-label',x)||{}).textContent||'')});
+    if(!section)return;
+    var make=function(id,icon,label,fn){var b=document.createElement('button');b.type='button';b.className='shell-side-link';b.setAttribute('data-nav',id);b.setAttribute('data-v8-menu','1');b.innerHTML='<i class="ph '+icon+'"></i><span>'+label+'</span>';b.onclick=fn;return b};
+    var importBtn=qs('[data-nav="importar"]',section)||make('importar','ph-database','Importar dados',function(){G.renderBanco&&G.renderBanco();setActive('importar')});
+    var labelBtn=qs('[data-nav="etiquetas"]',section)||make('etiquetas','ph-barcode','Etiquetas de cartuchos',function(){G.abrirEtiquetas&&G.abrirEtiquetas()});
+    importBtn.setAttribute('data-v8-menu','1'); labelBtn.setAttribute('data-v8-menu','1');
+    var anchor=qs('[data-nav="buscador-escola"]',section);section.insertBefore(importBtn,anchor||null);section.insertBefore(labelBtn,anchor||null);
+  }
+  function renderEtiquetas(){
+    var el=ensureView('etiquetas');hideViews();el.classList.remove('hidden');setActive('etiquetas');
+    var c=safe(function(){return (((G.db||{}).config||{}).cartuchosRecargas||{}).etiquetas||{}})||{};
+    var pure=G.CARTUCHOS_ETIQUETAS_PURE||{};var cap=Number(pure.ETQ_CAPACIDADE||126);var ini=Number(c.proximoNumero||1);
+    el.innerHTML='<div class="v8-menu-page"><div class="flex flex-wrap justify-between gap-3 items-center"><div><h1 class="text-[22px] font-bold">Etiquetas de cartuchos</h1><p class="text-sm text-slate-500 mt-1">Menu independente para configurar e imprimir as etiquetas, sem abrir Preferências.</p></div><button class="neo-btn primary" type="button" id="v8-print-labels"><i class="ph ph-printer"></i> Imprimir</button></div><div class="rounded-[18px] border bg-white p-6 mt-5"><div class="grid grid-cols-1 md:grid-cols-4 gap-3"><label class="v8-field">Número inicial<input id="v8-etq-ini" type="number" min="1" value="'+ini+'"></label><label class="v8-field">Número final<input id="v8-etq-fim" type="number" min="1" value="'+(ini+cap-1)+'"></label><label class="v8-field">Colunas<input id="v8-etq-col" type="number" min="1" max="12" value="'+Number(c.colunas||7)+'"></label><label class="v8-field">Linhas<input id="v8-etq-lin" type="number" min="1" max="30" value="'+Number(c.linhas||18)+'"></label></div><div id="v8-etq-preview" class="mt-5"></div><p class="text-xs text-slate-500 mt-4">As etiquetas usam somente números e código de barras. O menu não compartilha estado visual com Preferências.</p></div></div>';
+    function preview(){var col=Math.max(1,Number(qs('#v8-etq-col').value||7)),lin=Math.max(1,Number(qs('#v8-etq-lin').value||18)),start=Number(qs('#v8-etq-ini').value||1),n=Math.min(col*lin,cap);qs('#v8-etq-preview').innerHTML='<div class="v8-etq-grid" style="--etq-cols:'+col+'">'+Array.from({length:n},function(_,i){return '<div class="v8-etq-cell"><span class="v8-mini-bars"></span><b>'+(start+i)+'</b></div>'}).join('')+'</div>'}
+    qsa('#v8-etq-ini,#v8-etq-col,#v8-etq-lin').forEach(function(x){x.oninput=preview});preview();
+    qs('#v8-print-labels').onclick=function(){var a=Number(qs('#v8-etq-ini').value||1),b=Number(qs('#v8-etq-fim').value||a+cap-1);if(typeof G.imprimirEtiquetasCartucho==='function'){var old=qs('#cart-etq-inicio');if(old){old.value=a;var f=qs('#cart-etq-fim');if(f)f.value=b}G.imprimirEtiquetasCartucho()}else if(typeof G.toast==='function')G.toast('O módulo de etiquetas ainda está carregando.','info')};
+  }
+  G.abrirEtiquetas=renderEtiquetas;
+  G.renderMenuShellV8000=function(){safe(independentMenus);darkCss();sidebarPositionCss();applyTheme(loadTheme());applySidebarSide(loadSidebarSide());applyMenuOrder();safe(ensureDarkCard);safe(ensureSidebarPositionCard);safe(ensureMenuEditorCard);};
+  G.renderMenuShellV8000();
+  new MutationObserver(function(){safe(independentMenus);safe(ensureDarkCard);safe(ensureSidebarPositionCard);safe(ensureMenuEditorCard);applyMenuOrder();applySidebarSide(loadSidebarSide());if(themeOn())applyTheme(true)}).observe(document.body,{childList:true,subtree:true});
+  setTimeout(G.renderMenuShellV8000,250);setTimeout(G.renderMenuShellV8000,1000);
+  console.log('[DIGICOPY] menu_shell_v8000 carregado: fontes únicas de shell/importação/etiquetas/tema');
+})();

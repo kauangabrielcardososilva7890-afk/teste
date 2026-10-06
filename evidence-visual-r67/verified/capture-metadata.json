@@ -1,0 +1,340 @@
+{
+  "initial": {
+    "title": "Início",
+    "active": [
+      "view-dashboard"
+    ],
+    "text": ""
+  },
+  "results": [
+    {
+      "route": "dashboard",
+      "title": "Início",
+      "active": [
+        "view-dashboard"
+      ],
+      "initialText": "",
+      "desktop": "dashboard-desktop.png",
+      "mobile": "dashboard-mobile.png"
+    },
+    {
+      "route": "clientes",
+      "expected": "Clientes",
+      "desktopState": {
+        "title": "Clientes",
+        "active": [
+          "view-clientes"
+        ],
+        "text": "Clientes\n\nCadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.\n\nNovo cliente\nExcluir\nNome\nCódigo\nFantasia\nCPF/CNPJ\nTelefone\nCidade\nBairro\nBuscar\nTodos\nFiltro: ativos\nInadimplentes\nOcultos/inativos\nSem telefone\nSem endereço\nTodos status\nLi"
+      },
+      "desktop": "clientes-desktop.png",
+      "mobile": "clientes-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "route": "produtos",
+      "expected": "Produtos",
+      "desktopState": {
+        "title": "Estoque",
+        "active": [
+          "view-produtos"
+        ],
+        "text": "Produtos\nRecargas\nNovo produto\nEstoque baixo\nMostrar todos\nLimpar filtros\nExcluir\nTodas categorias\nProduto\nServiço\nCartucho\nCartucho Vazio\nInsumo\nEquipamento\nImpressoras\nChip\nCompatível\nInformática\nOriginal\nOutros\nAbaixo do mínimo\n\nTOTAL DE PRODUTOS\n\n6\n\nABAIXO DO MÍNIMO\n\n0\n\nIgual ao mínimo não avisa"
+      },
+      "desktop": "produtos-desktop.png",
+      "mobile": "produtos-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "route": "impressoras",
+      "expected": "Impressoras",
+      "desktopState": {
+        "title": "Impressoras",
+        "active": [
+          "view-impressoras"
+        ],
+        "text": "Impressoras\n\nTodas as impressoras cadastradas nos clientes\n\nSerial\nContador preto\nContador color\nNome cliente\nCod contrato cliente\nDepartamento\nLocal\nBuscar\nMODELO\tSERIAL\tPATRIMÔNIO\tCONTADOR PB\tCOLOR\tCLIENTE\tCONTRATO\tDEPTO\tLOCAL\nImpressora multifuncional corporativa de alta capacidade\tSERIE-SINTETIC"
+      },
+      "desktop": "impressoras-desktop.png",
+      "mobile": "impressoras-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "route": "contratos",
+      "expected": "Contratos de locação",
+      "desktopState": {
+        "title": "Contratos de locação",
+        "active": [
+          "view-contratos"
+        ],
+        "text": "Novo contrato\nExcluir\nTodos status\nAtivo\nPendente\nVencido\nEncerrado\nHoje (criados ou mexidos hoje)\nTodos\nNome\nCidade\nEquipamento\nPatrimônio\nSerial\nDepartamento\nChamados Abertos\nCod Locação\nCod Cliente\nEndereço Impressora\nContratos Vencidos\nContratos Vencer 30 Dias\nLeituras Lançar Hoje\nCod Leitura\nNã"
+      },
+      "desktop": "contratos-desktop.png",
+      "mobile": "contratos-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "route": "parque",
+      "expected": "Máquinas nos clientes",
+      "desktopState": {
+        "title": "Impressoras",
+        "active": [
+          "view-impressoras",
+          "view-parque"
+        ],
+        "text": "Tela sem conteúdo\n\nO botão funcionou — só faltou a tela carregar\n\nVoltar ao Início\n\nA tela parque foi chamada mas não tinha conteúdo pronto para mostrar. Nada foi apagado: seus dados e as outras telas continuam intactos. Se isso aparecer de novo, anote o nome acima e avise."
+      },
+      "desktop": "parque-desktop.png",
+      "mobile": "parque-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "manutencao",
+      "expected": "Chamados",
+      "desktopState": {
+        "title": "Impressoras",
+        "active": [
+          "view-impressoras",
+          "view-parque",
+          "view-manutencao"
+        ],
+        "text": "Tela sem conteúdo\n\nO botão funcionou — só faltou a tela carregar\n\nVoltar ao Início\n\nA tela manutencao foi chamada mas não tinha conteúdo pronto para mostrar. Nada foi apagado: seus dados e as outras telas continuam intactos. Se isso aparecer de novo, anote o nome acima e avise."
+      },
+      "desktop": "manutencao-desktop.png",
+      "mobile": "manutencao-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "vendas",
+      "expected": "Vender / Orçar",
+      "desktopState": {
+        "title": "Vender / Orçar",
+        "active": [
+          "view-vendas"
+        ],
+        "text": "Vendas e Notinhas\n\nPor padrão mostra somente hoje. Use busca/data para consultar notinhas antigas.\n\nNova notinha\nEstornar\nExcluir\nHoje\nAbertas\nTodas\n0 de 0\nR$ 0,00\nDE\nATÉ\nSituação: todas\nfaturado\nPagamento: todos\nDinheiro\nCartão\nPix\nPrazo\nBoleto\nGrátis\nFiltrar\nLimpar\n\tCÓDIGO\tDATA\tCLIENTE\tVALOR\tSITUA"
+      },
+      "desktop": "vendas-desktop.png",
+      "mobile": "vendas-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "financeiro",
+      "expected": "Financeiro",
+      "desktopState": {
+        "title": "Financeiro",
+        "active": [
+          "view-financeiro"
+        ],
+        "text": "Financeiro\n\nContas a receber e a pagar — duplo clique abre o histórico\n\nReceber\nImprimir\nExcluir\nHoje\nAbertos\nTodos\nNome\nCód. Venda\nCód. Parcela\nCód. Cliente\nPor Valor\nCód. Caixa\nCód. Pix\nCód. Leitura\nDE\nATÉ\nReceber + Pagar\nSó a receber\nSó a pagar\n Filtrar\n Remover filtro\n⇧ Vencimento\n⇩ Vencimento\n⇩"
+      },
+      "desktop": "financeiro-desktop.png",
+      "mobile": "financeiro-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "relatorios",
+      "expected": "Relatórios",
+      "desktopState": {
+        "title": "Relatórios",
+        "active": [
+          "view-relatorios"
+        ],
+        "text": "Relatórios\n\nResumo visual da operação\n\nBackup\n\nCLIENTES\n\n8\n\nVENDAS\n\n1\n\nCONTRATOS\n\n1\n\nCHAMADOS\n\n1\nRelatórios detalhados serão conectados ao banco em nuvem na próxima etapa."
+      },
+      "desktop": "relatorios-desktop.png",
+      "mobile": "relatorios-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "config",
+      "expected": "Configurações",
+      "desktopState": {
+        "title": "Configurações",
+        "active": [
+          "view-config"
+        ],
+        "text": "Configurações\n\nEmpresa, técnicos e preferências do sistema\n\nSalvar\n Dados da loja para relatórios e notinhas\n\nPreencha uma vez. Estes dados aparecem nas notinhas, chamados e relatórios.\n\nNOME FANTASIA\nRAZÃO SOCIAL\nCNPJ\n Buscar CNPJ\nTELEFONE\nWHATSAPP\nRUA / AV\nNÚMERO\nBAIRRO\nCIDADE\nUF\nCEP\nE-MAIL\nSalvar"
+      },
+      "desktop": "config-desktop.png",
+      "mobile": "config-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "usuarios",
+      "expected": "Usuários",
+      "desktopState": {
+        "title": "Usuários",
+        "active": [
+          "view-usuarios"
+        ],
+        "text": "Usuários e permissões\nNovo usuário\nNovo técnico\nNOME\tLOGIN\tPERFIL\tSTATUS\tAÇÕES\nAdministrador QA\tqa-admin\tADMIN\tATIVO\t\n\nTécnico Sintético QA TÉCNICO\t—\tTÉCNICO\t—\t\n🔎 Logins repetidos"
+      },
+      "desktop": "usuarios-desktop.png",
+      "mobile": "usuarios-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "auditoria",
+      "expected": "Auditoria",
+      "desktopState": {
+        "title": "Auditoria",
+        "active": [
+          "view-auditoria"
+        ],
+        "text": "Auditoria\n\nRegistro automático de ações por usuário\n\nDATA\tUSUÁRIO\tMÓDULO\tAÇÃO\tDETALHES\n20/09/2026, 10:00:00\tAdministrador QA\nAdministrador QA\tvisual-qa\tFIXTURE\tRegistro sintético, sem persistência."
+      },
+      "desktop": "auditoria-desktop.png",
+      "mobile": "auditoria-mobile.png",
+      "routeIdentityConfirmed": true
+    },
+    {
+      "event": "transient-modal",
+      "text": "Chamados\nHoje\nTodos\naté\nNome\nMotivo\nEquipamento\nSerial\nPatrimonio\nTécnico/Atribuido\nCód Venda\nCód Chamado\nTodos\nChamados de contrato\nChamados fora de contrato\nFinalizar selecionados\n\tCód\tData\tCliente\tMotivo\tEquipamento\tT"
+    },
+    {
+      "route": "leituras",
+      "path": "Contrato sintético > Leituras",
+      "result": "not available"
+    }
+  ],
+  "external": [
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/app-releases",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/app-release",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/orcamento",
+      "method": "GET"
+    }
+  ],
+  "pageErrors": []
+}

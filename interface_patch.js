@@ -59,18 +59,12 @@ window.toast = function(msg, tipo){
   if(UI_PURE.ehAvisoDeNuvem(msg)) return;      // silêncio nos "sincronizou/não tem dados..."
   return _uiToastReal(msg, tipo);
 };
-// ações manuais: uma única confirmação clara ao final
-function uiWrapSync(fnOrig, msgOk){
-  return async function(){
-    window.__uiSyncErro = false;
-    try{ if(fnOrig) await fnOrig({confirmar:true}); }catch(e){ window.__uiSyncErro = true; console.error(e); _uiToastReal('Não consegui agora: ' + ((e&&e.message)||e), 'error'); }
-    if(!window.__uiSyncErro && msgOk) _uiToastReal(msgOk, 'success');
-  };
-}
-if(typeof window.syncEnviarParaNuvem === 'function')
-  window.enviarDadosLocaisParaNuvem = uiWrapSync(window.syncEnviarParaNuvem, 'Pronto! Este PC enviou os dados para a nuvem ☁️');
-if(typeof window.syncCarregarDaNuvem === 'function')
-  window.carregarDadosDaNuvem = uiWrapSync(window.syncCarregarDaNuvem, 'Pronto! Os dados da nuvem foram trazidos para este PC ☁️');
+// AUDITORIA 23/09/2026 — as ações MANUAIS de nuvem foram REMOVIDAS a pedido do
+// dono: "não quero algo manual que envia pra nuvem, quero automático". Este
+// trecho embrulhava syncEnviarParaNuvem/syncCarregarDaNuvem e, como os stubs da
+// Cloudflare devolvem {ok:false} sem lançar erro, ele mostrava o aviso verde
+// "Pronto! Este PC enviou os dados para a nuvem ☁️" SEM TER ENVIADO NADA.
+// A sincronização que vale é a automática (cloudflare_data_sync_patch.js).
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 3) Consulta de clientes — final e definitiva

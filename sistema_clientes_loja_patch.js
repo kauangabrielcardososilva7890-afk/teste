@@ -100,17 +100,46 @@ function atualizarNomeSistema(){
     }
   });
 }
+// Dia local de uma data qualquer. NÃO usar toISOString aqui: à noite ela já
+// devolve o dia seguinte em UTC e o sistema deslogaria sem motivo.
+function diaLocalDe(valor){
+  if(!valor) return '';
+  const d=new Date(valor);
+  if(isNaN(d)) return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// Regra: pede login de novo quando VIRA O DIA. Só isso.
+//
+// Antes esta função rodava a cada 60s comparando com `loginDia`, um carimbo
+// gravado por um envelope no doLoginUser. Se qualquer outro patch trocasse o
+// doLoginUser sem encadear (e são 4 mexendo nele), o carimbo nunca era gravado
+// e a sessão caía DE MINUTO EM MINUTO. Agora o carimbo é só um atalho: a
+// verdade é o `loginAt`, que o próprio login grava na sessão. E sem nenhuma
+// das duas informações a sessão é adotada como de hoje, nunca derrubada.
 function exigirLoginDiario(){
   const s=sess(); if(!s) return false;
   const hoje=hojeLocal();
-  if(s.loginDia===hoje) return false;
+  const dia = s.loginDia || diaLocalDe(s.loginAt);
+  if(!dia){
+    s.loginDia=hoje;
+    try{ if(typeof setSession==='function') setSession(s); }catch(e){}
+    return false;
+  }
+  if(dia===hoje){
+    if(s.loginDia!==hoje){
+      s.loginDia=hoje;
+      try{ if(typeof setSession==='function') setSession(s); }catch(e){}
+    }
+    return false;
+  }
   try{ if(typeof clearSession==='function') clearSession(); else localStorage.removeItem('digicopy_session_v42_demo_apresentacao'); }catch(e){}
   toastMsg('Novo dia: faça login novamente para continuar.','info');
   if(typeof showLogin==='function') setTimeout(()=>showLogin(),50);
   return true;
 }
 
-window.SISTEMA_CLIENTES_LOJA_PURE={extrairRowsJson,mapClienteRow,importarClientesDeObjetos,proximoCodigoCliente,salvarLoja,hojeLocal};
+window.SISTEMA_CLIENTES_LOJA_PURE={extrairRowsJson,mapClienteRow,importarClientesDeObjetos,proximoCodigoCliente,salvarLoja,hojeLocal,diaLocalDe,exigirLoginDiario};
 
 if(typeof document==='undefined') return;
 

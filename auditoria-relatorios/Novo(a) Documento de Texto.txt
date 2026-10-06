@@ -1,0 +1,67 @@
+Vou conferir cada fluxo diretamente nos arquivos do branch atual, em modo somente leitura, sem executar testes nem comandos que alterem o repositório. Para os pontos que dependem de execução em ambiente externo ou de um fluxo real, vou separar claramente o que o código prova do que permanece não confirmado.
+```
+• Ran rg --files -g 'AGENTS.md' -g '*main.js' -g '*cloudflare_data_sync_patch.js' -g 'index.js' -g '*buscador_escola_patch.js' -g '*ajustes_v52221_cert_nuvem_a1_patch.…
+  └ cloudflare-worker\src\index.js
+    cloudflare-contador\src\index.js
+    mobile\android\app\src\main\assets\public\index.html
+• Failed (exit 1) rg -n "rtf:abrir|openPath|ENTITY_RE|_seq|escolaAuth|localStorage|a1Nuvem|changes|doLoginUser|contador|estorno|innerHTML|innerText|textContent|&gt|fd6…
+  └     (?:rtf:abrir|openPath|ENTITY_RE|_seq|escolaAuth|localStorage|a1Nuvem|changes|doLoginUser|contador|estorno|innerHTML|innerText|textContent|&gt|fd6ff95b8d4f|d793…
+        ^
+    error: unclosed group
+• Ran rg -n -e 'rtf:abrir' -e 'openPath' -e 'ENTITY_RE' -e '_seq' -e 'escolaAuth' -e 'localStorage' -e 'a1Nuvem' -e 'changes' -e 'doLoginUser' -e 'contador' -e 'estorn…
+  └ main.js:250:      const res = await shell.openPath(full);
+    main.js:263:// Imprime sem cabeçalho/rodapé do navegador (sem contador de páginas nem URL)
+    main.js:305:  // imprime LIMPO, sem cabeçalho/rodapé (sem URL nem contador de páginas).
+```
+Já localizei os arquivos centrais. Alguns achados têm descrições que divergem do código visível (por exemplo, o worker aceita `_` depois da primeira letra); vou agora seguir os dados até os pontos de gravação, exibição e envio para não concluir apenas pelo nome de um campo.
+```
+• Ran Get-Content main.js | Select-Object -Skip 230 -First 32; Get-Content cloudflare_data_sync_patch.js | Select-Object -Skip 1000 -First 80; Get-Content cloudflare_d…
+  └ setTimeout(apagarA1LocalSeHouver, 1200);
+    console.log('[DIGICOPY] v5.22.21 A1 na nuvem, sem senha gravada');
+    })();
+• Ran rg --files | rg 'app\.bundle|\.js$' | Select-Object -First 80; rg -n -e 'a1Nuvem' -e 'escolaAuth' -e 'localStorage\.setItem\(ESCOLA_LOGIN_KEY' -e 'ENTITY_RE' -e …
+  └ SHA256          D793181E64F1BE70D9D45C22AC902ED1C7F60D04BCE6232AE698454010503A03       C:\Users\User\Downloads\teste...
+
+
+• Ran rg -n 'salvarLancamentoContador|estornar|fatur|p\.contadores|anterior|status.*aberta|status.*faturado|novaLeituraDefinitiva|function.*doLoginUser|doLoginUser\s*=…
+  └ window.CONTRATOS_LEITURAS_DEFINITIVO_PURE={ medidorPadrao, calcMed };
+    console.log('[DIGICOPY] contratos_leituras_definitivo_patch.js v4.9.44 carregado');
+    })();
+• Failed (exit 1) rg -n 'a1Nuvem|escolaAuth|doLoginUser' cloudflare_data_sync_patch.js app.bundle.js *.js
+  └ app.bundle.js:57711:      window.doLoginUser=embrulho;
+    app.bundle.js:58214:  var oldLogin = window.doLoginUser;
+    app.bundle.js:58246:    window.doLoginUser = guardedLogin;
+• Ran rg -n -F '&gt' --glob '*.js' --glob '*.html' --glob '*.json'; rg -n 'localStorage\.setItem\(ESCOLA_LOGIN_KEY|a1Nuvem|db\.config\.fiscal|function upload|data\.cha…
+  └ ajustes_v5250_leitura_overhaul_patch.js:186:      l.valorTotal=(l.itens||[]).reduce(function(s,x){ return s+n(x&&x.valorTotal); },0);
+    ajustes_v5250_leitura_overhaul_patch.js:187:      l.valorExcedente=l.valorTotal;
+    ajustes_v5250_leitura_overhaul_patch.js:218:      btn.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); window.__v5250fatDaLista=true; window.estorn…
+• Ran Get-Content cloudflare_data_sync_patch.js | Select-Object -Skip 300 -First 80; Get-Content ajustes_v5250_leitura_overhaul_patch.js | Select-Object -Skip 25 -Firs…
+  └
+    function randomToken(prefix = '') {
+      const bytes = new Uint8Array(32);
+• Failed (exit 1) rg -n 'escolaAuth|a1Nuvem|&gt|localStorage\.setItem\(ESCOLA_LOGIN_KEY' --glob '*.js' --glob '!app.bundle.js' --glob '!mobile/**'; rg -n 'a1Nuvem|nfe-…
+  └ rg: README*: A sintaxe do nome do arquivo, do nome do diretório ou do rótulo do volume está incorreta. (os error 123)
+    rg: docs: O sistema não pode encontrar o arquivo especificado. (os error 2)
+    package.json:13:    "check": "node build_bundle.js --check && node --check ponte_electron_patch.js && node --check lz.js && node --check logo_data.js && node --che…
+• Ran (Get-Content package.json | ConvertFrom-Json).scripts.check.Length; (Get-Content cloudflare-worker/src/index.js | Measure-Object -Line).Lines; (Get-Content cloud…
+  └ cloudflare-worker/src/index.js:31:const ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
+    cloudflare_data_sync_patch.js:62:  config:'root', modulosDinamicos:'map', _seq:'contador'
+    333:    <script src="./app.bundle.js?v=8.1.0-fd6ff95b8d4f"></script>
+```
+A revisão já encontrou dois achados com evidência direta no código: o envio de `_seq` encontra um validador que exige letra inicial, e a proteção “uma aberta” não recebe o ID do contrato no botão da tela geral. Estou fechando a arbitragem dos itens dependentes de máquina/conta e distinguindo divergência de artefato de falha funcional demonstrada.
+A análise abaixo é somente leitura; não alterei arquivos, não executei testes e não rodei os fluxos no aplicativo. As classificações se referem ao que o código atual demonstra.
+
+| ID | Classificação | Arquivo/local | Evidência | Observação |
+|---|---|---|---|---|
+| 1 | **NÃO CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/main.js:242 | `payload.nome` é convertido para string, filtrado para letras, números, `_`, `.` e `-`, e limitado a 80 caracteres. O valor continua podendo terminar em `.bat`, `.cmd` ou `.exe`; o conteúdo também vem de `payload.conteudo`. O IPC grava o arquivo temporário e chama `shell.openPath(full)`. | O fluxo permite criar e tentar abrir esses arquivos, mas o código não prova que `shell.openPath` os execute. Isso depende do comportamento do Windows, das associações de arquivo e de políticas locais; precisa ser verificado em uma máquina Windows isolada. |
+| 2 | **CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare\_data\_sync\_patch.js:62; /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare-worker/src/index.js:31 | O cliente declara `_seq` como entidade sincronizável. O Worker valida a entidade com `^[a-zA-Z][a-zA-Z0-9_]{0,63}$`, que rejeita `_seq` por começar com `_`. | O `_` é permitido depois do primeiro caractere, mas não na posição inicial. O código confirma a incompatibilidade; a ocorrência efetiva de rejeição numa conta D1/Cloudflare requer observar o envio real. |
+| 3 | **FALSO POSITIVO** | /C:/Users/User/Downloads/teste-pr-47-codex/buscador\_escola\_patch.js:59; /C:/Users/User/Downloads/teste-pr-47-codex/buscador\_escola\_patch.js:63; /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare\_data\_sync\_patch.js:62 | Neste patch, a leitura de `localStorage` existe, mas não há gravação de credenciais nessa chave. Ao salvar, são escritos `usuario`, `senha` e `atualizadoEm` em `db.config.escolaAuth`, seguido de `saveDB()`. A entidade `config` é sincronizada como `root`. | A alegação específica de que este código salva em `localStorage` não se confirma. O armazenamento persistente em `db.config` e sua inclusão no fluxo de sincronização, sim. |
+| 4 | **CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/ajustes\_v52221\_cert\_nuvem\_a1\_patch.js:24; /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare\_data\_sync\_patch.js:62 | O patch lê `db.config.fiscal.a1Nuvem.data` como o certificado. A entidade `config` é sincronizada como `root`, portanto esse dado está dentro do objeto enviado pela sincronização. | O código confirma que o material integra o objeto de configuração sincronizado. Confirmar que chegou e foi armazenado em uma conta real exigiria verificar a nuvem/D1. |
+| 5 | **CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/index.html:333; `app.bundle.js` | A página usa a referência `v=8.1.0-fd6ff95b8d4f`. O bundle atual tem SHA-256 iniciado por `d793181e64f1`. | Há divergência entre o identificador de versão/query e o prefixo do hash atual do bundle. Isso confirma a divergência no checkout, mas não prova sozinho que um servidor publicado esteja servindo esse mesmo arquivo. |
+| 6 | **CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/package.json:13 | O valor do script `check` tem 11.065 caracteres e contém a cadeia longa de verificações ligadas por `&&`. | Isso excede o limite de linha de comando de `cmd.exe` (8.191 caracteres), usado normalmente pelo npm no Windows. A falha concreta não foi executada aqui, mas a extensão do comando confirma o risco de falhar nesse ambiente. |
+| 7 | **CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare-worker/src/index.js; /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare-worker/motor\_para\_colar.js | Os arquivos divergem substancialmente: têm 2.710 e 2.679 linhas, respectivamente, e a comparação aponta 1.201 inserções e 1.352 remoções. | A divergência entre o Worker-fonte e o arquivo “para colar” é real e confirma que os artefatos não estão sincronizados. A execução de `motor_para_colar.js` em produção não foi verificada. |
+| 8 | **CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare\_data\_sync\_patch.js:1062; /C:/Users/User/Downloads/teste-pr-47-codex/cloudflare\_data\_sync\_patch.js:1063 | A resposta nula é tratada no fluxo principal, mas `data.changes` não é validado como array antes do `for...of`. Um valor truthy que não seja iterável pode lançar erro; a contagem também assume `.length`. | A falta de validação de formato é demonstrável. Se uma resposta real malformada ocorrer depende do servidor/rede; não foi reproduzida aqui. |
+| 9 | **FALSO POSITIVO** | /C:/Users/User/Downloads/teste-pr-47-codex/app.js:447; ocorrências no bundle em /C:/Users/User/Downloads/teste-pr-47-codex/app.bundle.js:8768, /C:/Users/User/Downloads/teste-pr-47-codex/app.bundle.js:19635, /C:/Users/User/Downloads/teste-pr-47-codex/app.bundle.js:26775, entre outras | Existem várias redefinições/wrappers de `doLoginUser`, mas o código as implementa como encadeamentos (`oldLogin`, `_origDoLoginUser`, `orig`, etc.) e há marcadores para impedir reaplicações em alguns patches. | A multiplicidade existe, porém, só por si, não demonstra acumulação descontrolada nem falha funcional. A auditoria estática não confirmou um caminho que quebre o login; validar comportamento exigiria executar os cenários de login. |
+| 10 | **NÃO CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/contratos\_leituras\_definitivo\_patch.js:127; /C:/Users/User/Downloads/teste-pr-47-codex/ajustes\_v5250\_leitura\_overhaul\_patch.js:37; /C:/Users/User/Downloads/teste-pr-47-codex/ajustes\_v5250\_leitura\_overhaul\_patch.js:46; listagem em contratos\_leituras\_definitivo\_patch.js:117 (/C:/Users/User/Downloads/teste-pr-47-codex/contratos\_leituras-definitivo\_patch.js:117) | O lançamento obtém `anterior` de `p.contadores[key]`, com fallback para `med.contadorInicial`, e então atualiza `p.contadores[key]` para o valor atual. O estorno muda o status da leitura para `estornada` e o status das contas vinculadas para `estornado`; não altera o contador do parque. Há edição pós-estorno: o patch tenta restaurar o contador ao `item.anterior` antes de chamar o salvamento legado. A listagem calcula o valor pelos itens e, sem soma não nula, usa `l.valorTotal` ou `l.valorExcedente`; não lê o valor da conta a receber. | O código permite editar leitura estornada e a listagem usa campos da leitura, mas o item não especifica o sintoma preciso nem os dados do caso. Não executei o fluxo salvar → faturar → estornar → editar → salvar; portanto não confirmo que o problema relatado seja reproduzível. |
+| 11 | **FALSO POSITIVO** | Busca no código-fonte, bundle e HTML; renderização da tela em /C:/Users/User/Downloads/teste-pr-47-codex/contratos\_leituras\_definitivo\_patch.js:117 | A busca por `&gt` não encontrou ocorrência literal nos arquivos examinados. A tela de leituras monta HTML com `innerHTML`; campos de texto passam por `esc`, e não há evidência de texto `&gt` armazenado ou produzido por template nesse caminho. | O achado de que o usuário verá `&gt` literalmente não se confirma no branch atual. A inspeção de `innerText`/`textContent` não revelou um caminho que insira essa sequência literal. |
+| 12 | **CONFIRMADO** | /C:/Users/User/Downloads/teste-pr-47-codex/ajustes\_v52436\_leitura\_uma\_aberta\_patch.js:59; /C:/Users/User/Downloads/teste-pr-47-codex/ajustes\_v52436\_leitura\_uma\_aberta\_patch.js:77; criação geral em /C:/Users/User/Downloads/teste-pr-47-codex/contratos\_leituras\_definitivo\_patch.js:120 e /C:/Users/User/Downloads/teste-pr-47-codex/contratos\_leituras\_definitivo\_patch.js:123 | A proteção envolve `criarLeituraDefinitiva` e espera receber `contratoId` para procurar uma leitura aberta. Na tela geral, porém, o botão chama `criarLeituraDefinitiva()` sem argumento; a função usa `leituraContratoSel.id` internamente para criar a leitura. Assim, a guarda recebe `undefined` e retorna sem detectar a leitura existente. | O código confirma que essa tela geral pode criar uma segunda leitura aberta para o mesmo contrato sem passar pela proteção. Não executei a interface; a conclusão decorre dos argumentos e da guarda visíveis no código. |

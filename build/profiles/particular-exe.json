@@ -1,0 +1,7 @@
+{
+  "appId": "br.com.digicopy.erp.particular",
+  "productName": "DIGICOPY Particular",
+  "directories": { "output": "dist/particular-exe" },
+  "extraMetadata": { "digicopyProfile": "particular-cloud" },
+  "artifactName": "Digicopy-Particular-Setup-${version}.${ext}"
+}

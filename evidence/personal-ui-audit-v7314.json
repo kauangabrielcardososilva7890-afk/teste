@@ -1,0 +1,838 @@
+{
+  "viewport": {
+    "width": 1365,
+    "height": 850
+  },
+  "releaseNotes": {
+    "version": "7.3.14",
+    "seenForCurrentVersion": "1",
+    "previousVersionSeen": "1",
+    "shownAfterReload": false,
+    "stayedHiddenAfterReload": true
+  },
+  "menuPreferences": {
+    "session": {
+      "empresaId": "qa-company",
+      "empresaNome": "Empresa QA",
+      "cnpj": "00000000000000",
+      "usuarioId": "qa-admin",
+      "usuarioNome": "Administrador QA",
+      "login": "qa-admin",
+      "perfil": "Admin",
+      "loginAt": "2026-10-02T04:27:33.558Z",
+      "loginDia": "2026-10-02"
+    },
+    "dbUiMenus": null,
+    "deviceUiMenus": null,
+    "menuRelatedKeys": []
+  },
+  "fixtureCounts": {
+    "clientes": 1,
+    "produtos": 3,
+    "equipamentos": 1,
+    "contratos": 1,
+    "parque": 1,
+    "leituras": 1,
+    "os": 1,
+    "vendas": 1,
+    "orcamentos": 1,
+    "contasReceber": 1,
+    "contasPagar": 1
+  },
+  "budgetTokenCount": 1,
+  "routes": [
+    {
+      "id": "dashboard",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Início",
+      "activeView": [
+        "view-dashboard"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/dashboard.png",
+      "textStart": "DIGICOPY ERP\n\nPainel Geral • Gestão de Locação, Assistência Técnica e Vendas\n\nNova notinha\nClientes\nContratos\nChamados\nAtalhos\n\nCONTRATOS ATIVOS\n\n1\n\nPARQUE INSTALADO\n\n1\n\nOS EM ABERTO\n\n1\n\nMÁQ. DISPONÍVEIS\n\n0\n\nFATURAMENTO ",
+      "navigation": "Início"
+    },
+    {
+      "id": "vendas",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Vender / Orçar",
+      "activeView": [
+        "view-vendas"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/vendas.png",
+      "textStart": "Vendas e Notinhas\n\nPor padrão mostra somente hoje. Use busca/data para consultar notinhas antigas.\n\nNova notinha\nEstornar\nExcluir\nHoje\nAbertas\nTodas\n1 de 1\nR$ 140,00\nDE\nATÉ\nSituação: todas\nfaturado\nPagamento: todos\nDinhe",
+      "navigation": "Atendimento > Consultar notinhas"
+    },
+    {
+      "id": "orcamentos",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Orçamentos",
+      "activeView": [
+        "view-orcamentos"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/orcamentos.png",
+      "textStart": "Orçamentos\n\nPropostas ao cliente com aprovação online e ordem de serviço\n\nNovo\nEstornar\nExcluir\nTodos\nMostrar todos aprovados\nMostrar todos desaprovados\nTodos\nAbertos (Não fechados)\nAutorizados (Fechados)\nDesaprovados (R",
+      "navigation": "Atendimento > Orçamentos"
+    },
+    {
+      "id": "produtos",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Estoque",
+      "activeView": [
+        "view-produtos"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/produtos.png",
+      "textStart": "Produtos\nRecargas\nNovo produto\nEstoque baixo\nMostrar todos\nLimpar filtros\nExcluir\nTodas categorias\nProduto\nServiço\nCartucho\nCartucho Vazio\nInsumo\nEquipamento\nImpressoras\nChip\nCompatível\nInformática\nOriginal\nOutros\nAbaixo",
+      "navigation": "Produtos"
+    },
+    {
+      "id": "clientes",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Clientes",
+      "activeView": [
+        "view-clientes"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/clientes.png",
+      "textStart": "Clientes\n\nCadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.\n\nNovo cliente\nExcluir\nNome\nCódigo\nFantasia\nCPF/CNPJ\nTelefone\nCidade\nBairro\nBuscar\nTodos\nFiltro:",
+      "navigation": "Cadastros > Clientes"
+    },
+    {
+      "id": "contratos",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Contratos de locação",
+      "activeView": [
+        "view-contratos"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/contratos.png",
+      "textStart": "Novo contrato\nExcluir\nTodos status\nAtivo\nPendente\nVencido\nEncerrado\nHoje (criados ou mexidos hoje)\nTodos\nNome\nCidade\nEquipamento\nPatrimônio\nSerial\nDepartamento\nChamados Abertos\nCod Locação\nCod Cliente\nEndereço Impressora",
+      "navigation": "Locação > Contratos"
+    },
+    {
+      "id": "parque",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": true,
+      "title": "Impressoras",
+      "activeView": [
+        "view-impressoras",
+        "view-parque"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/parque.png",
+      "textStart": "Impressoras\n\nTodas as impressoras cadastradas nos clientes\n\nSerial\nContador preto\nContador color\nNome cliente\nCod contrato cliente\nDepartamento\nLocal\nBuscar\nMODELO\tSERIAL\tPATRIMÔNIO\tCONTADOR PB\tCOLOR\tCLIENTE\tCONTRATO\tDEP",
+      "navigation": "Locação > Máquinas nos clientes"
+    },
+    {
+      "id": "leituras",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": true,
+      "title": "Contratos de locação",
+      "activeView": [
+        "view-contratos",
+        "view-leituras"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/leituras.png",
+      "textStart": "Novo contrato\nExcluir\nTodos status\nAtivo\nPendente\nVencido\nEncerrado\nHoje (criados ou mexidos hoje)\nTodos\nNome\nCidade\nEquipamento\nPatrimônio\nSerial\nDepartamento\nChamados Abertos\nCod Locação\nCod Cliente\nEndereço Impressora",
+      "navigation": "Locação > Leituras"
+    },
+    {
+      "id": "impressoras",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Impressoras",
+      "activeView": [
+        "view-impressoras"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/impressoras.png",
+      "textStart": "Impressoras\n\nTodas as impressoras cadastradas nos clientes\n\nSerial\nContador preto\nContador color\nNome cliente\nCod contrato cliente\nDepartamento\nLocal\nBuscar\nMODELO\tSERIAL\tPATRIMÔNIO\tCONTADOR PB\tCOLOR\tCLIENTE\tCONTRATO\tDEP",
+      "navigation": "Locação > Impressoras"
+    },
+    {
+      "id": "financeiro",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Financeiro",
+      "activeView": [
+        "view-financeiro"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/financeiro.png",
+      "textStart": "Financeiro\n\nContas a receber e a pagar — duplo clique abre o histórico\n\nReceber\nImprimir\nExcluir\nHoje\nAbertos\nTodos\nNome\nCód. Venda\nCód. Parcela\nCód. Cliente\nPor Valor\nCód. Caixa\nCód. Pix\nCód. Leitura\nDE\nATÉ\nReceber + Pa",
+      "navigation": "Financeiro"
+    },
+    {
+      "id": "config",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Configurações",
+      "activeView": [
+        "view-config"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/config.png",
+      "textStart": "Configurações\n\nEmpresa, técnicos e preferências do sistema\n\nSalvar\n Dados da loja para relatórios e notinhas\n\nPreencha uma vez. Estes dados aparecem nas notinhas, chamados e relatórios.\n\nNOME FANTASIA\nRAZÃO SOCIAL\nCNPJ\n ",
+      "navigation": "Configurações > Preferências"
+    },
+    {
+      "id": "usuarios",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Usuários",
+      "activeView": [
+        "view-usuarios"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/usuarios.png",
+      "textStart": "Usuários e permissões\nNovo usuário\nNovo técnico\nNOME\tLOGIN\tPERFIL\tSTATUS\tAÇÕES\nAdministrador QA\tqa-admin\tADMIN\tATIVO\t\n\nTécnico Qa\ttécnico\tFUNCIONÁRIO\tATIVO\t\n\nTécnico QA TÉCNICO\t—\tTÉCNICO\t—\t\n🔎 Logins repetidos",
+      "navigation": "Configurações > Usuários e permissões"
+    },
+    {
+      "id": "auditoria",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Auditoria",
+      "activeView": [
+        "view-auditoria"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/auditoria.png",
+      "textStart": "Auditoria\n\nRegistro automático de ações por usuário\n\nDATA\tUSUÁRIO\tMÓDULO\tAÇÃO\tDETALHES\n02/10/2026, 04:27:32\tAdministrador QA\nqa-admin\tqa\tFIXTURE\tRegistro sintético de auditoria",
+      "navigation": "Configurações > Auditoria"
+    },
+    {
+      "id": "central-nf",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Central de Nota Fiscal",
+      "activeView": [
+        "view-central-nf"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/central-nf.png",
+      "textStart": "Atalhos:\n📥 Manifestação\n🗂 Enviar XML\nFISCAL\nNota Fiscal\nPerfil Tributário\nManifestação\nNCM\nEnviar XML\nConfigurações\n🏛️ HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL\nAMBIENTE\nTodos\nProdução\nHomologação\nSITUAÇÃO\nTodos\nAuto",
+      "navigation": "Fiscal > Nota Fiscal"
+    },
+    {
+      "id": "fiscal-perfil",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Perfil Tributário",
+      "activeView": [
+        "view-fiscal-perfil"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/fiscal-perfil.png",
+      "textStart": "FISCAL\nNota Fiscal\nPerfil Tributário\nManifestação\nNCM\nEnviar XML\nConfigurações\n🏛️ HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL\nPerfis Tributários\no mapa das operações da loja — cada item da nota escolhe um perfil e herda ",
+      "navigation": "Fiscal > Perfil Tributário"
+    },
+    {
+      "id": "fiscal-manifestacao",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Manifestação do Destinatário",
+      "activeView": [
+        "view-fiscal-manifestacao"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/fiscal-manifestacao.png",
+      "textStart": "FISCAL\nNota Fiscal\nPerfil Tributário\nManifestação\nNCM\nEnviar XML\nConfigurações\n🏛️ HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL\n📥 Consulta Notas Destinadas\nA partir do último registro consultado (retoma o NSU salvo)\nÚltim",
+      "navigation": "Fiscal > Manifestação"
+    },
+    {
+      "id": "fiscal-ncm",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "NCM — Nomenclatura Comum do Mercosul",
+      "activeView": [
+        "view-fiscal-ncm"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/fiscal-ncm.png",
+      "textStart": "FISCAL\nNota Fiscal\nPerfil Tributário\nManifestação\nNCM\nEnviar XML\nConfigurações\n🏛️ HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL\nBuscar\na tabela NCM completa (4.439 itens do banco antigo) entra com a migração — hoje a lupa ",
+      "navigation": "Fiscal > NCM"
+    },
+    {
+      "id": "fiscal-enviar-xml",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Enviar XML",
+      "activeView": [
+        "view-fiscal-enviar-xml"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/fiscal-enviar-xml.png",
+      "textStart": "FISCAL\nNota Fiscal\nPerfil Tributário\nManifestação\nNCM\nEnviar XML\nConfigurações\n🏛️ HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL\n🗂️ Preparar Arquivos Fiscais\nSELECIONE O MÊS\nIncluir PDFs\nPreparar Arquivos\n\tNF-E (MODELO 55)",
+      "navigation": "Fiscal > Enviar XML"
+    },
+    {
+      "id": "config-fiscal",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Configurações Fiscais",
+      "activeView": [
+        "view-config-fiscal"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/config-fiscal.png",
+      "textStart": "FISCAL\nNota Fiscal\nPerfil Tributário\nManifestação\nNCM\nEnviar XML\nConfigurações\n🏛️ HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL\nGeral\nImpressão\nNFCe\nTributação\nNuvem\nOutras\nMensagens\nFCP\nAutorizações\nReforma\nLog Fiscal\nAMB",
+      "navigation": "Fiscal > Configurações"
+    },
+    {
+      "id": "buscador-escola",
+      "ok": true,
+      "modalVisible": false,
+      "expectedTextMatched": false,
+      "title": "Buscador Escola",
+      "activeView": [
+        "view-buscador-escola"
+      ],
+      "hasSyntheticMarker": false,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/buscador-escola.png",
+      "textStart": "Buscador Escola\n\nCaixa Escolar MG • Atualização automática a cada 1 hora\n\nLogin na nuvem\nExcluídos\nExcel\n\nÚLTIMA ATUALIZAÇÃO\n\nNunca\n\nORÇAMENTOS\n\n0\n\nITENS\n\n0\n\nPRÓXIMA\n\naguardando\nMG todo\nNorte de Minas\nNorte prioritário\nA",
+      "navigation": "Buscador Escola"
+    },
+    {
+      "id": "backup",
+      "ok": true,
+      "modalVisible": true,
+      "expectedTextMatched": true,
+      "title": "Buscador Escola",
+      "activeView": [
+        "view-buscador-escola"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/backup.png",
+      "textStart": "Início\nAtendimento\nProdutos\nLocação\nFiscal\nCadastros\nFinanceiro\nBuscador Escola\nConfigurações\nBackup\nNavegador\nNuvem\nSair\nNuvem\nBuscador Escola\n\nCaixa Escolar MG • Atualização automática a cada 1 hora\n\nLogin na nuvem\nExc",
+      "navigation": "Backup"
+    },
+    {
+      "id": "nuvem",
+      "ok": true,
+      "modalVisible": true,
+      "expectedTextMatched": true,
+      "title": "Buscador Escola",
+      "activeView": [
+        "view-buscador-escola"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/nuvem.png",
+      "textStart": "Início\nAtendimento\nProdutos\nLocação\nFiscal\nCadastros\nFinanceiro\nBuscador Escola\nConfigurações\nBackup\nNavegador\nNuvem\nSair\nNuvem\nBuscador Escola\n\nCaixa Escolar MG • Atualização automática a cada 1 hora\n\nLogin na nuvem\nExc",
+      "navigation": "Nuvem"
+    },
+    {
+      "id": "chamado-rapido",
+      "ok": true,
+      "modalVisible": true,
+      "expectedTextMatched": true,
+      "title": "Buscador Escola",
+      "activeView": [
+        "view-buscador-escola"
+      ],
+      "hasSyntheticMarker": true,
+      "screenshot": "/home/ubuntu/audit-deliverables/personal-ui-r68/chamado-rapido.png",
+      "textStart": "Início\nAtendimento\nProdutos\nLocação\nFiscal\nCadastros\nFinanceiro\nBuscador Escola\nConfigurações\nBackup\nNavegador\nNuvem\nSair\nNuvem\nBuscador Escola\n\nCaixa Escolar MG • Atualização automática a cada 1 hora\n\nLogin na nuvem\nExc",
+      "navigation": "Atendimento > Abrir chamado"
+    }
+  ],
+  "navigation": {
+    "topnav": [
+      {
+        "label": "Início",
+        "onclick": "navigateTo('dashboard')"
+      },
+      {
+        "label": "Atendimento",
+        "onclick": "navigateTo('vendas')"
+      },
+      {
+        "label": "Produtos",
+        "onclick": "navigateTo('produtos')"
+      },
+      {
+        "label": "Locação",
+        "onclick": "navigateTo('contratos')"
+      },
+      {
+        "label": "Fiscal",
+        "onclick": "abrirCentralNfe()"
+      },
+      {
+        "label": "Cadastros",
+        "onclick": "navigateTo('clientes')"
+      },
+      {
+        "label": "Financeiro",
+        "onclick": "navigateTo('financeiro')"
+      },
+      {
+        "label": "Buscador Escola",
+        "onclick": "navigateTo('buscador-escola')"
+      },
+      {
+        "label": "Configurações",
+        "onclick": "navigateTo('config')"
+      },
+      {
+        "label": "Backup",
+        "onclick": "window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()"
+      },
+      {
+        "label": "Navegador",
+        "onclick": "navegadorAbrir()"
+      },
+      {
+        "label": "Nuvem",
+        "onclick": "abrirCloudflareNuvem()"
+      },
+      {
+        "label": "Sair",
+        "onclick": "doLogout()"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "",
+        "display": "block",
+        "visibility": "hidden",
+        "buttons": [
+          {
+            "text": "Consultar notinhas",
+            "onclick": "navigateTo('vendas')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Orçamentos",
+            "onclick": "navigateTo('orcamentos')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Abrir chamado",
+            "onclick": "openQuickOS()",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          }
+        ]
+      },
+      {
+        "id": "menu-outsourcing",
+        "display": "block",
+        "visibility": "hidden",
+        "buttons": [
+          {
+            "text": "Contratos",
+            "onclick": "navigateTo('contratos')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Máquinas nos clientes",
+            "onclick": "navigateTo('parque')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Leituras",
+            "onclick": "navigateTo('leituras')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Impressoras",
+            "onclick": "navigateTo('impressoras')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          }
+        ]
+      },
+      {
+        "id": "menu-nfe",
+        "display": "block",
+        "visibility": "hidden",
+        "buttons": [
+          {
+            "text": "Nota Fiscal",
+            "onclick": "navigateTo('central-nf')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 227,
+            "height": 39
+          },
+          {
+            "text": "Perfil Tributário",
+            "onclick": "navigateTo('fiscal-perfil')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 227,
+            "height": 39
+          },
+          {
+            "text": "Manifestação",
+            "onclick": "navigateTo('fiscal-manifestacao')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 227,
+            "height": 39
+          },
+          {
+            "text": "NCM",
+            "onclick": "navigateTo('fiscal-ncm')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 227,
+            "height": 39
+          },
+          {
+            "text": "Enviar XML",
+            "onclick": "navigateTo('fiscal-enviar-xml')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 227,
+            "height": 39
+          },
+          {
+            "text": "Configurações",
+            "onclick": "navigateTo('config-fiscal')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 227,
+            "height": 39
+          }
+        ]
+      },
+      {
+        "id": "menu-cadastros",
+        "display": "block",
+        "visibility": "hidden",
+        "buttons": [
+          {
+            "text": "Clientes",
+            "onclick": "navigateTo('clientes')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Novo cliente",
+            "onclick": "openModal('cliente')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          }
+        ]
+      },
+      {
+        "id": "menu-config",
+        "display": "block",
+        "visibility": "hidden",
+        "buttons": [
+          {
+            "text": "Preferências",
+            "onclick": "navigateTo('config')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Usuários e permissões",
+            "onclick": "navigateTo('usuarios')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Auditoria",
+            "onclick": "navigateTo('auditoria')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          }
+        ]
+      },
+      {
+        "id": "menu-navegador",
+        "display": "block",
+        "visibility": "hidden",
+        "buttons": [
+          {
+            "text": "NFS-e (prefeitura)",
+            "onclick": "navegadorAbrirSite('nfse-prefeitura')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "WhatsApp Web",
+            "onclick": "navegadorAbrirSite('whatsapp')",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          },
+          {
+            "text": "Adicionar site",
+            "onclick": "navegadorAbrir();setTimeout(function(){var b=document.getElementById('nav-novo');if(b)b.click();},60)",
+            "aria": null,
+            "display": "flex",
+            "visibility": "hidden",
+            "width": 208,
+            "height": 39
+          }
+        ]
+      }
+    ],
+    "views": [
+      "view-dashboard",
+      "view-clientes",
+      "view-produtos",
+      "view-impressoras",
+      "view-contratos",
+      "view-parque",
+      "view-leituras",
+      "view-manutencao",
+      "view-vendas",
+      "view-financeiro",
+      "view-relatorios",
+      "view-config",
+      "view-usuarios",
+      "view-auditoria"
+    ]
+  },
+  "externalRequests": [
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/app-releases",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/app-release",
+      "method": "GET",
+      "queryKeys": [
+        "cnpj"
+      ],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    },
+    {
+      "origin": "https://digicopy-contador-uso.digicopyonline.workers.dev",
+      "path": "/v1/medir",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "aborted-before-network"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/backups",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "aborted-before-network"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/health",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/health",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    }
+  ],
+  "dashboardProbe": {
+    "ok": true,
+    "dashboardIds": [
+      "kpi-contratos",
+      "kpi-parque",
+      "kpi-os",
+      "kpi-disponiveis",
+      "kpi-faturamento",
+      "kpi-vendas",
+      "kpi-vendas-valor",
+      "kpi-orcamentos",
+      "list-chamados-recentes",
+      "list-leituras-pendentes",
+      "kpi-auditoria",
+      "list-alertas",
+      "alert-vencendo",
+      "chartFinance",
+      "chartParque",
+      "parque-legend"
+    ]
+  },
+  "contractSearchAudit": {
+    "filterQuery": "",
+    "rendererQuery": "",
+    "filterField": "todos",
+    "rendererStatus": "",
+    "visibleRows": 1
+  },
+  "fiscalEditorAudit": {
+    "syntheticOnly": true,
+    "transmissionAttempted": false,
+    "importBottomVisibleAfterScroll": true,
+    "persisted": {
+      "numero": "1",
+      "descricao": "Item Fiscal Sintético QA",
+      "quantidade": 2,
+      "valorUnitario": "50",
+      "di": "DI-QA-001",
+      "adicaoNumero": "1",
+      "codPais": "9999",
+      "nomePais": "PAÍS SINTÉTICO QA",
+      "fcpBase": "100",
+      "fcpPerc": "2",
+      "fcpValor": "2"
+    }
+  },
+  "pageErrors": [],
+  "externalRequestSummary": [
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/app-releases",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/app-release",
+      "method": "GET",
+      "queryKeys": [
+        "cnpj"
+      ],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    },
+    {
+      "origin": "https://digicopy-contador-uso.digicopyonline.workers.dev",
+      "path": "/v1/medir",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "aborted-before-network"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/v1/backups",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "aborted-before-network"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/health",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    },
+    {
+      "origin": "https://digicopy-sync-api.digicopyonline.workers.dev",
+      "path": "/health",
+      "method": "GET",
+      "queryKeys": [],
+      "hasApprovalToken": false,
+      "approvalTokenLength": 0,
+      "disposition": "synthetic-mock"
+    }
+  ],
+  "cloudFetchTrace": []
+}

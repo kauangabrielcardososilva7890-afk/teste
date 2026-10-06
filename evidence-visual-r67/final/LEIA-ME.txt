@@ -1,0 +1,11 @@
+Auditoria visual Digicopy — rodada r67
+
+Conteúdo: pares de capturas PNG para 14 telas/fluxos, em 1365x850 (desktop) e 390x844 (mobile), mais capture-metadata.json.
+
+Origem: checkout local servido em localhost. Usuário e registros são sintéticos. Os registros foram colocados apenas no objeto de memória do navegador para a renderização visual; nenhuma ação de salvar, enviar, excluir ou faturar foi feita.
+
+Isolamento: Playwright permitiu somente o origin localhost e abortou qualquer request de outro origin antes do envio. Os metadados listam tentativas de GET interrompidas pelo interceptador; nenhuma chamada chegou ao serviço remoto. Nenhuma credencial real foi usada.
+
+Observações de cobertura: Leituras foi aberta pelo caminho suportado Contrato > Leituras. Máquinas nos clientes e Chamados apresentaram um fallback/modal no checkout capturado; as imagens documentam esse estado, mas não foram tratadas como evidência de corte de conteúdo do módulo subjacente.
+
+As imagens são capturas originais, sem anotação, corte ou edição.

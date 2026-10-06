@@ -1,0 +1,738 @@
+{
+ "FormCadClienteDBGrid5": [
+  {
+   "Expanded": false,
+   "FieldName": "ATIVO",
+   "Title.Caption": "Sel",
+   "Width": 20,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CODK_CLIENT",
+   "Title.Caption": "Codigo",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_RAZAOSOCIAL",
+   "Title.Caption": "Nome do Cliente",
+   "Width": 415,
+   "Visible": true
+  },
+  {
+   "Alignment": "taCenter",
+   "Expanded": false,
+   "FieldName": "TELEFONE",
+   "Title.Caption": "Telefone",
+   "Width": 89,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CPF_CNPJ",
+   "Title.Caption": "CPF/CNPJ",
+   "Width": 114,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_FANTASIA",
+   "Title.Caption": "Nome Fantasia",
+   "Width": 227,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "RUA",
+   "Title.Caption": "Endereço",
+   "Width": 199,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NUMERO",
+   "Title.Caption": "Número",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "BAIRRO",
+   "Title.Caption": "Bairro",
+   "Width": 142,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CIDADE",
+   "Title.Caption": "Cidade",
+   "Width": 132,
+   "Visible": true
+  }
+ ],
+ "FormConsuChamadoDBGrid1": [
+  {
+   "Expanded": false,
+   "FieldName": "ATIVO",
+   "Title.Caption": "Sel",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_ORDEM",
+   "Title.Caption": "Ordem",
+   "Width": 38,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "COD_VISITA",
+   "Title.Caption": "Código",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_FUNC_RESP",
+   "Title.Caption": "Atribuído",
+   "Width": 80,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "DATA",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_RAZAOSOCIAL",
+   "Title.Caption": "Cliente",
+   "Width": 250,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_RUA",
+   "Title.Caption": "Endereço",
+   "Width": 200,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_NUMERO",
+   "Title.Caption": "Numero",
+   "Width": 50,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_BAIRRO",
+   "Title.Caption": "Bahrro",
+   "Width": 150,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_CIDADE",
+   "Title.Caption": "Cidade",
+   "Width": 150,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_MOTIVO",
+   "Title.Caption": "Motivo do Chamado",
+   "Width": 202,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "EQUIPAMENTO",
+   "Title.Caption": "Produto",
+   "Width": 183,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_SERIAL",
+   "Title.Caption": "Serial",
+   "Width": 142,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_PATRIMONIO",
+   "Title.Caption": "Patrimônio",
+   "Width": 74,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_LOCALIZACAO",
+   "Title.Caption": "Localização",
+   "Width": 73,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "VI_CODENDA T",
+   "Width": 69,
+   "Visible": true
+  }
+ ],
+ "FormImpressorasOnlineDBGrid3": [
+  {
+   "Expanded": false,
+   "FieldName": "CON_DATA",
+   "Title.Caption": "Última Conexão",
+   "Width": 120,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_SITUACAO",
+   "Title.Caption": "S",
+   "Width": 18,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_NOME_EMPRESA",
+   "Title.Caption": "Local",
+   "Width": 200,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_MODELO_IMPRESSORA",
+   "Title.Caption": "Impressora",
+   "Width": 200,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_SERIAL",
+   "Title.Caption": "Serial",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_IP",
+   "Title.Caption": "IP",
+   "Width": 100,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_TOTAL_IMPRESSAO_DIA",
+   "Title.Caption": "Impressões",
+   "Width": 80,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_CONTADOR_GERAL",
+   "Title.Caption": "Contador Geral",
+   "Width": 80,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_CONTADORPRETOA4",
+   "Title.Caption": "Contador Preto",
+   "Width": 80,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_CONTADORCOLORA4",
+   "Title.Caption": "Contador Color",
+   "Width": 80,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_STATUS",
+   "Title.Caption": "Status da Impressora",
+   "Width": 200,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_TOTALPRINT",
+   "Title.Caption": "Cont. Imp",
+   "Width": 55,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_TOTALCOPY",
+   "Title.Caption": "Cont. Cópia",
+   "Width": 66,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_TOTALFAX",
+   "Title.Caption": "Cont. Fax",
+   "Width": 55,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_IMPMONO",
+   "Title.Caption": "Imp. Preto",
+   "Width": 55,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_IMPCOLOR",
+   "Title.Caption": "Imp. Color",
+   "Width": 55,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_COPMONO",
+   "Title.Caption": "Cop Mono",
+   "Width": 55,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_COPCOLOR",
+   "Title.Caption": "Cop Color",
+   "Width": 55,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CON_CONTADORSCAN",
+   "Title.Caption": "Scanner",
+   "Width": 55,
+   "Visible": true
+  }
+ ],
+ "FormLeiturasColetivaDBGrid1": [
+  {
+   "Expanded": false,
+   "FieldName": "COD_CONTADOR",
+   "Title.Caption": "Seq",
+   "Width": 30,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_PATRIMONIO",
+   "Title.Caption": "Patrim",
+   "Width": 40,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "STATUS",
+   "Title.Caption": "S",
+   "Width": 17,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "DESCRICAO",
+   "Title.Caption": "Impressora",
+   "Width": 163,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_DEPARTAMENTO",
+   "Title.Caption": "Departamento",
+   "Width": 171,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_SERIAL",
+   "Title.Caption": "Serial",
+   "Width": 142,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_LOCALIZACAO",
+   "Title.Caption": "Localização",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_TIPO",
+   "Title.Caption": "Tipo",
+   "Width": 66,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_MODALIDADE",
+   "Title.Caption": "Modalidade",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_CONTADOR_ANTERIOR",
+   "Title.Caption": "Anterior",
+   "Width": 62,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "PAGINAS_ATUAL",
+   "Title.Caption": "Atual",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_PAGINAS",
+   "Title.Caption": "Utilizado",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "PAGINAS_EXCEDENTE",
+   "Title.Caption": "Qtde Exced",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_VALOR_EXCEDENTE",
+   "Title.Caption": "Valor Exced",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_VALOR_ACRESCIMO",
+   "Title.Caption": "Acréscimo",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_VALOR_TOTAL",
+   "Title.Caption": "Valor Total",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "DATA_LEITURA",
+   "Title.Caption": "Lançado em",
+   "Width": 120,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_DATA_CAPTURADO",
+   "Title.Caption": "Capturado em",
+   "Width": 83,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CP_OBS",
+   "Title.Caption": "Observação",
+   "Width": 300,
+   "Visible": true
+  }
+ ],
+ "FormLeiturasDBGrid1": [
+  {
+   "Expanded": false,
+   "FieldName": "ATIVO",
+   "Title.Caption": "Sel",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_COD_LEITURA",
+   "Title.Caption": "Código",
+   "Width": 46,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_DATA",
+   "Title.Caption": "Lançada em",
+   "Width": 71,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_DATA_INICIO",
+   "Title.Caption": "Inicio",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_DATA_FINAL",
+   "Title.Caption": "Final",
+   "Width": 90,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_PAGINAS",
+   "Title.Caption": "Utilizado",
+   "Width": 75,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_PAGINAS_EXCEDENTES",
+   "Title.Caption": "Qtde Exced",
+   "Width": 67,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_VALOR_EXCEDENTES",
+   "Title.Caption": "Valor Exced.",
+   "Width": 70,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_VALOR_DESCONTO",
+   "Title.Caption": "Desconto",
+   "Width": 62,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_VALOR_ACRESCIMO",
+   "Title.Caption": "Acréscimo",
+   "Width": 65,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_VALOR_TOTAL",
+   "Title.Caption": "Valor Total",
+   "Width": 75,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_COD_NFSE",
+   "Title.Caption": "NFS",
+   "Width": 25,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_COD_NOTA_FISCAL",
+   "Title.Caption": "NFe",
+   "Width": 25,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LE_FINALIZAD@",
+   "Visible": true
+  }
+ ],
+ "FormLocacao2DBGrid1": [
+  {
+   "Expanded": false,
+   "FieldName": "IT_PATRIMONIO",
+   "Title.Caption": "Patrim",
+   "Width": 40,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_SERIAL",
+   "Title.Caption": "Serial",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_ON_DATA_ATUALIZADO",
+   "Title.Caption": "ON",
+   "Width": 18,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_EQUIPAMENTO",
+   "Title.Caption": "Equipamento",
+   "Width": 200,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_DEPARTAMENTO",
+   "Title.Caption": "Departamento",
+   "Width": 147,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_LOCALIZACAO",
+   "Title.Caption": "Local",
+   "Width": 128,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_ULTIMA_LEITURA",
+   "Title.Caption": "Ultima Leitura",
+   "Width": 77,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_FIXO_PRETO_A4",
+   "Title.Caption": "Acrésc Preto A4",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_LOCACAO",
+   "Title.Caption": "Valor Locação Preto A4",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_FIXO_COLOR_A4",
+   "Title.Caption": "Acrésc Color A4",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALoR_PAGINAS_COLOR",
+   "Title.Caption": "Valor Locação Color A4",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_FIXO_PRETO_A3",
+   "Title.Caption": "Acrésc Preto A3",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_LOCACAO_A3",
+   "Title.Caption": "Valor Locação Preto A3",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_FIZO_COLOR_A3",
+   "Title.Caption": "Acrésc Color A3",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_PAGINAS_COLOR_A3",
+   "Title.Caption": "Valor Locação Color A3",
+   "Width": 130,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "IT_VALOR_LOCACAO_SCANNER",
+   "Title.Caption": "Valor Locação Scanner",
+   "Width": 130,
+   "Visible": true
+  }
+ ],
+ "FormLocacaoDBGrid1": [
+  {
+   "Alignment": "taLeftJustify",
+   "Expanded": false,
+   "FieldName": "COD_LOCACAO",
+   "Title.Caption": "Locação",
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LOC_NOSSO_CODIGO",
+   "Title.Caption": "Nosso Código",
+   "Width": 74,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "NOME_RAZAOSOCIAL",
+   "Title.Caption": "Cliente",
+   "Width": 350,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "CPF_CNPJ",
+   "Title.Caption": "CNPJ",
+   "Visible": true
+  },
+  {
+   "Alignment": "taLeftJustify",
+   "Expanded": false,
+   "FieldName": "VALOR",
+   "Title.Caption": "Valor Contrato",
+   "Width": 75,
+   "Visible": true
+  },
+  {
+   "Alignment": "taLeftJustify",
+   "Expanded": false,
+   "FieldName": "VALOR_ULTIMAS_LEITURAS",
+   "Title.Caption": "Valor Últ. Leit",
+   "Width": 75,
+   "Visible": true
+  },
+  {
+   "Alignment": "taLeftJustify",
+   "Expanded": false,
+   "FieldName": "QTDE_VISITAS",
+   "Title.Caption": "Cha",
+   "Width": 18,
+   "Visible": true
+  },
+  {
+   "Alignment": "taLeftJustify",
+   "Expanded": false,
+   "FieldName": "QTDE_EQUIP",
+   "Title.Caption": "Equip.",
+   "Width": 35,
+   "Visible": true
+  },
+  {
+   "Alignment": "taLeftJustify",
+   "Expanded": false,
+   "FieldName": "ULTIMA_LEITURA",
+   "Title.Caption": "Última Leitur",
+   "Width": 120,
+   "Visible": true
+  },
+  {
+   "Expanded": false,
+   "FieldName": "LOC_DIA_FECHAMENTO",
+   "Title.Caption": "Fecha Dia",
+   "Width": 60,
+   "Visible": true
+  }
+ ]
+}

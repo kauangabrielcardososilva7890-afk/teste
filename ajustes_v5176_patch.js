@@ -35,8 +35,12 @@ function contadorDaLeitura(equipId, cor){
     (l.itens||[]).forEach(it=>{
       const pr=it.parqueId&&(db.parque||[]).find(x=>x.id===it.parqueId);
       if(it.equipamentoId!==equipId && !(pr&&pr.equipamentoId===equipId)) return;
+      const medidor=String(it.medidor||it.medidorLabel||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const isColor=medidor.startsWith('color');
+      const isPreto=medidor.startsWith('preto')||medidor.startsWith('pb')||medidor.startsWith('black');
+      if(!isColor&&!isPreto) return; // Scanner e medidores desconhecidos não são Preto nem Color.
       if(!best.d||new Date(d)>=new Date(best.d||0)){
-        if(/color/i.test(it.medidor||it.medidorLabel||'')) best={d,pb:best.pb,cor:it.atual};
+        if(isColor) best={d,pb:best.pb,cor:it.atual};
         else best={d,pb:it.atual,cor:best.cor};
       }
     });
@@ -141,17 +145,28 @@ if(window.salvarChamadoAvulso && !window.salvarChamadoAvulso.__noCnt){
 }
 
 // Preenche antigo do chamado
+/* LC_EDIT_COUNTER_PURE_START */
+function devePreservarPBEditado(os){
+  return !!(os && String(os.status||'').toLowerCase()==='concluido' && os.contadorAtual!==null && os.contadorAtual!==undefined && String(os.contadorAtual).trim()!=='');
+}
+/* LC_EDIT_COUNTER_PURE_END */
 const _auto=window.autoPreencherDadosChamado;
 if(typeof _auto==='function'){
   window.autoPreencherDadosChamado=function(equipId, manter, ignoreOsId){
+    const idEdit=ignoreOsId||(window.modalContext&&window.modalContext.id)||null;
+    const chamadoEditando=idEdit&&(db.os||[]).find(o=>o.id===idEdit);
+    const atuAntes=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
+    const valorAtualSalvo=atuAntes?atuAntes.value:'';
+    const preservarAtual=devePreservarPBEditado(chamadoEditando);
     const r=_auto.apply(this,arguments);
-    const id=ignoreOsId|| (window.modalContext&&window.modalContext.id)||null;
+    const id=idEdit;
     const ant=document.getElementById('ko-cont-ant')||document.getElementById('ca-cont-ant');
     if(ant&&equipId) ant.value=window.lcContadorAntigoChamado(equipId,false,id);
     const ca=document.getElementById('lc-cont-color-ant')||document.getElementById('ca-cont-color-ant');
     if(ca&&equipId) ca.value=window.lcContadorAntigoChamado(equipId,true,id);
     const atu=document.getElementById('ko-cont-atu')||document.getElementById('ca-cont-atu');
-    if(atu && !manter) atu.value='';
+    if(atu && preservarAtual) atu.value=valorAtualSalvo;
+    else if(atu && !manter) atu.value='';
     if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
     if(typeof calcChamadoAvulso==='function') calcChamadoAvulso();
     return r;
@@ -243,73 +258,6 @@ if(typeof _av==='function'){
 }
 
 // ── 4.2 PDF: contadores ao lado da data + assinaturas ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const s=sess()||{};
-  const emp=(db.empresas||[]).find(e=>e.id===s.empresaId)||{};
-  const cfg=(db.config&&db.config.empresa)||{};
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:160px;height:18px;vertical-align:bottom">&nbsp;'+cell('')+'</span>';
-  const linhaVal=function(v){ return '<span style="display:inline-block;border-bottom:1px solid #111;min-width:160px;height:18px;vertical-align:bottom;padding:0 6px">'+cell(v)+'</span>'; };
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:8px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px)}
-    .assin{margin-top:36px;display:flex;justify-content:space-between;gap:40px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(emp.fantasia||'DIGICOPY')}</h1><div class="muted">${esc(emp.nome||cfg.nome||'')}</div><div class="muted">${esc(emp.cnpj||s.cnpj||'')}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:18px;line-height:2.1;font-size:14px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:120px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;&nbsp;<b>Contador preto:</b> ${fin?linhaVal(o.contadorAtual):linha}
-    ${showColor?'&nbsp;&nbsp;&nbsp;<b>Contador color:</b> '+(fin?linhaVal(o.contadorColor):linha):''}
-  </p>
-  <div class="assin">
-    <div>Assinatura do técnico</div>
-    <div>Assinatura do cliente</div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5176_patch.js');
 })();

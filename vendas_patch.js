@@ -307,7 +307,7 @@
     };
     window.selectProdutoVenda = function(id){
       const p = db.produtos.find(x=>x.id===id); if(!p) return;
-      if(p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+      if(p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito){
         const est = Number(p.estoque||0);
         let existingQtd = (window.itensTemp.find(i=>i.produtoId===id)?.qtd||0);
         if(est<=0){ if(window.lfbAlert) return window.lfbAlert('Produto sem estoque','Sem estoque'); else return alert('Produto sem estoque'); }
@@ -351,7 +351,7 @@
       const it = window.itensTemp[idx]; if(!it) return;
       if(delta>0){
         const p = db.produtos.find(x=>x.id===it.produtoId);
-        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito){
           const est = Number(p.estoque||0);
           if(it.qtd+1>est){ if(window.lfbAlert) return window.lfbAlert('Estoque insuficiente. Disponível: '+est,'Estoque insuficiente'); else return alert('Estoque insuficiente. Disponível: '+est); }
         }
@@ -429,7 +429,7 @@
       // baixa estoque
       venda.itens.forEach(it=>{
         const p=db.produtos.find(x=>x.id===it.produtoId && x.empresaId===sess.empresaId);
-        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga') p.estoque -= it.qtd;
+        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito) p.estoque -= it.qtd;
       });
       db.vendas.push(venda);
       logAction('venda','criar',venda.id,`Venda ${venda.numero} cliente ${window.clienteSelecionadoVenda.nome} total ${fmtMoney(total)} por ${sess.usuarioNome} - Código cliente ${window.clienteSelecionadoVenda.codigo} - Pagamento ${pagamento||'N/A'}`);
