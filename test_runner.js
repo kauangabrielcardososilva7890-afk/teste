@@ -15,6 +15,7 @@ const {spawnSync}=require('child_process');
 })();
 const testsOficiais=[
   "test_menu_shell_v8000.js",
+  "test_login_enter_scope.js",
   "test_r67_auth_ui.js",
   "test_r68_orcamento_cloud_guard.js",
   "test_regressao_dialogos.js",

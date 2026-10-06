@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 220 | sha256: 0d8f4780c5174f42
+ * scripts: 220 | sha256: 5bfa7750fc9f676a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1589,13 +1589,19 @@ function gerarFaturasPendentes(){const sess=getSession(); const pend=db.leituras
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
-  // permitir Enter nos logins
+  // Enter só envia o formulário do usuário quando o foco está em um dos
+  // campos de login. A tela de login fica aberta atrás do painel da nuvem;
+  // antes, Enter em qualquer outro formulário chamava doLoginUser vazio e
+  // mostrava "Informe usuário e senha" mesmo quando a conexão funcionava.
   document.addEventListener('keydown',e=>{
-    if(e.key==='Enter'){
-      if(!document.getElementById('login-screen').classList.contains('hidden')){
-        if(typeof doLoginUser==='function') doLoginUser();
-      }
-    }
+    if(e.key!=='Enter') return;
+    const alvo=e.target;
+    if(!alvo || !['login-user','login-senha-user'].includes(alvo.id)) return;
+    const login=document.getElementById('login-screen');
+    const etapa=document.getElementById('login-step-user');
+    if(!login || login.classList.contains('hidden') || !etapa || etapa.classList.contains('hidden')) return;
+    e.preventDefault();
+    if(typeof doLoginUser==='function') doLoginUser();
   });
 })();
 
@@ -9368,6 +9374,11 @@ function loguinCompativel(u, typed){
   return (l === t || n === t || primeiroNome === t);
 }
 
+function avisarLogin(mensagem){
+  if(typeof toast==='function') toast(mensagem,'error');
+  else if(typeof window.lfbAlert==='function') window.lfbAlert(mensagem,'Login');
+}
+
 function normalizarAdminPrincipal(sess, dbRef){
   const _db = dbRef || (typeof db !== 'undefined' ? db : window.db);
   if(!sess || !_db) return;
@@ -9450,17 +9461,17 @@ window.doLoginUser = function(){
   const loginInput = document.getElementById('login-user')?.value?.trim() || '';
   const senhaInput = document.getElementById('login-senha-user')?.value?.trim() || '';
   if(!loginInput || !senhaInput){
-    alert('Informe usuário e senha');
+    avisarLogin('Informe usuário e senha');
     return;
   }
   // Busca empresa (pega a primeira disponível)
   let emp = (db.empresas||[]).find(e=>e.id);
   if(!emp && typeof escolherEmpresaPadrao==='function') emp = escolherEmpresaPadrao(db);
-  if(!emp){ alert('Empresa não encontrada'); return; }
+  if(!emp){ avisarLogin('Empresa não encontrada'); return; }
   const user = (db.usuarios||[]).find(u => u.empresaId === emp.id && u.ativo &&
     loguinCompativel(u, loginInput) && String(u.senha) === senhaInput);
   if(!user){
-    alert('Usuário ou senha incorreto');
+    avisarLogin('Usuário ou senha incorreto');
     return;
   }
   const session = {
